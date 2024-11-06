@@ -9,6 +9,8 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:fillViewport="true"
+        android:layout_marginTop="@dimen/vs_120"
+        android:layout_marginBottom="@dimen/vs_120"
         xmlns:android="http://schemas.android.com/apk/res/android">
         <TextView
             android:textSize="@dimen/ts_26"
