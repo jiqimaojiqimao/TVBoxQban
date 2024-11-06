@@ -16,4 +16,6 @@ public interface DataReceiver {
     void onApiReceived(String url);
 
     void onPushReceived(String url);
+
+	void onMirrorReceived(String id, String sourceKey);      //xuameng推送
 }
