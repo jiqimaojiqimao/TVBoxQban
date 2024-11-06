@@ -162,13 +162,14 @@
                         android:id="@+id/tvPlay"
                         android:background="@drawable/button_detail_play"
                         android:focusable="true"
-                        android:layout_width="@dimen/vs_120"
+                        android:layout_width="@dimen/vs_100"
                         android:layout_height="@dimen/vs_40"
                         android:layout_marginLeft="@dimen/vs_10"
                         android:layout_marginTop="@dimen/vs_10"
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
-                        android:text="立即播放"
+                        android:text="播放"
+			android:letterSpacing="0.2"
                         android:layout_marginStart="@dimen/vs_10"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
@@ -178,12 +179,13 @@
                         android:id="@+id/tvQuickSearch"
                         android:background="@drawable/button_detail_quick_search_1"
                         android:focusable="true"
-                        android:layout_width="@dimen/vs_120"
+                        android:layout_width="@dimen/vs_100"
                         android:layout_height="@dimen/vs_40"
                         android:layout_marginTop="@dimen/vs_10"
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
-                        android:text="快速搜索"
+                        android:text="快搜"
+			android:letterSpacing="0.2"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/vs_20"
@@ -192,12 +194,13 @@
                         android:id="@+id/tvSort"
                         android:background="@drawable/button_detail_sort"
                         android:focusable="true"
-                        android:layout_width="@dimen/vs_120"
+                        android:layout_width="@dimen/vs_100"
                         android:layout_height="@dimen/vs_40"
                         android:layout_marginTop="@dimen/vs_10"
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
                         android:text="倒序"
+			android:letterSpacing="0.2"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/vs_20"
@@ -206,12 +209,13 @@
                         android:id="@+id/tvCollect"
                         android:background="@drawable/button_detail_collect"
                         android:focusable="true"
-                        android:layout_width="@dimen/vs_120"
+                        android:layout_width="@dimen/vs_100"
                         android:layout_height="@dimen/vs_40"
                         android:layout_marginTop="@dimen/vs_10"
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
-                        android:text="加入收藏"
+                        android:text="☆收藏"
+			android:letterSpacing="0.2"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/vs_20"
@@ -220,13 +224,29 @@
                         android:id="@+id/tvDesc"
                         android:background="@drawable/button_detail_desc"
                         android:focusable="true"
-                        android:layout_width="@dimen/vs_120"
+                        android:layout_width="@dimen/vs_100"
                         android:layout_height="@dimen/vs_40"
                         android:layout_marginTop="@dimen/vs_10"
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
-                        android:text="内容简介"
+                        android:text="简介"
+			android:letterSpacing="0.2"
                         android:layout_marginEnd="@dimen/vs_10"/>
+                    <TextView
+                        android:id="@+id/tvPush"
+                        android:layout_width="@dimen/vs_100"
+                        android:layout_height="@dimen/vs_40"
+                        android:layout_marginEnd="@dimen/vs_10"
+			android:layout_marginTop="@dimen/vs_10"
+			android:layout_marginBottom="@dimen/vs_10"
+                        android:layout_marginRight="@dimen/vs_10"
+                        android:background="@drawable/button_detail_desc"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="推送"
+			android:letterSpacing="0.2"
+                        android:textColor="@android:color/white"
+                        android:textSize="@dimen/vs_20" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
