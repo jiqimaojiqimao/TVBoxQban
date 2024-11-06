@@ -51,6 +51,7 @@ import com.github.tvbox.osc.util.MD5;
 import com.github.tvbox.osc.util.SearchHelper;
 import com.github.tvbox.osc.util.SubtitleHelper;
 import com.github.tvbox.osc.ui.dialog.DescDialog;     //xuameng 内容简介
+import com.github.tvbox.osc.ui.dialog.PushDialog;    //xuameng远程推送
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -114,6 +115,7 @@ public class DetailActivity extends BaseActivity {
     private TextView tvPlayUrl;
     private TextView tvDes;
 	private TextView tvDesc;  //xuameng 内容简介
+	private TextView tvPush;   //xuameng 远程推送
     private TextView tvPlay;
     private TextView tvSort;
     private TextView tvQuickSearch;
@@ -174,6 +176,7 @@ public class DetailActivity extends BaseActivity {
         tvPlayUrl = findViewById(R.id.tvPlayUrl);
         tvDes = findViewById(R.id.tvDes);
 		tvDesc = findViewById(R.id.tvDesc);  //xuameng 内容简介
+		tvPush = findViewById(R.id.tvPush);   //xuameng 远程推送
         tvPlay = findViewById(R.id.tvPlay);
         tvSort = findViewById(R.id.tvSort);
         tvCollect = findViewById(R.id.tvCollect);
@@ -254,6 +257,26 @@ public class DetailActivity extends BaseActivity {
                 jumpToPlay();
             }
         });
+		
+		tvPush.setOnClickListener(new View.OnClickListener() {  //xuameng播放窗口中的远程推送
+            @Override
+            public void onClick(View v) {
+                PushDialog pushDialog = new PushDialog(mContext);
+                pushDialog.show();
+            }
+        });
+
+		tvPush.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override         //xuameng许大师制作焦点变大
+	        public void onFocusChange(View v, boolean hasFocus){
+            if (hasFocus){
+                v.animate().scaleX(1.10f).scaleY(1.10f).setDuration(300).setInterpolator(new BounceInterpolator()).start();
+            }else{
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(300).setInterpolator(new BounceInterpolator()).start();
+            }
+	    }
+	    });
+        //xuameng : end
 
         tvPlay.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -331,14 +354,14 @@ public class DetailActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 String text = tvCollect.getText().toString();
-                if ("加入收藏".equals(text)) {
+                if ("☆收藏".equals(text)) {
                     RoomDataManger.insertVodCollect(sourceKey, vodInfo);
                     Toast.makeText(DetailActivity.this, "已加入收藏夹", Toast.LENGTH_SHORT).show();
-                    tvCollect.setText("取消收藏");
+                    tvCollect.setText("★收藏");
                 } else {
                     RoomDataManger.deleteVodCollect(sourceKey, vodInfo);
                     Toast.makeText(DetailActivity.this, "已移除收藏夹", Toast.LENGTH_SHORT).show();
-                    tvCollect.setText("加入收藏");
+                    tvCollect.setText("☆收藏");
                 }
             }
         });
@@ -841,9 +864,9 @@ public class DetailActivity extends BaseActivity {
             sourceViewModel.getDetail(sourceKey, vodId);
             boolean isVodCollect = RoomDataManger.isVodCollect(sourceKey, vodId);
             if (isVodCollect) {
-                tvCollect.setText("取消收藏");
+                tvCollect.setText("★收藏");
             } else {
-                tvCollect.setText("加入收藏");
+                tvCollect.setText("☆收藏");
             }
         }
     }
@@ -891,6 +914,47 @@ public class DetailActivity extends BaseActivity {
             }
         }
     }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)              //xuameng远程推送
+    public void pushVod(RefreshEvent event) {
+        if (event.type == RefreshEvent.TYPE_PUSH_VOD) {
+            if (event.obj != null) {
+                List<String> data = (List<String>) event.obj;
+                OkGo.getInstance().cancelTag("pushVod");
+                OkGo.<String>post("http://" + data.get(0) + ":" + data.get(1) + "/action")
+                        .tag("pushVod")
+                        .params("id", vodId)
+                        .params("sourceKey", sourceKey)
+                        .params("do", "mirror")
+                        .execute(new AbsCallback<String>() {
+                            @Override
+                            public String convertResponse(okhttp3.Response response) throws Throwable {
+                                if (response.body() != null) {
+                                    return response.body().string();
+                                } else {
+                                    Toast.makeText(DetailActivity.this, "推送失败，填的地址可能不对", Toast.LENGTH_SHORT).show();
+                                    throw new IllegalStateException("网络请求错误");
+                                }
+                            }
+
+                            @Override
+                            public void onSuccess(Response<String> response) {
+                                String r = response.body();
+                                if ("mirrored".equals(r))
+                                    Toast.makeText(DetailActivity.this, "推送成功", Toast.LENGTH_SHORT).show();
+                                else
+                                    Toast.makeText(DetailActivity.this, "推送失败，远端聚汇影视版本不支持", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onError(Response<String> response) {
+                                super.onError(response);
+                                Toast.makeText(DetailActivity.this, "推送失败，填的地址可能不对", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+        }
+    }                //xuameng远程推送END
 
     private String searchTitle = "";
     private boolean hadQuickStart = false;
@@ -1025,6 +1089,7 @@ public class DetailActivity extends BaseActivity {
         OkGo.getInstance().cancelTag("fenci");
         OkGo.getInstance().cancelTag("detail");
         OkGo.getInstance().cancelTag("quick_search");
+		OkGo.getInstance().cancelTag("pushVod");      //XUAMENG远程推送
         EventBus.getDefault().unregister(this);
     }
 
@@ -1085,6 +1150,7 @@ public class DetailActivity extends BaseActivity {
         tvCollect.setFocusable(!fullWindows);
         tvQuickSearch.setFocusable(!fullWindows);
 		tvDesc.setFocusable(!fullWindows);      //xuameng 内容简介
+		tvPush.setFocusable(!fullWindows);    //xuameng 远程推送
         toggleSubtitleTextSize();
     }
 
