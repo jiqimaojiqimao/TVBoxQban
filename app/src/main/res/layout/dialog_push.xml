@@ -42,6 +42,7 @@
                 android:hint="推送 IP 地址"
                 android:maxLines="1"
                 android:maxLength="15"
+				android:digits="0123456789."
                 android:layout_weight="1.0"
                 android:inputType="text"/>
             <TextView
