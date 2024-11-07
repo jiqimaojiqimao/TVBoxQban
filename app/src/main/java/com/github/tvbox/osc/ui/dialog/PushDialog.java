@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.text.TextWatcher;  //xuameng输入监听依赖
+import android.text.Editable;		//xuameng输入监听依赖
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -40,6 +42,34 @@ public class PushDialog extends BaseDialog {
 
         // Push IP / Port
         etAddr = findViewById(R.id.etAddr);
+
+		etAddr.addTextChangedListener(new TextWatcher() {         //xuameng输入监听
+		private boolean isPointAdded = false;
+ 
+		@Override
+		public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // 在文本改变之前不需要做任何操作
+		}
+ 
+		@Override
+		public void onTextChanged(CharSequence s, int start, int before, int count) {
+	    // 在文本改变时也不需要做任何操作
+		}
+ 
+		@Override
+		public void afterTextChanged(Editable s) {
+        String text = s.toString();
+		   if (text.contains("..")) {
+			    // 移除最后输入的点
+			  int index = text.lastIndexOf(".");
+			  etAddr.getEditableText().delete(index, index + 1);
+			  isPointAdded = false;
+			  Toast.makeText(PushDialog.this.getContext(), "聚汇影视提示：IP地址格式为222.222.222.222", Toast.LENGTH_SHORT).show();
+			} else {				
+			  isPointAdded = true;				
+			}
+		  }
+		});            //xuameng输入监听完
         etPort = findViewById(R.id.etPort);
         String cfgAddr = Hawk.get(HawkConfig.PUSH_TO_ADDR, "");
         String cfgPort = Hawk.get(HawkConfig.PUSH_TO_PORT, "");
