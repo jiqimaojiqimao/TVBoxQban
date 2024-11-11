@@ -3,10 +3,6 @@ package com.p2p;
 import java.io.File;
 import java.util.concurrent.Executors;
 import com.github.tvbox.osc.util.FileUtils;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 
 public class P2PClass {
     private static final String TAG = "P2PClass";
@@ -18,10 +14,6 @@ public class P2PClass {
     class init extends Thread {
 
         String str = FileUtils.getCachePath();
-
-		File cacheDir = new File(App.getInstance().getCacheDir().getAbsolutePath() + "/cache");
-            if (!cacheDir.exists())
-                cacheDir.mkdirs();
 
         public void run() {
             P2PClass p2PClass = P2PClass.this;
@@ -44,6 +36,11 @@ public class P2PClass {
         if (!file.exists()) {
             file.mkdirs();
         }
+
+		File cacheDir = new File(App.getInstance().getCacheDir() + "/cache");
+        if (!cacheDir.exists()){
+            cacheDir.mkdirs();
+		}
         port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
         //Executors.newCachedThreadPool().execute(new init(str));
     }
