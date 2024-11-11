@@ -220,10 +220,16 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 if(dataInitOk && jarInitOk){
-					File dir = getCacheDir();
-					FileUtils.recursiveDelete(dir);
-					dir = getExternalCacheDir();
-					FileUtils.recursiveDelete(dir);
+				String cachePath = FileUtils.getCachePath();
+				File cacheDir = new File(cachePath);
+				if (!cacheDir.exists()) return;
+				new Thread(() -> {
+					try {
+						FileUtils.cleanDirectory(cacheDir);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}).start();
 					Toast.makeText(HomeActivity.this, "清空缓存成功！", Toast.LENGTH_SHORT).show(); 
                 }else {
                     jumpActivity(SettingActivity.class);
@@ -567,10 +573,17 @@ public class HomeActivity extends BaseActivity {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             if (keyCode == KeyEvent.KEYCODE_MENU) {
                 if(dataInitOk && jarInitOk){           //xuameng MENU键更改为重新加载主页数据
-					File dir = getCacheDir();
-					FileUtils.recursiveDelete(dir);
-					dir = getExternalCacheDir();
-					FileUtils.recursiveDelete(dir);
+						String cachePath = FileUtils.getCachePath();
+						File cacheDir = new File(cachePath);
+						if (!cacheDir.exists()) return;
+						new Thread(() -> {
+							try {
+								FileUtils.cleanDirectory(cacheDir);
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}).start();
+
                     Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     Bundle bundle = new Bundle();
