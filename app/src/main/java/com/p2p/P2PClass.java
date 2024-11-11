@@ -23,7 +23,7 @@ public class P2PClass {
             if (!file.exists()) {
                 file.mkdirs();
             }
-            P2PClass.port = P2PClass.this.doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
+            P2PClass.port = P2PClass.this.doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), FileUtils.getCachePath().getBytes());
         }
     }
 
@@ -37,7 +37,7 @@ public class P2PClass {
         if (!file.exists()) {
             file.mkdirs();
         }
-        port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
+        port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), FileUtils.getCachePath().getBytes());
         //Executors.newCachedThreadPool().execute(new init(str));
     }
 
