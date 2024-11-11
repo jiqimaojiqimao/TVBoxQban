@@ -118,7 +118,7 @@ public class FileUtils {
         return false;
     }
 
-    public static String getRootPath() {
+    public static File getRootPath() {
         return Environment.getExternalStorageDirectory();
     }
 
@@ -129,7 +129,7 @@ public class FileUtils {
     public static File getCacheDir() {
         return App.getInstance().getCacheDir();
     }
-    public static String getCachePath() {
+    public static File getCachePath() {
         return getCacheDir();
     }
 
