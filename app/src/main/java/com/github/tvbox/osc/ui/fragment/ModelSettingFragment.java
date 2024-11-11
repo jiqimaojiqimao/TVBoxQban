@@ -697,16 +697,6 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 e.printStackTrace();
             }
         }).start();
-		String ExternalCachePath = FileUtils.getExternalCachePath();
-		File ExternalcacheDir = new File(getExternalCachePath);
-        if (!ExternalcacheDir.exists()) return;
-        new Thread(() -> {
-            try {
-                FileUtils.cleanDirectory(ExternalcacheDir);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
         Toast.makeText(getContext(), "缓存已清空", Toast.LENGTH_LONG).show();
         return;
     }
