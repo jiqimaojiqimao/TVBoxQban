@@ -19,7 +19,7 @@ public class P2PClass {
 
         String str = FileUtils.getCachePath();
 
-		File cacheDir = new File(App.getInstance().getCacheDir().getAbsolutePath() + "/jpali");
+		File cacheDir = new File(App.getInstance().getCacheDir() + "/cache");
             if (!cacheDir.exists())
                 cacheDir.mkdirs();
 
