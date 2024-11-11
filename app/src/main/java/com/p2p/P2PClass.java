@@ -11,6 +11,7 @@ public class P2PClass {
     public static int port = 8087;
 
     public String path = null;
+	public String path1 = null;
 
     class init extends Thread {
 
@@ -27,9 +28,9 @@ public class P2PClass {
             }
 
 			p2PClass.path1 = this.CardPath;
-            File file = new File(P2PClass.this.path1);
-            if (!file.exists()) {
-                file.mkdirs();
+            File file1 = new File(P2PClass.this.path1);
+            if (!file1.exists()) {
+                file1.mkdirs();
             }
             P2PClass.port = P2PClass.this.doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
         }
