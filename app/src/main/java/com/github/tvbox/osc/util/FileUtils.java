@@ -118,8 +118,8 @@ public class FileUtils {
         return false;
     }
 
-    public static File getRootPath() {
-        return Environment.getExternalStorageDirectory();
+    public static String getRootPath() {
+        return Environment.getExternalStorageDirectory().getAbsolutePath();
     }
 
     public static File getLocal(String path) {
@@ -129,8 +129,8 @@ public class FileUtils {
     public static File getCacheDir() {
         return App.getInstance().getCacheDir();
     }
-    public static File getCachePath() {
-        return getCacheDir();
+    public static String getCachePath() {
+        return getCacheDir().getAbsolutePath();
     }
 
     public static void cleanDirectory(File dir) {
@@ -169,9 +169,11 @@ public class FileUtils {
         String ijkCachePath = getCachePath() + "/ijkcaches/";
         String thunderCachePath = getCachePath() + "/thunder/";
 		String exoCachePath = getCachePath() + "/exo-video-cache/";     //xuameng exo缓存
+		String jpaCachePath = getCachePath() + "/jpali/";     //xuameng jp缓存
         File ijkCacheDir = new File(ijkCachePath);
         File thunderCacheDir = new File(thunderCachePath);
 		File exoCachePathDir = new File(exoCachePath);       //xuameng exo缓存
+		File jpaCachePathDir = new File(jpaCachePath);       //xuameng jp缓存
 
         try {
             if (ijkCacheDir.exists()) cleanDirectory(ijkCacheDir);
@@ -185,6 +187,11 @@ public class FileUtils {
         }
         try {
             if (exoCachePathDir.exists()) cleanDirectory(exoCachePathDir);    //xuameng exo缓存
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+		try {
+            if (jpaCachePathDir.exists()) cleanDirectory(jpaCachePathDir);    //xuameng jp缓存
         } catch (Exception e) {
             e.printStackTrace();
         }
