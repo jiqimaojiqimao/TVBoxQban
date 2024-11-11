@@ -14,9 +14,8 @@ public class P2PClass {
 
     class init extends Thread {
 
-        init(String str) {
-			str = FileUtils.getCachePath();
-        }
+		String FileUtils.getCachePath() = str;
+
         public void run() {
             P2PClass p2PClass = P2PClass.this;
             p2PClass.path = str + "/jpali";
@@ -24,7 +23,7 @@ public class P2PClass {
             if (!file.exists()) {
                 file.mkdirs();
             }
-            P2PClass.port = P2PClass.this.doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
+            P2PClass.port = P2PClass.this.doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), FileUtils.getCachePath().getBytes());
         }
     }
 
@@ -38,7 +37,7 @@ public class P2PClass {
         if (!file.exists()) {
             file.mkdirs();
         }
-        port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
+        port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), FileUtils.getCachePath().getBytes());
         //Executors.newCachedThreadPool().execute(new init(str));
     }
 
