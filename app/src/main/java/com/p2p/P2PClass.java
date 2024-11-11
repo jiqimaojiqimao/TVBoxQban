@@ -20,8 +20,9 @@ public class P2PClass {
         String str = FileUtils.getCachePath();
 
 		File cacheDir = new File(App.getInstance().getCacheDir() + "/cache");
-            if (!cacheDir.exists())
+            if (!cacheDir.exists()){
                 cacheDir.mkdirs();
+			}
 
         public void run() {
             P2PClass p2PClass = P2PClass.this;
