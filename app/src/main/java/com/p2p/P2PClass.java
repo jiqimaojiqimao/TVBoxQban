@@ -3,15 +3,7 @@ package com.p2p;
 import java.io.File;
 import java.util.concurrent.Executors;
 import com.github.tvbox.osc.util.FileUtils;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+
 
 public class P2PClass {
     private static final String TAG = "P2PClass";
@@ -22,12 +14,20 @@ public class P2PClass {
 
     class init extends Thread {
 
+        final String CardPath;
+
         String str = FileUtils.getCachePath();
 
         public void run() {
             P2PClass p2PClass = P2PClass.this;
             p2PClass.path = str + "/jpali";
             File file = new File(P2PClass.this.path);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+
+			p2PClass.path1 = this.CardPath;
+            File file = new File(P2PClass.this.path1);
             if (!file.exists()) {
                 file.mkdirs();
             }
@@ -45,11 +45,6 @@ public class P2PClass {
         if (!file.exists()) {
             file.mkdirs();
         }
-
-		File cacheDir = new File(App.getInstance().getCacheDir().getAbsolutePath());
-        if (!cacheDir.exists()){
-            cacheDir.mkdirs();
-		}
         port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
         //Executors.newCachedThreadPool().execute(new init(str));
     }
