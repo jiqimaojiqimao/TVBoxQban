@@ -117,7 +117,10 @@ public class FileUtils {
         }
         return false;
     }
-
+    private static File check(File file) {
+        if (!file.exists()) file.mkdirs();
+        return file;
+    }
     public static String getRootPath() {
         return Environment.getExternalStorageDirectory().getAbsolutePath();
     }
