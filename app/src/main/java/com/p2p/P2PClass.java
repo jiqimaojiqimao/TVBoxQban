@@ -37,7 +37,7 @@ public class P2PClass {
         if (!file.exists()) {
             file.mkdirs();
         }
-        port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), FileUtils.getCachePath().getBytes());
+        port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
         //Executors.newCachedThreadPool().execute(new init(str));
     }
 
