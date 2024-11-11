@@ -46,7 +46,7 @@ public class P2PClass {
             file.mkdirs();
         }
 
-		File cacheDir = new File(App.getInstance().getCacheDir() + "/cache");
+		File cacheDir = new File(App.getInstance().getCacheDir().getAbsolutePath());
         if (!cacheDir.exists()){
             cacheDir.mkdirs();
 		}
