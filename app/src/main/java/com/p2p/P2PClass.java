@@ -18,7 +18,7 @@ public class P2PClass {
 
         public void run() {
             P2PClass p2PClass = P2PClass.this;
-            p2PClass.path = str + "/jpaliBB";
+            p2PClass.path = FileUtils.getCachePath() + "/jpaliBB/";
             File file = new File(P2PClass.this.path);
             if (!file.exists()) {
                 file.mkdirs();
@@ -32,7 +32,7 @@ public class P2PClass {
     }
 
     public P2PClass(String str) {
-        path = str + "/jpaliAA";
+        path = FileUtils.getCachePath() + "/jpaliBB/";
         File file = new File(path);
         if (!file.exists()) {
             file.mkdirs();
