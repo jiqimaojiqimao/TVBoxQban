@@ -18,9 +18,9 @@ import java.io.OutputStream;
 
 public class FileUtils {
 
-    public static File open(String str) {        //xuameng exo cache
-        return new File(getExternalCachePath() + "/qjscache_" + str + ".js");
-    }
+//    public static File open(String str) {        //xuameng exo cache
+//        return new File(getExternalCachePath() + "/qjscache_" + str + ".js");
+//    }
     public static boolean writeSimple(byte[] data, File dst) {
         try {
             if (dst.exists())
@@ -136,10 +136,6 @@ public class FileUtils {
         return App.getInstance().getExternalCacheDir();
     }
     public static String getExternalCachePath() {
-        File externalCacheDir = getExternalCacheDir();
-        if (externalCacheDir == null){
-            return getCachePath();
-        }
         return externalCacheDir.getAbsolutePath();
     }
     public static String getCachePath() {
@@ -181,8 +177,10 @@ public class FileUtils {
     public static void cleanPlayerCache() {
         String ijkCachePath = getCachePath() + "/ijkcaches/";
         String thunderCachePath = getCachePath() + "/thunder/";
+		String exoCachePath = getExternalCachePath() + "/exo-video-cache/";
         File ijkCacheDir = new File(ijkCachePath);
         File thunderCacheDir = new File(thunderCachePath);
+		File exoCachePathDir = new File(getExternalCachePath);
 
         try {
             if (ijkCacheDir.exists()) cleanDirectory(ijkCacheDir);
@@ -191,6 +189,11 @@ public class FileUtils {
         }
         try {
             if (thunderCacheDir.exists()) cleanDirectory(thunderCacheDir);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            if (exoCachePathDir.exists()) cleanDirectory(exoCachePathDir);
         } catch (Exception e) {
             e.printStackTrace();
         }
