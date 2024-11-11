@@ -15,7 +15,7 @@ public class P2PClass {
     class init extends Thread {
 
         init(String str) {
-            String FileUtils.getCachePath() = str;
+            String str = FileUtils.getCachePath();
         }
 
         public void run() {
