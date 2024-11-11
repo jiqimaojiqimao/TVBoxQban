@@ -575,7 +575,7 @@ public class HomeActivity extends BaseActivity {
                 if(dataInitOk && jarInitOk){           //xuameng MENU键更改为重新加载主页数据
 						String cachePath = FileUtils.getCachePath();
 						File cacheDir = new File(cachePath);
-						if (!cacheDir.exists()) return;
+						if (!cacheDir.exists()) false;
 						new Thread(() -> {
 							try {
 								FileUtils.cleanDirectory(cacheDir);
