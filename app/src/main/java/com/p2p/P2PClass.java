@@ -18,12 +18,12 @@ public class P2PClass {
 
         public void run() {
             P2PClass p2PClass = P2PClass.this;
-            p2PClass.path = FileUtils.getCachePath() + "/jpaliBB/";
+            p2PClass.path = str + "/jpali";
             File file = new File(P2PClass.this.path);
             if (!file.exists()) {
                 file.mkdirs();
             }
-            P2PClass.port = P2PClass.this.doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), FileUtils.getCachePath().getBytes());
+            P2PClass.port = P2PClass.this.doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
         }
     }
 
@@ -32,12 +32,12 @@ public class P2PClass {
     }
 
     public P2PClass(String str) {
-        path = FileUtils.getCachePath() + "/jpaliBB/";
+        path = str + "/jpali";
         File file = new File(path);
         if (!file.exists()) {
             file.mkdirs();
         }
-        port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), FileUtils.getCachePath().getBytes());
+        port = doxstarthttpd("TEST3E63BAAECDAA79BEAA91853490A69F08".getBytes(), str.getBytes());
         //Executors.newCachedThreadPool().execute(new init(str));
     }
 
