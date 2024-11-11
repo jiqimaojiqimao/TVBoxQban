@@ -117,12 +117,9 @@ public class FileUtils {
         }
         return false;
     }
-    private static File check(File file) {
-        if (!file.exists()) file.mkdirs();
-        return file;
-    }
+
     public static String getRootPath() {
-        return Environment.getExternalStorageDirectory().getAbsolutePath();
+        return Environment.getExternalStorageDirectory();
     }
 
     public static File getLocal(String path) {
@@ -133,7 +130,7 @@ public class FileUtils {
         return App.getInstance().getCacheDir();
     }
     public static String getCachePath() {
-        return getCacheDir().getAbsolutePath();
+        return getCacheDir();
     }
 
     public static void cleanDirectory(File dir) {
