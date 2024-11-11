@@ -136,7 +136,7 @@ public class FileUtils {
         return App.getInstance().getExternalCacheDir();
     }
     public static String getExternalCachePath() {
-        return externalCacheDir.getAbsolutePath();
+        return getExternalCacheDir.getAbsolutePath();
     }
     public static String getCachePath() {
         return getCacheDir().getAbsolutePath();
