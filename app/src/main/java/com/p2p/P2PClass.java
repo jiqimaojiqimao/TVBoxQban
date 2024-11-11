@@ -3,6 +3,15 @@ package com.p2p;
 import java.io.File;
 import java.util.concurrent.Executors;
 import com.github.tvbox.osc.util.FileUtils;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 
 public class P2PClass {
     private static final String TAG = "P2PClass";
