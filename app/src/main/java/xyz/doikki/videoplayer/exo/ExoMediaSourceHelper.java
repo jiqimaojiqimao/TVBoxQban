@@ -154,10 +154,6 @@ public final class ExoMediaSourceHelper {
     }
 
     private Cache newCache() {           //xuameng exo播放错误
-			File file = new File(FileUtils.getCachePath() + "exo-video-cache");
-			if (!file.exists()) {
-			file.mkdirs();
-			}
         return new SimpleCache(
                 new File(FileUtils.getCachePath() + "exo-video-cache"),//缓存目录
                 new LeastRecentlyUsedCacheEvictor(512 * 1024 * 1024),//缓存大小，默认512M，使用LRU算法实现
