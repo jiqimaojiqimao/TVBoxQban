@@ -220,7 +220,7 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 if(dataInitOk && jarInitOk){
-				String cachePath = FileUtils.getCachePath();
+				String cachePath = FileUtils.getCachePath();          //xuameng点击清空缓存
 				File cacheDir = new File(cachePath);
 				if (!cacheDir.exists()) return;
 				new Thread(() -> {
@@ -232,11 +232,11 @@ public class HomeActivity extends BaseActivity {
 				}).start();
 					Toast.makeText(HomeActivity.this, "清空缓存成功！", Toast.LENGTH_SHORT).show(); 
                 }else {
-                    jumpActivity(SettingActivity.class);
+                    jumpActivity(SettingActivity.class);		//xuameng加载慢跳转设置
                 }
             }
         });
-        tvName.setOnLongClickListener(new View.OnLongClickListener() {
+        tvName.setOnLongClickListener(new View.OnLongClickListener() {      //xuameng长按重新加载
             @Override
             public boolean onLongClick(View v) {
                 if(dataInitOk && jarInitOk){
@@ -248,7 +248,7 @@ public class HomeActivity extends BaseActivity {
                     HomeActivity.this.startActivity(intent);
 					Toast.makeText(HomeActivity.this, "重新加载主页数据！", Toast.LENGTH_SHORT).show();   
                 }else {
-                    jumpActivity(SettingActivity.class);
+                    jumpActivity(SettingActivity.class);   //xuameng加载慢跳转设置
                 }
                 return true;
             }
@@ -301,10 +301,10 @@ public class HomeActivity extends BaseActivity {
                             @Override
                             public void run() {
                                 if (!useCacheConfig) {
-                                    if (Hawk.get(HawkConfig.HOME_DEFAULT_SHOW, false)) {
+                                    if (Hawk.get(HawkConfig.HOME_DEFAULT_SHOW, false)) {         //xuameng直接进入直播
                                         jumpActivity(LivePlayActivity.class);
                                    }
-                                    Toast.makeText(HomeActivity.this, "自定义jar加载成功", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(HomeActivity.this, "自定义jar加载成功！", Toast.LENGTH_SHORT).show();
                                 }
 
                                 initData();
@@ -323,7 +323,7 @@ public class HomeActivity extends BaseActivity {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(HomeActivity.this, "jar加载失败", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(HomeActivity.this, "自定义jar加载失败！", Toast.LENGTH_SHORT).show();
                                 initData();
                             }
                         });
@@ -572,25 +572,8 @@ public class HomeActivity extends BaseActivity {
         int keyCode = event.getKeyCode();
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             if (keyCode == KeyEvent.KEYCODE_MENU) {
-                if(dataInitOk && jarInitOk){           //xuameng MENU键更改为重新加载主页数据
-						String cachePath = FileUtils.getCachePath();
-						File cacheDir = new File(cachePath);
-						if (!cacheDir.exists()) return false;
-						new Thread(() -> {
-							try {
-								FileUtils.cleanDirectory(cacheDir);
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						}).start();
-
-                    Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    Bundle bundle = new Bundle();
-                    bundle.putBoolean("useCache", true);
-                    intent.putExtras(bundle);
-                    HomeActivity.this.startActivity(intent);
-					Toast.makeText(HomeActivity.this, "清空缓存并重新加载主页数据！", Toast.LENGTH_SHORT).show(); 
+                if(dataInitOk && jarInitOk){           //xuameng MENU键显示主页源
+					showSiteSwitch(); 
                 }else {
                     jumpActivity(SettingActivity.class);   //xuameng主页加载缓慢时跳转到设置页面
                 }
