@@ -166,14 +166,14 @@ public class FileUtils {
     }
 
     public static void cleanPlayerCache() {
-        String ijkCachePath = getCachePath() + "/ijkcaches/";
-        String thunderCachePath = getCachePath() + "/thunder/";
-		String exoCachePath = getCachePath() + "/exo-video-cache/";     //xuameng exo缓存
-		String jpaCachePath = getCachePath() + "/jpali/";     //xuameng jp缓存
+        String ijkCachePath = getCachePath() + "ijkcaches";
+        String thunderCachePath = getCachePath() + "thunder";
+		String exoCachePath = getCachePath() + "exo-video-cache";     //xuameng exo缓存
+		String jpaCachePath = getCachePath() + "jpali";     //xuameng jp缓存
         File ijkCacheDir = new File(ijkCachePath);
         File thunderCacheDir = new File(thunderCachePath);
 		File exoCachePathDir = new File(exoCachePath);       //xuameng exo缓存
-		File jpaCachePathDir = new File(jpaCachePath);       //xuameng jp缓存
+		File jpaCachePathDir = new File(jpaCachePath + File.separator + "Downloads");       //xuameng jp缓存
 
         try {
             if (ijkCacheDir.exists()) cleanDirectory(ijkCacheDir);
