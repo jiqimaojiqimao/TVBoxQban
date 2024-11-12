@@ -14,19 +14,19 @@
             android:id="@+id/topLayout"
             android:paddingLeft="@dimen/vs_40"
             android:paddingRight="@dimen/vs_50"
-            android:paddingBottom="@dimen/vs_10"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/vs_10"
             android:layout_marginTop="@dimen/vs_10">
             <ImageView
-                android:id="@+id/ivThumb"
                 android:layout_gravity="center_vertical"
+                android:id="@+id/ivThumb"
+                android:focusable="false"
+                android:clickable="true"
                 android:layout_width="@dimen/vs_240"
                 android:layout_height="302.0mm"
                 android:layout_marginLeft="11.0mm"
                 android:layout_marginBottom="@dimen/vs_0"
-                android:clickable="true"
-                android:focusable="false"
                 android:scaleType="fitXY"/>
             <View
                 android:id="@+id/previewPlayerPlace"
@@ -134,9 +134,9 @@
                     android:textColor="@color/color_CCFFFFFF"
                     android:ellipsize="end"
                     android:id="@+id/tvPlayUrl"
-                    android:layout_marginBottom="@dimen/vs_5"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/vs_5"
                     android:singleLine="true"/>
                 <TextView
                     android:textSize="@dimen/ts_20"
@@ -145,7 +145,7 @@
                     android:id="@+id/tvDes"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:maxLines="3"
+                    android:maxLines="2"
                     android:lineSpacingMultiplier="1.2"/>
                 <Space
                     android:layout_width="wrap_content"
@@ -169,9 +169,9 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
                         android:text="播放"
-			android:letterSpacing="0.2"
                         android:layout_marginStart="@dimen/vs_10"
-                        android:layout_marginEnd="@dimen/vs_10"/>
+                        android:layout_marginEnd="@dimen/vs_10"
+                        android:letterSpacing="0.2"/>
                     <TextView
                         android:textSize="@dimen/vs_20"
                         android:textColor="@android:color/white"
@@ -185,8 +185,8 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
                         android:text="快搜"
-			android:letterSpacing="0.2"
-                        android:layout_marginEnd="@dimen/vs_10"/>
+                        android:layout_marginEnd="@dimen/vs_10"
+                        android:letterSpacing="0.2"/>
                     <TextView
                         android:textSize="@dimen/vs_20"
                         android:textColor="@android:color/white"
@@ -200,8 +200,8 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
                         android:text="倒序"
-			android:letterSpacing="0.2"
-                        android:layout_marginEnd="@dimen/vs_10"/>
+                        android:layout_marginEnd="@dimen/vs_10"
+                        android:letterSpacing="0.2"/>
                     <TextView
                         android:textSize="@dimen/vs_20"
                         android:textColor="@android:color/white"
@@ -215,8 +215,8 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
                         android:text="☆收藏"
-			android:letterSpacing="0.2"
-                        android:layout_marginEnd="@dimen/vs_10"/>
+                        android:layout_marginEnd="@dimen/vs_10"
+                        android:letterSpacing="0.2"/>
                     <TextView
                         android:textSize="@dimen/vs_20"
                         android:textColor="@android:color/white"
@@ -230,23 +230,23 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
                         android:text="简介"
-			android:letterSpacing="0.2"
-                        android:layout_marginEnd="@dimen/vs_10"/>
-                    <TextView
-                        android:id="@+id/tvPush"
-                        android:layout_width="@dimen/vs_100"
-                        android:layout_height="@dimen/vs_40"
                         android:layout_marginEnd="@dimen/vs_10"
-			android:layout_marginTop="@dimen/vs_10"
-			android:layout_marginBottom="@dimen/vs_10"
-                        android:layout_marginRight="@dimen/vs_10"
+                        android:letterSpacing="0.2"/>
+                    <TextView
+                        android:textSize="@dimen/vs_20"
+                        android:textColor="@android:color/white"
+                        android:gravity="center"
+                        android:id="@+id/tvPush"
                         android:background="@drawable/button_detail_desc"
                         android:focusable="true"
-                        android:gravity="center"
+                        android:layout_width="@dimen/vs_100"
+                        android:layout_height="@dimen/vs_40"
+                        android:layout_marginTop="@dimen/vs_10"
+                        android:layout_marginRight="@dimen/vs_10"
+                        android:layout_marginBottom="@dimen/vs_10"
                         android:text="推送"
-			android:letterSpacing="0.2"
-                        android:textColor="@android:color/white"
-                        android:textSize="@dimen/vs_20" />
+                        android:layout_marginEnd="@dimen/vs_10"
+                        android:letterSpacing="0.2"/>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
