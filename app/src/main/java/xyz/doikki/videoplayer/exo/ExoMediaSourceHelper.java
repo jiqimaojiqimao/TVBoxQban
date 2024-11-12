@@ -149,6 +149,7 @@ public final class ExoMediaSourceHelper {
 			File file = new File(FileUtils.getCachePath() + "exo-video-cache");
 			if (!file.exists()) {
 			file.mkdirs();
+			}
         }
         return new CacheDataSource.Factory()
                 .setCache(mCache)
