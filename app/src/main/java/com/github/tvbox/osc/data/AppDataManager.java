@@ -25,7 +25,7 @@ import java.io.IOException;
 public class AppDataManager {
     private static final int DB_FILE_VERSION = 3;
     private static final String DB_NAME = "tvbox";
-    private static AppDataManager manager;
+    private static AppDataManager manager;   //xuameng搜索历史
     private static AppDataBase dbInstance;
 
     private AppDataManager() {
@@ -57,6 +57,8 @@ public class AppDataManager {
         public void migrate(SupportSQLiteDatabase database) {
             database.execSQL("CREATE TABLE IF NOT EXISTS `vodRecordTmp` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vodId` TEXT, `updateTime` INTEGER NOT NULL, `sourceKey` TEXT, `data` BLOB, `dataJson` TEXT, `testMigration` INTEGER NOT NULL)");
 
+			database.execSQL("CREATE TABLE IF NOT EXISTS t_search (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, searchKeyWords TEXT)"); //xuameng搜索历史
+			database.execSQL("CREATE INDEX IF NOT EXISTS index_t_search_searchKeyWords ON t_search (searchKeyWords)");  //xuameng搜索历史
             // Read every thing from the former Expense table
             Cursor cursor = database.query("SELECT * FROM vodRecord");
 
@@ -117,8 +119,8 @@ public class AppDataManager {
         if (dbInstance == null)
             dbInstance = Room.databaseBuilder(App.getInstance(), AppDataBase.class, dbPath())
                     .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
-                    //.addMigrations(MIGRATION_1_2)
-                    //.addMigrations(MIGRATION_2_3)
+   //                 .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_2_3)     //xuameng搜索历史
                     //.addMigrations(MIGRATION_3_4)
                     //.addMigrations(MIGRATION_4_5)
                     .addCallback(new RoomDatabase.Callback() {
