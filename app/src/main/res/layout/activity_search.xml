@@ -112,6 +112,7 @@
             android:textSize="@dimen/ts_22"
             android:textColor="@android:color/white"
             android:layout_gravity="center_horizontal"
+            android:id="@+id/mHotSearch_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/vs_10"
@@ -133,6 +134,42 @@
         android:padding="@dimen/vs_20"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
+        <RelativeLayout
+            android:id="@+id/search_tips"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ll_search_layout">
+            <TextView
+                android:textSize="@dimen/ts_22"
+                android:textColor="@android:color/white"
+                android:id="@+id/title_history"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="搜索历史"/>
+            <ImageView
+                android:gravity="center"
+                android:id="@+id/clear_history"
+                android:background="@drawable/shape_user_focus"
+                android:padding="@dimen/vs_5"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:layout_width="@dimen/vs_50"
+                android:layout_height="@dimen/vs_50"
+                android:src="@drawable/icon_delete"
+                android:layout_alignParentRight="true"/>
+        </RelativeLayout>
+        <com.yang.flowlayoutlibrary.FlowLayout
+            android:id="@+id/tv_history"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/vs_20"
+            app:backgroundResource="@drawable/shape_user_focus"
+            app:horizontalSpacing="@dimen/vs_20"
+            app:itemColor="@android:color/white"
+            app:itemSize="@dimen/vs_20"
+            app:textPaddingH="@dimen/vs_20"
+            app:textPaddingV="@dimen/vs_10"
+            app:verticalSpacing="@dimen/vs_15"/>
         <com.owen.tvrecyclerview.widget.TvRecyclerView
             android:id="@+id/mGridView"
             android:visibility="invisible"
