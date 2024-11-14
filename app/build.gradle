@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId 'com.jvhuiys.player'
-        minSdkVersion 21
+        minSdkVersion 16
         targetSdkVersion 26
         versionCode 1
-        versionName '202411012-2222'
+        versionName '20241114-2222'
         multiDexEnabled true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -104,11 +104,12 @@ dependencies {
     implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
       //工具类
     implementation 'com.blankj:utilcodex:1.31.0'
+    implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     //xuameng exo
-    def exoplayerVersion = "2.18.7"
-    api "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-dash:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
-    api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
+    api "com.google.android.exoplayer:exoplayer-core:2.14.2"
+    api "com.google.android.exoplayer:exoplayer-dash:2.14.2"
+    api "com.google.android.exoplayer:exoplayer-hls:2.14.2"
+    api "com.google.android.exoplayer:exoplayer-rtsp:2.14.2"
+    api "com.google.android.exoplayer:extension-rtmp:2.14.2"
+    api "com.google.android.exoplayer:extension-okhttp:2.14.2"
 }
