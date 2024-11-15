@@ -169,7 +169,7 @@
             app:itemSize="@dimen/vs_20"
             app:textPaddingH="@dimen/vs_20"
             app:textPaddingV="@dimen/vs_10"
-            app:verticalSpacing="@dimen/vs_15"/>
+            app:verticalSpacing="@dimen/vs_20"/>
         <com.owen.tvrecyclerview.widget.TvRecyclerView
             android:id="@+id/mGridView"
             android:visibility="invisible"
