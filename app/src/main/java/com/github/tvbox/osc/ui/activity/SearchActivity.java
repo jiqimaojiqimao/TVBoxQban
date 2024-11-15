@@ -199,9 +199,8 @@ public class SearchActivity extends BaseActivity {
 				keyword = split[split.length - 1];
 				etSearch.setText(keyword);
                 if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
-
-				searchExecutorService = Executors.newFixedThreadPool(5);         //xuameng修复不选择搜索源还进行搜索，还显示搜索动画
-				List<SourceBean> searchRequestList = new ArrayList<>();
+    
+				List<SourceBean> searchRequestList = new ArrayList<>();  //xuameng修复不选择搜索源还进行搜索，还显示搜索动画
 				searchRequestList.addAll(ApiConfig.get().getSourceBeanList());
 				SourceBean home = ApiConfig.get().getHomeSourceBean();
 				searchRequestList.remove(home);
@@ -271,9 +270,8 @@ public class SearchActivity extends BaseActivity {
                 hasKeyBoard = true;
 				if (!TextUtils.isEmpty(keyword)) {
                     if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
-
-				searchExecutorService = Executors.newFixedThreadPool(5);         //xuameng修复不选择搜索源还进行搜索，还显示搜索动画
-				List<SourceBean> searchRequestList = new ArrayList<>();
+      
+				List<SourceBean> searchRequestList = new ArrayList<>();  //xuameng修复不选择搜索源还进行搜索，还显示搜索动画
 				searchRequestList.addAll(ApiConfig.get().getSourceBeanList());
 				SourceBean home = ApiConfig.get().getHomeSourceBean();
 				searchRequestList.remove(home);
@@ -316,6 +314,12 @@ public class SearchActivity extends BaseActivity {
                 searchTips.setVisibility(View.VISIBLE);
                 tHotSearchText.setText("热门搜索");          //xuameng修复删除内容后，热门搜索为空
 				showSuccess();  //xuameng修复BUG
+				mGridView.setVisibility(View.GONE);
+				if (searchExecutorService != null) {
+                searchExecutorService.shutdownNow();
+                searchExecutorService = null;
+                JSEngine.getInstance().stopAll();
+				}
 				cancel();
             }
         });
@@ -382,6 +386,12 @@ public class SearchActivity extends BaseActivity {
 						showSuccess();  //xuameng修复BUG
 						tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
 						searchTips.setVisibility(View.VISIBLE);
+						mGridView.setVisibility(View.GONE);
+						if (searchExecutorService != null) {
+							searchExecutorService.shutdownNow();
+							searchExecutorService = null;
+							JSEngine.getInstance().stopAll();
+							}
                     }
                 } else if (pos == 0) {
                     RemoteDialog remoteDialog = new RemoteDialog(mContext);
@@ -433,8 +443,7 @@ public class SearchActivity extends BaseActivity {
                 etSearch.setText(content);
                 if (Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)) {
 
-				searchExecutorService = Executors.newFixedThreadPool(5);         //xuameng修复不选择搜索源还进行搜索，还显示搜索动画
-				List<SourceBean> searchRequestList = new ArrayList<>();
+				List<SourceBean> searchRequestList = new ArrayList<>();  //xuameng修复不选择搜索源还进行搜索，还显示搜索动画
 				searchRequestList.addAll(ApiConfig.get().getSourceBeanList());
 				SourceBean home = ApiConfig.get().getHomeSourceBean();
 				searchRequestList.remove(home);
@@ -610,9 +619,8 @@ public class SearchActivity extends BaseActivity {
             remoteDialog.dismiss();
             remoteDialog = null;
         }
-        cancel();
-        searchExecutorService = Executors.newFixedThreadPool(5);         //xuameng修复不选择搜索源还进行搜索，还显示搜索动画
-        List<SourceBean> searchRequestList = new ArrayList<>();
+        cancel();      
+        List<SourceBean> searchRequestList = new ArrayList<>();   //xuameng修复不选择搜索源还进行搜索，还显示搜索动画
         searchRequestList.addAll(ApiConfig.get().getSourceBeanList());
         SourceBean home = ApiConfig.get().getHomeSourceBean();
         searchRequestList.remove(home);
@@ -647,6 +655,11 @@ public class SearchActivity extends BaseActivity {
 
     private void searchResult() {
         try {
+            if (searchExecutorService != null) {  //xuameng必须加防止内存溢出
+                searchExecutorService.shutdownNow();
+                searchExecutorService = null;
+                JSEngine.getInstance().stopAll();
+            }
         } catch (Throwable th) {
             th.printStackTrace();
         } finally {
@@ -697,7 +710,10 @@ public class SearchActivity extends BaseActivity {
         return matchNum == arr.length ? true : false;
     }
 
-    private void searchData(AbsXml absXml) {
+    private void searchData(AbsXml absXml) {  //xuameng重要BUG如果快速模式直接返回
+		if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
+			return;
+		}
         if (absXml != null && absXml.movie != null && absXml.movie.videoList != null && absXml.movie.videoList.size() > 0) {
             List<Movie.Video> data = new ArrayList<>();
             for (Movie.Video video : absXml.movie.videoList) {
@@ -718,9 +734,13 @@ public class SearchActivity extends BaseActivity {
         int count = allRunCount.decrementAndGet();
         if (count <= 0) {
             if (searchAdapter.getData().size() <= 0) {
+				if (searchExecutorService != null) {
                 showEmpty();		//xuameng修复BUG
-                tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
-                searchTips.setVisibility(View.VISIBLE);
+				}else{
+				tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
+				searchTips.setVisibility(View.VISIBLE);
+				mGridView.setVisibility(View.GONE); 
+				}
             }
             cancel();
         }
