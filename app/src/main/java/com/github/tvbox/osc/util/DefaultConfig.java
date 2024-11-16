@@ -11,6 +11,7 @@ import android.content.Intent;  //xuameng重置
 import com.github.tvbox.osc.base.App;  //xuameng重置
 import java.io.File;  //xuameng重置
 import java.util.Objects;  //xuameng重置
+import com.github.tvbox.osc.ui.activity.HomeActivity;  //xuameng重置
 
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.bean.MovieSort;
