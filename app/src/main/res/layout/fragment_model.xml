@@ -73,7 +73,7 @@
                     android:textColor="@android:color/white"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="首页数据源"/>
+                    android:text="首页数据"/>
                 <Space
                     android:layout_width="0.0dip"
                     android:layout_height="wrap_content"
@@ -234,7 +234,7 @@
                             android:textColor="@android:color/white"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="启动时进直播"/>
+                            android:text="直进直播"/>
                         <Space
                             android:layout_width="0.0dip"
                             android:layout_height="wrap_content"
@@ -358,6 +358,7 @@
                         android:textColor="@android:color/white"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+						android:letterSpacing="0.4"
                         android:text="播放器"/>
                     <Space
                         android:layout_width="0.0dip"
@@ -394,7 +395,7 @@
                         android:textColor="@android:color/white"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="IJK解码方式"/>
+                        android:text="IJK 解码"/>
                     <Space
                         android:layout_width="0.0dip"
                         android:layout_height="wrap_content"
@@ -473,7 +474,7 @@
                         android:textColor="@android:color/white"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="IJK缓存"/>
+                        android:text="IJK 缓存"/>
                     <Space
                         android:layout_width="0.0dip"
                         android:layout_height="wrap_content"
@@ -605,7 +606,7 @@
                             android:textColor="@android:color/white"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="搜索附近聚汇影视"/>
+                            android:text="附近聚汇"/>
                         <Space
                             android:layout_width="0.0dip"
                             android:layout_height="wrap_content"
@@ -877,7 +878,7 @@
                             android:textColor="@android:color/white"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="重置播放器"/>
+                            android:text="应用重置"/>
                         <Space
                             android:layout_width="0.0dip"
                             android:layout_height="wrap_content"
@@ -916,7 +917,7 @@
                             android:textColor="@android:color/white"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="数据备份还原"/>
+                            android:text="备份还原"/>
                         <Space
                             android:layout_width="0.0dip"
                             android:layout_height="wrap_content"
@@ -946,7 +947,7 @@
                             android:textColor="@android:color/white"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="关于"/>
+                            android:text="关于我们"/>
                         <Space
                             android:layout_width="0.0dip"
                             android:layout_height="wrap_content"
