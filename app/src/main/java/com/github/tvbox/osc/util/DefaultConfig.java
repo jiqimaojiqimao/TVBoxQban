@@ -5,6 +5,12 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.app.Activity;   //xuameng重置
+import android.os.Environment;  //xuameng重置
+import android.content.Intent;  //xuameng重置
+import com.github.tvbox.osc.base.App;  //xuameng重置
+import java.io.File;  //xuameng重置
+import java.util.Objects;  //xuameng重置
 
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.bean.MovieSort;
@@ -53,6 +59,40 @@ public class DefaultConfig {
         Collections.sort(data);
         return data;
     }
+
+    public static void resetApp(Context mContext){
+        //使用
+        clearPrivate(mContext);
+        restartApp();
+    }
+
+    public static void restartApp() {     //xuameng重置
+        Activity activity = AppManager.getInstance().getActivity(HomeActivity.class);
+        final Intent intent = activity.getPackageManager().getLaunchIntentForPackage(activity.getPackageName());
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            activity.startActivity(intent);
+        }
+        //杀掉以前进程
+        android.os.Process.killProcess(android.os.Process.myPid());
+    }
+
+    /**
+     * 清空私有目录
+     */
+    public static  void clearPrivate(Context mContext) {
+        //清空文件夹
+        File dir = new File(Objects.requireNonNull(mContext.getFilesDir().getParent()));
+        File[] files = dir.listFiles();
+        if (null != files) {
+            for (File file : files) {
+                if (!file.getName().contains("lib")) {
+                    FileUtils.recursiveDelete(file);
+                }
+            }
+        }
+    }            //xuameng重置完
+
 
     public static int getAppVersionCode(Context mContext) {
         //包管理操作管理类
