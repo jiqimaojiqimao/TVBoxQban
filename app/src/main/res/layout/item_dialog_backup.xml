@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <TextView
-        android:textSize="@dimen/ts_26"
+        android:textSize="@dimen/ts_22"
         android:textColor="@color/color_FFFFFF"
         android:ellipsize="middle"
         android:gravity="center"
@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:text="\@{name}"
         android:singleLine="true"
-        android:layout_weight="1.0" />
+        android:layout_weight="1.0"/>
     <ImageView
         android:id="@+id/tvDel"
         android:background="@drawable/button_dialog_main"
@@ -30,5 +30,5 @@
         android:layout_height="fill_parent"
         android:layout_marginLeft="@dimen/vs_5"
         android:src="@drawable/icon_delete"
-        android:layout_marginStart="@dimen/vs_5" />
+        android:layout_marginStart="@dimen/vs_5"/>
 </LinearLayout>
