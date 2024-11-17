@@ -16,7 +16,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
             <EditText
-                android:textSize="@dimen/ts_26"
+                android:textSize="@dimen/ts_24"
                 android:textColor="@color/color_80000000"
                 android:textColorHint="@color/color_6C3D3D3D"
                 android:id="@+id/input"
@@ -38,7 +38,7 @@
                 android:layout_gravity="center"
                 android:id="@+id/inputSubmit"
                 android:background="@drawable/button_dialog_main"
-                android:padding="11mm"
+                android:padding="@dimen/vs_10"
                 android:focusable="true"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
