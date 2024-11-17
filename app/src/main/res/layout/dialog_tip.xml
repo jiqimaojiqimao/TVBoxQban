@@ -8,7 +8,7 @@
         android:orientation="vertical"
         android:background="@drawable/shape_dialog_bg_main"
         android:padding="@dimen/vs_30"
-        android:layout_width="@dimen/vs_440"
+        android:layout_width="@dimen/vs_480"
         android:layout_height="wrap_content">
         <TextView
             android:textSize="@dimen/ts_24"
@@ -23,8 +23,9 @@
         <LinearLayout
             android:layout_gravity="center"
             android:orientation="horizontal"
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:weightSum="2.0"
             android:layout_marginTop="@dimen/vs_30">
             <TextView
                 android:textSize="@dimen/ts_22"
@@ -33,9 +34,11 @@
                 android:layout_gravity="center"
                 android:id="@+id/leftBtn"
                 android:background="@drawable/button_dialog_main"
-                android:padding="@dimen/vs_10"
+                android:paddingTop="@dimen/vs_10"
+                android:paddingBottom="@dimen/vs_10"
+                android:layout_weight="1.0"
                 android:focusable="true"
-                android:layout_width="@dimen/vs_170"
+                android:layout_width="0mm"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="@dimen/vs_5"
                 android:text="确定"/>
@@ -46,9 +49,11 @@
                 android:layout_gravity="center"
                 android:id="@+id/rightBtn"
                 android:background="@drawable/button_dialog_main"
-                android:padding="@dimen/vs_10"
+                android:paddingTop="@dimen/vs_10"
+                android:paddingBottom="@dimen/vs_10"
                 android:focusable="true"
-                android:layout_width="@dimen/vs_170"
+                android:layout_weight="1.0"
+                android:layout_width="0mm"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/vs_5"
                 android:text="取消"/>
