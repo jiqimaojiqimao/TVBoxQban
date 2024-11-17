@@ -53,6 +53,8 @@
             android:id="@+id/mGridView"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+			app:tv_layoutManager="V7LinearLayoutManager"
+			app:tv_selectedItemIsCentered="true"
             app:tv_verticalSpacingWithMargins="@dimen/vs_10"
             app:tv_horizontalSpacingWithMargins="@dimen/vs_10"/>
     </LinearLayout>
