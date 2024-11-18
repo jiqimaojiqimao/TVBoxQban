@@ -58,7 +58,6 @@ import android.text.TextWatcher;  //xuameng搜索历史
 import android.text.Editable;		//xuameng搜索历史
 import com.github.tvbox.osc.data.SearchPresenter;  //xuameng搜索历史
 import com.github.tvbox.osc.cache.SearchHistory;   //xuameng搜索历史
-import androidx.constraintlayout.widget.ConstraintLayout; //xuameng搜索历史
 import com.google.gson.Gson;  //热门搜索
 import com.google.gson.JsonArray; //热门搜索
 import com.google.gson.JsonElement; //热门搜索
