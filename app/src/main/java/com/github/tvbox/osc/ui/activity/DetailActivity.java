@@ -453,7 +453,8 @@ public class DetailActivity extends BaseActivity {
         mGridViewFlag.setOnItemListener(new TvRecyclerView.OnItemListener() {
             private void refresh(View itemView, int position) {
                 String newFlag = seriesFlagAdapter.getData().get(position).name;
-                if (vodInfo != null && !vodInfo.playFlag.equals(newFlag)) {
+//                if (vodInfo != null && !vodInfo.playFlag.equals(newFlag)) {       //xuameng原语句
+				  if (vodInfo != null) {										//xuameng修复点击播放列表（如阿里原阿里智栏）切换集数后，再点击相同的播放列表，不滚动到当前播放集数的问题
                     for (int i = 0; i < vodInfo.seriesFlags.size(); i++) {
                         VodInfo.VodSeriesFlag flag = vodInfo.seriesFlags.get(i);
                         if (flag.name.equals(vodInfo.playFlag)) {
@@ -1108,7 +1109,10 @@ public class DetailActivity extends BaseActivity {
             if (seriesFlagFocus != null && !seriesFlagFocus.isFocused()) {
                 seriesFlagFocus.requestFocus();
                 return;
-            }
+            }else {
+				tvPlay.requestFocus();        //xuameng修复播放退出到小窗口后再按返回键直接退出的问题，跳转到播放
+				return;
+			}
         }
         super.onBackPressed();
     }
