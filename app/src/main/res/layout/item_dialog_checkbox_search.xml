@@ -16,6 +16,9 @@
             android:paddingRight="@dimen/vs_10"
             android:focusable="true"
             android:clickable="true"
+			android:singleLine="true"
+			android:ellipsize="marquee"
+			android:marqueeRepeatLimit="marquee_forever"
             android:layout_width="fill_parent"
             android:layout_height="53.0mm"
             android:text="1111"/>
