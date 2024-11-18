@@ -28,10 +28,10 @@
                 android:focusable="true"
                 android:visibility="gone"
                 android:layout_width="fill_parent"
-                android:maxLines="1"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/vs_10"
-                android:text="选择内置字幕"/>
+                android:text="选择内置字幕"
+                android:maxLines="1"/>
             <TextView
                 android:textSize="@dimen/ts_22"
                 android:textColor="@color/color_FFFFFF"
@@ -43,9 +43,9 @@
                 android:paddingBottom="@dimen/vs_10"
                 android:focusable="true"
                 android:layout_width="fill_parent"
-                android:maxLines="1"
                 android:layout_height="wrap_content"
-                android:text="选择本地字幕"/>
+                android:text="选择本地字幕"
+                android:maxLines="1"/>
             <TextView
                 android:textSize="@dimen/ts_22"
                 android:textColor="@color/color_FFFFFF"
@@ -57,10 +57,10 @@
                 android:paddingBottom="@dimen/vs_10"
                 android:focusable="true"
                 android:layout_width="fill_parent"
-                android:maxLines="1"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/vs_10"
-                android:text="在线搜索字幕"/>
+                android:text="在线搜索字幕"
+                android:maxLines="1"/>
             <LinearLayout
                 android:gravity="center_vertical"
                 android:layout_gravity="center"
@@ -78,10 +78,10 @@
                     android:paddingTop="@dimen/vs_10"
                     android:paddingBottom="@dimen/vs_10"
                     android:focusable="true"
-                    android:maxLines="1"
                     android:layout_width="@dimen/vs_170"
                     android:layout_height="wrap_content"
-                    android:text="字号减小"/>
+                    android:text="字号减小"
+                    android:maxLines="1"/>
                 <TextView
                     android:textSize="@dimen/ts_40"
                     android:textStyle="bold"
@@ -89,12 +89,10 @@
                     android:gravity="center"
                     android:layout_gravity="center"
                     android:id="@+id/subtitleSizeText"
-                    android:layout_weight="1.0"
-                    android:layout_width="fill_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/vs_40"
-                    android:layout_marginRight="@dimen/vs_40"
-                    android:text="16"/>
+                    android:text="16"
+                    android:layout_weight="1.0"/>
                 <TextView
                     android:textSize="@dimen/ts_22"
                     android:textColor="@color/color_FFFFFF"
@@ -105,10 +103,10 @@
                     android:paddingTop="@dimen/vs_10"
                     android:paddingBottom="@dimen/vs_10"
                     android:focusable="true"
-                    android:maxLines="1"
                     android:layout_width="@dimen/vs_170"
                     android:layout_height="wrap_content"
-                    android:text="字号增大"/>
+                    android:text="字号增大"
+                    android:maxLines="1"/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center_vertical"
@@ -138,14 +136,12 @@
                 <TextView
                     android:textSize="@dimen/ts_40"
                     android:gravity="center"
-                    android:maxLines="1"
-                    android:layout_weight="1.0"
                     android:layout_gravity="center"
-                    android:layout_width="fill_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/vs_40"
-                    android:layout_marginRight="@dimen/vs_40"
-                    android:text=""/>
+                    android:text=""
+                    android:maxLines="1"
+                    android:layout_weight="1.0"/>
                 <TextView
                     android:textSize="@dimen/ts_22"
                     android:textStyle="bold"
@@ -159,8 +155,8 @@
                     android:focusable="true"
                     android:layout_width="@dimen/vs_170"
                     android:layout_height="wrap_content"
-                    android:maxLines="1"
                     android:text="字幕样式二"
+                    android:maxLines="1"
                     android:shadowColor="@color/color_CC000000"
                     android:shadowDx="1.0"
                     android:shadowDy="1.0"
@@ -180,8 +176,8 @@
                     android:layout_gravity="center"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:maxLines="1"
-                    android:text="字幕延时仅对外挂字幕有效"/>
+                    android:text="字幕延时仅对外挂字幕有效"
+                    android:maxLines="1"/>
             </LinearLayout>
             <LinearLayout
                 android:gravity="center_vertical"
@@ -200,10 +196,10 @@
                     android:paddingTop="@dimen/vs_10"
                     android:paddingBottom="@dimen/vs_10"
                     android:focusable="true"
-                    android:maxLines="1"
                     android:layout_width="@dimen/vs_170"
                     android:layout_height="wrap_content"
-                    android:text="字幕提前"/>
+                    android:text="字幕提前"
+                    android:maxLines="1"/>
                 <TextView
                     android:textSize="@dimen/ts_40"
                     android:textStyle="bold"
@@ -211,13 +207,11 @@
                     android:gravity="center"
                     android:layout_gravity="center"
                     android:id="@+id/subtitleTimeText"
-                    android:maxLines="1"
-                    android:layout_weight="1.0"
-                    android:layout_width="fill_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/vs_40"
-                    android:layout_marginRight="@dimen/vs_40"
-                    android:text="0"/>
+                    android:text="0"
+                    android:maxLines="1"
+                    android:layout_weight="1.0"/>
                 <TextView
                     android:textSize="@dimen/ts_22"
                     android:textColor="@color/color_FFFFFF"
@@ -229,9 +223,9 @@
                     android:paddingBottom="@dimen/vs_10"
                     android:focusable="true"
                     android:layout_width="@dimen/vs_170"
-                    android:maxLines="1"
                     android:layout_height="wrap_content"
-                    android:text="字幕推迟"/>
+                    android:text="字幕推迟"
+                    android:maxLines="1"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
