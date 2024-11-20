@@ -4,19 +4,19 @@
     android:layout_height="fill_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_gravity="center"
         android:orientation="vertical"
         android:id="@+id/root"
         android:background="@drawable/shape_dialog_bg_main"
         android:padding="@dimen/vs_30"
         android:layout_width="fill_parent"
-        android:layout_height="495.0mm">
+        android:layout_height="wrap_content">
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/vs_10"
+            android:id="@+id/testll"
             android:weightSum="2.0">
             <TextView
                 android:textSize="@dimen/ts_24"
@@ -31,6 +31,10 @@
                 android:layout_width="0.0dip"
                 android:layout_height="wrap_content"
                 android:text="全选"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/root"
                 android:layout_weight="1.0"/>
             <TextView
                 android:textSize="@dimen/ts_24"
@@ -46,16 +50,26 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/vs_10"
                 android:text="全不选"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/root"
                 android:layout_weight="1.0"/>
         </LinearLayout>
         <com.owen.tvrecyclerview.widget.TvRecyclerView
+            android:layout_marginTop="@dimen/vs_10"
             android:orientation="vertical"
             android:id="@+id/mGridView"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-			app:tv_layoutManager="V7LinearLayoutManager"
-			app:tv_selectedItemIsCentered="true"
-            app:tv_verticalSpacingWithMargins="@dimen/vs_10"
-            app:tv_horizontalSpacingWithMargins="@dimen/vs_10"/>
-    </LinearLayout>
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constrainedHeight="true"
+            app:layout_constraintHeight_max="370mm"
+            app:layout_constraintTop_toBottomOf="@+id/testll"
+            app:tv_horizontalSpacingWithMargins="@dimen/vs_10"
+            app:tv_layoutManager="V7LinearLayoutManager"
+            app:tv_selectedItemIsCentered="true"
+            app:tv_verticalSpacingWithMargins="@dimen/vs_10"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
