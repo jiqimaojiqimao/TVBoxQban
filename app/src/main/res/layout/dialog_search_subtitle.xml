@@ -10,7 +10,7 @@
         android:background="@drawable/shape_dialog_bg_main"
         android:padding="@dimen/vs_30"
         android:layout_width="@dimen/vs_960"
-        android:layout_height="@dimen/vs_480">
+        android:layout_height="496mm">
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="fill_parent"
@@ -45,38 +45,31 @@
                 android:layout_marginLeft="@dimen/vs_5"
                 android:text="搜索"/>
         </LinearLayout>
-        <ScrollView
+        <LinearLayout
             android:layout_gravity="center|top"
+            android:layout_marginTop="@dimen/vs_10"
+            android:orientation="vertical"
             android:focusable="false"
             android:focusableInTouchMode="false"
-            android:scrollbars="none"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/vs_10">
-            <LinearLayout
-                android:layout_gravity="center|top"
-                android:orientation="vertical"
-                android:focusable="false"
-                android:focusableInTouchMode="false"
+            android:layout_height="wrap_content">
+            <com.owen.tvrecyclerview.widget.TvRecyclerView
+                android:id="@+id/mGridView"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content">
-                <com.owen.tvrecyclerview.widget.TvRecyclerView
-                    android:id="@+id/mGridView"
-                    android:clipChildren="false"
-                    android:clipToPadding="false"
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
-                    app:tv_horizontalSpacingWithMargins="@dimen/vs_5"
-                    app:tv_selectedItemIsCentered="true"
-                    app:tv_verticalSpacingWithMargins="@dimen/vs_5"/>
-            </LinearLayout>
-        </ScrollView>
+                android:layout_height="fill_parent"
+                app:tv_horizontalSpacingWithMargins="@dimen/vs_5"
+                app:tv_selectedItemIsCentered="true"
+                app:tv_verticalSpacingWithMargins="@dimen/vs_5"/>
+        </LinearLayout>
         <ProgressBar
             android:layout_gravity="center"
             android:id="@+id/loadingBar"
             android:visibility="gone"
+            android:gravity="center"
             android:layout_width="@dimen/vs_50"
             android:layout_height="@dimen/vs_50"
             android:indeterminateOnly="true"
