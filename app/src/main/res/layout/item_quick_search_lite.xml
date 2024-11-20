@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+<FrameLayout
     android:background="@drawable/button_dialog_main"
-    android:focusable="true">
-
+    android:focusable="true"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <TextView
-        android:id="@+id/tvName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:textSize="@dimen/ts_22"
+        android:textColor="@color/color_FFFFFF"
         android:ellipsize="middle"
         android:gravity="center_vertical"
+        android:id="@+id/tvName"
         android:padding="@dimen/vs_10"
-        android:singleLine="true"
-        android:textColor="@color/color_FFFFFF"
-        android:textSize="@dimen/ts_20" />
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="true"/>
 </FrameLayout>
