@@ -183,7 +183,7 @@ public class DetailActivity extends BaseActivity {
         tvQuickSearch = findViewById(R.id.tvQuickSearch);
         mEmptyPlayList = findViewById(R.id.mEmptyPlaylist);
         mGridView = findViewById(R.id.mGridView);
-        mGridView.setHasFixedSize(true);
+//        mGridView.setHasFixedSize(true);  //xuameng固定大小用
         mGridView.setHasFixedSize(false);
         this.mGridViewLayoutMgr = new V7GridLayoutManager(this.mContext, 6);
         mGridView.setLayoutManager(this.mGridViewLayoutMgr);
@@ -817,7 +817,26 @@ public class DetailActivity extends BaseActivity {
                         seriesFlagAdapter.setNewData(vodInfo.seriesFlags);
                         mGridViewFlag.scrollToPosition(flagScrollTo);
 
-                        refreshList();
+                        refreshList();    //xuameng滚动到当前播放剧集
+						tvPlay.setNextFocusUpId(R.id.mGridView);   //xuameng上面焦点是选剧集
+						tvQuickSearch.setNextFocusUpId(R.id.mGridView); 
+						tvSort.setNextFocusUpId(R.id.mGridView); 
+						tvCollect.setNextFocusUpId(R.id.mGridView); 
+						tvDesc.setNextFocusUpId(R.id.mGridView); 
+						tvPush.setNextFocusUpId(R.id.mGridView); 
+						mGridView.setNextFocusDownId(R.id.tvPlay);   //xuameng下面焦点是播放
+						mGridView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+						@Override
+						public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+								super.onScrollStateChanged(recyclerView, newState);
+								if (newState == mGridView.SCROLL_STATE_IDLE) {   //xuameng剧集滚动完成后焦点选择为剧集
+								// 滚动已经停止，执行你需要的操作
+								mGridView.requestFocus();
+								mGridView.removeOnScrollListener(this);    //xuameng删除滚动监听
+								}
+							}
+						});
+
                         if (showPreview) {
                             jumpToPlay();
                             llPlayerFragmentContainer.setVisibility(View.VISIBLE);
@@ -1100,7 +1119,21 @@ public class DetailActivity extends BaseActivity {
             if (playFragment.onBackPressed())
                 return;
             toggleFullPreview();
-            mGridView.requestFocus();
+
+            refreshList();   //xuameng退出全屏播放增加滚动到当前播放剧集
+			mGridView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+			@Override
+			public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+					super.onScrollStateChanged(recyclerView, newState);
+					if (newState == mGridView.SCROLL_STATE_IDLE) {    //xuameng剧集滚动完成后焦点选择为剧集
+					// 滚动已经停止，执行你需要的操作
+					mGridView.requestFocus();
+					mGridView.removeOnScrollListener(this);				//xuameng删除滚动监听				
+					}
+				}
+			});
+
+//            mGridView.requestFocus(); 没用了
             List<VodInfo.VodSeries> list = vodInfo.seriesMap.get(vodInfo.playFlag);
             mSeriesGroupView.setVisibility(list.size()>GroupCount ? View.VISIBLE : View.GONE);
             return;
