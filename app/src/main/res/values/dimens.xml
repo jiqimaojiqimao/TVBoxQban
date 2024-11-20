@@ -244,7 +244,7 @@
     <dimen name="vs_24">24.0mm</dimen>
     <dimen name="vs_240">240.0mm</dimen>
     <dimen name="vs_250">250.0mm</dimen>
-    <dimen name="vs_25_">-25.0mm</dimen>
+    <dimen name="vs_25">25.0mm</dimen>
     <dimen name="vs_270">270.0mm</dimen>
     <dimen name="vs_28">28.0mm</dimen>
     <dimen name="vs_280">280.0mm</dimen>
