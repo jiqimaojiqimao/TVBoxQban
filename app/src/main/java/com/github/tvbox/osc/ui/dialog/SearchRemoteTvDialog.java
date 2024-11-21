@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 
 import com.github.tvbox.osc.R;
-import com.github.tvbox.osc.callback.EmptyCallback;
+import com.github.tvbox.osc.callback.EmptyCallbackXu;   //xuameng修复文字看不见
 import com.github.tvbox.osc.callback.LoadingCallback;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.player.thirdparty.RemoteTVBox;
@@ -56,7 +56,7 @@ public class SearchRemoteTvDialog extends BaseDialog{
     private void showRemoteTvDialog(boolean found) {
         if (!found) {
             if (ModelSettingFragment.loadingSearchRemoteTvDialog != null) {
-                ModelSettingFragment.loadingSearchRemoteTvDialog.showEmpty();
+                ModelSettingFragment.loadingSearchRemoteTvDialog.showEmptyXu();
             }
             Toast.makeText(getContext(), "未找到附近聚汇影视", Toast.LENGTH_SHORT).show();
             return;
@@ -116,9 +116,9 @@ public class SearchRemoteTvDialog extends BaseDialog{
         }
     }
 
-    public void showEmpty() {
+    public void showEmptyXu() {
         if (null != mLoadService) {
-            mLoadService.showCallback(EmptyCallback.class);
+            mLoadService.showCallback(EmptyCallbackXu.class);
         }
     }
 
