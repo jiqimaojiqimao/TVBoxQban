@@ -27,8 +27,8 @@
             android:layout_height="fill_parent"
             android:baselineAligned="false">
             <LinearLayout
-                android:background="#40000000"
                 android:orientation="horizontal"
+                android:background="#40000000"
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent">
                 <com.owen.tvrecyclerview.widget.TvRecyclerView
@@ -56,19 +56,20 @@
                     android:orientation="vertical"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="6.0dip"
-                    android:layout_marginRight="2.0dip"
+                    android:layout_marginLeft="@dimen/vs_2"
+                    android:layout_marginRight="@dimen/vs_2"
                     android:onClick="divLoadEpgLeft"
                     style="@style/epg_window_btn">
                     <TextView
                         android:textStyle="bold"
+                        android:textSize="@dimen/ts_22"
                         android:textColor="@color/color_FFFFFF"
                         android:gravity="center"
                         android:id="@+id/tv_arrow0"
-                        android:paddingBottom="5.0dip"
-                        android:layout_width="26.0dip"
+                        android:paddingBottom="@dimen/vs_5"
+                        android:layout_width="@dimen/vs_40"
                         android:layout_height="fill_parent"
-                        android:layout_marginTop="10.0dip"
+                        android:layout_marginTop="@dimen/vs_10"
                         android:text="更 多"
                         android:shadowColor="#cc000000"
                         android:shadowDx="5.0"
@@ -76,20 +77,21 @@
                     <ImageView
                         android:gravity="center"
                         android:id="@+id/iv_arrow2"
-                        android:paddingLeft="0.0dip"
-                        android:paddingTop="5.0dip"
-                        android:layout_width="23.0dip"
-                        android:layout_height="23.0dip"
+                        android:paddingLeft="@dimen/vs_0"
+                        android:paddingTop="@dimen/vs_5"
+                        android:layout_width="@dimen/vs_24"
+                        android:layout_height="@dimen/vs_24"
                         android:src="@drawable/scrollviewleft"/>
                     <TextView
                         android:textStyle="bold"
+                        android:textSize="@dimen/ts_22"
                         android:textColor="@color/color_FFFFFF"
                         android:gravity="center"
                         android:id="@+id/tv_arrow3"
-                        android:paddingTop="10.0dip"
-                        android:layout_width="26.0dip"
+                        android:paddingTop="@dimen/vs_10"
+                        android:layout_width="@dimen/vs_40"
                         android:layout_height="fill_parent"
-                        android:layout_marginBottom="10.0dip"
+                        android:layout_marginBottom="@dimen/vs_10"
                         android:text="节 目"
                         android:shadowColor="#cc000000"
                         android:shadowDx="5.0"
@@ -98,7 +100,7 @@
             </LinearLayout>
             <LinearLayout
                 android:background="#4d000000"
-                android:layout_width="1.0dip"
+                android:layout_width="@dimen/vs_1"
                 android:layout_height="fill_parent"
                 android:layout_margin="0.0dip"/>
             <com.owen.tvrecyclerview.widget.TvRecyclerView
@@ -116,7 +118,7 @@
                 android:fadeScrollbars="false"/>
             <LinearLayout
                 android:background="#4d000000"
-                android:layout_width="1.0dip"
+                android:layout_width="@dimen/vs_1"
                 android:layout_height="fill_parent"
                 android:layout_margin="0.0dip"/>
             <LinearLayout
@@ -130,20 +132,21 @@
                     android:orientation="vertical"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="2.0dip"
-                    android:layout_marginRight="3.0dip"
+                    android:layout_marginLeft="@dimen/vs_2"
+                    android:layout_marginRight="@dimen/vs_3"
                     android:onClick="divLoadEpgRight"
                     style="@style/epg_window_btn">
                     <TextView
                         android:textStyle="bold"
+                        android:textSize="@dimen/ts_22"
                         android:textColor="@color/color_FFFFFF"
                         android:gravity="center"
                         android:id="@+id/tv_arrow"
-                        android:paddingRight="0.0dip"
-                        android:paddingBottom="5.0dip"
-                        android:layout_width="26.0dip"
+                        android:paddingRight="@dimen/vs_0"
+                        android:paddingBottom="@dimen/vs_5"
+                        android:layout_width="@dimen/vs_40"
                         android:layout_height="fill_parent"
-                        android:layout_marginTop="10.0dip"
+                        android:layout_marginTop="@dimen/vs_10"
                         android:text="节 目"
                         android:shadowColor="#cc000000"
                         android:shadowDx="5.0"
@@ -151,20 +154,21 @@
                     <ImageView
                         android:gravity="center"
                         android:id="@+id/iv_arrow"
-                        android:paddingTop="5.0dip"
-                        android:layout_width="23.0dip"
-                        android:layout_height="23.0dip"
+                        android:paddingTop="@dimen/vs_5"
+                        android:layout_width="@dimen/vs_24"
+                        android:layout_height="@dimen/vs_24"
                         android:src="@drawable/scrollview"/>
                     <TextView
                         android:textStyle="bold"
+                        android:textSize="@dimen/ts_22"
                         android:textColor="@color/color_FFFFFF"
                         android:gravity="center"
                         android:id="@+id/tv_arrow2"
-                        android:paddingTop="10.0dip"
-                        android:paddingRight="0.0dip"
-                        android:layout_width="26.0dip"
+                        android:paddingTop="@dimen/vs_10"
+                        android:paddingRight="@dimen/vs_0"
+                        android:layout_width="@dimen/vs_40"
                         android:layout_height="fill_parent"
-                        android:layout_marginBottom="10.0dip"
+                        android:layout_marginBottom="@dimen/vs_10"
                         android:text="信 息"
                         android:shadowColor="#cc000000"
                         android:shadowDx="5.0"
@@ -194,9 +198,9 @@
                     app:tv_verticalSpacingWithMargins="10.0mm"/>
                 <LinearLayout
                     android:background="#4d000000"
-                    android:layout_width="1.0dip"
+                    android:layout_width="@dimen/vs_1"
                     android:layout_height="fill_parent"
-                    android:layout_margin="0.0dip"/>
+                    android:layout_margin="@dimen/vs_0"/>
                 <com.owen.tvrecyclerview.widget.TvRecyclerView
                     android:gravity="center"
                     android:id="@+id/lv_epg"
@@ -216,7 +220,7 @@
                     android:gravity="center"
                     android:layout_gravity="center"
                     android:id="@+id/txtNoEpg"
-                    android:paddingLeft="5.0dip"
+                    android:paddingLeft="@dimen/vs_5"
                     android:visibility="gone"
                     android:layout_width="@dimen/vs_360"
                     android:layout_height="fill_parent"
@@ -249,9 +253,9 @@
             app:tv_verticalSpacingWithMargins="10.0mm"/>
         <LinearLayout
             android:background="#4d000000"
-            android:layout_width="1.0dip"
+            android:layout_width="@dimen/vs_1"
             android:layout_height="fill_parent"
-            android:layout_margin="0.0dip"/>
+            android:layout_margin="@dimen/vs_0"/>
         <com.owen.tvrecyclerview.widget.TvRecyclerView
             android:gravity="center"
             android:id="@+id/mSettingGroupView"
@@ -312,7 +316,7 @@
         android:layout_gravity="bottom|center"
         android:id="@+id/ll_epg"
         android:background="@drawable/shape_dialog_filter_bg"
-        android:paddingBottom="0.0dip"
+        android:paddingBottom="@dimen/vs_0"
         android:layout_width="fill_parent"
         android:layout_height="@dimen/vs_300">
         <View
@@ -391,13 +395,13 @@
                 android:gravity="center"
                 android:layout_gravity="bottom|center"
                 android:id="@+id/tv_channel_bar_name"
-                android:paddingTop="0.0dip"
-                android:paddingBottom="0.0mm"
+                android:paddingTop="@dimen/vs_0"
+                android:paddingBottom="@dimen/vs_0"
                 android:layout_width="@dimen/vs_200"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="0.0dip"
+                android:layout_marginLeft="@dimen/vs_0"
                 android:layout_marginTop="@dimen/vs_0"
-                android:layout_marginRight="0.0dip"
+                android:layout_marginRight="@dimen/vs_0"
                 android:text="密码频道"
                 android:singleLine="true"
                 android:layout_alignParentBottom="true"/>
@@ -701,8 +705,8 @@
                 android:id="@+id/iv_play"
                 android:background="@drawable/vod_pause"
                 android:visibility="gone"
-                android:layout_width="120.0sp"
-                android:layout_height="120.0sp"/>
+                android:layout_width="@dimen/vs_120"
+                android:layout_height="@dimen/vs_120"/>
         </LinearLayout>
         <TextView
             android:textSize="@dimen/vs_100"
@@ -754,8 +758,8 @@
                 <ImageView
                     android:id="@+id/iv_playpause"
                     android:background="@drawable/vod_pause"
-                    android:layout_width="32.0mm"
-                    android:layout_height="32.0mm"/>
+                    android:layout_width="@dimen/vs_35"
+                    android:layout_height="@dimen/vs_35"/>
                 <TextView
                     android:textColor="#ffffffff"
                     android:id="@+id/tv_currentpos"
@@ -901,24 +905,24 @@
         </LinearLayout>
     </LinearLayout>
     <TextView
+        android:textSize="90.0mm"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:layout_gravity="end|center|top"
         android:id="@+id/tv_selected_channel"
+        android:background="@android:color/transparent"
+        android:paddingRight="15.0mm"
+        android:focusable="false"
+        android:visibility="gone"
+        android:clickable="false"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:paddingRight="15mm"
-        android:layout_marginTop="25mm"
-        android:layout_marginRight="25mm"
-        android:background="@android:color/transparent"
-        android:inputType="number"
-        android:digits="0123456789"
-        android:clickable="false"
-        android:focusable="false"
-        android:textColor="@android:color/white"
-        android:textSize="90mm"
-        android:textStyle="bold"
+        android:layout_marginTop="25.0mm"
+        android:layout_marginRight="25.0mm"
         android:shadowColor="#cc000000"
         android:shadowDx="5.0"
         android:shadowDy="5.0"
         android:shadowRadius="2.0"
-        android:visibility="gone"/>
+        android:digits="\ 0123456789"
+        android:inputType="number"/>
 </FrameLayout>
