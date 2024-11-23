@@ -1,6 +1,6 @@
 package com.github.tvbox.osc.util;
 
-import androidx.media3.common.util.UriUtil;
+import com.github.catvod.utils.UriUtil;
 
 import com.github.tvbox.osc.base.App;
 
