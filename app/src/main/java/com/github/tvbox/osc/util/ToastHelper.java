@@ -15,10 +15,4 @@ public class ToastHelper {
             }
         }).start();
     }
-
-    public static void debugToast(Context context, String text) {
-        if (HawkConfig.isDebug()) {
-            showToast(context, text);
-        }
-    }
 }
