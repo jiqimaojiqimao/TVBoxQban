@@ -537,7 +537,7 @@ public class PlayActivity extends BaseActivity {
     void playUrl(String url, HashMap<String, String> headers) {
         LOG.i("playUrl:" + url);
         if(autoRetryCount>1 && url.contains(".m3u8")){
-  //xuameng没用了          url="http://home.jundie.top:666/unBom.php?m3u8="+url;//尝试去bom头再次播放
+			//xuameng没用了          url="http://home.jundie.top:666/unBom.php?m3u8="+url;//尝试去bom头再次播放
         }
         final String finalUrl = url;
         runOnUiThread(new Runnable() {
@@ -547,7 +547,7 @@ public class PlayActivity extends BaseActivity {
                 if (mVideoView != null) {
                     mVideoView.release();
                     if (finalUrl != null) {
-                        String url =finalUrl;
+                        String url = finalUrl;
                         try {
                             int playerType = mVodPlayerCfg.getInt("pl");
                             if (playerType >= 10) {
@@ -925,6 +925,7 @@ public class PlayActivity extends BaseActivity {
     }
 
     public void play(boolean reset) {
+		if(mVodInfo==null)return;
         VodInfo.VodSeries vs = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodInfo.playIndex));
         setTip("正在获取播放信息", true, false);
@@ -940,18 +941,8 @@ public class PlayActivity extends BaseActivity {
         if (reset) {
             CacheManager.delete(MD5.string2MD5(progressKey), 0);
             CacheManager.delete(MD5.string2MD5(subtitleCacheKey), 0);
-        }else{
-            try{
-                int playerType = mVodPlayerCfg.getInt("pl");
-                if(playerType==1){
-                    mController.mSubtitleView.setVisibility(View.VISIBLE);
-                }else {
-                    mController.mSubtitleView.setVisibility(View.GONE);
-                }
-            }catch (JSONException e) {
-                e.printStackTrace();
-            }
         }
+
         if(Jianpian.isJpUrl(vs.url)){//荐片地址特殊判断
             String jp_url= vs.url;
             mController.showParse(false);
