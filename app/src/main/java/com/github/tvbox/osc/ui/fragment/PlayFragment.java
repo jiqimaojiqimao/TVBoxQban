@@ -318,7 +318,9 @@ public class PlayFragment extends BaseLazyFragment {
                                 String zimuUrl = subtitle.getUrl();
                                 LOG.i("Remote Subtitle Url: " + zimuUrl);
                                 setSubtitle(zimuUrl);//设置字幕
-                                searchSubtitleDialog.dismiss();
+                                if (searchSubtitleDialog != null) {
+                                    searchSubtitleDialog.dismiss();
+                                }
                             }
                         });
                     }
@@ -548,30 +550,20 @@ public class PlayFragment extends BaseLazyFragment {
 
     void playUrl(String url, HashMap<String, String> headers) {
 		if (!isAdded()) return;
+        if (mActivity == null) return;
         LOG.i("playUrl:" + url);
         if(autoRetryCount>0 && url.contains(".m3u8")){
-            url="http://home.jundie.top:666/unBom.php?m3u8="+url;//尝试去bom头再次播放
+			 //xuameng没用了         url="http://home.jundie.top:666/unBom.php?m3u8="+url;//尝试去bom头再次播放
         }
-        if (url.startsWith("data:application/dash+xml;base64,")) {
-            PlayerHelper.updateCfg(mVideoView, mVodPlayerCfg, 2);
-            App.getInstance().setDashData(url.split("base64,")[1]);
-            url = ControlManager.get().getAddress(true) + "dash/proxy.mpd";
-        } else if (url.contains(".mpd") || url.contains("type=mpd")) {
-            PlayerHelper.updateCfg(mVideoView, mVodPlayerCfg, 2);
-        } else {
-            PlayerHelper.updateCfg(mVideoView, mVodPlayerCfg);
-        }
-
-        String finalUrl = url;
-        if (mActivity == null) return;
+		final String finalUrl = url;
         requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 stopParse();
                 if (mVideoView != null) {
                     mVideoView.release();
-
                     if (finalUrl != null) {
+						String url = finalUrl;
                         try {
                             int playerType = mVodPlayerCfg.getInt("pl");
                             if (playerType >= 10) {
@@ -580,7 +572,7 @@ public class PlayFragment extends BaseLazyFragment {
                                 setTip("调用外部播放器" + PlayerHelper.getPlayerName(playerType) + "进行播放", true, false);
                                 boolean callResult = false;
                                 long progress = getSavedProgress(progressKey);
-                                callResult = PlayerHelper.runExternalPlayer(playerType, requireActivity(), finalUrl, playTitle, playSubtitle, headers, progress);
+								callResult = PlayerHelper.runExternalPlayer(playerType, requireActivity(), url, playTitle, playSubtitle, headers, progress);
                                 setTip("调用外部播放器" + PlayerHelper.getPlayerName(playerType) + (callResult ? "成功" : "失败"), callResult, !callResult);
                                 return;
                             }
@@ -588,11 +580,20 @@ public class PlayFragment extends BaseLazyFragment {
                             e.printStackTrace();
                         }
                         hideTip();
+                        if (url.startsWith("data:application/dash+xml;base64,")) {
+                            PlayerHelper.updateCfg(mVideoView, mVodPlayerCfg, 2);
+                            App.getInstance().setDashData(url.split("base64,")[1]);
+                            url = ControlManager.get().getAddress(true) + "dash/proxy.mpd";
+                        } else if (url.contains(".mpd") || url.contains("type=mpd")) {
+                            PlayerHelper.updateCfg(mVideoView, mVodPlayerCfg, 2);
+                        } else {
+                            PlayerHelper.updateCfg(mVideoView, mVodPlayerCfg);
+                        }
                         mVideoView.setProgressKey(progressKey);
                         if (headers != null) {
-                            mVideoView.setUrl(finalUrl, headers);
+                            mVideoView.setUrl(url, headers);
                         } else {
-                            mVideoView.setUrl(finalUrl);
+                            mVideoView.setUrl(url);
                         }
                         mVideoView.start();
                         mController.resetSpeed();
@@ -974,8 +975,8 @@ public class PlayFragment extends BaseLazyFragment {
         stopParse();
         initParseLoadFound();
         if(mVideoView!= null) mVideoView.release();
-        String subtitleCacheKey = mVodInfo.sourceKey + "-" + mVodInfo.id + "-" + mVodInfo.playFlag + "-" + mVodInfo.playIndex+ "-" + vs.name + "-subt";
-        String progressKey = mVodInfo.sourceKey + mVodInfo.id + mVodInfo.playFlag + mVodInfo.playIndex + vs.name;
+        subtitleCacheKey = mVodInfo.sourceKey + "-" + mVodInfo.id + "-" + mVodInfo.playFlag + "-" + mVodInfo.playIndex+ "-" + vs.name + "-subt";
+        progressKey = mVodInfo.sourceKey + mVodInfo.id + mVodInfo.playFlag + mVodInfo.playIndex + vs.name;
         //重新播放清除现有进度
         if (reset) {
             CacheManager.delete(MD5.string2MD5(progressKey), 0);
@@ -1257,7 +1258,7 @@ public class PlayFragment extends BaseLazyFragment {
             LinkedHashMap<String, HashMap<String, String>> jxs = new LinkedHashMap<>();
             String extendName = "";
             for (ParseBean p : ApiConfig.get().getParseBeanList()) {
-                HashMap data = new HashMap<String, String>();
+				HashMap<String, String> data = new HashMap<String, String>();
                 data.put("url", p.getUrl());
                 if (p.getUrl().equals(pb.getUrl())) {
                     extendName = p.getName();
