@@ -271,6 +271,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/vs_10"
                 android:text="暂无播放数据"
+				android:shadowColor="#ff000000"
+				android:shadowDx="2.0"
+				android:shadowDy="2.0"
+				android:shadowRadius="1.0"
                 android:layout_marginStart="@dimen/vs_10"/>
         </LinearLayout>
         <com.owen.tvrecyclerview.widget.TvRecyclerView
