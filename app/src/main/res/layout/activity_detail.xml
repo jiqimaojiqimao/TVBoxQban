@@ -16,8 +16,8 @@
             android:paddingRight="@dimen/vs_50"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/vs_10"
-            android:layout_marginTop="@dimen/vs_10">
+            android:layout_marginTop="@dimen/vs_10"
+            android:layout_marginBottom="@dimen/vs_10">
             <ImageView
                 android:layout_gravity="center_vertical"
                 android:id="@+id/ivThumb"
@@ -166,11 +166,9 @@
                         android:layout_height="@dimen/vs_40"
                         android:layout_marginLeft="@dimen/vs_10"
                         android:layout_marginTop="@dimen/vs_10"
-                        android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
                         android:text="播放"
                         android:layout_marginStart="@dimen/vs_10"
-                        android:layout_marginEnd="@dimen/vs_10"
                         android:letterSpacing="0.2"/>
                     <TextView
                         android:textSize="@dimen/vs_20"
@@ -184,6 +182,8 @@
                         android:layout_marginTop="@dimen/vs_10"
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
+                        android:layout_marginLeft="@dimen/vs_10"
+                        android:layout_marginStart="@dimen/vs_10"
                         android:text="快搜"
                         android:layout_marginEnd="@dimen/vs_10"
                         android:letterSpacing="0.2"/>
@@ -271,10 +271,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="@dimen/vs_10"
                 android:text="暂无播放数据"
-				android:shadowColor="#ff000000"
-				android:shadowDx="2.0"
-				android:shadowDy="2.0"
-				android:shadowRadius="1.0"
+                android:shadowColor="#ff000000"
+                android:shadowDx="2.0"
+                android:shadowDy="2.0"
+                android:shadowRadius="1.0"
                 android:layout_marginStart="@dimen/vs_10"/>
         </LinearLayout>
         <com.owen.tvrecyclerview.widget.TvRecyclerView
