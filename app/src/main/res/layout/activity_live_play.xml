@@ -61,8 +61,8 @@
                     android:onClick="divLoadEpgLeft"
                     style="@style/epg_window_btn">
                     <TextView
-                        android:textStyle="bold"
                         android:textSize="@dimen/ts_22"
+                        android:textStyle="bold"
                         android:textColor="@color/color_FFFFFF"
                         android:gravity="center"
                         android:id="@+id/tv_arrow0"
@@ -83,8 +83,8 @@
                         android:layout_height="@dimen/vs_24"
                         android:src="@drawable/scrollviewleft"/>
                     <TextView
-                        android:textStyle="bold"
                         android:textSize="@dimen/ts_22"
+                        android:textStyle="bold"
                         android:textColor="@color/color_FFFFFF"
                         android:gravity="center"
                         android:id="@+id/tv_arrow3"
@@ -137,8 +137,8 @@
                     android:onClick="divLoadEpgRight"
                     style="@style/epg_window_btn">
                     <TextView
-                        android:textStyle="bold"
                         android:textSize="@dimen/ts_22"
+                        android:textStyle="bold"
                         android:textColor="@color/color_FFFFFF"
                         android:gravity="center"
                         android:id="@+id/tv_arrow"
@@ -159,8 +159,8 @@
                         android:layout_height="@dimen/vs_24"
                         android:src="@drawable/scrollview"/>
                     <TextView
-                        android:textStyle="bold"
                         android:textSize="@dimen/ts_22"
+                        android:textStyle="bold"
                         android:textColor="@color/color_FFFFFF"
                         android:gravity="center"
                         android:id="@+id/tv_arrow2"
@@ -387,6 +387,13 @@
                     android:layout_height="@dimen/vs_100"
                     android:src="@drawable/app_banner"
                     android:scaleType="fitXY"/>
+                <ImageView
+                    android:layout_gravity="center"
+                    android:id="@+id/img_live_icon_xu"
+                    android:layout_width="@dimen/vs_200"
+                    android:layout_height="@dimen/vs_100"
+                    android:src="@drawable/banner_xu"
+                    android:scaleType="fitXY"/>
             </FrameLayout>
             <com.github.tvbox.osc.ui.tv.widget.MarqueeTextView
                 android:textSize="@dimen/vs_20"
@@ -489,7 +496,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginRight="@dimen/vs_0"
                 android:layout_marginBottom="@dimen/vs_0"
-                android:text="源 1/1"
+                android:text="[线路源1/1]"
                 android:layout_alignParentRight="true"/>
         </LinearLayout>
         <ProgressBar
@@ -590,6 +597,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="@dimen/vs_0"
+				android:text="[频道编号]"
                 android:layout_alignParentRight="true"/>
         </LinearLayout>
     </RelativeLayout>
@@ -923,6 +931,6 @@
         android:shadowDx="5.0"
         android:shadowDy="5.0"
         android:shadowRadius="2.0"
-        android:digits="\ 0123456789"
+        android:digits=" 0123456789"
         android:inputType="number"/>
 </FrameLayout>
