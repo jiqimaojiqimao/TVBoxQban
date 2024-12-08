@@ -1243,6 +1243,9 @@ public class LivePlayActivity extends BaseActivity {
             mHideSettingLayoutRun();
             return;
         }
+		if (isInit){  //xuameng重要
+			isPass = false;
+		}	
         if(isVOD) {
             Mtv_left_top_xu.setVisibility(View.GONE);
         }
