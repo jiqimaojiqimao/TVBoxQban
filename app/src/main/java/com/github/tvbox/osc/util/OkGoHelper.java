@@ -88,7 +88,7 @@ public class OkGoHelper {
     }
 
     static void initDnsOverHttps() {
-        dnsHttpsList.add("关闭");
+        dnsHttpsList.add("默认");
         dnsHttpsList.add("腾讯");
         dnsHttpsList.add("阿里");
         dnsHttpsList.add("360");
