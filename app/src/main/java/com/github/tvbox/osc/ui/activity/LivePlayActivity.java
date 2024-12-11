@@ -2390,6 +2390,12 @@ public class LivePlayActivity extends BaseActivity {
                     }
                 });
             }
+			@Override
+            public void onError(Response<String> response) {
+                super.onError(response);
+                Toast.makeText(App.getInstance(), "直播地址未找到！请联系许大师！", Toast.LENGTH_LONG).show();
+                finish();
+			}
         });
     }
     private void initLiveState() {
