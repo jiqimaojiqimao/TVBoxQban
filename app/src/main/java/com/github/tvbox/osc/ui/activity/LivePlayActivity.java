@@ -28,6 +28,11 @@ import android.graphics.Color; //xuameng获取颜色值
 import android.util.TypedValue; //xuameng TypedValue依赖
 import android.view.LayoutInflater; //xuameng LayoutInflater依赖
 import android.text.InputFilter; //xuameng导入依赖的package包/类
+import android.content.Intent;   //xuameng记忆播放频道组用
+import com.github.tvbox.osc.util.HawkUtils;  //xuameng记忆播放频道组用
+import com.github.tvbox.osc.util.JavaUtil;   //xuameng记忆播放频道组用
+import android.os.Bundle;   //xuameng记忆播放频道组用
+import kotlin.Pair;   //xuameng记忆播放频道组用
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
@@ -1373,6 +1378,7 @@ public class LivePlayActivity extends BaseActivity {
             currentLiveChannelIndex = liveChannelIndex;
             currentLiveChannelItem = getLiveChannels(currentChannelGroupIndex).get(currentLiveChannelIndex);
             Hawk.put(HawkConfig.LIVE_CHANNEL, currentLiveChannelItem.getChannelName());
+			HawkUtils.setLastLiveChannelGroup(liveChannelGroupList.get(currentChannelGroupIndex).getGroupName());     //xuameng记忆频道组
             livePlayerManager.getLiveChannelPlayer(mVideoView, currentLiveChannelItem.getChannelName());
             liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
         }
@@ -2399,24 +2405,19 @@ public class LivePlayActivity extends BaseActivity {
         });
     }
     private void initLiveState() {
-        String lastChannelName = Hawk.get(HawkConfig.LIVE_CHANNEL, "");
-        int lastChannelGroupIndex = -1;
+        int lastChannelGroupIndex = -1;     //xuameng记忆上次播放频道组开始
         int lastLiveChannelIndex = -1;
-        for(LiveChannelGroup liveChannelGroup: liveChannelGroupList) {
-            for(LiveChannelItem liveChannelItem: liveChannelGroup.getLiveChannels()) {
-                if(liveChannelItem.getChannelName().equals(lastChannelName)) {
-                    lastChannelGroupIndex = liveChannelGroup.getGroupIndex();
-                    lastLiveChannelIndex = liveChannelItem.getChannelIndex();
-                    break;
-                }
-            }
-            if(lastChannelGroupIndex != -1) break;
-        }
-        if(lastChannelGroupIndex == -1) {
-            lastChannelGroupIndex = getFirstNoPasswordChannelGroup();
-            if(lastChannelGroupIndex == -1) lastChannelGroupIndex = 0;
-            lastLiveChannelIndex = 0;
-        }
+        Intent intent = getIntent();
+        if (intent != null && intent.getExtras() != null) {
+            Bundle bundle = intent.getExtras();
+            lastChannelGroupIndex = bundle.getInt("groupIndex", 0);
+            lastLiveChannelIndex = bundle.getInt("channelIndex", 0);
+        } else {
+            Pair<Integer, Integer> lastChannel = JavaUtil.findLiveLastChannel(liveChannelGroupList);
+            lastChannelGroupIndex = lastChannel.getFirst();
+            lastLiveChannelIndex = lastChannel.getSecond();
+		}                    //xuameng记忆上次播放频道组结束
+
         livePlayerManager.init(mVideoView);
         showTime();
         showNetSpeed();
