@@ -81,10 +81,11 @@
                 <TextView
                     android:textSize="@dimen/ts_24"
                     android:textColor="@android:color/white"
-                    android:ellipsize="middle"
+                    android:ellipsize="marquee"
                     android:id="@+id/tvHomeApi"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:maxEms="22"
                     android:singleLine="true"/>
                 <TextView
                     android:textSize="@dimen/ts_30"
@@ -118,10 +119,11 @@
                 <TextView
                     android:textSize="@dimen/ts_24"
                     android:textColor="@android:color/white"
-                    android:ellipsize="middle"
+                    android:ellipsize="marquee"
                     android:id="@+id/tvApi"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:maxEms="22"
                     android:singleLine="true"/>
                 <TextView
                     android:textSize="@dimen/ts_30"
@@ -358,8 +360,8 @@
                         android:textColor="@android:color/white"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-						android:letterSpacing="0.4"
-                        android:text="播放器"/>
+                        android:text="播放器"
+                        android:letterSpacing="0.4"/>
                     <Space
                         android:layout_width="0.0dip"
                         android:layout_height="wrap_content"
