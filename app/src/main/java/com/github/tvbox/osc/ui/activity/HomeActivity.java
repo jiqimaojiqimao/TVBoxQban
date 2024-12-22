@@ -253,9 +253,16 @@ public class HomeActivity extends BaseActivity {
                 return true;
             }
         });
+        tvDate.setOnClickListener(new View.OnClickListener() {    //xuameng点击系统时间跳转设置
+            @Override
+            public void onClick(View v) {
+                jumpActivity(SettingActivity.class);		//xuameng加载慢跳转设置               
+            }
+        });
         setLoadSir(this.contentLayout);
         //mHandler.postDelayed(mFindFocus, 500);
     }
+
 
     private void initViewModel() {
         sourceViewModel = new ViewModelProvider(this).get(SourceViewModel.class);
