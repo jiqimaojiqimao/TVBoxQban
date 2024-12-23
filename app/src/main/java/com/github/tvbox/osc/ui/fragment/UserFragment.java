@@ -30,7 +30,6 @@ import com.github.tvbox.osc.util.DefaultConfig;  //xuameng长按重新加载
 import com.github.tvbox.osc.ui.activity.HomeActivity;  //xuameng长按历史键重新载入主页数据
 import android.content.Intent;
 import android.os.Bundle;
-import android.content.Context;
 
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.UA;
@@ -189,8 +188,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         	@Override
             public boolean onLongClick(View v) {
 				FastClickCheckUtil.check(v);
-				Context context = getApplicationContext();
-           Intent intent = new Intent(context, HomeActivity.class);
+			Intent intent =new Intent(mContext, HomeActivity.class);
            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
            Bundle bundle = new Bundle();
            bundle.putBoolean("useCache", true);
