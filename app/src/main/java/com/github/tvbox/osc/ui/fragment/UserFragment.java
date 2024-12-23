@@ -27,6 +27,7 @@ import com.github.tvbox.osc.ui.adapter.HomeHotVodAdapter;
 import com.github.tvbox.osc.ui.dialog.xuamengAboutDialog;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.DefaultConfig;  //xuameng长按重新加载
+import com.github.tvbox.osc.ui.activity.HomeActivity;  //xuameng长按历史键重新载入主页数据
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.UA;
 import com.google.gson.Gson;
@@ -179,7 +180,16 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 }
             }
         });
-           //xuameng : Long press to trigger Delete Mode for VOD History on Home Page    
+           //xuameng : start
+		    findViewById(R.id.tvHistory).setOnLongClickListener(new View.OnLongClickListener() {       //xuameng长按历史键重载主页数据
+        	@Override
+            public boolean onLongClick(View v) {
+				FastClickCheckUtil.check(v);
+				HomeActivity.reloadindex();
+				return true;
+            }
+        });
+		
             findViewById(R.id.tvxuameng).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
