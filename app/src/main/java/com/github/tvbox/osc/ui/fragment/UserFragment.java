@@ -26,10 +26,10 @@ import com.github.tvbox.osc.ui.activity.SettingActivity;
 import com.github.tvbox.osc.ui.adapter.HomeHotVodAdapter;
 import com.github.tvbox.osc.ui.dialog.xuamengAboutDialog;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
-import com.github.tvbox.osc.util.DefaultConfig;  //xuameng长按重新加载
+import com.github.tvbox.osc.util.DefaultConfig;  //xuameng长按许大师制作重启APP
 import com.github.tvbox.osc.ui.activity.HomeActivity;  //xuameng长按历史键重新载入主页数据
-import android.content.Intent;
-import android.os.Bundle;
+import android.content.Intent;		//xuameng长按历史键重新载入主页数据
+import android.os.Bundle;			//xuameng长按历史键重新载入主页数据
 
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.UA;
@@ -188,13 +188,13 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         	@Override
             public boolean onLongClick(View v) {
 				FastClickCheckUtil.check(v);
-			Intent intent =new Intent(mContext, HomeActivity.class);
-           intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-           Bundle bundle = new Bundle();
-           bundle.putBoolean("useCache", true);
-           intent.putExtras(bundle);
-           startActivity(intent);
-		   Toast.makeText(mContext, "重新加载主页数据！", Toast.LENGTH_SHORT).show(); 
+				Intent intent =new Intent(mContext, HomeActivity.class);
+				intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+				Bundle bundle = new Bundle();
+				bundle.putBoolean("useCache", true);
+				intent.putExtras(bundle);
+				startActivity(intent);
+				Toast.makeText(mContext, "重新加载主页数据！", Toast.LENGTH_SHORT).show(); 
 				return true;
             }
         });
