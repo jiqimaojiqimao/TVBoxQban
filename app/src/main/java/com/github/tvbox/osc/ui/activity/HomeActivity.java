@@ -661,6 +661,18 @@ public class HomeActivity extends BaseActivity {
         ControlManager.get().stopServer();
     }
 
+    public static void reloadindex {
+        if(dataInitOk && jarInitOk){
+           Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+           intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+           Bundle bundle = new Bundle();
+           bundle.putBoolean("useCache", true);
+           intent.putExtras(bundle);
+           HomeActivity.this.startActivity(intent);
+		   Toast.makeText(HomeActivity.this, "重新加载主页数据！", Toast.LENGTH_SHORT).show();  
+		}
+    }
+
     void showSiteSwitch() {
         List<SourceBean> sites = ApiConfig.get().getSourceBeanList();
         if (sites.size() > 0) {
