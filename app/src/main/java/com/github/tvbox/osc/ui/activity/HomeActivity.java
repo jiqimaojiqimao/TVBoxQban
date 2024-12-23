@@ -661,7 +661,7 @@ public class HomeActivity extends BaseActivity {
         ControlManager.get().stopServer();
     }
 
-    public static void reloadindex {
+    public static void reloadindex() {
         if(dataInitOk && jarInitOk){
            Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
