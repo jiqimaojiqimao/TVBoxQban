@@ -188,12 +188,13 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         	@Override
             public boolean onLongClick(View v) {
 				FastClickCheckUtil.check(v);
-           Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+				Context context = getApplicationContext();
+           Intent intent = new Intent(context, HomeActivity.class);
            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
            Bundle bundle = new Bundle();
            bundle.putBoolean("useCache", true);
            intent.putExtras(bundle);
-           HomeActivity.startActivity(intent);
+           startActivity(intent);
 		   Toast.makeText(mContext, "重新加载主页数据！", Toast.LENGTH_SHORT).show(); 
 				return true;
             }
