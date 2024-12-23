@@ -662,7 +662,6 @@ public class HomeActivity extends BaseActivity {
     }
 
     public void reloadindex() {
-        if(dataInitOk && jarInitOk){
            Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
            Bundle bundle = new Bundle();
@@ -670,7 +669,6 @@ public class HomeActivity extends BaseActivity {
            intent.putExtras(bundle);
            HomeActivity.this.startActivity(intent);
 		   Toast.makeText(HomeActivity.this, "重新加载主页数据！", Toast.LENGTH_SHORT).show();  
-		}
     }
 
     void showSiteSwitch() {
