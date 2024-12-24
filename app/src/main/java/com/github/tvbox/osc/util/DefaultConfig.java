@@ -71,8 +71,9 @@ public class DefaultConfig {
         Activity activity = AppManager.getInstance().getActivity(HomeActivity.class);
         final Intent intent = activity.getPackageManager().getLaunchIntentForPackage(activity.getPackageName());
         if (intent != null) {
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            activity.startActivity(intent);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+			finish();
         }
         //杀掉以前进程
         android.os.Process.killProcess(android.os.Process.myPid());
