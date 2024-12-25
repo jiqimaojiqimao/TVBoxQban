@@ -57,6 +57,9 @@ public class VodController extends BaseController {
                 switch (msg.what) {
                     case 1000: { // seek 刷新
                         mProgressRoot.setVisibility(VISIBLE);
+						if (iv_circle_bg.getVisibility() == View.VISIBLE){   //xuameng音乐播放时图标
+						iv_circle_bg.setVisibility(GONE);
+						}
                         break;
                     }
                     case 1001: { // seek 关闭
@@ -173,6 +176,8 @@ public class VodController extends BaseController {
     TextView mPlayerRetry;
     TextView mPlayrefresh;
 	TextView mxuPlay;                         //xuameng 底部播放ID
+	private ImageView iv_circle_bg;  //xuameng音乐播放时图标
+	LinearLayout MxuamengMusic;       //xuameng播放音乐背景
     public TextView mPlayerTimeStartEndText;
     public TextView mPlayerTimeStartBtn;
     public TextView mPlayerTimeSkipBtn;
@@ -210,6 +215,31 @@ public class VodController extends BaseController {
             String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
             String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
             mVideoSize.setText("[ " + width + " X " + height +" ]");
+            
+			if (mControlWrapper.isPlaying()){    //xuameng音乐播放时图标判断
+				if (width.length() > 1 && height.length() > 1){
+					if (iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
+					iv_circle_bg.setVisibility(GONE);
+					}
+					if (MxuamengMusic.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
+					MxuamengMusic.setVisibility(GONE);
+					}
+				}else{
+					if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
+					MxuamengMusic.setVisibility(VISIBLE);
+					}
+					if (mProgressRoot.getVisibility() == View.VISIBLE || mPlayLoadNetSpeed.getVisibility() == View.VISIBLE){
+						if (iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
+						iv_circle_bg.setVisibility(GONE);
+						}
+					}else {
+						iv_circle_bg.setVisibility(VISIBLE);
+						}
+					}
+			}else {
+				iv_circle_bg.setVisibility(GONE);
+			}   //xuameng音乐播放时图标判断完
+				
 
             mHandler.postDelayed(this, 1000);
         }
@@ -267,6 +297,8 @@ public class VodController extends BaseController {
         mPlayPauseTimexu = findViewById(R.id.tv_sys_time_xu);          //XUAMENG的系统时间
 		MxuamengView = findViewById(R.id.xuamengView);				   //XUAMENG防点击
 		mTvPausexu = findViewById(R.id.tv_pause_xu);				   //XUAMENG暂停动画
+		iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg);  //xuameng音乐播放时图标
+		MxuamengMusic = findViewById(R.id.xuamengMusic);  //xuameng播放音乐背景
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
         mSubtitleView = findViewById(R.id.subtitle_view);
@@ -275,6 +307,13 @@ public class VodController extends BaseController {
         mLandscapePortraitBtn = findViewById(R.id.landscape_portrait);
         backBtn = findViewById(R.id.tv_back);
 		mxuPlay = findViewById(R.id.mxuplay);		                  //xuameng  低菜单播放
+
+		//xuameng音乐播放时图标
+        ObjectAnimator animator20 = ObjectAnimator.ofFloat(iv_circle_bg, "rotation", 360.0f);
+        animator20.setDuration(10000);
+        animator20.setRepeatCount(-1);
+        animator20.start();
+
         backBtn.setOnClickListener(new OnClickListener() {            //xuameng  屏幕上的返回键
             @Override
             public void onClick(View view) {
@@ -1159,8 +1198,17 @@ public class VodController extends BaseController {
                 break;
             case VideoView.STATE_PREPARING:
 				simSeekPosition = 0;       //XUAMENG重要,换视频时重新记录进度
+				if (MxuamengMusic.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
+					MxuamengMusic.setVisibility(GONE);
+					}
+				if (iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
+					iv_circle_bg.setVisibility(GONE);
+					}
             case VideoView.STATE_BUFFERING:
                 if(mProgressRoot.getVisibility()==GONE)mPlayLoadNetSpeed.setVisibility(VISIBLE);
+				if (iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
+					iv_circle_bg.setVisibility(GONE);
+					}
                 break;
             case VideoView.STATE_PLAYBACK_COMPLETED:
                 listener.playNext(true);
@@ -1314,6 +1362,8 @@ public class VodController extends BaseController {
             return false;
         }
         if (super.onBackPressed()) {                                                                      //xuameng返回退出
+			iv_circle_bg.setVisibility(GONE);  //xuameng音乐播放时图标
+			MxuamengMusic.setVisibility(GONE);  //xuameng播放音乐背景
             return true;
         }
         if (isBottomVisible() && (System.currentTimeMillis() - DOUBLE_CLICK_TIME > 500)) {			      //xuameng按返回键退出
@@ -1333,5 +1383,7 @@ public class VodController extends BaseController {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         mHandler.removeCallbacks(myRunnable2);
+		mHandler.removeCallbacks(xuRunnable);
+		
     }
 }
