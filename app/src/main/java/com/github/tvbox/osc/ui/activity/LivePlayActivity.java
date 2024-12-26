@@ -1913,12 +1913,15 @@ public class LivePlayActivity extends BaseActivity {
             public void playStateChanged(int playState) {
                 switch(playState) {
                     case VideoView.STATE_IDLE:
+						tv_size.setText("[0 X 0]");  //XUAMENG分辨率
                     case VideoView.STATE_PAUSED:
                         break;
-                    case VideoView.STATE_PREPARED:
+                    case VideoView.STATE_PREPARED:						
                         if(mVideoView.getVideoSize().length >= 2) { //XUAMENG分辨率
                             tv_size.setText("[" + mVideoView.getVideoSize()[0] + " X " + mVideoView.getVideoSize()[1] + "]");
-                        }
+                        }else {
+							tv_size.setText("[0 X 0]");
+						}
                         int duration1 = (int) mVideoView.getDuration();
                         if(isBack) {
                             tv_right_top_type.setText("回看中");
