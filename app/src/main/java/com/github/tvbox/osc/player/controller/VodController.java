@@ -1132,6 +1132,7 @@ public class VodController extends BaseController {
         videoPlayState = playState;
         switch (playState) {
             case VideoView.STATE_IDLE:
+				mVideoSize.setText("[ 0 X 0 ]");
                 break;
             case VideoView.STATE_PLAYING:
                 initLandscapePortraitBtnInfo();
