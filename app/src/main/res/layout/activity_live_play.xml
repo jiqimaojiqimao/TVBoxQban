@@ -483,7 +483,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/vs_0"
-                android:text="[1024X768]"
+                android:text="[0 X 0]"
                 android:layout_alignParentRight="true"/>
             <TextView
                 android:textSize="@dimen/vs_20"
