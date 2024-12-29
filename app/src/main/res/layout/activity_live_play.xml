@@ -948,4 +948,13 @@
         android:layout_width="@dimen/vs_80"
         android:layout_height="@dimen/vs_80"
         android:src="@drawable/app_icon"/>
+    <ProgressBar
+        android:layout_gravity="center"
+        android:layout_width="@dimen/vs_50"
+        android:layout_height="@dimen/vs_50"
+		android:id="@+id/loading_xu"
+		android:visibility="gone"
+        android:indeterminateOnly="true"
+        android:indeterminateDrawable="@drawable/anim_loading"
+        android:indeterminateBehavior="repeat" />
 </FrameLayout>
