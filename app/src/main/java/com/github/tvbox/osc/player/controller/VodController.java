@@ -259,11 +259,6 @@ public class VodController extends BaseController {
             String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
             String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
             mVideoSize.setText("[ " + width + " X " + height +" ]");
-
-if (!ApiConfig.get().wallpaper.isEmpty()){
-String Url = ApiConfig.get().wallpaper;
-Picasso.get().load(Url).placeholder(R.drawable.xumusic).into(MxuamengMusic); // xuameng内容空显示banner
-}
             
 			if (mControlWrapper.isPlaying()){    //xuameng音乐播放时图标判断
 				mxuPlay.setText("暂停");
@@ -320,6 +315,20 @@ Picasso.get().load(Url).placeholder(R.drawable.xumusic).into(MxuamengMusic); // 
         }
     };
 
+    private Runnable myRunnable3 = new Runnable() {
+        @Override
+        public void run() {
+
+
+if (!ApiConfig.get().wallpaper.isEmpty()){
+String Url = ApiConfig.get().wallpaper;
+Picasso.get().load(Url).placeholder(R.drawable.xumusic).centerCrop().into(MxuamengMusic); // xuameng内容空显示banner
+}	
+MxuamengMusic.setVisibility(GONE);
+MxuamengMusic.setVisibility(VISIBLE);
+            mHandler.postDelayed(this, 6000);
+        }
+    };
 
    private Runnable xuRunnable = new Runnable() {                     //xuameng显示系统时间
         @Override
