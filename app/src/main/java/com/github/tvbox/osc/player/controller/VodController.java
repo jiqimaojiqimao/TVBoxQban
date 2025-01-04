@@ -47,6 +47,8 @@ import java.util.Date;
 import xyz.doikki.videoplayer.player.VideoView;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 import static xyz.doikki.videoplayer.util.PlayerUtils.stringForTime;
+import com.squareup.picasso.Picasso;
+import com.github.tvbox.osc.api.ApiConfig;
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
@@ -257,6 +259,11 @@ public class VodController extends BaseController {
             String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
             String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
             mVideoSize.setText("[ " + width + " X " + height +" ]");
+
+if (!ApiConfig.get().wallpaper.isEmpty()){
+String Url = ApiConfig.get().wallpaper;
+Picasso.get().load(Url).placeholder(R.drawable.xumusic).into(MxuamengMusic); // xuameng内容空显示banner
+}
             
 			if (mControlWrapper.isPlaying()){    //xuameng音乐播放时图标判断
 				mxuPlay.setText("暂停");
