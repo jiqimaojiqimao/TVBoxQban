@@ -217,7 +217,7 @@ public class VodController extends BaseController {
     TextView mPlayrefresh;
 	TextView mxuPlay;                         //xuameng 底部播放ID
 	private ImageView iv_circle_bg;  //xuameng音乐播放时图标
-	LinearLayout MxuamengMusic;       //xuameng播放音乐背景
+	ImageView MxuamengMusic;       //xuameng播放音乐背景
     public TextView mPlayerTimeStartEndText;
     public TextView mPlayerTimeStartBtn;
     public TextView mPlayerTimeSkipBtn;
@@ -373,7 +373,7 @@ Picasso.get().load(Url).placeholder(R.drawable.xumusic).into(MxuamengMusic); // 
 		MxuamengView = findViewById(R.id.xuamengView);				   //XUAMENG防点击
 		mTvPausexu = findViewById(R.id.tv_pause_xu);				   //XUAMENG暂停动画
 		iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg);  //xuameng音乐播放时图标
-		MxuamengMusic = findViewById(R.id.xuamengMusic);  //xuameng播放音乐背景
+		MxuamengMusic = (ImageView) findViewById(R.id.xuamengMusic);  //xuameng播放音乐背景
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
         mSubtitleView = findViewById(R.id.subtitle_view);
