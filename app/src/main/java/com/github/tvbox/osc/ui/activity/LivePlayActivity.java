@@ -1335,6 +1335,7 @@ public class LivePlayActivity extends BaseActivity {
         RecyclerView.ViewHolder holder = mLiveChannelView.findViewHolderForAdapterPosition(currentLiveChannelIndex);
         if(holder != null) holder.itemView.requestFocus();
         tvLeftChannelListLayout.setVisibility(View.VISIBLE);
+		tvLeftChannelListLayout.requestLayout();   //xuameng surface按键不好使
 		isShowlist = true;
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) tvLeftChannelListLayout.getLayoutParams();
         if(countDownTimer5 != null) {
@@ -1531,6 +1532,7 @@ public class LivePlayActivity extends BaseActivity {
         RecyclerView.ViewHolder holder = mSettingGroupView.findViewHolderForAdapterPosition(0);
         if(holder != null) holder.itemView.requestFocus();
         tvRightSettingLayout.setVisibility(View.VISIBLE);
+		tvRightSettingLayout.requestLayout();  //xuameng surface按键不好使
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) tvRightSettingLayout.getLayoutParams();
         if(countDownTimer6 != null) {
             countDownTimer6.cancel();
