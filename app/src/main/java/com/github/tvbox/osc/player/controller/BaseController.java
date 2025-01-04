@@ -42,7 +42,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private boolean mEnableInNormal;
     private boolean mCanSlide;
     private int mCurPlayState;
-	private double DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();    //xuameng防连击0.5秒
 
     protected Handler mHandler;
 
@@ -52,7 +51,8 @@ public abstract class BaseController extends BaseVideoController implements Gest
         void callback(Message msg);
     }
 
-    private boolean mIsDoubleTapTogglePlayEnabled = true;
+    //private boolean mIsDoubleTapTogglePlayEnabled = true;
+	private boolean mIsDoubleTapTogglePlayEnabled = false;   //xuameng打开双击 true
 
 
     public BaseController(@NonNull Context context) {
@@ -243,10 +243,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
      */
     @Override
     public boolean onDoubleTap(MotionEvent e) {
-		if ((System.currentTimeMillis() - DOUBLE_CLICK_TIME_2) < 500){                  //xuameng 防播放打断动画
-			return true;
-			}
-		DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();
         if (mIsDoubleTapTogglePlayEnabled && !isLocked() && isInPlaybackState()) togglePlay();
         return true;
     }
