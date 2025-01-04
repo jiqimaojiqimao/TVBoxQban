@@ -328,7 +328,7 @@ Picasso.get()
 	.placeholder(R.drawable.xumusic)
 	.centerCrop()
 	.into(MxuamengMusic) // xuameng内容空显示banner
-	.clearMemory();
+	
 }	
 MxuamengMusic.setVisibility(GONE);
 MxuamengMusic.setVisibility(VISIBLE);
