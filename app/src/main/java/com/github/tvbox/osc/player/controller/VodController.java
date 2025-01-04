@@ -322,7 +322,7 @@ public class VodController extends BaseController {
 
 if (!ApiConfig.get().wallpaper.isEmpty()){
 String Url = ApiConfig.get().wallpaper;
-Picasso.get().load(Url).placeholder(R.drawable.xumusic).centerCrop().memoryPolicy(MemoryPolicy.NO_CACHE).into(MxuamengMusic); // xuameng内容空显示banner
+Picasso.get().with(context).load(Url).placeholder(R.drawable.xumusic).centerCrop().memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE).into(MxuamengMusic); // xuameng内容空显示banner
 }	
 MxuamengMusic.setVisibility(GONE);
 MxuamengMusic.setVisibility(VISIBLE);
