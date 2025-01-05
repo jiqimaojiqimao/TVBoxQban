@@ -320,7 +320,7 @@ public class VodController extends BaseController {
         }
     };
 
-	private class myRunnableMusic implements Runnable {
+	private Runnable myRunnableMusic = new Runnable() {
         @Override
         public void run() {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
@@ -408,6 +408,8 @@ public class VodController extends BaseController {
         animator20.setDuration(10000);
         animator20.setRepeatCount(-1);
         animator20.start();
+		
+		mHandler.post(myRunnableMusic);
 
         backBtn.setOnClickListener(new OnClickListener() {            //xuameng  屏幕上的返回键
             @Override
@@ -480,7 +482,6 @@ public class VodController extends BaseController {
             }
         });
 
-		myHandle.post(myRunnableMusic);
 
         mGridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false));
         ParseAdapter parseAdapter = new ParseAdapter();
