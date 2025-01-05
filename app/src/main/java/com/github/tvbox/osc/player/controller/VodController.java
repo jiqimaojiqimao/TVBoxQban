@@ -327,8 +327,8 @@ Picasso.get()
 
 	.placeholder(R.drawable.xumusic)
 	.centerCrop()
-	.into(MxuamengMusic); // xuameng内容空显示banner
-	
+	.into(MxuamengMusic) // xuameng内容空显示banner
+
 }	
 MxuamengMusic.setVisibility(GONE);
 MxuamengMusic.setVisibility(VISIBLE);
@@ -397,6 +397,7 @@ MxuamengMusic.setVisibility(VISIBLE);
         mLandscapePortraitBtn = findViewById(R.id.landscape_portrait);
         backBtn = findViewById(R.id.tv_back);
 		mxuPlay = findViewById(R.id.mxuplay);		                  //xuameng  低菜单播放
+		mHandler.post(myRunnable3);
 
 		//xuameng音乐播放时图标
         ObjectAnimator animator20 = ObjectAnimator.ofFloat(iv_circle_bg, "rotation", 360.0f);
@@ -465,7 +466,6 @@ MxuamengMusic.setVisibility(VISIBLE);
             @Override
             public void run() {
                 mHandler.post(myRunnable2);
-				mHandler.post(myRunnable3);
             }
         });
 
