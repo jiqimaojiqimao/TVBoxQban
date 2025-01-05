@@ -51,6 +51,7 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.MemoryPolicy;
 import com.squareup.picasso.NetworkPolicy;
 import com.github.tvbox.osc.api.ApiConfig;
+import android.widget.RelativeLayout;   //xuameng搜索历史
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
