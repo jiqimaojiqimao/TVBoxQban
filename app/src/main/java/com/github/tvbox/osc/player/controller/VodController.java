@@ -316,7 +316,7 @@ public class VodController extends BaseController {
 			}   //xuameng音乐播放时图标判断完
 				
 
-            mHandler.postDelayed(this, 6000);
+            mHandler.postDelayed(this, 1000);
         }
     };
 
@@ -409,7 +409,7 @@ public class VodController extends BaseController {
         animator20.setRepeatCount(-1);
         animator20.start();
 
-		mHandler.post(myRunnableMusic);
+		myHandle.post(myRunnableMusic);
 
         backBtn.setOnClickListener(new OnClickListener() {            //xuameng  屏幕上的返回键
             @Override
