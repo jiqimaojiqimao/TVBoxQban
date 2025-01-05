@@ -9,7 +9,7 @@
         android:id="@+id/mVideoView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"/>
-    <LinearLayout
+    <ImageView
         android:enabled="true"
         android:id="@+id/xuamengMusic"
         android:visibility="gone"
