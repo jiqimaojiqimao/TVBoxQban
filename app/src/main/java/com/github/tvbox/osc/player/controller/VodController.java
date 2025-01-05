@@ -266,7 +266,7 @@ public class VodController extends BaseController {
 
             
 			if (mControlWrapper.isPlaying()){    //xuameng音乐播放时图标判断
-
+MxuamengMusic.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
 				mxuPlay.setText("暂停");
 				if (!isPlaying && mTvPausexu.getVisibility() == View.VISIBLE){						
 					ObjectAnimator animator10 = ObjectAnimator.ofFloat(mTvPausexu, "translationX", -0,700);				//xuameng动画暂停菜单开始
@@ -313,7 +313,7 @@ public class VodController extends BaseController {
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 	//			.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic); // xuameng内容空显示banner
-				MxuamengMusic.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+				
 			}
 					if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
 					MxuamengMusic.setVisibility(VISIBLE);
