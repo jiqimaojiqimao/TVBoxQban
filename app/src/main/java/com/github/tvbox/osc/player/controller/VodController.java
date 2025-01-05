@@ -307,7 +307,7 @@ public class VodController extends BaseController {
 				.placeholder(R.drawable.xumusic)
 	//			.centerCrop()
 				.error(R.drawable.xumusic)
-	//			.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
+				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 	//			.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic); // xuameng内容空显示banner
 			}
