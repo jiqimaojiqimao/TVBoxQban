@@ -409,8 +409,6 @@ public class VodController extends BaseController {
         animator20.setRepeatCount(-1);
         animator20.start();
 
-		myHandle.post(myRunnableMusic);
-
         backBtn.setOnClickListener(new OnClickListener() {            //xuameng  屏幕上的返回键
             @Override
             public void onClick(View view) {
@@ -481,6 +479,8 @@ public class VodController extends BaseController {
                 mHandler.post(xuRunnable);
             }
         });
+
+		myHandle.post(myRunnableMusic);
 
         mGridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false));
         ParseAdapter parseAdapter = new ParseAdapter();
