@@ -61,6 +61,7 @@ public class ApiConfig {
     private List<IJKCode> ijkCodes;
     private String spider = null;
     public String wallpaper = "";
+	public String musicwallpaper = "";
 
     private SourceBean emptyHome = new SourceBean();
 
@@ -307,6 +308,7 @@ public class ApiConfig {
         spider = DefaultConfig.safeJsonString(infoJson, "spider", "");
         // wallpaper
         wallpaper = DefaultConfig.safeJsonString(infoJson, "wallpaper", "");
+		musicwallpaper = DefaultConfig.safeJsonString(infoJson, "musicwallpaper", "");
         // 远端站点源
         SourceBean firstSite = null;
         for (JsonElement opt : infoJson.get("sites").getAsJsonArray()) {
