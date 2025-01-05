@@ -47,10 +47,10 @@ import java.util.Date;
 import xyz.doikki.videoplayer.player.VideoView;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 import static xyz.doikki.videoplayer.util.PlayerUtils.stringForTime;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.MemoryPolicy;
-import com.squareup.picasso.NetworkPolicy;
-import com.github.tvbox.osc.api.ApiConfig;
+import com.squareup.picasso.Picasso;      //xuameng播放音频切换图片
+import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
+import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
+import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
@@ -261,11 +261,8 @@ public class VodController extends BaseController {
             String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
             String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
             mVideoSize.setText("[ " + width + " X " + height +" ]");
-
-
             
 			if (mControlWrapper.isPlaying()){    //xuameng音乐播放时图标判断
-
 				mxuPlay.setText("暂停");
 				if (!isPlaying && mTvPausexu.getVisibility() == View.VISIBLE){						
 					ObjectAnimator animator10 = ObjectAnimator.ofFloat(mTvPausexu, "translationX", -0,700);				//xuameng动画暂停菜单开始
@@ -320,12 +317,12 @@ public class VodController extends BaseController {
         }
     };
 
-	private Runnable myRunnableMusic = new Runnable() {
+	private Runnable myRunnableMusic = new Runnable() {  //xuameng播放音频切换图片
         @Override
         public void run() {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
-				if (!ApiConfig.get().wallpaper.isEmpty()){
-				String Url = ApiConfig.get().wallpaper;
+				if (!ApiConfig.get().musicwallpaper.isEmpty()){
+				String Url = ApiConfig.get().musicwallpaper;
 				Picasso.get()
 				.load(Url)
 				.placeholder(R.drawable.xumusic)
@@ -337,7 +334,7 @@ public class VodController extends BaseController {
 				.into(MxuamengMusic); // xuameng内容空显示banner
 				}
 			}
-        mHandler.postDelayed(this, 6000);
+        mHandler.postDelayed(this, 20000);
        }
     };
 
@@ -470,7 +467,7 @@ public class VodController extends BaseController {
             @Override
             public void run() {
                 mHandler.post(myRunnable2);
-				mHandler.post(myRunnableMusic);
+				mHandler.post(myRunnableMusic);  //xuameng播放音频切换图片
             }
         });
 
