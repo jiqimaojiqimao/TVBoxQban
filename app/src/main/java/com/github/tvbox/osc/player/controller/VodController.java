@@ -300,18 +300,6 @@ public class VodController extends BaseController {
 					MxuamengMusic.setVisibility(GONE);
 					}
 				}else{
-												if (!ApiConfig.get().wallpaper.isEmpty()){
-				String Url = ApiConfig.get().wallpaper;
-				Picasso.get()
-				.load(Url)
-				.placeholder(R.drawable.xumusic)
-				.resize(3840,2160)
-				.centerCrop()
-				.error(R.drawable.xumusic)
-				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
-	//			.networkPolicy(NetworkPolicy.NO_CACHE)
-				.into(MxuamengMusic); // xuameng内容空显示banner
-			}
 					if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
 					MxuamengMusic.setVisibility(VISIBLE);
 					}
@@ -330,6 +318,27 @@ public class VodController extends BaseController {
 
             mHandler.postDelayed(this, 6000);
         }
+    };
+
+	private class myRunnableMusic implements Runnable {
+        @Override
+        public void run() {
+			if (MxuamengMusic.getVisibility() == View.VISIBLE){
+				if (!ApiConfig.get().wallpaper.isEmpty()){
+				String Url = ApiConfig.get().wallpaper;
+				Picasso.get()
+				.load(Url)
+				.placeholder(R.drawable.xumusic)
+				.resize(3840,2160)
+				.centerCrop()
+				.error(R.drawable.xumusic)
+				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
+	//			.networkPolicy(NetworkPolicy.NO_CACHE)
+				.into(MxuamengMusic); // xuameng内容空显示banner
+				}
+			}
+        mHandler.postDelayed(this, 6000);
+       }
     };
 
    private Runnable xuRunnable = new Runnable() {                     //xuameng显示系统时间
@@ -399,6 +408,8 @@ public class VodController extends BaseController {
         animator20.setDuration(10000);
         animator20.setRepeatCount(-1);
         animator20.start();
+
+		mHandler.post(myRunnableMusic);
 
         backBtn.setOnClickListener(new OnClickListener() {            //xuameng  屏幕上的返回键
             @Override
