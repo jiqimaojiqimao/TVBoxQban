@@ -34,6 +34,10 @@ import com.github.tvbox.osc.util.JavaUtil;   //xuameng记忆播放频道组用
 import android.os.Bundle;   //xuameng记忆播放频道组用
 import kotlin.Pair;   //xuameng记忆播放频道组用
 import android.widget.ProgressBar;   //xuameng 播放音频时的缓冲动画
+import com.squareup.picasso.Picasso;      //xuameng播放音频切换图片
+import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
+import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
+import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
@@ -187,7 +191,7 @@ public class LivePlayActivity extends BaseActivity {
     private int selectedChannelNumber = 0; // xuameng遥控器数字键输入的要切换的频道号码
     private TextView tvSelectedChannel; //xuameng频道编号
 	private ImageView iv_circle_bg_xu;  //xuameng音乐播放时图标
-	private LinearLayout MxuamengMusic;       //xuameng播放音乐背景
+	private ImageView MxuamengMusic;       //xuameng播放音乐背景
     private static Toast toast;
     private static String shiyi_time; //时移时间
     private static int shiyi_time_c; //时移时间差值
@@ -264,7 +268,7 @@ public class LivePlayActivity extends BaseActivity {
         divLoadEpgleft = (View) findViewById(R.id.divLoadEpgleft);
         view_line_XU = (View) findViewById(R.id.view_line); //xuameng横线
 		iv_circle_bg_xu = (ImageView) findViewById(R.id.iv_circle_bg_xu);  //xuameng音乐播放时图标
-		MxuamengMusic = findViewById(R.id.xuamengMusic);  //xuameng播放音乐背景
+		MxuamengMusic = (ImageView) findViewById(R.id.xuamengMusic);  //xuameng播放音乐背景
 		mLoading = findViewById(R.id.loading_xu);  //xuameng 播放音频时的缓冲动画
         divEpg = (LinearLayout) findViewById(R.id.divEPG);
         //右上角图片旋转
@@ -429,6 +433,7 @@ public class LivePlayActivity extends BaseActivity {
         initLiveSettingGroupList();
         mHandler.post(mUpdateNetSpeedRunXu); //XUAMENG左上网速检测1秒钟一次
         mHandler.post(mUpdateVodProgressXu); //xuamengVOD BACK播放进度检测
+		mHandler.post(myRunnableMusic); //xuamengVOD BACK播放进度检测
         iv_playpause.setNextFocusLeftId(R.id.pb_progressbar);
     }
     //获取EPG并存储 // 百川epg  DIYP epg   51zmt epg ------- 自建EPG格式输出格式请参考 51zmt
@@ -885,6 +890,7 @@ public class LivePlayActivity extends BaseActivity {
             mHandler.removeCallbacks(mUpdateNetSpeedRun);
             mHandler.removeCallbacks(mUpdateNetSpeedRunXu);
             mHandler.removeCallbacks(mUpdateVodProgressXu);
+			mHandler.removeCallbacks(myRunnableMusic);
             mHandler.removeCallbacks(mUpdateTimeRun);
             mHandler.removeCallbacks(mUpdateTimeRunXu);
 			iv_circle_bg_xu.setVisibility(View.GONE);  //xuameng音乐播放时图标
@@ -2674,6 +2680,29 @@ public class LivePlayActivity extends BaseActivity {
             mHandler.postDelayed(this, 1000);
         }
     };
+
+	private Runnable myRunnableMusic = new Runnable() {  //xuameng播放音频切换图片
+        @Override
+        public void run() {
+			if (MxuamengMusic.getVisibility() == View.VISIBLE){
+				if (!ApiConfig.get().musicwallpaper.isEmpty()){
+				String Url = ApiConfig.get().musicwallpaper;
+				Picasso.get()
+				.load(Url)
+//				.placeholder(R.drawable.xumusic)
+				.resize(3840,2160)
+				.centerCrop()
+				.error(R.drawable.xumusic)
+				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
+	//			.networkPolicy(NetworkPolicy.NO_CACHE)
+				.into(MxuamengMusic); // xuameng内容空显示banner
+				}
+			}
+        mHandler.postDelayed(this, 15000);
+       }
+    };
+
+
     private void showPasswordDialog(int groupIndex, int liveChannelIndex) {
         if(tvLeftChannelListLayout.getVisibility() == View.VISIBLE) {
             mHideChannelListRunXu(); //xuameng隐藏频道菜单
