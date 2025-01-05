@@ -48,6 +48,9 @@ import xyz.doikki.videoplayer.player.VideoView;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 import static xyz.doikki.videoplayer.util.PlayerUtils.stringForTime;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.MemoryPolicy.NO_STORE;
+import com.squareup.picasso.MemoryPolicy.NO_CACHE;
+import com.squareup.picasso3.NetworkPolicy.NO_CACHE;
 import com.github.tvbox.osc.api.ApiConfig;
 
 public class VodController extends BaseController {
@@ -326,7 +329,9 @@ Picasso.get()
 	.load(Url)
 
 	.placeholder(R.drawable.xumusic)
-	.centerCrop(true)
+	.centerCrop()
+		.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
+		.networkPolicy(NetworkPolicy.NO_CACHE)
 	.into(MxuamengMusic); // xuameng内容空显示banner
 
 }	
