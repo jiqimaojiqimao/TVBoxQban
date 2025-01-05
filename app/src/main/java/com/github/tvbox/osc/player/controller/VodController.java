@@ -302,15 +302,17 @@ public class VodController extends BaseController {
 				}else{
 												if (!ApiConfig.get().wallpaper.isEmpty()){
 				String Url = ApiConfig.get().wallpaper;
+				
 				Picasso.get()
 				.load(Url)
 				.placeholder(R.drawable.xumusic)
-				.resize(3840,2160)
+				.fit()
 				.centerCrop()
 				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 	//			.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic); // xuameng内容空显示banner
+				MxuamengMusic.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
 			}
 					if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
 					MxuamengMusic.setVisibility(VISIBLE);
