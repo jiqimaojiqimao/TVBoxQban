@@ -321,7 +321,7 @@ public class VodController extends BaseController {
         @Override
         public void run() {
 
-
+if (mControlWrapper.isPlaying()){
 if (!ApiConfig.get().wallpaper.isEmpty()){
 String Url = ApiConfig.get().wallpaper;
 Picasso.get()
@@ -336,6 +336,7 @@ Picasso.get()
 }	
 MxuamengMusic.setVisibility(GONE);
 MxuamengMusic.setVisibility(VISIBLE);
+}
             mHandler.postDelayed(this, 6000);
         }
     };
