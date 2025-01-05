@@ -391,7 +391,6 @@ public class VodController extends BaseController {
         mLandscapePortraitBtn = findViewById(R.id.landscape_portrait);
         backBtn = findViewById(R.id.tv_back);
 		mxuPlay = findViewById(R.id.mxuplay);		                  //xuameng  低菜单播放
-		mHandler.post(myRunnable3);
 
 		//xuameng音乐播放时图标
         ObjectAnimator animator20 = ObjectAnimator.ofFloat(iv_circle_bg, "rotation", 360.0f);
