@@ -409,8 +409,6 @@ public class VodController extends BaseController {
         animator20.setRepeatCount(-1);
         animator20.start();
 		
-		mHandler.post(myRunnableMusic);
-
         backBtn.setOnClickListener(new OnClickListener() {            //xuameng  屏幕上的返回键
             @Override
             public void onClick(View view) {
@@ -472,6 +470,7 @@ public class VodController extends BaseController {
             @Override
             public void run() {
                 mHandler.post(myRunnable2);
+				mHandler.post(myRunnableMusic);
             }
         });
 
