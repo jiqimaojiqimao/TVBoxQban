@@ -307,7 +307,7 @@ public class VodController extends BaseController {
 				Picasso.get()
 				.load(Url)
 				.placeholder(R.drawable.xumusic)
-				.fit()
+				.resize(3840,2160)
 				.centerCrop()
 				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
