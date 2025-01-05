@@ -305,8 +305,9 @@ public class VodController extends BaseController {
 				Picasso.get()
 				.load(Url)
 				.placeholder(R.drawable.xumusic)
-				.centerCrop()
-				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
+	//			.centerCrop()
+				.error(R.drawable.xumusic)
+	//			.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 	//			.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic); // xuameng内容空显示banner
 			}
