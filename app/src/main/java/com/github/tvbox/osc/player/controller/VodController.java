@@ -48,9 +48,8 @@ import xyz.doikki.videoplayer.player.VideoView;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 import static xyz.doikki.videoplayer.util.PlayerUtils.stringForTime;
 import com.squareup.picasso.Picasso;
-import com.squareup.picasso.MemoryPolicy.NO_STORE;
-import com.squareup.picasso.MemoryPolicy.NO_CACHE;
-import com.squareup.picasso3.NetworkPolicy.NO_CACHE;
+import com.squareup.picasso.MemoryPolicy;
+import com.squareup.picasso.NetworkPolicy;
 import com.github.tvbox.osc.api.ApiConfig;
 
 public class VodController extends BaseController {
