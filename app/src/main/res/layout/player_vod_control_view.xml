@@ -17,6 +17,7 @@
         android:id="@+id/xuamengMusic"
         android:visibility="gone"
         android:background="@drawable/xumusic"
+		android:scaleType="fitXY" 
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"/>
     <LinearLayout
