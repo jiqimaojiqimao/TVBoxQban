@@ -325,8 +325,8 @@ public class VodController extends BaseController {
 				String Url = ApiConfig.get().musicwallpaper;
 				Picasso.get()
 				.load(Url)
-//				.placeholder(R.drawable.xumusic)
-				.noPlaceholder()
+//				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
+				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(3840,2160)
 				.centerCrop()
 				.error(R.drawable.xumusic)
