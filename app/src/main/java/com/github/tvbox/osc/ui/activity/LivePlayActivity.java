@@ -2689,12 +2689,13 @@ public class LivePlayActivity extends BaseActivity {
 				String Url = ApiConfig.get().musicwallpaper;
 				Picasso.get()
 				.load(Url)
-//				.placeholder(R.drawable.xumusic)
+//				.placeholder(R.drawable.xumusic)  //xuameng默认的站位图
+				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(3840,2160)
 				.centerCrop()
 				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
-	//			.networkPolicy(NetworkPolicy.NO_CACHE)
+				.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic); // xuameng内容空显示banner
 				}
 			}
