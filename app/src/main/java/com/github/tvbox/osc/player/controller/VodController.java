@@ -326,11 +326,12 @@ public class VodController extends BaseController {
 				Picasso.get()
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)
+				.noPlaceholder()
 				.resize(3840,2160)
 				.centerCrop()
 				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
-	//			.networkPolicy(NetworkPolicy.NO_CACHE)
+				.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic); // xuameng内容空显示banner
 				}
 			}
