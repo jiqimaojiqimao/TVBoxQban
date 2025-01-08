@@ -83,7 +83,7 @@ public class IjkTrackInfo implements ITrackInfo {
                 out.append(mStreamMeta.getSampleRateInline());
                 break;
             case MEDIA_TRACK_TYPE_TIMEDTEXT:
-                out.append("Language");
+                out.append("Language");  //xuameng显示语言
                 out.append(", ");
                 out.append(mStreamMeta.mLanguage);
                 break;
