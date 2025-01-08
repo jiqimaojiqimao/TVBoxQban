@@ -52,7 +52,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
                             t.renderId = groupArrayIndex;
                             data.addAudio(t);
                         } else if (MimeTypes.isText(format.sampleMimeType)) {
-                            String trackName = (format.sampleMimeType:format.containerMimeType);
+                            String trackName = format.sampleMimeType:format.containerMimeType;
                             TrackInfoBean t = new TrackInfoBean();
                             t.name = trackName;
                             t.language = "";
