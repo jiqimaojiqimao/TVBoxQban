@@ -83,14 +83,12 @@ public class IjkTrackInfo implements ITrackInfo {
                 out.append(mStreamMeta.getSampleRateInline());
                 break;
             case MEDIA_TRACK_TYPE_TIMEDTEXT:
-                out.append("TIMEDTEXT");
+                out.append("Language");
                 out.append(", ");
                 out.append(mStreamMeta.mLanguage);
                 break;
             case MEDIA_TRACK_TYPE_SUBTITLE:
                 out.append("SUBTITLE");
-			    out.append(", ");
-                out.append(mStreamMeta.mLanguage);
                 break;
             default:
                 out.append("UNKNOWN");
