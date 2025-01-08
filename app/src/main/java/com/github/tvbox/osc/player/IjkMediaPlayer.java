@@ -127,7 +127,7 @@ public class IjkMediaPlayer extends IjkPlayer {
         IjkTrackInfo[] trackInfo = mMediaPlayer.getTrackInfo();
         if (trackInfo == null) return null;
         TrackInfo data = new TrackInfo();
-        int subtitleSelected = mMediaPlayer.getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT);
+        int subtitleSelected = mMediaPlayer.getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_SUBTITLE);
         int audioSelected = mMediaPlayer.getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_AUDIO);
         int index = 0;
         for (IjkTrackInfo info : trackInfo) {
@@ -141,7 +141,7 @@ public class IjkMediaPlayer extends IjkPlayer {
                 // 如果需要，还可以检查轨道的描述或标题以获取更多信息
                 data.addAudio(a);
             }
-            if (info.getTrackType() == ITrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT) {//内置字幕
+            if (info.getTrackType() == ITrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) {//内置字幕
 				String trackName = (data.getSubtitle().size() + 1) + "：" + info.getInfoInline();
                 TrackInfoBean t = new TrackInfoBean();
                 t.name = trackName;
