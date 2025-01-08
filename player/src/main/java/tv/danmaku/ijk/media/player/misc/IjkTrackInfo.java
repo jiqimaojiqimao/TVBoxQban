@@ -89,6 +89,8 @@ public class IjkTrackInfo implements ITrackInfo {
                 break;
             case MEDIA_TRACK_TYPE_SUBTITLE:
                 out.append("SUBTITLE");
+			    out.append(", ");
+                out.append(mStreamMeta.mLanguage);
                 break;
             default:
                 out.append("UNKNOWN");
