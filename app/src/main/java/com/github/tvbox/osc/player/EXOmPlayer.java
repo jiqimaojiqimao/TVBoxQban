@@ -41,13 +41,6 @@ public class EXOmPlayer extends ExoMediaPlayer {
                     TrackGroup group = groupArray.get(groupIndex);
                     for (int formatIndex = 0; formatIndex < group.length; formatIndex++) {
                         Format format = group.getFormat(formatIndex);
-						String originalString = format.sampleMimeType;   //xuameng显示字幕类型
-						String stringToReplace = "application/";  //xuameng过滤字幕类型里application/字符串
-						String replacementString = "";
-						if(originalString.contains(stringToReplace)) {  //xuameng过滤字幕类型里application/字符串
-						originalString = originalString.replace(stringToReplace, replacementString);  //xuameng过滤字幕类型里application/字符串
-						}
-
                         if (MimeTypes.isAudio(format.sampleMimeType)) {
                             String trackName = (data.getAudio().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + (TextUtils.isEmpty(format.codecs)?format.sampleMimeType:format.codecs) + "]";
 							TrackInfoBean t = new TrackInfoBean();
@@ -59,6 +52,22 @@ public class EXOmPlayer extends ExoMediaPlayer {
                             t.renderId = groupArrayIndex;
                             data.addAudio(t);
                         } else if (MimeTypes.isText(format.sampleMimeType)) {
+							String originalString = format.sampleMimeType;   //xuameng显示字幕类型
+							String stringToReplace = "application/";  //xuameng过滤字幕类型里application/字符串
+							String replacementString = "";
+							if(originalString.contains(stringToReplace)) {  //xuameng过滤字幕类型里application/字符串
+							originalString = originalString.replace(stringToReplace, replacementString);  //xuameng过滤字幕类型里application/字符串
+							}
+							String text = "text/x-";  //xuameng过滤字幕类型里application/字符串
+							String textString = "";
+							if(originalString.contains(text)) {  //xuameng过滤字幕类型里application/字符串
+							originalString = originalString.replace(text, textString);  //xuameng过滤字幕类型里application/字符串
+							}
+							String text1 = "x-";  //xuameng过滤字幕类型里application/字符串
+							String textString1 = "";
+							if(originalString.contains(text1)) {  //xuameng过滤字幕类型里application/字符串
+							originalString = originalString.replace(text1, textString1);  //xuameng过滤字幕类型里application/字符串
+							}
                             String trackName = (data.getSubtitle().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "，"  + "[" + originalString  + "字幕]";  //xuameng显示字幕类型
                             TrackInfoBean t = new TrackInfoBean();
                             t.name = trackName;
