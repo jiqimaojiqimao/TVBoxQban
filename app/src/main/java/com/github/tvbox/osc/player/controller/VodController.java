@@ -263,6 +263,11 @@ public class VodController extends BaseController {
             mVideoSize.setText("[ " + width + " X " + height +" ]");
             
 			if (mControlWrapper.isPlaying()){    //xuameng音乐播放时图标判断
+				if (!mIsDragging) {
+					mControlWrapper.startProgress();    //xuameng启动进程
+					mControlWrapper.startFadeOut();
+				}
+
 				mxuPlay.setText("暂停");
 				if (!isPlaying && mTvPausexu.getVisibility() == View.VISIBLE){						
 					ObjectAnimator animator10 = ObjectAnimator.ofFloat(mTvPausexu, "translationX", -0,700);				//xuameng动画暂停菜单开始
