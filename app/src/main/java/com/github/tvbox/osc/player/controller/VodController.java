@@ -328,7 +328,7 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
-				Picasso.get()
+				Picasso.with(context)
 				.load(Url)
 				    .noFade()
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
