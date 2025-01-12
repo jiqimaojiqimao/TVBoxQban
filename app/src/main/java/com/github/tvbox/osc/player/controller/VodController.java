@@ -50,9 +50,8 @@ import static xyz.doikki.videoplayer.util.PlayerUtils.stringForTime;
 import com.squareup.picasso.Picasso;      //xuameng播放音频切换图片
 import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
+import com.squareup.picasso.Callback;
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
@@ -238,7 +237,6 @@ public class VodController extends BaseController {
     private boolean isClickBackBtn;
 	private double DOUBLE_CLICK_TIME = 0L;    //xuameng返回键防连击1.5秒（为动画）
 	private double DOUBLE_CLICK_TIME_2 = 0L;    //xuameng防连击1秒（为动画）
-	private Context mContext;
    
     LockRunnable lockRunnable = new LockRunnable();
     private boolean isLock = false;
@@ -325,29 +323,35 @@ public class VodController extends BaseController {
         }
     };
 
-    public void testxu() {
-
-
-	String Url = ApiConfig.get().musicwallpaper;
-				Glide.with(mContext)
-				.load(Url)
-//				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
-//				.noPlaceholder()   //不使用站位图，效果不好
- .crossFade(1000) 
-				.override(3840,2160)
-				.centerCrop()
-				.error(R.drawable.xumusic)
-    .skipMemoryCache(true)
-    .diskCacheStrategy(DiskCacheStrategy.NONE)
-				.into(MxuamengMusic); // xuameng内容空显示banner
-     }
-
 	private Runnable myRunnableMusic = new Runnable() {  //xuameng播放音频切换图片
         @Override
         public void run() {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
-				testxu();
+				String Url = ApiConfig.get().musicwallpaper;
+				Picasso.get()
+				.load(Url)
+				    .noFade()
+//				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
+				.noPlaceholder()   //不使用站位图，效果不好
+				.resize(3840,2160)
+				.centerCrop()
+				.error(R.drawable.xumusic)
+				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
+				.networkPolicy(NetworkPolicy.NO_CACHE)
+			//	.into(MxuamengMusic); // xuameng内容空显示banner
+				.into(MxuamengMusic, new Callback() {
+					
+                @Override
+                public void onSuccess() {
+                    MxuamengMusic.setAlpha(0.2f);
+                    MxuamengMusic.animate().setDuration(2000).alpha(1f).start();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                }
+            });
 				}
 			}
         mHandler.postDelayed(this, 15000);
