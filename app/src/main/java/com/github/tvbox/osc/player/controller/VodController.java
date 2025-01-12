@@ -346,7 +346,7 @@ public class VodController extends BaseController {
         public void run() {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
-				testxu;
+				testxu();
 				}
 			}
         mHandler.postDelayed(this, 15000);
