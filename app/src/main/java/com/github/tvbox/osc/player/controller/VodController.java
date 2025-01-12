@@ -2,7 +2,7 @@ package com.github.tvbox.osc.player.controller;
 import android.animation.Animator;                      //xuameng动画
 import android.animation.AnimatorListenerAdapter;       //xuameng动画
 import android.animation.ObjectAnimator;                //xuameng动画
-import okhttp3.Callback
+import okhttp3.Callback;
 import android.app.Activity;
 import android.annotation.SuppressLint;
 import android.content.Context;
