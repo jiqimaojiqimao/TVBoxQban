@@ -344,8 +344,8 @@ public class VodController extends BaseController {
 					
                 @Override
                 public void onSuccess() {
-                    MxuamengMusic.setAlpha(0f);
-                    MxuamengMusic.animate().setDuration(1000).alpha(1f).start();
+                    MxuamengMusic.setAlpha(0.5f);
+                    MxuamengMusic.animate().setDuration(2000).alpha(1f).start();
                 }
 
                 @Override
