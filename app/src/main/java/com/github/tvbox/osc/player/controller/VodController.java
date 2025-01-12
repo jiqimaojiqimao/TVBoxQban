@@ -330,7 +330,7 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
-				Glide.get()
+				Glide.with()
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 //				.noPlaceholder()   //不使用站位图，效果不好
