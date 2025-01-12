@@ -50,8 +50,10 @@ import static xyz.doikki.videoplayer.util.PlayerUtils.stringForTime;
 import com.squareup.picasso.Picasso;      //xuameng播放音频切换图片
 import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
-import com.squareup.picasso.Callback;
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
@@ -329,30 +331,17 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
-				Picasso.get()
+				Glide.with(this)
 				.load(Url)
-				    .noFade()
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
-				.noPlaceholder()   //不使用站位图，效果不好
-				.resize(3840,2160)
+//				.noPlaceholder()   //不使用站位图，效果不好
+ .crossFade(1000) 
+				.override(3840,2160)
 				.centerCrop()
 				.error(R.drawable.xumusic)
-				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
-				.networkPolicy(NetworkPolicy.NO_CACHE)
-					.fade(700)
-			//	.into(MxuamengMusic); // xuameng内容空显示banner
-				.into(MxuamengMusic, new Callback() {
-					
-                @Override
-                public void onSuccess() {
-                    MxuamengMusic.setAlpha(0.2f);
-                    MxuamengMusic.animate().setDuration(1000).alpha(1f).start();
-                }
-
-                @Override
-                public void onError(Exception e) {
-                }
-            });
+    .skipMemoryCache(true)
+    .diskCacheStrategy(DiskCacheStrategy.NONE)
+				.into(MxuamengMusic); // xuameng内容空显示banner
 				}
 			}
         mHandler.postDelayed(this, 15000);
