@@ -2,6 +2,7 @@ package com.github.tvbox.osc.player.controller;
 import android.animation.Animator;                      //xuameng动画
 import android.animation.AnimatorListenerAdapter;       //xuameng动画
 import android.animation.ObjectAnimator;                //xuameng动画
+import okhttp3.Callback
 import android.app.Activity;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -328,7 +329,7 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
-				Picasso.with(context)
+				Picasso.get()
 				.load(Url)
 				    .noFade()
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
@@ -341,13 +342,13 @@ public class VodController extends BaseController {
 			//	.into(MxuamengMusic); // xuameng内容空显示banner
 				.into(MxuamengMusic, new Callback() {
 					
-                @Override
+
                 public void onSuccess() {
                     MxuamengMusic.setAlpha(0f);
-                    MxuamengMusic.animate().setDuration(400).alpha(1f).start();
+                    MxuamengMusic.animate().setDuration(1000).alpha(1f).start();
                 }
 
-                @Override
+ 
                 public void onError(Exception e) {
                 }
             });
