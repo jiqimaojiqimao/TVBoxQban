@@ -52,7 +52,6 @@ import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 public class VodController extends BaseController {
@@ -331,7 +330,7 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
-				Glide.with(this)
+				Glide.get()
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 //				.noPlaceholder()   //不使用站位图，效果不好
