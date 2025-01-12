@@ -2,7 +2,6 @@ package com.github.tvbox.osc.player.controller;
 import android.animation.Animator;                      //xuameng动画
 import android.animation.AnimatorListenerAdapter;       //xuameng动画
 import android.animation.ObjectAnimator;                //xuameng动画
-import okhttp3.Callback;
 import android.app.Activity;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -51,6 +50,7 @@ import static xyz.doikki.videoplayer.util.PlayerUtils.stringForTime;
 import com.squareup.picasso.Picasso;      //xuameng播放音频切换图片
 import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
+import com.squareup.picasso.Callback;
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
 
 public class VodController extends BaseController {
@@ -342,13 +342,13 @@ public class VodController extends BaseController {
 			//	.into(MxuamengMusic); // xuameng内容空显示banner
 				.into(MxuamengMusic, new Callback() {
 					
-
+                @Override
                 public void onSuccess() {
                     MxuamengMusic.setAlpha(0f);
                     MxuamengMusic.animate().setDuration(1000).alpha(1f).start();
                 }
 
- 
+                @Override
                 public void onError(Exception e) {
                 }
             });
