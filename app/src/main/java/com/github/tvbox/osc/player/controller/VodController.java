@@ -324,12 +324,10 @@ public class VodController extends BaseController {
         }
     };
 
-	private Runnable myRunnableMusic = new Runnable() {  //xuameng播放音频切换图片
-        @Override
-        public void run() {
-			if (MxuamengMusic.getVisibility() == View.VISIBLE){
-				if (!ApiConfig.get().musicwallpaper.isEmpty()){
-				String Url = ApiConfig.get().musicwallpaper;
+    public void testxu() {
+
+
+	String Url = ApiConfig.get().musicwallpaper;
 				Glide.with(this)
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
@@ -341,6 +339,14 @@ public class VodController extends BaseController {
     .skipMemoryCache(true)
     .diskCacheStrategy(DiskCacheStrategy.NONE)
 				.into(MxuamengMusic); // xuameng内容空显示banner
+     }
+
+	private Runnable myRunnableMusic = new Runnable() {  //xuameng播放音频切换图片
+        @Override
+        public void run() {
+			if (MxuamengMusic.getVisibility() == View.VISIBLE){
+				if (!ApiConfig.get().musicwallpaper.isEmpty()){
+				testxu;
 				}
 			}
         mHandler.postDelayed(this, 15000);
