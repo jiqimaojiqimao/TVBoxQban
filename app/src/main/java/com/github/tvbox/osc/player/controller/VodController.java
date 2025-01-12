@@ -339,13 +339,25 @@ public class VodController extends BaseController {
 				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
+				.fetch(new Callback(){
+            @Override
+            public void onSuccess() {
+                MxuamengMusic.setAlpha(1f);
+                MxuamengMusic.animate().setDuration(300).alpha(0f).start();
+            }
+
+            @Override
+            public void onError() {
+
+            }
+        });
 			//	.into(MxuamengMusic); // xuameng内容空显示banner
 				.into(MxuamengMusic, new Callback() {
 					
                 @Override
                 public void onSuccess() {
-                    MxuamengMusic.setAlpha(0.5f);
-                    MxuamengMusic.animate().setDuration(2000).alpha(1f).start();
+                    MxuamengMusic.setAlpha(0f);
+                    MxuamengMusic.animate().setDuration(1000).alpha(1f).start();
                 }
 
                 @Override
