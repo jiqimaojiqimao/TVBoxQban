@@ -330,6 +330,7 @@ public class VodController extends BaseController {
 				String Url = ApiConfig.get().musicwallpaper;
 				Picasso.get()
 				.load(Url)
+				    .noFade()
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(3840,2160)
@@ -337,7 +338,19 @@ public class VodController extends BaseController {
 				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
-				.into(MxuamengMusic); // xuameng内容空显示banner
+			//	.into(MxuamengMusic); // xuameng内容空显示banner
+				.into(MxuamengMusic, new Callback() {
+					
+                @Override
+                public void onSuccess() {
+                    MxuamengMusic.setAlpha(0f);
+                    MxuamengMusic.animate().setDuration(400).alpha(1f).start();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                }
+            });
 				}
 			}
         mHandler.postDelayed(this, 15000);
