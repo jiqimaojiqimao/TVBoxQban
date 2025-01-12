@@ -326,7 +326,7 @@ public class VodController extends BaseController {
 
     public void testxu() {
 
-
+private Context mContext;
 	String Url = ApiConfig.get().musicwallpaper;
 				Glide.with(mContext)
 				.load(Url)
