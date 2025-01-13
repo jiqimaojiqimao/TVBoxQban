@@ -359,6 +359,7 @@ public class VodController extends BaseController {
                     MxuamengMusic.animate().setDuration(2500).alpha(1f).start();
             }
         };
+		        countDownTimer.start();
                 }
 
                 @Override
