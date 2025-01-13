@@ -329,8 +329,11 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
+				                    MxuamengMusic.setAlpha(1f);
+                    MxuamengMusic.animate().setDuration(1500).alpha(0.3f).start();
 				Picasso.get()
 				.load(Url)
+					.noFade()
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(3840,2160)
@@ -343,7 +346,7 @@ public class VodController extends BaseController {
                 @Override
                 public void onSuccess() {
                     MxuamengMusic.setAlpha(0.3f);
-                    MxuamengMusic.animate().setDuration(2500).alpha(1f).start();
+                    MxuamengMusic.animate().setDuration(1500).alpha(1f).start();
                 }
 
                 @Override
