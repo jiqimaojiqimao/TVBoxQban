@@ -339,7 +339,7 @@ public class VodController extends BaseController {
 				if(countDownTimer != null) {
 					countDownTimer.cancel();
 				}
-				countDownTimer = new CountDownTimer(2800, 500) { //底部epg隐藏时间设定
+				countDownTimer = new CountDownTimer(2300, 500) { //底部epg隐藏时间设定
 				public void onTick(long j) {}
 				public void onFinish() {
 				Picasso.get()
