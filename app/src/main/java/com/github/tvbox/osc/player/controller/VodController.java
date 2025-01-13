@@ -336,7 +336,11 @@ public class VodController extends BaseController {
 				.resize(3840,2160)
 				.centerCrop()
 				.error(R.drawable.xumusic)
-					.fetch(new Callback() {
+
+				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
+				.networkPolicy(NetworkPolicy.NO_CACHE)
+				.into(MxuamengMusic); // xuameng内容空显示banner
+									.fetch(new Callback() {
           @Override
           public void onSuccess() {
                              MxuamengMusic.setAlpha(1f);
@@ -349,12 +353,9 @@ public class VodController extends BaseController {
             //加载失败
           }
       });
-				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
-				.networkPolicy(NetworkPolicy.NO_CACHE)
-				.into(MxuamengMusic); // xuameng内容空显示banner
 				}
 			}
-        mHandler.postDelayed(this, 15000);
+        mHandler.postDelayed(this, 10000);
        }
     };
 
