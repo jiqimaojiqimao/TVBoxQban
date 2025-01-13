@@ -353,6 +353,7 @@ public class VodController extends BaseController {
             countDownTimer.cancel();
         }
         countDownTimer = new CountDownTimer(1500, 1500) { //底部epg隐藏时间设定
+			public void onTick(long j) {}
             public void onFinish() {
                                     MxuamengMusic.setAlpha(0.3f);
                     MxuamengMusic.animate().setDuration(2500).alpha(1f).start();
