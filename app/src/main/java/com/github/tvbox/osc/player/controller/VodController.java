@@ -331,7 +331,8 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
-
+				                    MxuamengMusic.setAlpha(1f);
+                    MxuamengMusic.animate().setDuration(2500).alpha(0.3f).start();
 				Picasso.get()
 				.load(Url)
 					.noFade()
@@ -346,19 +347,14 @@ public class VodController extends BaseController {
 
                 @Override
                 public void onSuccess() {
-				                    MxuamengMusic.setAlpha(1f);
-                    MxuamengMusic.animate().setDuration(2500).alpha(0.3f).start();
-					  
-							if(countDownTimer != null) {
+if(countDownTimer != null) {
             countDownTimer.cancel();
         }
-        countDownTimer = new CountDownTimer(1500, 1500) { //底部epg隐藏时间设定
-			public void onTick(long j) {}
+        countDownTimer = new CountDownTimer(2500, 500) { //底部epg隐藏时间设定
+
             public void onFinish() {
                                     MxuamengMusic.setAlpha(0.3f);
                     MxuamengMusic.animate().setDuration(2500).alpha(1f).start();
-            }
-        };
                 }
 
                 @Override
