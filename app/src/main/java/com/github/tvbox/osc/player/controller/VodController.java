@@ -329,23 +329,20 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
-				Picasso.with((Activity) getContext())
+				Picasso.get()
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(3840,2160)
 				.centerCrop()
 				.error(R.drawable.xumusic)
-
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
-				.into(MxuamengMusic) // xuameng内容空显示banner
-									.fetch(new Callback() {
+				fetch(new Callback() {
           @Override
           public void onSuccess() {
-                             MxuamengMusic.setAlpha(1f);
-      
-                MxuamengMusic.animate().setDuration(1000).alpha(0f).start();
+                         MxuamengMusic.setAlpha(0f);
+                MxuamengMusic.animate().setDuration(300).alpha(1f).start();
           }
 
           @Override
@@ -353,9 +350,10 @@ public class VodController extends BaseController {
             //加载失败
           }
       });
+				.into(MxuamengMusic); // xuameng内容空显示banner
 				}
 			}
-        mHandler.postDelayed(this, 10000);
+        mHandler.postDelayed(this, 15000);
        }
     };
 
