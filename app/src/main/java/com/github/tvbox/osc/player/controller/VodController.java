@@ -349,7 +349,7 @@ public class VodController extends BaseController {
           public void onError() {
             //加载失败
           }
-      });
+      })
 				.into(MxuamengMusic); // xuameng内容空显示banner
 				}
 			}
