@@ -106,6 +106,9 @@ dependencies {
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
     implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
+
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+
       //工具类
     implementation 'com.blankj:utilcodex:1.31.0'
     //xuameng exo
