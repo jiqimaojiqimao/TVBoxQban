@@ -353,21 +353,21 @@ public class VodController extends BaseController {
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic, new Callback() {
-                @Override
-                public void onSuccess() {
-					isPicasso = true;
-                    MxuamengMusic.setAlpha(0.1f);
-                    MxuamengMusic.animate().setDuration(3000).alpha(1f).start();
-                }
-                @Override
-                public void onError(Exception e) {
-					isPicasso = false;
-					MxuamengMusic.setAlpha(1f);
-					MxuamengMusic.animate().setDuration(3000).alpha(0.1f).start();
-                }
-            });
-            }
-        };
+					@Override
+					public void onSuccess() {
+						isPicasso = true;
+						MxuamengMusic.setAlpha(0.1f);
+						MxuamengMusic.animate().setDuration(3000).alpha(1f).start();
+					}
+					@Override
+					public void onError(Exception e) {
+						isPicasso = false;
+						MxuamengMusic.setAlpha(1f);
+						MxuamengMusic.animate().setDuration(3000).alpha(0.1f).start();
+					}
+				});
+				}
+			};
 		        countDownTimer.start();
 
 				}
