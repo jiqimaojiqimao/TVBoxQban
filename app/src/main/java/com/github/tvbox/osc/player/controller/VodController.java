@@ -51,6 +51,7 @@ import com.squareup.picasso.Picasso;      //xuameng播放音频切换图片
 import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
+import com.squareup.picasso.Callback;
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
@@ -328,6 +329,20 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
+
+                    MxuamengMusic.setAlpha(0f);
+                    MxuamengMusic.animate().setDuration(1000).alpha(1f)
+    .setListener(new Animator.AnimatorListener() {
+        @Override
+        public void onAnimationStart(Animator animation) {
+            // 动画开始时执行的代码
+        }
+ 
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            // 动画结束时执行的代码
+        }.start();
+
 				Picasso.get()
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
@@ -337,7 +352,18 @@ public class VodController extends BaseController {
 				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
-				.into(MxuamengMusic); // xuameng内容空显示banner
+				.into(MxuamengMusic, new Callback() {
+
+                @Override
+                public void onSuccess() {
+                    MxuamengMusic.setAlpha(0f);
+                    MxuamengMusic.animate().setDuration(1000).alpha(1f).start();
+                }
+
+                @Override
+                public void onError(Exception e) {
+                }
+            });
 				}
 			}
         mHandler.postDelayed(this, 15000);
