@@ -52,6 +52,7 @@ import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
 import com.squareup.picasso.Callback;
+import android.os.CountDownTimer;
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
@@ -237,6 +238,7 @@ public class VodController extends BaseController {
     private boolean isClickBackBtn;
 	private double DOUBLE_CLICK_TIME = 0L;    //xuameng返回键防连击1.5秒（为动画）
 	private double DOUBLE_CLICK_TIME_2 = 0L;    //xuameng防连击1秒（为动画）
+	private CountDownTimer countDownTimer;
    
     LockRunnable lockRunnable = new LockRunnable();
     private boolean isLock = false;
@@ -329,8 +331,7 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
-				                    MxuamengMusic.setAlpha(1f);
-                    MxuamengMusic.animate().setDuration(1500).alpha(0.3f).start();
+
 				Picasso.get()
 				.load(Url)
 					.noFade()
@@ -345,8 +346,18 @@ public class VodController extends BaseController {
 
                 @Override
                 public void onSuccess() {
-                    MxuamengMusic.setAlpha(0.3f);
-                    MxuamengMusic.animate().setDuration(1500).alpha(1f).start();
+				                    MxuamengMusic.setAlpha(1f);
+                    MxuamengMusic.animate().setDuration(2500).alpha(0.3f).start();
+					  
+							if(countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+        countDownTimer = new CountDownTimer(1500, 1500) { //底部epg隐藏时间设定
+            public void onFinish() {
+                                    MxuamengMusic.setAlpha(0.3f);
+                    MxuamengMusic.animate().setDuration(2500).alpha(1f).start();
+            }
+        };
                 }
 
                 @Override
