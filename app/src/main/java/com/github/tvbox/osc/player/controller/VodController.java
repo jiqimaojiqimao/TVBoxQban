@@ -339,7 +339,7 @@ public class VodController extends BaseController {
 
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
-				.into(MxuamengMusic); // xuameng内容空显示banner
+				.into(MxuamengMusic) // xuameng内容空显示banner
 									.fetch(new Callback() {
           @Override
           public void onSuccess() {
