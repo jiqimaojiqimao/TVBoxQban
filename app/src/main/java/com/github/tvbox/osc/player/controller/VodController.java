@@ -340,21 +340,25 @@ public class VodController extends BaseController {
 				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(3840,2160)
 				.centerCrop()
-				.error(R.drawable.xumusic)
+				.noerror(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic, new Callback() {
 
                 @Override
                 public void onSuccess() {
-if(countDownTimer != null) {
+
+
+					        if(countDownTimer != null) {
             countDownTimer.cancel();
         }
         countDownTimer = new CountDownTimer(2500, 500) { //底部epg隐藏时间设定
-
+            public void onTick(long j) {}
             public void onFinish() {
-                                    MxuamengMusic.setAlpha(0.3f);
+                                   MxuamengMusic.setAlpha(0.3f);
                     MxuamengMusic.animate().setDuration(2500).alpha(1f).start();
+            }
+        };
                 }
 
                 @Override
