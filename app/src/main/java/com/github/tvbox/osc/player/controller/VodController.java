@@ -333,6 +333,14 @@ public class VodController extends BaseController {
 				String Url = ApiConfig.get().musicwallpaper;
 				                    MxuamengMusic.setAlpha(1f);
                     MxuamengMusic.animate().setDuration(2500).alpha(0.3f).start();
+
+
+					   if(countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+        countDownTimer = new CountDownTimer(2500, 500) { //底部epg隐藏时间设定
+            public void onTick(long j) {}
+            public void onFinish() {
 				Picasso.get()
 				.load(Url)
 					.noFade()
@@ -343,13 +351,6 @@ public class VodController extends BaseController {
 	//			.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
-
-					   if(countDownTimer != null) {
-            countDownTimer.cancel();
-        }
-        countDownTimer = new CountDownTimer(2500, 500) { //底部epg隐藏时间设定
-            public void onTick(long j) {}
-            public void onFinish() {
 								.into(MxuamengMusic, new Callback() {
 
                 @Override
