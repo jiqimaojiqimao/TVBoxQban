@@ -328,7 +328,7 @@ public class VodController extends BaseController {
 
 
 	String Url = ApiConfig.get().musicwallpaper;
-				Glide.with(Context)
+				Glide.with((Activity) getContext())
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 //				.noPlaceholder()   //不使用站位图，效果不好
