@@ -338,7 +338,7 @@ public class VodController extends BaseController {
 				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
-				fetch(new Callback() {
+				.fetch(new Callback() {
           @Override
           public void onSuccess() {
                          MxuamengMusic.setAlpha(0f);
