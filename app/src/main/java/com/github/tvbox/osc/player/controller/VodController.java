@@ -51,8 +51,6 @@ import com.squareup.picasso.Picasso;      //xuameng播放音频切换图片
 import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
-import com.squareup.picasso.Callback;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
@@ -330,7 +328,6 @@ public class VodController extends BaseController {
 			if (MxuamengMusic.getVisibility() == View.VISIBLE){
 				if (!ApiConfig.get().musicwallpaper.isEmpty()){
 				String Url = ApiConfig.get().musicwallpaper;
-				final AtomicBoolean Picasso = new AtomicBoolean(true);
 				Picasso.get()
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
@@ -340,24 +337,7 @@ public class VodController extends BaseController {
 				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
-				.into(MxuamengMusic, new Callback() {
-  @Override public void onLoad() {
-    if (Picasso.get()) {
-      //play fade
-      Animation fadeOut = new AlphaAnimation(0, 1);
- //     fadeOut.setInterpolator(new AccelerateInterpolator());
-      fadeOut.setDuration(1000);
-      MxuamengMusic.startAnimation(fadeOut);
-
-      Animation fadeOutPlaceholder = new AlphaAnimation(1, 0);
- //    fadeOutPlaceholder.setInterpolator(new AccelerateInterpolator());
-      fadeOutPlaceholder.setDuration(1000);
-      MxuamengMusic.startAnimation(fadeOutPlaceholder);
-    }
-  }
-  //..
-});
-Picasso.set(false);
+				.into(MxuamengMusic); // xuameng内容空显示banner
 				}
 			}
         mHandler.postDelayed(this, 15000);
