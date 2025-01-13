@@ -338,6 +338,7 @@ public class VodController extends BaseController {
 				.error(R.drawable.xumusic)
     .skipMemoryCache(true)
     .diskCacheStrategy(DiskCacheStrategy.NONE)
+.placeholder(new ColorDrawable(Color.WHITE))
 				.into(MxuamengMusic); // xuameng内容空显示banner
      }
 
