@@ -2615,22 +2615,17 @@ public class LivePlayActivity extends BaseActivity {
 				    String width = Integer.toString(mVideoView.getVideoSize()[0]);
 					String height = Integer.toString(mVideoView.getVideoSize()[1]);
 				if (width.length() > 1 && height.length() > 1){ //XUAMENG分辨率
+					mVideoView.setAlpha(1f);
 					if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 						iv_circle_bg_xu.setVisibility(View.GONE);
 						}
 					if (MxuamengMusic.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
 						MxuamengMusic.setVisibility(View.GONE);
 						}
-					if (mVideoView.getVisibility() == View.GONE){  //xuameng播放音乐背景
-						mVideoView.setVisibility(View.VISIBLE);
-					}
 					}else{
-						setLoadSir(findViewById(R.id.live_root));
+						mVideoView.setAlpha(0f);
 						if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
-							MxuamengMusic.setVisibility(View.VISIBLE);
-						}
-						if (mVideoView.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
-							mVideoView.setVisibility(View.GONE);
+						MxuamengMusic.setVisibility(View.VISIBLE);
 						}
 						if (isBuffer || isShowlist){
 							if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
