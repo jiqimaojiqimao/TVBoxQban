@@ -115,6 +115,7 @@ public class LivePlayActivity extends BaseActivity {
     private long mExitTimeUp = 0; //xuameng上键间隔时间
     private long mExitTimeDown = 0; //xuameng下键间隔时间
     private long mSpeedTimeUp = 0; //xuameng上键间隔时间
+	protected ProgressBar mLoading;  //xuameng 播放音频时的缓冲动画
     private LinearLayout tvRightSettingLayout;
     private TvRecyclerView mSettingGroupView;
     private TvRecyclerView mSettingItemView;
@@ -185,6 +186,7 @@ public class LivePlayActivity extends BaseActivity {
     private boolean isSEEKBAR = false; //xuameng进入SEEKBAR
     private boolean isTVNUM = false; //xuameng获取频道编号
 	private boolean isBuffer = false; //xuameng缓冲
+	private boolean listenBuffer = false; //xuameng音频缓冲
 	private boolean isShowlist = false; //xuameng判断菜单显示
     private int selectedChannelNumber = 0; // xuameng遥控器数字键输入的要切换的频道号码
     private TextView tvSelectedChannel; //xuameng频道编号
@@ -267,6 +269,7 @@ public class LivePlayActivity extends BaseActivity {
         view_line_XU = (View) findViewById(R.id.view_line); //xuameng横线
 		iv_circle_bg_xu = (ImageView) findViewById(R.id.iv_circle_bg_xu);  //xuameng音乐播放时图标
 		MxuamengMusic = (ImageView) findViewById(R.id.xuamengMusic);  //xuameng播放音乐背景
+		mLoading = findViewById(R.id.loading_xu);  //xuameng 播放音频时的缓冲动画
         divEpg = (LinearLayout) findViewById(R.id.divEPG);
         //右上角图片旋转
         ObjectAnimator animator1 = ObjectAnimator.ofFloat(iv_circle_bg, "rotation", 360.0f);
@@ -892,6 +895,7 @@ public class LivePlayActivity extends BaseActivity {
             mHandler.removeCallbacks(mUpdateTimeRunXu);
 			iv_circle_bg_xu.setVisibility(View.GONE);  //xuameng音乐播放时图标
 			MxuamengMusic.setVisibility(View.GONE);  //xuameng播放音乐背景
+			mLoading.setVisibility(View.GONE); //xuameng 播放音频时的缓冲动画
             super.onBackPressed();
         } else {
             mExitTime = System.currentTimeMillis();
@@ -1938,6 +1942,7 @@ public class LivePlayActivity extends BaseActivity {
             public void playStateChanged(int playState) {
                 switch(playState) {
                     case VideoView.STATE_IDLE:
+						mLoading.setVisibility(View.GONE); //xuameng 播放音频时的缓冲动画
 						tv_size.setText("[0 X 0]");  //XUAMENG分辨率
 						if (MxuamengMusic.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
 							MxuamengMusic.setVisibility(View.GONE);
@@ -1948,9 +1953,15 @@ public class LivePlayActivity extends BaseActivity {
                     case VideoView.STATE_PAUSED:
                         break;
                     case VideoView.STATE_PREPARED:
+						mLoading.setVisibility(View.GONE); //xuameng 播放音频时的缓冲动画
 					    String width = Integer.toString(mVideoView.getVideoSize()[0]);
 						String height = Integer.toString(mVideoView.getVideoSize()[1]);
 						tv_size.setText("[" + width + " X " + height +"]");
+						if (width.length() > 1 && height.length() > 1){
+							listenBuffer = false;  //xuameng音频缓冲
+							}else{
+							listenBuffer = true; //xuameng音频缓冲
+							}
                        
                         int duration1 = (int) mVideoView.getDuration();
                         if(isBack) {
@@ -1978,13 +1989,17 @@ public class LivePlayActivity extends BaseActivity {
                         }
                         break;
                     case VideoView.STATE_BUFFERED:
+						mLoading.setVisibility(View.GONE); //xuameng 播放音频时的缓冲动画
                     case VideoView.STATE_PLAYING:
+						mLoading.setVisibility(View.GONE); //xuameng 播放音频时的缓冲动画
                         currentLiveChangeSourceTimes = 0;
                         mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);
 						isBuffer = false;
                         break;
                     case VideoView.STATE_ERROR:
+						mLoading.setVisibility(View.GONE); //xuameng 播放音频时的缓冲动画
                     case VideoView.STATE_PLAYBACK_COMPLETED:
+						mLoading.setVisibility(View.GONE); //xuameng 播放音频时的缓冲动画
                         if(isBack) {
                             mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBack);
                             mHandler.postDelayed(mConnectTimeoutChangeSourceRunBack, 5000); //xuameng回看超时5秒退出
@@ -1994,12 +2009,18 @@ public class LivePlayActivity extends BaseActivity {
                         mHandler.postDelayed(mConnectTimeoutChangeSourceRun, 10000); //xuameng播放超时10秒换源
                         break;
                     case VideoView.STATE_PREPARING:
+						mLoading.setVisibility(View.GONE); //xuameng 播放音频时的缓冲动画
                         isVOD = false;
                     case VideoView.STATE_BUFFERING:
                         mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);
                         mHandler.postDelayed(mConnectTimeoutChangeSourceRun, (Hawk.get(HawkConfig.LIVE_CONNECT_TIMEOUT, 1) + 1) * 5000);
 						if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 							iv_circle_bg_xu.setVisibility(View.GONE);
+						}
+						if (listenBuffer){ //xuameng音频缓冲
+							mLoading.setVisibility(View.VISIBLE); //xuameng 播放音频时的缓冲动画
+						}else {
+							mLoading.setVisibility(View.GONE); //xuameng 播放音频时的缓冲动画
 						}
 						isBuffer = true;
                         break;
@@ -2615,8 +2636,6 @@ public class LivePlayActivity extends BaseActivity {
 				    String width = Integer.toString(mVideoView.getVideoSize()[0]);
 					String height = Integer.toString(mVideoView.getVideoSize()[1]);
 				if (width.length() > 1 && height.length() > 1){ //XUAMENG分辨率
-					mVideoView.setVideoController(null);
-					MxuamengMusic.setVideoController(controller);
 					if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 						iv_circle_bg_xu.setVisibility(View.GONE);
 						}
@@ -2626,8 +2645,6 @@ public class LivePlayActivity extends BaseActivity {
 					}else{
 						if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
 						MxuamengMusic.setVisibility(View.VISIBLE);
-						MxuamengMusic.setVideoController(controller);
-						mVideoView.setVideoController(null);
 						}
 						if (isBuffer || isShowlist){
 							if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
