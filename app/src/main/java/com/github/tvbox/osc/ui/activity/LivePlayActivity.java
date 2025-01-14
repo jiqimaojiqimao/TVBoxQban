@@ -2693,7 +2693,7 @@ public class LivePlayActivity extends BaseActivity {
 				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(3840,2160)
 				.centerCrop()
-				.error(R.drawable.xumusic)
+//				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic); // xuameng内容空显示banner
