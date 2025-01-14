@@ -347,7 +347,8 @@ public class VodController extends BaseController {
 				.noFade()
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 				.noPlaceholder()   //不使用站位图，效果不好
-				.resize(3840,2160)
+				.resize(1920,1080)
+				.onlyScaleDown()
 				.centerCrop()
 //				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
@@ -362,8 +363,8 @@ public class VodController extends BaseController {
 					@Override
 					public void onError(Exception e) {
 						isPicasso = false;
-						MxuamengMusic.setAlpha(1f);
-						MxuamengMusic.animate().setDuration(3000).alpha(0.1f).start();
+						MxuamengMusic.setAlpha(0.1f);
+						MxuamengMusic.animate().setDuration(200).alpha(1f).start();
 					}
 				});
 				}
