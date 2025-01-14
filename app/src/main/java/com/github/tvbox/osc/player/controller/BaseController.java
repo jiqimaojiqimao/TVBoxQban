@@ -65,6 +65,10 @@ public abstract class BaseController extends BaseVideoController implements Gest
                     case 100: { // 亮度+音量调整
                         mSlideInfo.setVisibility(VISIBLE);
                         mSlideInfo.setText(msg.obj.toString());
+						if (mLivecirclebgxu.getVisibility() == View.VISIBLE){
+							mLivecirclebgxu.setVisibility(GONE);
+						}
+
                         break;
                     }
 
@@ -92,6 +96,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
     }
 
     private TextView mSlideInfo;
+	private ImageView mLivecirclebgxu;  //xuameng音乐播放时图标
     private ProgressBar mLoading;
     private ViewGroup mPauseRoot;
     private TextView mPauseTime;
@@ -106,6 +111,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
         mLoading = findViewWithTag("vod_control_loading");
         mPauseRoot = findViewWithTag("vod_control_pause");
         mPauseTime = findViewWithTag("vod_control_pause_t");
+		mLivecirclebgxu = findViewWithTag("live_circle_bg_xu");
     }
 
     @Override
