@@ -612,6 +612,7 @@
         android:layout_gravity="center"
         android:visibility="gone"
         android:id="@+id/iv_circle_bg"
+		android:tag="music_iv_circle_bg"
         android:padding="@dimen/vs_10"
         android:layout_width="@dimen/vs_80"
         android:layout_height="@dimen/vs_80"
