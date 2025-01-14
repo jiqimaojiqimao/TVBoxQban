@@ -1938,6 +1938,7 @@ public class LivePlayActivity extends BaseActivity {
             public void playStateChanged(int playState) {
                 switch(playState) {
                     case VideoView.STATE_IDLE:
+						mVideoView.setAlpha(1f);
 						tv_size.setText("[0 X 0]");  //XUAMENG分辨率
 						if (MxuamengMusic.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
 							MxuamengMusic.setVisibility(View.GONE);
