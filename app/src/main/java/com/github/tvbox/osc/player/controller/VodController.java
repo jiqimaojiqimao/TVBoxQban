@@ -332,8 +332,8 @@ public class VodController extends BaseController {
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 				.noPlaceholder()   //不使用站位图，效果不好
-				.onlyScaleDown()
 				.resize(1920,1080)
+				.onlyScaleDown()
 				.centerCrop()
 //				.error(R.drawable.xumusic)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
