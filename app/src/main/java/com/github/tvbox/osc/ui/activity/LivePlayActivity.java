@@ -227,7 +227,7 @@ public class LivePlayActivity extends BaseActivity {
         context = this;
         epgStringAddress = Hawk.get(HawkConfig.EPG_URL, "");
         if(epgStringAddress == null || epgStringAddress.length() < 5) epgStringAddress = "http://xuameng.vicp.net:8081/test.php";
-        setLoadSir(findViewById(R.id.live_root));
+    //    setLoadSir(findViewById(R.id.live_root));
         mVideoView = findViewById(R.id.mVideoView);
         tvLeftChannelListLayout = findViewById(R.id.tvLeftChannnelListLayout); //xuameng左边频道菜单
         mChannelGroupView = findViewById(R.id.mGroupGridView);
@@ -2621,15 +2621,9 @@ public class LivePlayActivity extends BaseActivity {
 					if (MxuamengMusic.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
 						MxuamengMusic.setVisibility(View.GONE);
 						}
-					if (mVideoView.getVisibility() == View.GONE){  //xuameng播放音乐背景
-						mVideoView.setVisibility(View.VISIBLE);
-					}
 					}else{
 						if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
-							MxuamengMusic.setVisibility(View.VISIBLE);
-						}
-						if (mVideoView.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
-							mVideoView.setVisibility(View.GONE);
+						MxuamengMusic.setVisibility(View.VISIBLE);
 						}
 						if (isBuffer || isShowlist){
 							if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
