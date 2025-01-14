@@ -55,6 +55,10 @@ public abstract class BaseController extends BaseVideoController implements Gest
     //private boolean mIsDoubleTapTogglePlayEnabled = true;
 	private boolean mIsDoubleTapTogglePlayEnabled = false;   //xuameng打开双击 true
 
+    @Override
+    protected int getLayoutId() {
+        return R.layout.activity_live_play;
+    }
 
     public BaseController(@NonNull Context context) {
         super(context);
@@ -112,7 +116,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
         mLoading = findViewWithTag("vod_control_loading");
         mPauseRoot = findViewWithTag("vod_control_pause");
         mPauseTime = findViewWithTag("vod_control_pause_t");
-		mLivecirclebgxu = findViewWithTag("live_circle_bg_xu");
+		mLivecirclebgxu = (ImageView) findViewById(R.id.iv_circle_bg_xu);  //xuameng音乐播放时图标
     }
 
     @Override
