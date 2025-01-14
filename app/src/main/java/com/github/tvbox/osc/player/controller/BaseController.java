@@ -15,6 +15,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -65,6 +66,9 @@ public abstract class BaseController extends BaseVideoController implements Gest
                     case 100: { // 亮度+音量调整
                         mSlideInfo.setVisibility(VISIBLE);
                         mSlideInfo.setText(msg.obj.toString());
+						if (iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
+							iv_circle_bg.setVisibility(GONE);
+						}
                         break;
                     }
 
@@ -95,6 +99,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private ProgressBar mLoading;
     private ViewGroup mPauseRoot;
     private TextView mPauseTime;
+	private ImageView iv_circle_bg;  //xuameng音乐播放时图标
 
     @Override
     protected void initView() {
@@ -106,6 +111,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
         mLoading = findViewWithTag("vod_control_loading");
         mPauseRoot = findViewWithTag("vod_control_pause");
         mPauseTime = findViewWithTag("vod_control_pause_t");
+		iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg);  //xuameng音乐播放时图标
     }
 
     @Override
