@@ -14,6 +14,14 @@
 		android:scaleType="fitXY" 
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"/>
+    <ImageView
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:id="@+id/iv_circle_bg_xu"
+        android:padding="@dimen/vs_10"
+        android:layout_width="@dimen/vs_80"
+        android:layout_height="@dimen/vs_80"
+        android:src="@drawable/app_icon"/>
     <xyz.doikki.videoplayer.player.VideoView
         android:id="@+id/mVideoView"
         android:layout_width="fill_parent"
@@ -942,12 +950,4 @@
         android:shadowRadius="2.0"
         android:digits=" 0123456789"
         android:inputType="number"/>
-    <ImageView
-        android:layout_gravity="center"
-        android:visibility="gone"
-        android:id="@+id/iv_circle_bg_xu"
-        android:padding="@dimen/vs_10"
-        android:layout_width="@dimen/vs_80"
-        android:layout_height="@dimen/vs_80"
-        android:src="@drawable/app_icon"/>
 </FrameLayout>
