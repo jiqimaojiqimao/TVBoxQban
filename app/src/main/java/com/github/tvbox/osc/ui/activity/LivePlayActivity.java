@@ -1938,7 +1938,6 @@ public class LivePlayActivity extends BaseActivity {
             public void playStateChanged(int playState) {
                 switch(playState) {
                     case VideoView.STATE_IDLE:
-						mVideoView.setAlpha(1f);
 						tv_size.setText("[0 X 0]");  //XUAMENG分辨率
 						if (MxuamengMusic.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
 							MxuamengMusic.setVisibility(View.GONE);
@@ -2616,7 +2615,8 @@ public class LivePlayActivity extends BaseActivity {
 				    String width = Integer.toString(mVideoView.getVideoSize()[0]);
 					String height = Integer.toString(mVideoView.getVideoSize()[1]);
 				if (width.length() > 1 && height.length() > 1){ //XUAMENG分辨率
-					mVideoView.setAlpha(1f);
+					mVideoView.setVideoController(null);
+					MxuamengMusic.setVideoController(controller);
 					if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 						iv_circle_bg_xu.setVisibility(View.GONE);
 						}
@@ -2624,9 +2624,10 @@ public class LivePlayActivity extends BaseActivity {
 						MxuamengMusic.setVisibility(View.GONE);
 						}
 					}else{
-						mVideoView.setAlpha(0.4f);
 						if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
 						MxuamengMusic.setVisibility(View.VISIBLE);
+						MxuamengMusic.setVideoController(controller);
+						mVideoView.setVideoController(null);
 						}
 						if (isBuffer || isShowlist){
 							if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
