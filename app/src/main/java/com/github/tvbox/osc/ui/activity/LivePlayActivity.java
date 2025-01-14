@@ -2621,9 +2621,15 @@ public class LivePlayActivity extends BaseActivity {
 					if (MxuamengMusic.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
 						MxuamengMusic.setVisibility(View.GONE);
 						}
+					if (mVideoView.getVisibility() == View.GONE){  //xuameng播放音乐背景
+						mVideoView.setVisibility(View.VISIBLE);
+					}
 					}else{
 						if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
-						MxuamengMusic.setVisibility(View.VISIBLE);
+							MxuamengMusic.setVisibility(View.VISIBLE);
+						}
+						if (mVideoView.getVisibility() == View.VISIBLE){  //xuameng播放音乐背景
+							mVideoView.setVisibility(View.GONE);
 						}
 						if (isBuffer || isShowlist){
 							if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
