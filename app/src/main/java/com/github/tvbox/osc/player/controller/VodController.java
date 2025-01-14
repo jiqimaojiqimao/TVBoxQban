@@ -219,6 +219,7 @@ public class VodController extends BaseController {
     TextView mPlayrefresh;
 	TextView mxuPlay;                         //xuameng 底部播放ID
 	private ImageView iv_circle_bg;  //xuameng音乐播放时图标
+	private TextView tv_slide_progress_text;
 	ImageView MxuamengMusic;       //xuameng播放音乐背景
     public TextView mPlayerTimeStartEndText;
     public TextView mPlayerTimeStartBtn;
@@ -305,7 +306,7 @@ public class VodController extends BaseController {
 					if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
 					MxuamengMusic.setVisibility(VISIBLE);
 					}
-					if (mProgressRoot.getVisibility() == View.VISIBLE || mPlayLoadNetSpeed.getVisibility() == View.VISIBLE){
+					if (mProgressRoot.getVisibility() == View.VISIBLE || mPlayLoadNetSpeed.getVisibility() == View.VISIBLE || tv_slide_progress_text.getVisibility() == View.VISIBLE){
 						if (iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 						iv_circle_bg.setVisibility(GONE);
 						}
@@ -397,6 +398,7 @@ public class VodController extends BaseController {
 		mTvPausexu = findViewById(R.id.tv_pause_xu);				   //XUAMENG暂停动画
 		iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg);  //xuameng音乐播放时图标
 		MxuamengMusic = (ImageView) findViewById(R.id.xuamengMusic);  //xuameng播放音乐背景
+		tv_slide_progress_text = findViewById(R.id.tv_slide_progress_text);
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
         mSubtitleView = findViewById(R.id.subtitle_view);
