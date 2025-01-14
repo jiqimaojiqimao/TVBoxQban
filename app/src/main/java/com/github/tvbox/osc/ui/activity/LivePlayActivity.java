@@ -2624,7 +2624,7 @@ public class LivePlayActivity extends BaseActivity {
 						MxuamengMusic.setVisibility(View.GONE);
 						}
 					}else{
-						mVideoView.setAlpha(0f);
+						mVideoView.setAlpha(0.4f);
 						if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
 						MxuamengMusic.setVisibility(View.VISIBLE);
 						}
