@@ -56,10 +56,9 @@ public abstract class BaseController extends BaseVideoController implements Gest
 	private boolean mIsDoubleTapTogglePlayEnabled = false;   //xuameng打开双击 true
 
     @Override
-    protected int getLayoutId() {
+    protected int getLayoutResID() {
         return R.layout.activity_live_play;
     }
-
     public BaseController(@NonNull Context context) {
         super(context);
         mHandler = new Handler(new Handler.Callback() {
