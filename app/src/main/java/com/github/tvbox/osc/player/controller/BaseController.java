@@ -15,7 +15,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -55,10 +54,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
     //private boolean mIsDoubleTapTogglePlayEnabled = true;
 	private boolean mIsDoubleTapTogglePlayEnabled = false;   //xuameng打开双击 true
 
-    @Override
-    protected int getLayoutResID() {
-        return R.layout.activity_live_play;
-    }
+
     public BaseController(@NonNull Context context) {
         super(context);
         mHandler = new Handler(new Handler.Callback() {
@@ -69,10 +65,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
                     case 100: { // 亮度+音量调整
                         mSlideInfo.setVisibility(VISIBLE);
                         mSlideInfo.setText(msg.obj.toString());
-						if (mLivecirclebgxu.getVisibility() == View.VISIBLE){
-							mLivecirclebgxu.setVisibility(GONE);
-						}
-
                         break;
                     }
 
@@ -100,7 +92,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
     }
 
     private TextView mSlideInfo;
-	private ImageView mLivecirclebgxu;  //xuameng音乐播放时图标
     private ProgressBar mLoading;
     private ViewGroup mPauseRoot;
     private TextView mPauseTime;
@@ -115,7 +106,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
         mLoading = findViewWithTag("vod_control_loading");
         mPauseRoot = findViewWithTag("vod_control_pause");
         mPauseTime = findViewWithTag("vod_control_pause_t");
-		mLivecirclebgxu = (ImageView) findViewById(R.id.iv_circle_bg_xu);  //xuameng音乐播放时图标
     }
 
     @Override
