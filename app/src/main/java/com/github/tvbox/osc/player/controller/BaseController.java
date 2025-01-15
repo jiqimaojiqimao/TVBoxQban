@@ -75,8 +75,8 @@ public abstract class BaseController extends BaseVideoController implements Gest
 						}
 						
 						LayoutInflater inflater = LayoutInflater.from(context);
-	View otherLayout = inflater.inflate(R.layout.activity_live_play, null);
-	ImageView circlebgxu = otherLayout.findViewById(R.id.iv_circle_bg_xu);
+	otherLayout = inflater.inflate(R.layout.activity_live_play, null);
+	circlebgxu = otherLayout.findViewById(R.id.iv_circle_bg_xu);
 						
 
 						if (circlebgxu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
@@ -114,6 +114,8 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private ViewGroup mPauseRoot;
     private TextView mPauseTime;
 	private ImageView music_iv_circle_bg;  //xuameng音乐播放时图标
+	private ImageView circlebgxu;
+	private FrameLayout otherLayout;
 
     @Override
     protected void initView() {
