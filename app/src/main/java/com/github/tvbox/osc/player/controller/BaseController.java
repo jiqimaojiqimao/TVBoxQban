@@ -15,7 +15,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.ImageView;
+import android.widget.ImageView;  //xuameng依赖
+import android.view.LayoutInflater; //xuameng LayoutInflater依赖
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -69,6 +70,10 @@ public abstract class BaseController extends BaseVideoController implements Gest
 						if (music_iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 							music_iv_circle_bg.setVisibility(GONE);
 						}
+						if (circlebgxu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
+							circlebgxu.setVisibility(GONE);
+						}
+						
                         break;
                     }
 
@@ -100,6 +105,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private ViewGroup mPauseRoot;
     private TextView mPauseTime;
 	private ImageView music_iv_circle_bg;  //xuameng音乐播放时图标
+	private ImageView circlebgxu;  //xuameng音乐播放时图标
 
     @Override
     protected void initView() {
@@ -112,6 +118,9 @@ public abstract class BaseController extends BaseVideoController implements Gest
         mPauseRoot = findViewWithTag("vod_control_pause");
         mPauseTime = findViewWithTag("vod_control_pause_t");
 		music_iv_circle_bg = findViewWithTag("music_iv_circle_bg");  //xuameng音乐播放时图标
+        LayoutInflater inflater = getLayoutInflater();
+        View activityView = inflater.inflate(R.layout.activity_live_play, null);
+        circlebgxu = activityView.findViewById(R.id.iv_circle_bg_xu);
     }
 
     @Override
