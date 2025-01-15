@@ -2625,7 +2625,7 @@ public class LivePlayActivity extends BaseActivity {
 						if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
 						MxuamengMusic.setVisibility(View.VISIBLE);
 						}
-						if (isBuffer || isShowlist){
+						if (isBuffer || isShowlist || Hawk.get(HawkConfig.MSLIDEINFO, true)){
 							if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 							iv_circle_bg_xu.setVisibility(View.GONE);
 							}
