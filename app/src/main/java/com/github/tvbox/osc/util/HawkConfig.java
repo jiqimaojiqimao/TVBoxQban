@@ -43,5 +43,6 @@ public class HawkConfig {
 	public static final String HOME_DEFAULT_SHOW = "home_default_show";  //xuameng 启动时直接进直播的开关
 	public static final String LIVE_CHANNEL_GROUP = "last_live_channel_group_name";  //xuameng记忆上次播放频道组
 	public static final String MSLIDEINFO = "mSlideInfo";  //调节亮度声音
+	public static final String SHOW_WINDOWS = "show_windows";  //返回到播放窗口
     public static boolean hotVodDelete;
 }
