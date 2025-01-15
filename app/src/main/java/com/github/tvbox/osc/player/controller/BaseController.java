@@ -17,6 +17,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ImageView;  //xuameng依赖
 import android.view.LayoutInflater; //xuameng LayoutInflater依赖
+import android.R;
 import android.widget.LinearLayout;
 import android.widget.FrameLayout;
 
@@ -71,6 +72,15 @@ public abstract class BaseController extends BaseVideoController implements Gest
                         mSlideInfo.setText(msg.obj.toString());
 						if (music_iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 							music_iv_circle_bg.setVisibility(GONE);
+						}
+						
+						LayoutInflater inflater = LayoutInflater.from(context);
+	View otherLayout = inflater.inflate(R.layout.activity_live_play, null);
+	ImageView circlebgxu = otherLayout.findViewById(R.id.iv_circle_bg_xu);
+						
+
+						if (circlebgxu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
+							circlebgxu.setVisibility(GONE);
 						}
 						
                         break;
@@ -441,12 +451,4 @@ public abstract class BaseController extends BaseVideoController implements Gest
     public boolean onKeyEvent(KeyEvent event) {
         return false;
     }
-public void showToastXu(){
-	       LayoutInflater inflater = getLayoutInflater();
-        View view = inflater.inflate(R.layout.activity_live_play, null);
-        ImageView circlebgxu = view.findViewById(R.id.iv_circle_bg_xu);
-								if (circlebgxu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
-							circlebgxu.setVisibility(GONE);
-						}
-}
 }
