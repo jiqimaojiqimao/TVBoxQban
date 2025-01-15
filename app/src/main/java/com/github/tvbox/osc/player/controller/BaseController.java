@@ -118,7 +118,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
         mPauseRoot = findViewWithTag("vod_control_pause");
         mPauseTime = findViewWithTag("vod_control_pause_t");
 		music_iv_circle_bg = findViewWithTag("music_iv_circle_bg");  //xuameng音乐播放时图标
-        LayoutInflater inflater = getLayoutInflater();
+        LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View activityView = inflater.inflate(R.layout.activity_live_play, null);
         circlebgxu = activityView.findViewById(R.id.iv_circle_bg_xu);
     }
