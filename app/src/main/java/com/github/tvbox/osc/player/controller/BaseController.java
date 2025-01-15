@@ -73,11 +73,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
 							music_iv_circle_bg.setVisibility(GONE);
 						}
 						
-
-						if (circlebgxu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
-							circlebgxu.setVisibility(GONE);
-						}
-						
                         break;
                     }
 
@@ -109,12 +104,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private ViewGroup mPauseRoot;
     private TextView mPauseTime;
 	private ImageView music_iv_circle_bg;  //xuameng音乐播放时图标
-
-        LayoutInflater inflater = getLayoutInflater();
-        View view = inflater.inflate(R.layout.live_toast, null);
-
-						
-        ImageView circlebgxu = view.findViewById(R.id.toastImage);
 
     @Override
     protected void initView() {
@@ -452,4 +441,12 @@ public abstract class BaseController extends BaseVideoController implements Gest
     public boolean onKeyEvent(KeyEvent event) {
         return false;
     }
+public void showToastXu(){
+	       LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.activity_live_play, null);
+        ImageView circlebgxu = view.findViewById(R.id.iv_circle_bg_xu);
+								if (circlebgxu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
+							circlebgxu.setVisibility(GONE);
+						}
+}
 }
