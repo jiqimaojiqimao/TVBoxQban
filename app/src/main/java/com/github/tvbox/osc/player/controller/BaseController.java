@@ -111,10 +111,10 @@ public abstract class BaseController extends BaseVideoController implements Gest
 	private ImageView music_iv_circle_bg;  //xuameng音乐播放时图标
 
         LayoutInflater inflater = getLayoutInflater();
-        View view = inflater.inflate(R.layout.activity_live_play, null);
+        View view = inflater.inflate(R.layout.live_toast, null);
 
 						
-        ImageView circlebgxu = view.findViewById(R.id.iv_circle_bg_xu);
+        ImageView circlebgxu = view.findViewById(R.id.toastImage);
 
     @Override
     protected void initView() {
