@@ -72,13 +72,13 @@ public abstract class BaseController extends BaseVideoController implements Gest
 						if (music_iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 							music_iv_circle_bg.setVisibility(GONE);
 						}
-						Hawk.put(HawkConfig.MSLIDEINFO, true);  //xuameng判断滑动
+						HawkConfig.MSLIDEINFO = true;  //xuameng判断滑动
                         break;
                     }
 
                     case 101: { // 亮度+音量调整 关闭
                         mSlideInfo.setVisibility(GONE);
-						Hawk.put(HawkConfig.MSLIDEINFO, false);  //xuameng判断滑动
+						HawkConfig.MSLIDEINFO = false;  //xuameng判断滑动
                         break;
                     }
                     default: {
