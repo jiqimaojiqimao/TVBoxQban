@@ -317,12 +317,12 @@ public class VodController extends BaseController {
 						}
 					}
 			}else {
-				iv_circle_bg.setVisibility(GONE);   //xuameng音乐播放时图标判断完
-		}else {
-			if (!isPlaying && mTvPausexu.getVisibility() == View.GONE && Hawk.get(HawkConfig.SHOW_WINDOWS, true)){
-				pauseIngXu();
-			}
-		}
+				iv_circle_bg.setVisibility(GONE);
+				if (!isPlaying && mTvPausexu.getVisibility() == View.GONE && Hawk.get(HawkConfig.SHOW_WINDOWS, true)){
+					pauseIngXu();  //xuameng暂停图标暂停判断
+				}
+			}   //xuameng音乐播放时图标判断完
+				
 
             mHandler.postDelayed(this, 1000);
         }
