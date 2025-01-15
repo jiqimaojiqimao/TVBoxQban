@@ -73,7 +73,8 @@ public abstract class BaseController extends BaseVideoController implements Gest
 							music_iv_circle_bg.setVisibility(GONE);
 						}
 						
-						LayoutInflater inflater = LayoutInflater.from(Context context);
+						
+LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	otherLayout = inflater.inflate(R.layout.activity_live_play, false);
 	circlebgxu = otherLayout.findViewById(R.id.iv_circle_bg_xu);
 						
