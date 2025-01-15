@@ -17,6 +17,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ImageView;  //xuameng依赖
 import android.view.LayoutInflater; //xuameng LayoutInflater依赖
+import android.R;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
