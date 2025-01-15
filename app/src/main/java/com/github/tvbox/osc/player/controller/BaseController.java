@@ -70,11 +70,10 @@ public abstract class BaseController extends BaseVideoController implements Gest
 						if (music_iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 							music_iv_circle_bg.setVisibility(GONE);
 						}
-        LayoutInflater inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View customToastView = inflater.inflate(R.layout.live_toast, null);
-        ImageView imageView = customToastView.findViewById(R.id.toastImage);
-						if (imageView.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
-							imageView.setVisibility(GONE);
+        View activityView = LayoutInflater.from(context).inflate(R.layout.activity_live_play,null);
+        circlebgxu = activityView.findViewById(R.id.iv_circle_bg_xu);
+						if (circlebgxu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
+							circlebgxu.setVisibility(GONE);
 						}
 						
                         break;
