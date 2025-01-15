@@ -109,10 +109,10 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private ViewGroup mPauseRoot;
     private TextView mPauseTime;
 	private ImageView music_iv_circle_bg;  //xuameng音乐播放时图标
-	private ImageView circlebgxu;  //xuameng音乐播放时图标
-	private View view;  //xuameng音乐播放时图标
 
-						View view = LayoutInflater.from(getActivity()).inflate(R.layout.activity_live_play, null);
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.activity_live_play, null);
+
 						
         ImageView circlebgxu = view.findViewById(R.id.iv_circle_bg_xu);
 
