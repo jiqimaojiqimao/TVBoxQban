@@ -51,8 +51,6 @@ import com.squareup.picasso.Picasso;      //xuameng播放音频切换图片
 import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
-import com.github.tvbox.osc.util.HawkConfig;    //xuameng 退出窗口判断
-import com.orhanobut.hawk.Hawk; //xuameng 退出窗口判断
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
@@ -318,9 +316,6 @@ public class VodController extends BaseController {
 					}
 			}else {
 				iv_circle_bg.setVisibility(GONE);
-				if (!isPlaying && mTvPausexu.getVisibility() == View.GONE && Hawk.get(HawkConfig.SHOW_WINDOWS, true)){
-					pauseIngXu();  //xuameng暂停图标暂停判断
-				}
 			}   //xuameng音乐播放时图标判断完
 				
 
@@ -1655,7 +1650,6 @@ public class VodController extends BaseController {
             backBtn.setVisibility(INVISIBLE);           //返回键隐藏菜单
 			mTvPausexu.setVisibility(GONE);				//隐藏暂停菜单
 			mLockView.setVisibility(INVISIBLE);         //xuameng隐藏屏幕锁
-			Hawk.put(HawkConfig.SHOW_WINDOWS, false);  //xuameng返回到窗口
             }
             return false;
         }
@@ -1679,7 +1673,6 @@ public class VodController extends BaseController {
         backBtn.setVisibility(INVISIBLE);           //返回键隐藏菜单
 	    mTvPausexu.setVisibility(GONE);				//隐藏暂停菜单
 		mLockView.setVisibility(INVISIBLE);         //xuameng隐藏屏幕锁
-		Hawk.put(HawkConfig.SHOW_WINDOWS, false);  //xuameng返回到窗口
         return false;
     }
 
