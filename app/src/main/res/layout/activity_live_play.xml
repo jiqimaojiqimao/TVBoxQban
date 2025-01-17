@@ -3,7 +3,7 @@
     android:id="@+id/live_root"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-	android:background="#FF000000"
+	android:background="#ff000000"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <ImageView
@@ -14,6 +14,10 @@
 		android:scaleType="fitXY" 
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"/>
+    <xyz.doikki.videoplayer.player.VideoView
+        android:id="@+id/mVideoView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
     <ImageView
         android:layout_gravity="center"
         android:visibility="gone"
@@ -22,10 +26,6 @@
         android:layout_width="@dimen/vs_80"
         android:layout_height="@dimen/vs_80"
         android:src="@drawable/app_icon"/>
-    <xyz.doikki.videoplayer.player.VideoView
-        android:id="@+id/mVideoView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"/>
     <LinearLayout
         android:gravity="center_vertical"
         android:layout_gravity="left"
