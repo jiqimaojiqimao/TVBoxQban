@@ -261,8 +261,17 @@ public class VodController extends BaseController {
             mPlayLoadNetSpeed.setText(speed);
             String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
             String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
-            mVideoSize.setText("[ " + width + " X " + height +" ]");
-            
+            mVideoSize.setText("[ " + width + " X " + height +" ]");          				
+            mHandler.postDelayed(this, 1000);
+        }
+    };
+
+    private Runnable myRunnableXu = new Runnable() {
+        @Override
+        public void run() {
+            String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
+            String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
+
 			if (mControlWrapper.isPlaying()){    //xuameng音乐播放时图标判断
 				if (!mIsDragging) {
 					mControlWrapper.startProgress();    //xuameng启动进程
@@ -319,7 +328,7 @@ public class VodController extends BaseController {
 			}   //xuameng音乐播放时图标判断完
 				
 
-            mHandler.postDelayed(this, 1000);
+            mHandler.postDelayed(this, 100);
         }
     };
 
@@ -476,6 +485,7 @@ public class VodController extends BaseController {
             public void run() {
                 mHandler.post(myRunnable2);
 				mHandler.post(myRunnableMusic);  //xuameng播放音频切换图片
+				mHandler.post(myRunnableXu);  //xuameng播放音频切换图片
             }
         });
 
@@ -1659,6 +1669,7 @@ public class VodController extends BaseController {
 			mHandler.removeCallbacks(myRunnable2);
 			mHandler.removeCallbacks(xuRunnable);
 			mHandler.removeCallbacks(myRunnableMusic);	
+			mHandler.removeCallbacks(myRunnableXu);
             return true;
         }
         if (isBottomVisible() && (System.currentTimeMillis() - DOUBLE_CLICK_TIME > 350)) {			      //xuameng按返回键退出
@@ -1682,5 +1693,6 @@ public class VodController extends BaseController {
         mHandler.removeCallbacks(myRunnable2);
 		mHandler.removeCallbacks(xuRunnable);
 		mHandler.removeCallbacks(myRunnableMusic);		
+		mHandler.removeCallbacks(myRunnableXu);
     }
 }
