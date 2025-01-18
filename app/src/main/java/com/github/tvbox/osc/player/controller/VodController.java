@@ -258,10 +258,7 @@ public class VodController extends BaseController {
             mPlayPauseTime.setText(timeFormat.format(date));
             String speed = PlayerHelper.getDisplaySpeed(mControlWrapper.getTcpSpeed());
             mPlayLoadNetSpeedRightTop.setText(speed);
-            mPlayLoadNetSpeed.setText(speed);
-            String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
-            String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
-            mVideoSize.setText("[ " + width + " X " + height +" ]");          				
+            mPlayLoadNetSpeed.setText(speed);         				
             mHandler.postDelayed(this, 1000);
         }
     };
@@ -1370,6 +1367,9 @@ public class VodController extends BaseController {
                 mPlayLoadNetSpeed.setVisibility(GONE);
                 hideLiveAboutBtn();
                 listener.prepared();
+			    String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
+				String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
+				mVideoSize.setText("[ " + width + " X " + height +" ]"); 
                 break;
             case VideoView.STATE_BUFFERED:
                 mPlayLoadNetSpeed.setVisibility(GONE);
