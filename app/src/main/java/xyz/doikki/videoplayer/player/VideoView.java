@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import com.orhanobut.hawk.Hawk;         //xuameng surfaceview判断用
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,6 +35,7 @@ import xyz.doikki.videoplayer.render.IRenderView;
 import xyz.doikki.videoplayer.render.RenderViewFactory;
 import xyz.doikki.videoplayer.util.L;
 import xyz.doikki.videoplayer.util.PlayerUtils;
+import com.github.tvbox.osc.util.HawkConfig;  //xuameng surfaceview判断用
 
 /**
  * 播放器
@@ -98,6 +100,9 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
 
     protected boolean mIsTinyScreen;//是否处于小屏状态
     protected int[] mTinyScreenSize = {0, 0};
+
+	private int Progress = 0;
+	private boolean isSurface = false;  //xuameng判断是否surface
 
     /**
      * 监听系统中音频焦点改变，见{@link #setEnableAudioFocus(boolean)}
@@ -196,6 +201,8 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * @return 是否成功开始播放
      */
     protected boolean startPlay() {
+		Progress = 0; //xuameng清空进程记录
+		isSurface = false;
         //如果要显示移动网络提示则不继续播放
         if (showNetWarning()) {
             //中止播放
@@ -216,6 +223,26 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
         return true;
     }
 
+    protected boolean startPlayXu() {
+        //如果要显示移动网络提示则不继续播放
+        if (showNetWarning()) {
+            //中止播放
+            setPlayState(STATE_START_ABORT);
+            return false;
+        }
+        //监听音频焦点改变
+        if (mEnableAudioFocus) {
+            mAudioFocusHelper = new AudioFocusHelper(this);
+        }
+        //读取播放进度
+        if (mProgressManager != null) {
+            mCurrentPosition = mProgressManager.getSavedProgress(mProgressKey == null ? mUrl : mProgressKey);
+        }
+        initPlayer();
+        addDisplay();
+        startPrepare(false);
+        return true;
+    }
     /**
      * 是否显示移动网络提示，可在Controller中配置
      */
@@ -349,6 +376,18 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * 继续播放
      */
     public void resume() {
+		String width = Integer.toString(getVideoSize()[0]);
+		String height = Integer.toString(getVideoSize()[1]);
+
+		if (width.length() > 1 && height.length() > 1) {
+			int duration = (int) getDuration();
+			if(duration > 130000) {
+			Progress = (int) getCurrentPosition();
+			isSurface = true;
+			}
+		releaseXu();
+		startPlayXu();
+		}       //xuameng surfaceview判断完
         if (isInPlaybackState()
                 && !mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
@@ -400,6 +439,37 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
         }
     }
 
+    public void releaseXu() {
+        if (!isInIdleState()) {
+            //释放播放器
+            if (mMediaPlayer != null) {
+                mMediaPlayer.release();
+                mMediaPlayer = null;
+            }
+            //释放renderView
+            if (mRenderView != null) {
+                mPlayerContainer.removeView(mRenderView.getView());
+                mRenderView.release();
+                mRenderView = null;
+            }
+            //释放Assets资源
+            if (mAssetFileDescriptor != null) {
+                try {
+                    mAssetFileDescriptor.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            //关闭AudioFocus监听
+            if (mAudioFocusHelper != null) {
+                mAudioFocusHelper.abandonFocus();
+                mAudioFocusHelper = null;
+            }
+            saveProgress();
+            //切换转态
+            setPlayState(STATE_IDLE);
+        }
+    }
     /**
      * 保存播放进度
      */
@@ -555,6 +625,11 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             case AbstractPlayer.MEDIA_INFO_RENDERING_START: // 视频/音频开始渲染
                 setPlayState(STATE_PLAYING);
                 mPlayerContainer.setKeepScreenOn(true);
+				if (Progress > 0 && isSurface && !HawkConfig.intVod){   //xuameng surface读取播放进度
+					seekTo(Progress);
+					Progress = 0;
+					isSurface = false;
+				}
                 break;
             case AbstractPlayer.MEDIA_INFO_VIDEO_ROTATION_CHANGED:
                 if (mRenderView != null) mRenderView.setVideoRotation(extra);
