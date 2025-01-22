@@ -42,6 +42,7 @@ public class HawkConfig {
     public static final String IJK_CACHE_PLAY = "ijk_cache_play";       //IJK缓存
 	public static final String HOME_DEFAULT_SHOW = "home_default_show";  //xuameng 启动时直接进直播的开关
 	public static final String LIVE_CHANNEL_GROUP = "last_live_channel_group_name";  //xuameng记忆上次播放频道组
-	public static boolean MSLIDEINFO = false;  //调节亮度声音
+	public static boolean MSLIDEINFO = false;  //xuameng调节亮度声音
+	public static boolean intVod = false;  //xuameng判断是否进入VOD界面
     public static boolean hotVodDelete;
 }
