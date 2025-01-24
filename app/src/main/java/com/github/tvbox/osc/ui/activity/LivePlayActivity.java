@@ -186,6 +186,7 @@ public class LivePlayActivity extends BaseActivity {
     private boolean isTVNUM = false; //xuameng获取频道编号
 	private boolean isBuffer = false; //xuameng缓冲
 	private boolean isShowlist = false; //xuameng判断菜单显示
+	private boolean isVideoplaying = false;  //xuameng判断视频开始播放
     private int selectedChannelNumber = 0; // xuameng遥控器数字键输入的要切换的频道号码
     private TextView tvSelectedChannel; //xuameng频道编号
 	private ImageView iv_circle_bg_xu;  //xuameng音乐播放时图标
@@ -1966,6 +1967,7 @@ public class LivePlayActivity extends BaseActivity {
 							iv_circle_bg_xu.setVisibility(View.GONE);
 							} 
 							iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
+						isVideoplaying = false;
                     case VideoView.STATE_PAUSED:
                         break;
                     case VideoView.STATE_PREPARED:
@@ -2004,6 +2006,7 @@ public class LivePlayActivity extends BaseActivity {
                     case VideoView.STATE_PLAYING:
                         currentLiveChangeSourceTimes = 0;
                         mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);
+						isVideoplaying = true;
 						isBuffer = false;
                         break;
                     case VideoView.STATE_ERROR:
@@ -2018,6 +2021,7 @@ public class LivePlayActivity extends BaseActivity {
                         mHandler.postDelayed(mConnectTimeoutChangeSourceRun, 10000); //xuameng播放超时10秒换源
                         break;
                     case VideoView.STATE_PREPARING:
+						isVideoplaying = false;
                         isVOD = false;
                     case VideoView.STATE_BUFFERING:
                         mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);
@@ -2670,6 +2674,7 @@ public class LivePlayActivity extends BaseActivity {
             if(mVideoView.isPlaying()) {  //xuameng音乐播放时图标判断
 				    String width = Integer.toString(mVideoView.getVideoSize()[0]);
 					String height = Integer.toString(mVideoView.getVideoSize()[1]);
+					tv_size.setText("[" + width + " X " + height +"]");
 				if (width.length() > 1 && height.length() > 1){ //XUAMENG分辨率
 					if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 						iv_circle_bg_xu.setVisibility(View.GONE);
@@ -2678,7 +2683,7 @@ public class LivePlayActivity extends BaseActivity {
 						MxuamengMusic.setVisibility(View.GONE);
 						}
 					}else{
-						if (MxuamengMusic.getVisibility() == View.GONE){  //xuameng播放音乐背景
+						if (MxuamengMusic.getVisibility() == View.GONE && isVideoplaying){  //xuameng播放音乐背景
 						MxuamengMusic.setVisibility(View.VISIBLE);
 						}
 						if (isBuffer || isShowlist || HawkConfig.MSLIDEINFO){  //xuameng缓冲时，显示左菜单时，显示亮度音量时
@@ -2686,7 +2691,9 @@ public class LivePlayActivity extends BaseActivity {
 							iv_circle_bg_xu.setVisibility(View.GONE);
 							}
 						}else {
+							if (isVideoplaying){
 							iv_circle_bg_xu.setVisibility(View.VISIBLE);
+							}
 						}
 					}
 			}else {
