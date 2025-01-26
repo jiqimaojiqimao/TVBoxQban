@@ -2674,7 +2674,7 @@ public class LivePlayActivity extends BaseActivity {
             if(mVideoView.isPlaying()) {  //xuameng音乐播放时图标判断
 				    String width = Integer.toString(mVideoView.getVideoSize()[0]);
 					String height = Integer.toString(mVideoView.getVideoSize()[1]);
-					tv_size.setText("[" + width + " X " + height +"]");
+				//	tv_size.setText("[" + width + " X " + height +"]");
 				if (width.length() > 1 && height.length() > 1){ //XUAMENG分辨率
 					if (iv_circle_bg_xu.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
 						iv_circle_bg_xu.setVisibility(View.GONE);
