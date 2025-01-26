@@ -50,6 +50,7 @@ import static xyz.doikki.videoplayer.util.PlayerUtils.stringForTime;
 import com.squareup.picasso.Picasso;      //xuameng播放音频切换图片
 import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
+import android.graphics.Bitmap;  //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
 
 public class VodController extends BaseController {
@@ -343,9 +344,10 @@ public class VodController extends BaseController {
 				.load(Url)
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 				.noPlaceholder()   //不使用站位图，效果不好
-				.resize(3840,2160)
+				.resize(1920,1080)
 				.centerCrop()
 //				.error(R.drawable.xumusic)
+				.config(Bitmap.Config.RGB_565)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
 				.networkPolicy(NetworkPolicy.NO_CACHE)
 				.into(MxuamengMusic); // xuameng内容空显示banner
