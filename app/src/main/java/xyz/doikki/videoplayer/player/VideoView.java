@@ -379,7 +379,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
 		String width = Integer.toString(getVideoSize()[0]);
 		String height = Integer.toString(getVideoSize()[1]);
 
-		if (width.length() > 1 && height.length() > 1) {
+		if (width.length() > 1 && height.length() > 1 && !HawkConfig.intSubtitle) {
 			int duration = (int) getDuration();
 			if(duration > 130000) {
 			Progress = (int) getCurrentPosition();
