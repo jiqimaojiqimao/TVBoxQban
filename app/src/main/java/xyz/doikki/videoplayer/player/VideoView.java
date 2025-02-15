@@ -397,6 +397,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             }
             mPlayerContainer.setKeepScreenOn(true);
         }
+		HawkConfig.intSubtitle = false;  //xuameng判断进入本地字幕
     }
 
     /**
