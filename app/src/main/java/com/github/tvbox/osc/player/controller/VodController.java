@@ -1343,6 +1343,10 @@ public class VodController extends BaseController {
 			    public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
                 MxuamengView.setVisibility(VISIBLE);		   //xuameng动画开始防点击
+				if (mPlayPauseTimexu.getVisibility() == View.VISIBLE||mPlayTitle.getVisibility() == View.VISIBLE){
+					mPlayPauseTimexu.setVisibility(GONE);   //xuameng隐藏上面视频名称
+					mPlayTitle.setVisibility(GONE);         //xuameng隐藏上面时间
+				}
 				isPlaying = true;  //xuameng动画开启
 			    }
                 public void onAnimationEnd(Animator animation) {
