@@ -54,6 +54,11 @@ public class IjkTrackInfo implements ITrackInfo {
 				if(Language.contains(zhi)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(zhi, changezhi);  //xuameng过滤字幕类型里application/字符串
 				}
+				String zho = "zho";  //xuameng过滤字幕类型里application/字符串
+				String changezho = "中文";
+				if(Language.contains(zho)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(zho, changezho);  //xuameng过滤字幕类型里application/字符串
+				}
 				String eng = "eng";  //xuameng过滤字幕类型里application/字符串
 				String changeeng = "英语";
 				if(Language.contains(eng)) {  //xuameng过滤字幕类型里application/字符串
@@ -320,6 +325,11 @@ public class IjkTrackInfo implements ITrackInfo {
 		String textString3 = "TrueHD";
 		if(zimuCodecs.contains(text3)) {  //xuameng过滤字幕类型里application/字符串
 			zimuCodecs = zimuCodecs.replace(text3, textString3);  //xuameng过滤字幕类型里application/字符串
+		}
+		String text4 = "-608";  //xuameng过滤字幕类型里application/字符串
+		String textString4 = "";
+		if(zimuCodecs.contains(text4)) {  //xuameng过滤字幕类型里application/字符串
+			zimuCodecs = zimuCodecs.replace(text4, textString4);  //xuameng过滤字幕类型里application/字符串
 		}
         return zimuCodecs;
     }
