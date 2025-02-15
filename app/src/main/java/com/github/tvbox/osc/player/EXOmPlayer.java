@@ -103,6 +103,11 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							if(originalString.contains(text2)) {  //xuameng过滤字幕类型里application/字符串
 							originalString = originalString.replace(text2, textString2);  //xuameng过滤字幕类型里application/字符串
 							}
+							String text3 = "-608";  //xuameng过滤字幕类型里application/字符串
+							String textString3 = "";
+							if(originalString.contains(text3)) {  //xuameng过滤字幕类型里application/字符串
+							originalString = originalString.replace(text3, textString3);  //xuameng过滤字幕类型里application/字符串
+							}
                             String trackName = "";  //xuameng显示字幕类型
                             TrackInfoBean t = new TrackInfoBean();
                             t.name = trackName;
