@@ -2715,7 +2715,7 @@ public class LivePlayActivity extends BaseActivity {
 //				.placeholder(R.drawable.xumusic)  //xuameng默认的站位图
 				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(1920,1080)
-				.centerCrop()
+//				.centerCrop()
 //				.error(R.drawable.xumusic)
 				.config(Bitmap.Config.RGB_565)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
@@ -2731,7 +2731,7 @@ public class LivePlayActivity extends BaseActivity {
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(1920,1080)
-				.centerCrop()
+//				.centerCrop()
 //				.error(R.drawable.xumusic)
 				.config(Bitmap.Config.RGB_565)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
@@ -2746,7 +2746,7 @@ public class LivePlayActivity extends BaseActivity {
 //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
 				.noPlaceholder()   //不使用站位图，效果不好
 				.resize(1920,1080)
-				.centerCrop()
+//				.centerCrop()
 //				.error(R.drawable.xumusic)
 				.config(Bitmap.Config.RGB_565)
 				.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)
