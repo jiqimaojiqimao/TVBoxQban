@@ -327,12 +327,6 @@ public class PlayActivity extends BaseActivity {
             @Override
             public void openLocalFileChooserDialog() {
 				HawkConfig.intSubtitle = true;  //xuameng判断进入本地字幕
-				new Handler().postDelayed(new Runnable() {
-					@Override
-					public void run() {
-					HawkConfig.intSubtitle = false;  //xuameng判断进入本地字幕
-					}
-				}, 800);
                 new ChooserDialog(PlayActivity.this)
                         .withFilter(false, false, "srt", "ass", "scc", "stl", "ttml")
                         .withStartFile("/storage/emulated/0/Download")
@@ -348,6 +342,12 @@ public class PlayActivity extends BaseActivity {
             }
         });
         subtitleDialog.show();
+		new Handler().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+			HawkConfig.intSubtitle = false;  //xuameng判断进入本地字幕
+			}
+		}, 6000);
     }
 
     void setSubtitleViewTextStyle(int style) {
