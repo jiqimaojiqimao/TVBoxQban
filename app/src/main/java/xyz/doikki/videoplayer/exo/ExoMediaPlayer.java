@@ -55,7 +55,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     @Override
     public void initPlayer() {
         if (mRenderersFactory == null) {
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext).setEnableDecoderFallback(true);  // XUAMENG启用解码器回退，避免硬件加速问题
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
         }
         mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
         if (mTrackSelector == null) {
