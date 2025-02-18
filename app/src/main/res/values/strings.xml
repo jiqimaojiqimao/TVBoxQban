@@ -1,4 +1,8 @@
 <resources>
     <!--  app名称   -->
     <string name="app_name">聚汇影视</string>
+	<!--  本地字幕选择   -->
+	<string name="title_choose_file">请选择字幕文件</string>
+	<string name="dialog_cancel">取消</string>
+	<string name="title_choose">选择</string>
 </resources>
