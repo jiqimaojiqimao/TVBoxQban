@@ -1036,8 +1036,11 @@
         <item name="android:scaleType">fitCenter</item>
     </style>
     <style name="FileChooserListItemStyle">
+		<item name="android:paddingBottom">@dimen/vs_10</item>
+		<item name="android:paddingTop">@dimen/vs_10</item>
+		<item name="android:paddingLeft">@dimen/vs_10</item>
+		<item name="android:paddingRight">@dimen/vs_10</item>
         <item name="android:background">@color/li_row_background</item>
-        <item name="android:padding">10.0dip</item>
         <item name="android:descendantFocusability">beforeDescendants</item>
         <item name="fileChooserFileIconStyle">@style/FileChooserFileIconStyle</item>
         <item name="fileChooserTextDateStyle">@style/FileChooserTextDateStyle</item>
@@ -1055,7 +1058,7 @@
         <item name="fileChooserNewFolderWidthWeight">0.56</item>
     </style>
     <style name="FileChooserPathViewStyle">
-        <item name="android:textSize">12.0sp</item>
+        <item name="android:textSize">13.0sp</item>
         <item name="android:textColor">#40000000</item>
         <item name="android:background">#ffffffff</item>
         <item name="android:paddingLeft">16.0dip</item>
@@ -1521,4 +1524,70 @@
         <item name="android:maxHeight">9mm</item>  
         <item name="android:indeterminateBehavior">cycle</item> 
     </style>  
+
+<!--xuameng文件选择器样式,在此只改变了背景和基本颜色-->
+    <style name="FileChooserXu" parent="FileChooserStyle">
+        <item name="android:textColor">@color/colorPrimary</item>
+        <item name="android:textColorPrimary">@color/colorPrimary</item>
+        <item name="android:textColorSecondary">@color/colorPrimary</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimary</item>
+        <item name="colorAccent">@color/material_deep_teal_200</item>
+        <item name="fileChooserDialogStyle">@style/FileChooserDialogStyle1</item>
+        <item name="fileChooserListItemStyle">@style/FileChooserListItemStyle1</item>
+        <item name="fileChooserPathViewStyle">@style/FileChooserPathViewStyle1</item>
+    </style>
+
+<!--xuameng选择器弹窗样式 背景shape_dialog_bg_main 文字颜色color_85000000-->
+    <style name="FileChooserDialogStyle1" parent="FileChooserDialogStyle">
+        <item name="android:windowBackground">@drawable/shape_dialog_bg_main</item>
+        <item name="android:buttonBarButtonStyle">@style/FileChooserButtonStyle1</item>
+        <item name="buttonBarButtonStyle">@style/FileChooserButtonStyle1</item>
+    </style>
+    <style name="FileChooserButtonStyle1" parent="FileChooserButtonStyle">
+        <item name="android:textColor">@color/color_85000000</item>
+    </style>
+<!--    xuameng选择器弹窗样式结束-->
+<!--xuameng文件选择器条目样式开始-->
+    <style name="FileChooserListItemStyle1" parent="FileChooserListItemStyle">
+        <item name="fileChooserTextNameStyle">@style/FileChooserTextNameStyle1</item>
+        <item name="fileChooserTextSizeStyle">@style/FileChooserTextSizeStyle1</item>
+        <item name="fileChooserTextDateStyle">@style/FileChooserTextDateStyle1</item>
+	<!--item选择颜色-->
+		<item name="fileListItemSelectedTint">@drawable/listview_item_selector</item>
+	<!--item预选颜色-->
+		<item name="fileListItemFocusedDrawable">@drawable/listview_item_selector</item>
+        <item name="android:background">@android:color/transparent</item>
+	<!--item间距-->
+		<item name="android:paddingBottom">@dimen/vs_0</item>
+		<item name="android:paddingTop">@dimen/vs_0</item>
+		<item name="android:paddingLeft">23.0sp</item>
+		<item name="android:paddingRight">23.0sp</item>
+    </style>
+	<!--xuameng文件夹名称颜色-->
+    <style name="FileChooserTextNameStyle1" parent="FileChooserTextNameStyle">
+		<item name="android:textSize">15.0sp</item>
+        <item name="android:textColor">@color/color_85000000</item>
+    </style>
+	<!--xuameng文件夹日期颜色-->
+    <style name="FileChooserTextSizeStyle1" parent="FileChooserTextSizeStyle">
+        <item name="android:textColor">@color/color_99000000</item>
+    </style>
+	<!--xuameng文件夹时间颜色-->
+    <style name="FileChooserTextDateStyle1" parent="FileChooserTextDateStyle">
+        <item name="android:textColor">@color/color_99000000</item>
+    </style>
+<!-- 文件选择器条目样式结束-->
+
+<!-- xuameng选择器文件路径文字颜色样式   -->
+    <style name="FileChooserPathViewStyle1" parent="FileChooserPathViewStyle">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:textColor">@color/color_85000000</item>
+		<item name="android:textSize">15.0sp</item>
+		<item name="android:paddingBottom">10.0sp</item>
+		<item name="android:paddingTop">0.0sp</item>
+		<item name="android:paddingLeft">24.0sp</item>
+		<item name="android:paddingRight">24.0sp</item>
+    </style>
+<!-- xuameng选择器文件路径文字颜色样式结束   -->
 </resources>
