@@ -79,6 +79,7 @@
     <color name="li_row_background">#fffbfbfb</color>
     <color name="li_row_background_tint">#4027bfad</color>
     <color name="li_row_selector">#4080cbc4</color>
+	<color name="li_row_selector_xu">#333d3d3d</color>
     <color name="material_blue_grey_800">#ff37474f</color>
     <color name="material_blue_grey_900">#ff263238</color>
     <color name="material_blue_grey_950">#ff21272b</color>
