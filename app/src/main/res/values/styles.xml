@@ -1554,7 +1554,7 @@
         <item name="fileChooserTextSizeStyle">@style/FileChooserTextSizeStyle1</item>
         <item name="fileChooserTextDateStyle">@style/FileChooserTextDateStyle1</item>
 	<!--item选择颜色-->
-		<item name="fileListItemSelectedTint">@drawable/listview_item_selector</item>
+		<item name="fileListItemSelectedTint">@color/li_row_background_tint</item>
 	<!--item预选颜色-->
 		<item name="fileListItemFocusedDrawable">@drawable/listview_item_selector</item>
         <item name="android:background">@android:color/transparent</item>
