@@ -376,12 +376,18 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * 继续播放
      */
     public void resume() {
-		ViewGroup decorView = getDecorView();
-        this.removeView(mPlayerContainer);
-        //将播放器视图添加到DecorView中即实现了全屏
-        decorView.addView(mPlayerContainer);
+		String width = Integer.toString(getVideoSize()[0]);
+		String height = Integer.toString(getVideoSize()[1]);
 
-
+		if (width.length() > 1 && height.length() > 1 && !HawkConfig.intSubtitle) {
+			int duration = (int) getDuration();
+			if(duration > 130000) {
+			Progress = (int) getCurrentPosition();
+			isSurface = true;
+			}
+		releaseXu();
+		startPlayXu();
+		}       //xuameng surfaceview判断完
         if (isInPlaybackState()
                 && !mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
@@ -613,6 +619,11 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             case AbstractPlayer.MEDIA_INFO_RENDERING_START: // 视频/音频开始渲染
                 setPlayState(STATE_PLAYING);
                 mPlayerContainer.setKeepScreenOn(true);
+				if (Progress > 0 && isSurface && !HawkConfig.intVod){   //xuameng surface读取播放进度
+					seekTo(Progress);
+					Progress = 0;
+					isSurface = false;
+				}
 				String width = Integer.toString(getVideoSize()[0]);
 				String height = Integer.toString(getVideoSize()[1]);
 				if (width.length() <= 1 && height.length() <= 1){
