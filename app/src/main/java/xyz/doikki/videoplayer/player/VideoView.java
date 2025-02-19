@@ -238,7 +238,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
         if (mProgressManager != null) {
             mCurrentPosition = mProgressManager.getSavedProgress(mProgressKey == null ? mUrl : mProgressKey);
         }
- 
+        initPlayer();
         addDisplay();
         startPrepare(false);
         return true;
@@ -379,13 +379,15 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
 		String width = Integer.toString(getVideoSize()[0]);
 		String height = Integer.toString(getVideoSize()[1]);
 
-		            if (mRenderView != null) {
-                mPlayerContainer.removeView(mRenderView.getView());
-                mRenderView.release();
-                mRenderView = null;
-            }
-		addDisplay();
-		       //xuameng surfaceview判断完
+		if (width.length() > 1 && height.length() > 1 && !HawkConfig.intSubtitle) {
+			int duration = (int) getDuration();
+			if(duration > 130000) {
+			Progress = (int) getCurrentPosition();
+			isSurface = true;
+			}
+		releaseXu();
+		startPlayXu();
+		}       //xuameng surfaceview判断完
         if (isInPlaybackState()
                 && !mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
@@ -441,7 +443,10 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
     public void releaseXu() {
         if (!isInIdleState()) {
             //释放播放器
-
+            if (mMediaPlayer != null) {
+                mMediaPlayer.release();
+                mMediaPlayer = null;
+            }
             //释放renderView
             if (mRenderView != null) {
                 mPlayerContainer.removeView(mRenderView.getView());
@@ -461,7 +466,9 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
                 mAudioFocusHelper.abandonFocus();
                 mAudioFocusHelper = null;
             }
-
+            saveProgress();
+            //切换转态
+            setPlayState(STATE_IDLE);
         }
     }
     /**
@@ -612,7 +619,11 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             case AbstractPlayer.MEDIA_INFO_RENDERING_START: // 视频/音频开始渲染
                 setPlayState(STATE_PLAYING);
                 mPlayerContainer.setKeepScreenOn(true);
-
+				if (Progress > 0 && isSurface && !HawkConfig.intVod){   //xuameng surface读取播放进度
+					seekTo(Progress);
+					Progress = 0;
+					isSurface = false;
+				}
 				String width = Integer.toString(getVideoSize()[0]);
 				String height = Integer.toString(getVideoSize()[1]);
 				if (width.length() <= 1 && height.length() <= 1){
