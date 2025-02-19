@@ -385,7 +385,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
                 mRenderView = null;
             }
 		addDisplay();
-		}       //xuameng surfaceview判断完
+		       //xuameng surfaceview判断完
         if (isInPlaybackState()
                 && !mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
