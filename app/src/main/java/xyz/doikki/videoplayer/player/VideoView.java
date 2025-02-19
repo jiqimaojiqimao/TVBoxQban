@@ -376,10 +376,12 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * 继续播放
      */
     public void resume() {
-initView();
+		ViewGroup decorView = getDecorView();
         this.removeView(mPlayerContainer);
         //将播放器视图添加到DecorView中即实现了全屏
         decorView.addView(mPlayerContainer);
+
+
         if (isInPlaybackState()
                 && !mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
