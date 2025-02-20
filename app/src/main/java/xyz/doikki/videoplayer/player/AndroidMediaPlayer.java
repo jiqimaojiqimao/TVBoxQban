@@ -132,7 +132,16 @@ public class AndroidMediaPlayer extends AbstractPlayer implements MediaPlayer.On
         stop();
         final MediaPlayer mediaPlayer = mMediaPlayer;
         mMediaPlayer = null;
-
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    mediaPlayer.release();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
 
     @Override
