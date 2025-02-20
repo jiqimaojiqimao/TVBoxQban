@@ -336,7 +336,6 @@ public class PlayFragment extends BaseLazyFragment {
         subtitleDialog.setLocalFileChooserListener(new SubtitleDialog.LocalFileChooserListener() {
             @Override
             public void openLocalFileChooserDialog() {
-				HawkConfig.intSubtitle = true;  //xuameng判断进入本地字幕
                 new ChooserDialog(getActivity(),R.style.FileChooserXu)   //xuameng本地字幕风格
 						.withResources(R.string.title_choose_file, R.string.title_choose, R.string.dialog_cancel)  //xuameng本地字幕风格
                         .withFilter(false, false, "srt", "ass", "scc", "stl", "ttml")
@@ -353,12 +352,6 @@ public class PlayFragment extends BaseLazyFragment {
             }
         });
         subtitleDialog.show();
-		new Handler().postDelayed(new Runnable() {
-			@Override
-			public void run() {
-			HawkConfig.intSubtitle = false;  //xuameng判断进入本地字幕
-			}
-		}, 6000);
     }
 
     @SuppressLint("UseCompatLoadingForColorStateLists")
