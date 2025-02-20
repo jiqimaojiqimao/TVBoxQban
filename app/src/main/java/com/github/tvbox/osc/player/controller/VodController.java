@@ -764,13 +764,13 @@ public class VodController extends BaseController {
             public void onClick(View view) {
                 myHandle.removeCallbacks(myRunnable);
                 myHandle.postDelayed(myRunnable, myHandleSeconds);
-									HawkConfig.intVod = true;  //xuameng判断进入本地字幕
-		new Handler().postDelayed(new Runnable() {
-			@Override
-			public void run() {
-			HawkConfig.intVod = false;  //xuameng判断进入本地字幕
-			}
-		}, 2000);
+				HawkConfig.intVod = true;  //xuameng判断选择播放器防止surface焦点丢失
+				new Handler().postDelayed(new Runnable() {
+					@Override
+						public void run() {
+						HawkConfig.intVod = false;  //xuameng判断选择播放器防止surface焦点丢失
+						}
+					}, 2000);
                 try {
                     int playerType = mPlayerConfig.getInt("pl");
                     ArrayList<Integer> exsitPlayerTypes = PlayerHelper.getExistPlayerTypes();
@@ -825,13 +825,13 @@ public class VodController extends BaseController {
                         @Override
                         public void click(Integer value, int pos) {
                             try {
-																	HawkConfig.intVod = true;  //xuameng判断进入本地字幕
-		new Handler().postDelayed(new Runnable() {
-			@Override
-			public void run() {
-			HawkConfig.intVod = false;  //xuameng判断进入本地字幕
-			}
-		}, 2000);
+								HawkConfig.intVod = true;  //xuameng判断选择播放器防止surface焦点丢失
+								new Handler().postDelayed(new Runnable() {
+									@Override
+										public void run() {
+										HawkConfig.intVod = false;  //xuameng判断选择播放器防止surface焦点丢失
+										}
+									}, 2000);
                                 dialog.cancel();
                                 int thisPlayType = players.get(pos);
                                 if (thisPlayType != playerType) {
