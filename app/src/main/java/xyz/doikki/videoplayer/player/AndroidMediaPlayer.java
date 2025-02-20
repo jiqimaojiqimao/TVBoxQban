@@ -102,8 +102,6 @@ public class AndroidMediaPlayer extends AbstractPlayer implements MediaPlayer.On
     public void reset() {
         stop();
         mMediaPlayer.reset();
-        mMediaPlayer.setSurface(null);
-        mMediaPlayer.setDisplay(null);
         mMediaPlayer.setVolume(1, 1);
     }
 
