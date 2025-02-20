@@ -34,7 +34,6 @@ import xyz.doikki.videoplayer.render.IRenderView;
 import xyz.doikki.videoplayer.render.RenderViewFactory;
 import xyz.doikki.videoplayer.util.L;
 import xyz.doikki.videoplayer.util.PlayerUtils;
-import com.github.tvbox.osc.util.HawkConfig;  //xuameng surfaceview判断用
 
 /**
  * 播放器
@@ -99,9 +98,6 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
 
     protected boolean mIsTinyScreen;//是否处于小屏状态
     protected int[] mTinyScreenSize = {0, 0};
-
-	private int Progress = 0;
-	private boolean isSurface = false;  //xuameng判断是否surface
 
     /**
      * 监听系统中音频焦点改变，见{@link #setEnableAudioFocus(boolean)}
@@ -200,8 +196,6 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * @return 是否成功开始播放
      */
     protected boolean startPlay() {
-		Progress = 0; //xuameng清空进程记录
-		isSurface = false;
         //如果要显示移动网络提示则不继续播放
         if (showNetWarning()) {
             //中止播放
@@ -384,7 +378,6 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             }
             mPlayerContainer.setKeepScreenOn(true);
         }
-		HawkConfig.intSubtitle = false;  //xuameng判断进入本地字幕
     }
 
     /**
@@ -606,11 +599,6 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             case AbstractPlayer.MEDIA_INFO_RENDERING_START: // 视频/音频开始渲染
                 setPlayState(STATE_PLAYING);
                 mPlayerContainer.setKeepScreenOn(true);
-				if (Progress > 0 && isSurface && !HawkConfig.intVod){   //xuameng surface读取播放进度
-					seekTo(Progress);
-					Progress = 0;
-					isSurface = false;
-				}
 				String width = Integer.toString(getVideoSize()[0]);
 				String height = Integer.toString(getVideoSize()[1]);
 				if (width.length() <= 1 && height.length() <= 1){
