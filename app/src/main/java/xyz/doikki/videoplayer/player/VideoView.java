@@ -105,6 +105,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
 	private int Progress = 0;
 	private boolean isSurface = false;  //xuameng判断是否surface
 	private static Toast toast;
+	private Context mContext;
 
     /**
      * 监听系统中音频焦点改变，见{@link #setEnableAudioFocus(boolean)}
