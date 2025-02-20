@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import com.orhanobut.hawk.Hawk;         //xuameng surfaceview判断用
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
