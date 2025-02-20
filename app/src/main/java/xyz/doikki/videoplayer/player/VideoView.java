@@ -366,7 +366,10 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
     public void release() {
         if (!isInIdleState()) {
             //释放播放器
-
+            if (mMediaPlayer != null) {
+                mMediaPlayer.release();
+                mMediaPlayer = null;
+            }
             //释放renderView
             if (mRenderView != null) {
                 mPlayerContainer.removeView(mRenderView.getView());
