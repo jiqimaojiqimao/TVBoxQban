@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import com.orhanobut.hawk.Hawk;         //xuameng surfaceview判断用
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -376,18 +375,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * 继续播放
      */
     public void resume() {
-		String width = Integer.toString(getVideoSize()[0]);
-		String height = Integer.toString(getVideoSize()[1]);
-
-		if (width.length() > 1 && height.length() > 1 && !HawkConfig.intSubtitle) {
-			int duration = (int) getDuration();
-			if(duration > 130000) {
-			Progress = (int) getCurrentPosition();
-			isSurface = true;
-			}
-		releaseXu();
-		startPlayXu();
-		}       //xuameng surfaceview判断完
+      //xuameng surfaceview判断完
         if (isInPlaybackState()
                 && !mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
@@ -517,7 +505,9 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
         if (resetPosition) {
             mCurrentPosition = 0;
         }
-        addDisplay();
+				release();
+		startPlay();
+       
         startPrepare(true);
     }
 
