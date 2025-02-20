@@ -505,8 +505,9 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
         if (resetPosition) {
             mCurrentPosition = 0;
         }
+		initView();
         addDisplay();
-        startPrepare(false);
+        startPrepare(true);
     }
 
     /**
