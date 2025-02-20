@@ -13,6 +13,7 @@ import androidx.annotation.NonNull;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.render.IRenderView;
 import xyz.doikki.videoplayer.render.MeasureHelper;
+import com.github.tvbox.osc.util.HawkConfig;
 
 public class SurfaceRenderView extends SurfaceView implements IRenderView, SurfaceHolder.Callback {
     private MeasureHelper mMeasureHelper;
@@ -98,9 +99,12 @@ public class SurfaceRenderView extends SurfaceView implements IRenderView, Surfa
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-                if (mMediaPlayer != null) {
+		if (HawkConfig.intVod){ 
+			HawkConfig.intVod = false;  //xuameng判断进入本地字幕
+			return;
+		}
+        if (mMediaPlayer != null) {
             mMediaPlayer.setDisplay(null);
         }
-
     }
 }
