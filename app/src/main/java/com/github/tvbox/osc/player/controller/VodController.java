@@ -1384,7 +1384,7 @@ public class VodController extends BaseController {
                 break;
             case VideoView.STATE_ERROR:
                 listener.errReplay();
-				mxuPlay.setText("错误");
+				mxuPlay.setText("准备");
 				if(!isPlaying && mTvPausexu.getVisibility() == View.VISIBLE){
 			    ObjectAnimator animator31 = ObjectAnimator.ofFloat(mTvPausexu, "translationX", -0,700);				//xuameng动画暂停菜单开始
                 animator31.setDuration(300);			//xuameng动画暂停菜单
