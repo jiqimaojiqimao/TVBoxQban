@@ -100,11 +100,11 @@ public class SurfaceRenderView extends SurfaceView implements IRenderView, Surfa
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
 		if (HawkConfig.intVod){ 
-			HawkConfig.intVod = false;  //xuameng判断进入本地字幕
+			HawkConfig.intVod = false;  //xuameng判断选择播放器防止surface焦点丢失
 			return;
 		}
         if (mMediaPlayer != null) {
-            mMediaPlayer.setDisplay(null);
+            mMediaPlayer.setDisplay(null);  //xuameng解决后台进前台黑屏问题
         }
     }
 }
