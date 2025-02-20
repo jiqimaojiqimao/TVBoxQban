@@ -287,7 +287,11 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * 开始准备播放（直接播放）
      */
     protected void startPrepare(boolean reset) {
-
+        if (reset) {
+            mMediaPlayer.reset();
+            //重新设置option，media player reset之后，option会失效
+            setOptions();
+        }
         if (prepareDataSource()) {
 			mVideoSize[0] = 0;   //xuameng重要修复获取视频尺寸不刷新
 			mVideoSize[1] = 0;
@@ -362,10 +366,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
     public void release() {
         if (!isInIdleState()) {
             //释放播放器
-            if (mMediaPlayer != null) {
-                mMediaPlayer.release();
-                mMediaPlayer = null;
-            }
+
             //释放renderView
             if (mRenderView != null) {
                 mPlayerContainer.removeView(mRenderView.getView());
