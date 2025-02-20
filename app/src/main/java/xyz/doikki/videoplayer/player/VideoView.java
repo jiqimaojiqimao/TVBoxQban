@@ -506,8 +506,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             mCurrentPosition = 0;
         }
 		releaseXu();
-        addDisplay();
-        startPrepare(true);
+		startPlayXu();
     }
 
     /**
