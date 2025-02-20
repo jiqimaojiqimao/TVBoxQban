@@ -17,8 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
-import com.orhanobut.hawk.Hawk;         //xuameng surfaceview判断用
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -104,8 +102,6 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
 
 	private int Progress = 0;
 	private boolean isSurface = false;  //xuameng判断是否surface
-	private static Toast toast;
-	private Context mContext;
 
     /**
      * 监听系统中音频焦点改变，见{@link #setEnableAudioFocus(boolean)}
@@ -381,7 +377,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
     public void resume() {
 		String width = Integer.toString(getVideoSize()[0]);
 		String height = Integer.toString(getVideoSize()[1]);
-Toast.makeText(mContext, "当前未选择频道，无法查看频道信息！", Toast.LENGTH_SHORT).show();
+
 		if (width.length() > 1 && height.length() > 1 && !HawkConfig.intSubtitle) {
 			int duration = (int) getDuration();
 			if(duration > 130000) {
@@ -390,6 +386,8 @@ Toast.makeText(mContext, "当前未选择频道，无法查看频道信息！", 
 			}
 		releaseXu();
 		startPlayXu();
+		mMediaPlayer.pause();
+		return;
 		}       //xuameng surfaceview判断完
         if (isInPlaybackState()
                 && !mMediaPlayer.isPlaying()) {
