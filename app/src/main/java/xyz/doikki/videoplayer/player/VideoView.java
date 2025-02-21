@@ -99,6 +99,8 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
     protected boolean mIsTinyScreen;//是否处于小屏状态
     protected int[] mTinyScreenSize = {0, 0};
 
+	private int duration = 0;  //xuameng获取视频时长
+
     /**
      * 监听系统中音频焦点改变，见{@link #setEnableAudioFocus(boolean)}
      */
@@ -404,7 +406,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * 保存播放进度
      */
     protected void saveProgress() {
-        if (mProgressManager != null && mCurrentPosition > 0) {
+        if (mProgressManager != null && mCurrentPosition > 0 && duration > 0) {  //xuameng视频时长大于0才记忆进度
             L.d("saveProgress: " + mCurrentPosition);
             mProgressManager.saveProgress(mProgressKey == null ? mUrl : mProgressKey, mCurrentPosition);
         }
@@ -528,9 +530,11 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
         if (!isMute() && mAudioFocusHelper != null) {
             mAudioFocusHelper.requestFocus();
         }
-        if (mCurrentPosition > 0) {
+		duration = (int) getDuration();   //xuameng获取视频时长
+        if (mCurrentPosition > 0 && duration > 0) {  //xuameng视频时长大于0时载入播放进度，防止系统播放器播放直播视频问题
             seekTo(mCurrentPosition);
         }
+
     }
 
     /**
