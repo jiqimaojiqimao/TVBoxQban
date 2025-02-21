@@ -1184,6 +1184,7 @@ public class VodController extends BaseController {
                 listener.playNext(true);
             }
         }
+		if (position < 0) position = 0 - position;
 		mCurrentTime.setText(PlayerUtils.stringForTime(position));        //xuameng当前进程时间
         mTotalTime.setText(PlayerUtils.stringForTime(duration));	   //xuameng总进程时间
         if (duration > 0) {
