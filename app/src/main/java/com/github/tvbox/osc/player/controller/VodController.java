@@ -1184,7 +1184,7 @@ public class VodController extends BaseController {
                 listener.playNext(true);
             }
         }
-		if (position < 0) position = 0 - position;
+		if (position < 0) position = 0 - position;   //xuameng系统播放器有时会有负进度的BUG
 		mCurrentTime.setText(PlayerUtils.stringForTime(position));        //xuameng当前进程时间
         mTotalTime.setText(PlayerUtils.stringForTime(duration));	   //xuameng总进程时间
         if (duration > 0) {
