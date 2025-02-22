@@ -34,6 +34,7 @@ import xyz.doikki.videoplayer.render.IRenderView;
 import xyz.doikki.videoplayer.render.RenderViewFactory;
 import xyz.doikki.videoplayer.util.L;
 import xyz.doikki.videoplayer.util.PlayerUtils;
+import com.github.tvbox.osc.util.HawkConfig;  //xuameng surfaceview判断用
 
 /**
  * 播放器
@@ -100,6 +101,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
     protected int[] mTinyScreenSize = {0, 0};
 
 	private int duration = 0;  //xuameng获取视频时长
+	private int Progress = 0;  //xuameng获取进程
 
     /**
      * 监听系统中音频焦点改变，见{@link #setEnableAudioFocus(boolean)}
@@ -198,6 +200,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * @return 是否成功开始播放
      */
     protected boolean startPlay() {
+		Progress = 0; //xuameng清空进程记录
         //如果要显示移动网络提示则不继续播放
         if (showNetWarning()) {
             //中止播放
@@ -353,6 +356,23 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
     public void resume() {
         if (isInPlaybackState()
                 && !mMediaPlayer.isPlaying()) {
+			if (HawkConfig.intSYSplayer){   //xuameng某些系统播放器黑屏处理
+				String width = Integer.toString(getVideoSize()[0]);
+				String height = Integer.toString(getVideoSize()[1]);
+				if (width.length() > 1 && height.length() > 1) {   //xuameng有视频才处理
+					int duration = (int) getDuration();
+					if(duration > 130000) {      //xuameng 系统播放器获取播放进度
+						Progress = (int) getCurrentPosition();
+					}
+					addDisplay();
+					startPrepare(true);
+					if (mAudioFocusHelper != null && !isMute()) {
+						mAudioFocusHelper.requestFocus();
+					}
+					mPlayerContainer.setKeepScreenOn(true);
+					return;
+				}       
+			}  //xuameng某些系统播放器黑屏处理完
             mMediaPlayer.start();
             setPlayState(STATE_PLAYING);
             if (mAudioFocusHelper != null && !isMute()) {
@@ -534,6 +554,10 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
         if (mCurrentPosition > 0 && duration > 0) {  //xuameng视频时长大于0时载入播放进度，防止系统播放器播放直播视频问题
             seekTo(mCurrentPosition);
         }
+		if (Progress > 0 && !HawkConfig.intVod && HawkConfig.intSYSplayer){   //xuameng系统播放器直播界面读取播放进度
+			seekTo(Progress);
+			Progress = 0;
+		}
 
     }
 
