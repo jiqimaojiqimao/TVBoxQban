@@ -45,6 +45,8 @@ public class HawkConfig {
 	public static final String LIVE_CHANNEL_GROUP = "last_live_channel_group_name";  //xuameng记忆上次播放频道组
 	public static boolean MSLIDEINFO = false;  //xuameng调节亮度声音
 	public static boolean intLIVEPLAYTYPE = false;  //xuameng是否有直播默认播放器
+	public static boolean intSYSplayer = false;  //xuameng是否进入系统播放器
+	public static boolean intVod = false;  //xuameng判断是否进入VOD界面
 
     public static boolean hotVodDelete;
 }
