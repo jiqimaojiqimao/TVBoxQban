@@ -1193,6 +1193,8 @@ public class VodController extends BaseController {
 			mSeekBar.setMax(duration);       //xuameng设置总进程必须
         } else {
             mSeekBar.setEnabled(false);
+			position = 0;
+			mSeekBar.setProgress(position);	 //xuameng视频总长度为0重置进度条为0
         }
         int percent = mControlWrapper.getBufferedPercentage();
 		int totalBuffer = percent * duration;
