@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+import com.github.tvbox.osc.util.HawkConfig;  //xuameng surfaceview判断用
 
 import java.util.Map;
 
@@ -92,6 +93,7 @@ public class AndroidMediaPlayer extends AbstractPlayer implements MediaPlayer.On
     public void prepareAsync() {
         try {
             mIsPreparing = true;
+			HawkConfig.intSYSplayer = true;  //xuameng判断进入系统播放器
             mMediaPlayer.prepareAsync();
         } catch (IllegalStateException e) {
             mPlayerEventListener.onError();
@@ -130,6 +132,7 @@ public class AndroidMediaPlayer extends AbstractPlayer implements MediaPlayer.On
         mMediaPlayer.setOnPreparedListener(null);
         mMediaPlayer.setOnVideoSizeChangedListener(null);
 		reset();      //xuameng修复空指针
+		HawkConfig.intSYSplayer = false;  //xuameng判断进入系统播放器
 /*        stop();
         final MediaPlayer mediaPlayer = mMediaPlayer;
         mMediaPlayer = null;
