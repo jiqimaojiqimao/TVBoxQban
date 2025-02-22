@@ -1982,7 +1982,7 @@ public class LivePlayActivity extends BaseActivity {
                             isVOD = false;
                             return;
                         }
-                        if(duration1 > 130000) {
+                        if(duration1 > 130000 && duration1 < 180000000) {  //xuameng处理某些播放器时长获取不准确问题
                             isVOD = true;
                             if(countDownTimer != null) {
                                 countDownTimer.cancel();
