@@ -43,6 +43,12 @@ public class HawkConfig {
     public static final String IJK_CACHE_PLAY = "ijk_cache_play";       //IJK缓存
 	public static final String HOME_DEFAULT_SHOW = "home_default_show";  //xuameng 启动时直接进直播的开关
 	public static final String LIVE_CHANNEL_GROUP = "last_live_channel_group_name";  //xuameng记忆上次播放频道组
+	public static final String PLAYER_IS_LIVE = "player_is_live";   //xuameng判断是否进入直播
+	public static final String DOH_JSON = "doh_json";    //xuameng DNS JSON
+    public static final String LIVE_GROUP_INDEX = "live_group_index";    //XUAMENG直播源index
+    public static final String LIVE_GROUP_LIST = "live_group_list";  //XUAMENG直播源list
+    public static final String LIVE_API_URL = "live_api_url";
+
 	public static boolean MSLIDEINFO = false;  //xuameng调节亮度声音
 	public static boolean intLIVEPLAYTYPE = false;  //xuameng是否有直播默认播放器
 	public static boolean intSYSplayer = false;  //xuameng是否进入系统播放器
