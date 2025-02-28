@@ -97,7 +97,7 @@ public class GridFragment extends BaseLazyFragment {
     public boolean isFolederMode(){ return (getUITag() =='1'); }
     // 获取当前页面UI的显示模式 ‘0’ 正常模式 '1' 文件夹模式 '2' 显示缩略图的文件夹模式
     public char getUITag(){
-        System.out.println(sortData);
+  //xuameng      System.out.println(sortData);
         return (sortData == null || sortData.flag == null || sortData.flag.length() ==0 ) ?  '0' : sortData.flag.charAt(0);
     }
     // 是否允许聚合搜索 sortData.flag的第二个字符为‘1’时允许聚搜
@@ -325,5 +325,9 @@ public class GridFragment extends BaseLazyFragment {
         }
         if (gridFilterDialog != null)
             gridFilterDialog.show();
+    }
+    public void forceRefresh() {     //xuameng刷新页面
+        page = 1;
+        initData();
     }
 }
