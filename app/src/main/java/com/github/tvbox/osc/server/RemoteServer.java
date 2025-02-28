@@ -13,6 +13,7 @@ import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.event.ServerEvent;
 import com.github.tvbox.osc.util.FileUtils;
 import com.github.tvbox.osc.util.OkGoHelper;
+import com.github.tvbox.osc.util.Proxy;  //xuameng新增
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -116,6 +117,31 @@ public class RemoteServer extends NanoHTTPD {
                     if (params.containsKey("do")) {
                         Object[] rs = ApiConfig.get().proxyLocal(params);
                         try {
+							int code = (int) rs[0];   //xuameng新增
+                            String mime = (String) rs[1];
+                            InputStream stream = rs[2] != null ? (InputStream) rs[2] : null;
+                            Response response = NanoHTTPD.newChunkedResponse(
+                                    NanoHTTPD.Response.Status.lookup(code),
+                                    mime,
+                                    stream
+                            );
+                            if(rs.length>=4){
+                                HashMap<String, String> mapHeader = (HashMap<String, String>) rs[3];
+                                if(!mapHeader.isEmpty()){
+                                    for (String key : mapHeader.keySet()) {
+                                        response.addHeader(key, mapHeader.get(key));
+                                    }
+                                }
+                            }
+                            return response;
+                        } catch (Throwable th) {
+                            return NanoHTTPD.newFixedLengthResponse(NanoHTTPD.Response.Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "500");
+                        }
+                    }
+                    if (params.containsKey("go")) {
+                        Object[] rs = Proxy.proxy(params);
+                        try {        
+                            assert rs != null;  //xuameng新增完
                             int code = (int) rs[0];
                             String mime = (String) rs[1];
                             InputStream stream = rs[2] != null ? (InputStream) rs[2] : null;
