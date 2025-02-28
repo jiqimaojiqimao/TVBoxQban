@@ -161,7 +161,6 @@ public class JSEngine {
                     for (Object o : args) {
                         b.append(o == null ? "null" : o.toString());
                     }
-                    System.out.println(TAG + " >>> " + b.toString());
                     return null;
                 }
             });
