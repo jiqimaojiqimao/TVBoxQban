@@ -100,7 +100,6 @@ import org.xwalk.core.XWalkWebResourceResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -145,6 +144,7 @@ public class PlayFragment extends BaseLazyFragment {
         initView();
         initViewModel();
         initData();
+		Hawk.put(HawkConfig.PLAYER_IS_LIVE,false);  //xuameng新增
     }
 
     public long getSavedProgress(String url) {
@@ -238,7 +238,15 @@ public class PlayFragment extends BaseLazyFragment {
             @Override
             public void replay(boolean replay) {
                 autoRetryCount = 0;
-                play(replay);
+                if(replay){  //xuameng新增
+                    play(true);
+                }else {
+                    if(webPlayUrl!=null && !webPlayUrl.isEmpty()) {
+                        playUrl(webPlayUrl,webHeaderMap);
+                    }else {
+                        play(false);
+                    }  
+                }  //xuameng新增完
             }
 
             @Override
@@ -522,9 +530,10 @@ public class PlayFragment extends BaseLazyFragment {
                 mPlayLoadTip.setText(msg);
                 mPlayLoadTip.setVisibility(View.VISIBLE);
                 mPlayLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
-				if (!mVideoView.isPlaying()){       //xuameng修复播放成功也显示错误
+				if (!mVideoView.isPlaying()){
 					mPlayLoadErr.setVisibility(err ? View.VISIBLE : View.GONE);
 				}
+
             }
         });
     }
@@ -552,12 +561,11 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     void playUrl(String url, HashMap<String, String> headers) {
-		if (!isAdded()) return;
+		LOG.i("echo-playUrl:" + url);
+		if(autoRetryCount==0)webPlayUrl=url;
         if (mActivity == null) return;
+		if (!isAdded()) return;
         LOG.i("playUrl:" + url);
-        if(autoRetryCount>0 && url.contains(".m3u8")){
-			 //xuameng没用了         url="http://home.jundie.top:666/unBom.php?m3u8="+url;//尝试去bom头再次播放
-        }
 		final String finalUrl = url;
         requireActivity().runOnUiThread(new Runnable() {
             @Override
@@ -612,7 +620,10 @@ public class PlayFragment extends BaseLazyFragment {
             trackInfo = ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).getTrackInfo();
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
                 mController.mSubtitleView.hasInternal = true;
-            }
+            }else{
+				mController.mSubtitleView.hasInternal = false;   //xuameng修复切换播放器内置字幕不刷新
+			}
+
             ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setOnTimedTextListener(new IMediaPlayer.OnTimedTextListener() {
                 @Override
                 public void onTimedText(IMediaPlayer mp, IjkTimedText text) {
@@ -630,7 +641,9 @@ public class PlayFragment extends BaseLazyFragment {
             trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
                 mController.mSubtitleView.hasInternal = true;
-            }
+            }else{
+				mController.mSubtitleView.hasInternal = false;  //xuameng修复切换播放器内置字幕不刷新
+			}
             ((EXOmPlayer) (mVideoView.getMediaPlayer())).setOnTimedTextListener(new Player.Listener() {
                 @Override
                 public void onCues(@NonNull List<Cue> cues) {
@@ -726,7 +739,7 @@ public class PlayFragment extends BaseLazyFragment {
                                             break;
                                     }
                                     String filename = name + (name.toLowerCase().endsWith(ext) ? "" : ext);
-                                    url += "#" + URLEncoder.encode(filename);
+                                    url += "#" + mController.encodeUrl(filename);
                                 }
                                 playSubtitle = url;
                             } catch (Throwable th) {
@@ -743,6 +756,7 @@ public class PlayFragment extends BaseLazyFragment {
                         HashMap<String, String> headers = null;
                         webUserAgent = null;
                         webHeaderMap = null;
+						webPlayUrl = null;
                         if (info.has("header")) {
                             try {
                                 JSONObject hds = new JSONObject(info.getString("header"));
@@ -939,15 +953,41 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     private int autoRetryCount = 0;
+	private long lastRetryTime = 0; // 记录上次调用时间（毫秒）  //xuameng新增
 
     boolean autoRetry() {
+        long currentTime = System.currentTimeMillis();
+        if (autoRetryCount<2 && currentTime - lastRetryTime > 10000){
+            LOG.i("echo-reset-autoRetryCount");
+            autoRetryCount = 0;
+        }
+
+        lastRetryTime = currentTime;  // 更新上次调用时间
         if (loadFoundVideoUrls != null && loadFoundVideoUrls.size() > 0) {
             autoRetryFromLoadFoundVideoUrls();
             return true;
         }
-        if (autoRetryCount < 1) {
-            autoRetryCount++;
-            play(false);
+        if (autoRetryCount < 2) {
+            if(autoRetryCount==1){
+                //第二次重试时重新调用接口
+                play(false);
+ //xuameng暂时去除自动切换播放器               autoRetryCount++;
+            }else {
+             /* xuameng暂时去除自动切换播放器   //切换播放器不占用重试次数
+                if(mController.switchPlayer()){
+                    webPlayUrl=mController.getWebPlayUrlIfNeeded(webPlayUrl);
+                    autoRetryCount++;
+                }else {
+//                    Toast.makeText(mContext, "自动切换播放器重试", Toast.LENGTH_SHORT).show();
+                }  //xuameng暂时去除自动切换播放器完 */
+                //第一次重试直接带着原地址继续播放
+                if(webPlayUrl!=null){
+                    playUrl(webPlayUrl, webHeaderMap);
+                }else {
+                    play(false);
+                }
+            }       
+			autoRetryCount++;    //xuameng新增完
             return true;
         } else {
             autoRetryCount = 0;
@@ -1027,7 +1067,8 @@ public class PlayFragment extends BaseLazyFragment {
     private String parseFlag;
     private String webUrl;
     private String webUserAgent;
-    private Map<String, String > webHeaderMap;
+    private HashMap<String, String > webHeaderMap;
+	private String webPlayUrl;
 
     private void initParse(String flag, boolean useParse, String playUrl, final String url) {
         parseFlag = flag;
@@ -1154,7 +1195,7 @@ public class PlayFragment extends BaseLazyFragment {
             } catch (Throwable e) {
                 e.printStackTrace();
             }
-            OkGo.<String>get(pb.getUrl() + encodeUrl(webUrl))
+            OkGo.<String>get(pb.getUrl() + mController.encodeUrl(webUrl))   //xuameng新增
                     .tag("json_jx")
                     .headers(reqHeaders)
                     .execute(new AbsCallback<String>() {
@@ -1327,14 +1368,6 @@ public class PlayFragment extends BaseLazyFragment {
                     }
                 }
             });
-        }
-    }
-
-    private String encodeUrl(String url) {
-        try {
-            return URLEncoder.encode(url, "UTF-8");
-        } catch (Exception e) {
-            return url;
         }
     }
 
