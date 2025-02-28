@@ -17,6 +17,7 @@ import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.MD5;
 import com.orhanobut.hawk.Hawk;
 import com.squareup.picasso.Picasso;
+import com.github.tvbox.osc.util.Base64Img;   //xuameng base64图片
 
 import java.util.ArrayList;
 
@@ -60,15 +61,22 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
         ImageView ivThumb = helper.getView(R.id.ivThumb);
         //由于部分电视机使用glide报错
         if (!TextUtils.isEmpty(item.pic)) {
-            Picasso.get()
-                    .load(DefaultConfig.checkReplaceProxy(item.pic))
-				    .transform(new RoundTransformation(MD5.string2MD5(item.pic))
-                            .centerCorp(true)
-                            .override(AutoSizeUtils.mm2px(mContext, 300), AutoSizeUtils.mm2px(mContext, 400))
-                            .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
-                    .placeholder(R.drawable.img_loading_placeholder)
-                    .error(R.drawable.img_loading_placeholder)
-                    .into(ivThumb);
+            item.pic=item.pic.trim();
+            if(Base64Img.isBase64Image(item.pic)){
+                // 如果是 Base64 图片，解码并设置
+                ivThumb.setImageBitmap(Base64Img.decodeBase64ToBitmap(item.pic));
+            }else {
+                Picasso.get()
+                        .load(DefaultConfig.checkReplaceProxy(item.pic))
+                        .transform(new RoundTransformation(MD5.string2MD5(item.pic))
+                                .centerCorp(true)
+                                .override(AutoSizeUtils.mm2px(mContext, 300), AutoSizeUtils.mm2px(mContext, 400))
+                                .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
+                        .placeholder(R.drawable.img_loading_placeholder)
+                        .noFade()
+                        .error(R.drawable.img_loading_placeholder)
+                        .into(ivThumb);
+            }
         } else {
             ivThumb.setImageResource(R.drawable.img_loading_placeholder);
         }
