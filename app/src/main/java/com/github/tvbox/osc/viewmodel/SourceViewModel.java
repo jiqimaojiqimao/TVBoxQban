@@ -100,7 +100,7 @@ public class SourceViewModel extends ViewModel {
             Runnable waitResponse = new Runnable() {
                 @Override
                 public void run() {
-                    ExecutorService executor = Executors.newSingleThreadExecutor();
+                    ExecutorService executor = Executors.newSingleThreadExecutor();      
                     Future<String> future = executor.submit(new Callable<String>() {
                         @Override
                         public String call() throws Exception {
@@ -715,20 +715,47 @@ public class SourceViewModel extends ViewModel {
             spThreadPool.execute(new Runnable() {
                 @Override
                 public void run() {
-                    Spider sp = ApiConfig.get().getCSP(sourceBean);
-                    if(TextUtils.isEmpty(url))return;
-                    String json = sp.playerContent(playFlag, url, ApiConfig.get().getVipParseFlags());
+                    ExecutorService executor = Executors.newSingleThreadExecutor();  //xuameng新增
+                    Future<String> future = executor.submit(new Callable<String>() {
+                        @Override
+                        public String call() throws Exception {
+                            Spider sp = ApiConfig.get().getCSP(sourceBean);
+                            if (TextUtils.isEmpty(url)) return "";
+                            try {
+                                return sp.playerContent(playFlag, url, ApiConfig.get().getVipParseFlags());
+                            } catch (Exception e) {
+                                LOG.i("echo--getPlay--error: " + e.getMessage());
+                                return "";
+                            }
+                        }
+                    });
+
                     try {
-                        JSONObject result = new JSONObject(json);
-                        result.put("key", url);
-                        result.put("proKey", progressKey);
-                        result.put("subtKey", subtitleKey);
-                        if (!result.has("flag"))
-                            result.put("flag", playFlag);
-                        playResult.postValue(result);
-                    } catch (Throwable th) {
-                        th.printStackTrace();
+                        String json = future.get(8, TimeUnit.SECONDS);
+                        LOG.i("echo--getPlay--result:" + json);
+                        // 处理返回的 JSON
+                        if (!TextUtils.isEmpty(json)) {
+                            JSONObject result = new JSONObject(json);
+                            result.put("key", url);
+                            result.put("proKey", progressKey);
+                            result.put("subtKey", subtitleKey);
+                            if (!result.has("flag"))
+                                result.put("flag", playFlag);
+                            playResult.postValue(result);
+                        } else {
+                            playResult.postValue(null);
+                        }
+                    } catch (TimeoutException e) {
+                        // 如果超时了，处理超时逻辑
+                        LOG.i("echo--getPlay--timeout");
+                        future.cancel(true);
                         playResult.postValue(null);
+                    } catch (Exception e) {
+                        // 捕获其他异常
+                        LOG.i("echo--getPlay--error: " + e.getMessage());
+                        playResult.postValue(null);
+                    } finally {
+                        executor.shutdown();   //xuameng新增完
                     }
                 }
             });
