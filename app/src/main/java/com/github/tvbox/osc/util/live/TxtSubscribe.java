@@ -22,6 +22,8 @@ public class TxtSubscribe {
             parseTxt(linkedHashMap, str);
         }
     }
+
+    //解析m3u后缀
     private static void parseM3u(LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>> linkedHashMap, String str) {
         ArrayList<String> urls;
         try {
@@ -75,6 +77,7 @@ public class TxtSubscribe {
         return line.startsWith("ua") || line.startsWith("parse") || line.startsWith("click") || line.startsWith("player") || line.startsWith("header") || line.startsWith("format") || line.startsWith("origin") || line.startsWith("referer") || line.startsWith("#EXTHTTP:") || line.startsWith("#EXTVLCOPT:") || line.startsWith("#KODIPROP:");
     }
 
+    //解析txt后缀
     public static void parseTxt(LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>> linkedHashMap, String str) {
         ArrayList<String> arrayList;
         try {
