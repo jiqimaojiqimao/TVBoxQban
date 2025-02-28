@@ -201,19 +201,21 @@ public class HomeActivity extends BaseActivity {
         });
 
         this.mGridView.setOnInBorderKeyEventListener(new TvRecyclerView.OnInBorderKeyEventListener() {
-            public final boolean onInBorderKeyEvent(int direction, View view) {
+            public boolean onInBorderKeyEvent(int direction, View view) {
+                if (direction == View.FOCUS_UP) {   //XUAMENG上键刷新完
+                    BaseLazyFragment baseLazyFragment = fragments.get(sortFocused);
+                    if ((baseLazyFragment instanceof GridFragment)) {
+                        ((GridFragment) baseLazyFragment).forceRefresh();
+                    }
+                }
                 if (direction != View.FOCUS_DOWN) {
                     return false;
                 }
-                isDownOrUp = true;
                 BaseLazyFragment baseLazyFragment = fragments.get(sortFocused);
                 if (!(baseLazyFragment instanceof GridFragment)) {
                     return false;
                 }
-                if (!((GridFragment) baseLazyFragment).isLoad()) {
-                    return true;
-                }
-                return false;
+                return !((GridFragment) baseLazyFragment).isLoad();      //XUAMENG上键刷新完
             }
         });
         tvName.setOnClickListener(new View.OnClickListener() {
@@ -256,7 +258,19 @@ public class HomeActivity extends BaseActivity {
         tvDate.setOnClickListener(new View.OnClickListener() {    //xuameng点击系统时间跳转设置
             @Override
             public void onClick(View v) {
-                jumpActivity(SettingActivity.class);		//xuameng加载慢跳转设置               
+                if(dataInitOk && jarInitOk){           //xuameng MENU键显示主页源
+					showSiteSwitch(); 
+                }else{
+					jumpActivity(SettingActivity.class);		//xuameng加载慢跳转设置 
+				}
+            }
+        });
+
+        tvDate.setOnLongClickListener(new View.OnLongClickListener() {      //xuameng长按重新加载
+            @Override
+            public boolean onLongClick(View v) {
+				jumpActivity(SettingActivity.class);		//xuameng加载慢跳转设置   
+                return true;
             }
         });
         setLoadSir(this.contentLayout);
@@ -462,6 +476,7 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
+	@SuppressLint("NotifyDataSetChanged")
     @Override
     public void onBackPressed() {
 
