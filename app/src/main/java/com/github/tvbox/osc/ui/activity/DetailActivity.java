@@ -184,7 +184,7 @@ public class DetailActivity extends BaseActivity {
         tvQuickSearch = findViewById(R.id.tvQuickSearch);
         mEmptyPlayList = findViewById(R.id.mEmptyPlaylist);
         mGridView = findViewById(R.id.mGridView);
-//        mGridView.setHasFixedSize(true);  //xuameng固定大小用
+        mGridView.setHasFixedSize(true);  //xuameng固定大小用
         mGridView.setHasFixedSize(false);
         this.mGridViewLayoutMgr = new V7GridLayoutManager(this.mContext, 6);
         mGridView.setLayoutManager(this.mGridViewLayoutMgr);
@@ -1002,7 +1002,7 @@ public class DetailActivity extends BaseActivity {
         searchTitle = mVideo.name;
         quickSearchData.clear();
         quickSearchWord.addAll(SearchHelper.splitWords(searchTitle));
-        // 分词
+        /* xuameng // 分词   
         OkGo.<String>get("http://api.pullword.com/get.php?source=" + URLEncoder.encode(searchTitle) + "&param1=0&param2=0&json=1")
                 .tag("fenci")
                 .execute(new AbsCallback<String>() {
@@ -1033,7 +1033,7 @@ public class DetailActivity extends BaseActivity {
                     public void onError(Response<String> response) {
                         super.onError(response);
                     }
-                });
+                });   xuameng */
 
         searchResult();
     }
