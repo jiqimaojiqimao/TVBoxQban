@@ -9,6 +9,7 @@ public class VideoParseRuler {
 
     private static final HashMap<String, ArrayList<ArrayList<String>>> HOSTS_RULE = new HashMap<>();
     private static final HashMap<String, ArrayList<ArrayList<String>>> HOSTS_FILTER = new HashMap<>();
+	private static final HashMap<String, ArrayList<String>> HOSTS_REGEX = new HashMap<>();
 
     public static void clearRule() {
         HOSTS_RULE.clear();
@@ -45,6 +46,18 @@ public class VideoParseRuler {
             return HOSTS_FILTER.get(host);
         }
         return null;
+    }
+
+    public static void addHostRegex(String host, ArrayList<String> regex) {    //xuameng广告过滤
+        if (regex == null || regex.size() == 0) return;
+        ArrayList<String> temp = new ArrayList<>();
+        if (HOSTS_REGEX.get(host) != null && HOSTS_REGEX.get(host).size() > 0) temp = HOSTS_REGEX.get(host);
+        temp.addAll(regex);
+        HOSTS_REGEX.put(host, temp);
+    }
+
+    public static HashMap<String, ArrayList<String>> getHostsRegex() {
+        return HOSTS_REGEX;
     }
 
     public static boolean checkIsVideoForParse(String webUrl, String url) {
