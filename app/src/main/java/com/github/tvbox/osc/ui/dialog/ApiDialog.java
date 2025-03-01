@@ -7,6 +7,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.KeyEvent;   //xuameng新增
+import android.view.inputmethod.EditorInfo;  //xuameng新增
 
 import androidx.annotation.NonNull;
 
@@ -128,6 +130,26 @@ public class ApiDialog extends BaseDialog {
                                 }
                             });
                 }
+            }
+        });
+       inputApi.setOnEditorActionListener(new TextView.OnEditorActionListener() {      //xuameng新增配置地址软键盘确定直接确定配置地址。
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                    String newApi = inputApi.getText().toString().trim();
+                    if (!newApi.isEmpty()) {
+                        ArrayList<String> history = Hawk.get(HawkConfig.API_HISTORY, new ArrayList<String>());
+                        if (!history.contains(newApi))
+                            history.add(0, newApi);
+                        if (history.size() > 30)
+                            history.remove(30);
+                        Hawk.put(HawkConfig.API_HISTORY, history);
+                        listener.onchange(newApi);
+                        dismiss();
+                    }
+                    return true;
+                }
+                return false;
             }
         });
         refreshQRCode();
