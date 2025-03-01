@@ -207,8 +207,8 @@ public class LivePlayActivity extends BaseActivity {
     private CountDownTimer countDownTimer21;
     private CountDownTimer countDownTimer22;
     private CountDownTimer countDownTimer30;
-    private int videoWidth = 1920;
-    private int videoHeight = 1080;
+    private final int videoWidth = 1920;
+    private final int videoHeight = 1080;
     private TextView tv_currentpos;
     private TextView tv_duration;
     private SeekBar sBar;
@@ -1399,8 +1399,7 @@ public class LivePlayActivity extends BaseActivity {
             isBack = false;
             return true;
         }
-        if(mVideoView == null) return true; //XUAMENG可能会引起空指针问题的修复
-        mVideoView.release();
+		if(mVideoView!=null)mVideoView.release();  //XUAMENG可能会引起空指针问题的修复
         if(!changeSource) {
             currentChannelGroupIndex = channelGroupIndex;
             currentLiveChannelIndex = liveChannelIndex;
@@ -1434,10 +1433,12 @@ public class LivePlayActivity extends BaseActivity {
         ll_right_top_huikan.setVisibility(View.GONE);
         Mtv_left_top_xu.setVisibility(View.GONE); //xuameng直播时隐藏回看的菜单
         iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
-        mVideoView.setUrl(currentLiveChannelItem.getUrl());
         simSeekPosition = 0; //XUAMENG重要,换视频时重新记录进度
         simSlideOffset = 0; //XUAMENG重要,换视频时重新记录进度
-        mVideoView.start();
+		if(mVideoView!=null){          //xuameng 空指针
+            mVideoView.setUrl(currentLiveChannelItem.getUrl());
+            mVideoView.start();
+        }
 		if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
            iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
         }
@@ -2415,13 +2416,15 @@ public class LivePlayActivity extends BaseActivity {
                 String type= livesOBJ.get("type").getAsString();
                 if(!type.equals("0")){
                     Toast.makeText(App.getInstance(), "聚汇影视提示您：暂不支持该直播类型！", Toast.LENGTH_SHORT).show();
-                    break;
+                    return;
                 }
                 Hawk.put(HawkConfig.LIVE_GROUP_INDEX, position);
-                mVideoView.release();
                 ApiConfig.get().loadLiveApi(livesOBJ);
-//                init();
                 recreate();
+                if (mVideoView != null) {   //xuameng空指针
+                    mVideoView.release();
+                    mVideoView=null;
+                }
                 return;
         }
         mHideSettingLayoutRunXu();
@@ -2487,7 +2490,7 @@ public class LivePlayActivity extends BaseActivity {
             public void onError(Response<String> response) {
                 super.onError(response);
 				Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0);  //xuameng新增
-                Toast.makeText(App.getInstance(), "直播地址加载错误，请联系许大师！", Toast.LENGTH_LONG).show();
+                Toast.makeText(App.getInstance(), "聚汇影视提示您：直播地址加载错误！", Toast.LENGTH_LONG).show();
                 finish();
             }
         });
