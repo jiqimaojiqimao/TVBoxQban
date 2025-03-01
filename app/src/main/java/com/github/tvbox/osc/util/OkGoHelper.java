@@ -199,25 +199,28 @@ public class OkGoHelper {
         public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
             if (myHosts == null){
                 myHosts = ApiConfig.get().getMyHost(); //确保只获取一次减少消耗
-                if(!myHosts.isEmpty())mapHosts(myHosts);
             }
+            if(!myHosts.isEmpty() && myHosts.containsKey(hostname)) {
+                hostname=myHosts.get(hostname);
+            }
+            assert hostname != null;
             if (isValidIpAddress(hostname)) {
                 return Collections.singletonList(InetAddress.getByName(hostname));
-            }
-            else if (map!=null && map.containsKey(hostname)) {
-                return Objects.requireNonNull(map.get(hostname));
-            }
-            else {
+            }else {
                 return  dnsOverHttps.lookup(hostname);
             }
         }
 
-        public synchronized void mapHosts(Map<String,String> hosts) {
+        public synchronized void mapHosts(Map<String,String> hosts) throws UnknownHostException {   //xuameng新增
             map=new ConcurrentHashMap<>();
             for (Map.Entry<String, String> entry : hosts.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                map.put(key,getAllByName(value));
+                if(isValidIpAddress(value)){
+                    map.put(key,Collections.singletonList(InetAddress.getByName(value)));
+                }else {
+                    map.put(key,getAllByName(value));
+                }
             }
         }
 
