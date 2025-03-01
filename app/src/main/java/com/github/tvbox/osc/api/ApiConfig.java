@@ -46,6 +46,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.github.tvbox.osc.util.LOG;   //xuameng
 import com.github.tvbox.osc.util.OkGoHelper;  //xuameng
+import com.github.tvbox.osc.util.M3u8;  //xuameng
 
 /**
  * @author pj567
@@ -148,6 +149,7 @@ public class ApiConfig {
             }
         }
         String TempKey = null, configUrl = "", pk = ";pk;";
+		apiUrl=apiUrl.replace("file://", "clan://localhost/");    //xuameng本地文件
         if (apiUrl.contains(pk)) {
             String[] a = apiUrl.split(pk);
             TempKey = a[1];
@@ -166,6 +168,7 @@ public class ApiConfig {
             configUrl = apiUrl;
         }
         String configKey = TempKey;
+		String finalApiUrl = apiUrl;   //xuameng本地文件
         OkGo.<String>get(configUrl)
                 .headers("User-Agent", userAgent)
                 .headers("Accept", requestAccept)
@@ -174,7 +177,7 @@ public class ApiConfig {
                     public void onSuccess(Response<String> response) {
                         try {
                             String json = response.body();
-                            parseJson(apiUrl, json);
+                            parseJson(finalApiUrl, json);  //xuameng本地文件
                             try {
                                 File cacheDir = cache.getParentFile();
                                 if (!cacheDir.exists())
@@ -200,7 +203,7 @@ public class ApiConfig {
                         super.onError(response);
                         if (cache.exists()) {
                             try {
-                                parseJson(apiUrl, cache);
+                                parseJson(finalApiUrl, cache);  //xuameng本地文件
                                 callback.success();
                                 return;
                             } catch (Throwable th) {
@@ -218,11 +221,11 @@ public class ApiConfig {
                             result = FindResult(response.body().string(), configKey);
                         }
 
-                        if (apiUrl.startsWith("clan")) {
-                            result = clanContentFix(clanToAddress(apiUrl), result);
+                        if (finalApiUrl.startsWith("clan")) {
+                            result = clanContentFix(clanToAddress(finalApiUrl), result);  //xuameng本地文件
                         }
                         //假相對路徑
-                        result = fixContentPath(apiUrl,result);
+                        	result = fixContentPath(finalApiUrl,result);  //xuameng本地文件
                         return result;
                     }
                 });
@@ -379,12 +382,19 @@ public class ApiConfig {
         }
         // 直播源xuameng新增
         if(infoJson.has("lives")){
-            Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);      //xuameng暂时修复
             JsonArray lives_groups=infoJson.get("lives").getAsJsonArray();
             int live_group_index=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
-            JsonObject livesOBJ = lives_groups.get(live_group_index).getAsJsonObject();
+			if(live_group_index>lives_groups.size()-1){
+				Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);  //xuameng上次有两个直播源选中了第二个，下次进入第二个删除了，就会出错。判断一下，如果没有第二个，默认进第一个
+				int live_group_index_xu=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
+				JsonObject livesOBJ_xu = lives_groups.get(live_group_index_xu).getAsJsonObject();
+				Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
+				loadLiveApi(livesOBJ_xu);
+            }else{
+			JsonObject livesOBJ = lives_groups.get(live_group_index).getAsJsonObject();
             Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
             loadLiveApi(livesOBJ);
+			}
         }    //xuameng新增完
 
         //video parse rule for host
@@ -419,15 +429,19 @@ public class ApiConfig {
                 }
                 if (obj.has("hosts") && obj.has("regex")) {
                     ArrayList<String> rule = new ArrayList<>();
+					ArrayList<String> ads = new ArrayList<>();     //xuameng ads
                     JsonArray regexArray = obj.getAsJsonArray("regex");
                     for (JsonElement one : regexArray) {
-                        rule.add(one.getAsString());
+                        String regex = one.getAsString();
+                        if (M3u8.isAd(regex)) ads.add(regex);   //xuameng ads
+                        else rule.add(regex);
                     }
 
                     JsonArray array = obj.getAsJsonArray("hosts");
                     for (JsonElement one : array) {
                         String host = one.getAsString();
                         VideoParseRuler.addHostRule(host, rule);
+						VideoParseRuler.addHostRegex(host, ads);
                     }
                 }
             }
@@ -735,7 +749,7 @@ public class ApiConfig {
 
     String clanContentFix(String lanLink, String content) {
         String fix = lanLink.substring(0, lanLink.indexOf("/file/") + 6);
-        return content.replace("clan://", fix);
+        return content.replace("clan://localhost/", fix).replace("file://", fix);  //xuameng本地文件
     }
 
     String fixContentPath(String url, String content) {
