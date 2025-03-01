@@ -117,7 +117,8 @@ public class App extends MultiDexApplication {
     public static P2PClass getp2p() {
         try {
             if (p == null) {
-                p = new P2PClass(instance.getCacheDir().getAbsolutePath());
+				// p = new P2PClass(instance.getExternalCacheDir().getAbsolutePath());     
+                p = new P2PClass(instance.getCacheDir().getAbsolutePath());  //xuameng修复某些设备不能建立cachedir目录
             }
             return p;
         } catch (Exception e) {
