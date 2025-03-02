@@ -99,8 +99,9 @@ public class OkGoHelper {
         String json=Hawk.get(HawkConfig.DOH_JSON,"");
         if(json.isEmpty())json=dnsConfigJson;
         JsonArray jsonArray = JsonParser.parseString(json).getAsJsonArray();
+		JsonArray mergedArray = mergeJsonArrays(dnsConfigJson, jsonArray);
         if (type >= 1 && type < dnsHttpsList.size()) {
-            JsonObject dnsConfig = jsonArray.get(type - 1).getAsJsonObject();
+            JsonObject dnsConfig = mergedArray.get(type - 1).getAsJsonObject();
             return dnsConfig.get("url").getAsString();  // 获取对应的 URL
         }
         return ""; //xuameng新增完
