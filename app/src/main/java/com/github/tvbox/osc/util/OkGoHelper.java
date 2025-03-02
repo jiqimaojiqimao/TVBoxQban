@@ -95,12 +95,12 @@ public class OkGoHelper {
     public static boolean is_doh = false;  //xuameng新增
     public static Map<String, String> myHosts = null;  //xuameng新增
 
-    public static JSONArray mergeJsonArrays(JSONArray... arrays) {
-        JSONArray mergedArray = new JSONArray();
+    public static JsonArray mergeJsonArrays(JsonArray... arrays) {
+        JsonArray mergedArray = new JSONArray();
         
-        for (JSONArray array : arrays) {
+        for (JsonArray array : arrays) {
             for (int i = 0; i < array.length(); i++) {
-                JSONObject object = array.getJSONObject(i);
+                JsonArray object = array.getAsJsonObject(i);
                 mergedArray.put(object);
             }
         }
