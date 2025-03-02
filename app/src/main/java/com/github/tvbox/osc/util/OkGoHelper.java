@@ -95,6 +95,19 @@ public class OkGoHelper {
     public static boolean is_doh = false;  //xuameng新增
     public static Map<String, String> myHosts = null;  //xuameng新增
 
+    public static JSONArray mergeJsonArrays(JSONArray... arrays) {
+        JSONArray mergedArray = new JSONArray();
+        
+        for (JSONArray array : arrays) {
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject object = array.getJSONObject(i);
+                mergedArray.put(object);
+            }
+        }
+        
+        return mergedArray;
+    }
+
     public static String getDohUrl(int type) {  //xuameng新增
         String json=Hawk.get(HawkConfig.DOH_JSON,"");
         if(json.isEmpty())json=dnsConfigJson;
