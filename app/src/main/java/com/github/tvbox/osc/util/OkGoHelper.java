@@ -95,26 +95,12 @@ public class OkGoHelper {
     public static boolean is_doh = false;  //xuameng新增
     public static Map<String, String> myHosts = null;  //xuameng新增
 
-    public static JsonArray mergeJsonArrays(JsonArray... arrays) {
-        JsonArray mergedArray = new JSONArray();
-        
-        for (JsonArray array : arrays) {
-            for (int i = 0; i < array.length(); i++) {
-                JsonArray object = array.getAsJsonObject(i);
-                mergedArray.put(object);
-            }
-        }
-        
-        return mergedArray;
-    }
-
     public static String getDohUrl(int type) {  //xuameng新增
         String json=Hawk.get(HawkConfig.DOH_JSON,"");
         if(json.isEmpty())json=dnsConfigJson;
         JsonArray jsonArray = JsonParser.parseString(json).getAsJsonArray();
-		JsonArray mergedArray = mergeJsonArrays(dnsConfigJson, jsonArray);
         if (type >= 1 && type < dnsHttpsList.size()) {
-            JsonObject dnsConfig = mergedArray.get(type - 1).getAsJsonObject();
+            JsonObject dnsConfig = jsonArray.get(type - 1).getAsJsonObject();
             return dnsConfig.get("url").getAsString();  // 获取对应的 URL
         }
         return ""; //xuameng新增完
