@@ -47,6 +47,9 @@ import java.util.regex.Pattern;
 import com.github.tvbox.osc.util.LOG;   //xuameng
 import com.github.tvbox.osc.util.OkGoHelper;  //xuameng
 import com.github.tvbox.osc.util.M3u8;  //xuameng
+import com.github.tvbox.osc.bean.LiveSettingGroup;  //xuameng
+import com.github.tvbox.osc.bean.LiveSettingItem;    //xuameng
+import java.util.Arrays;   //xuameng
 
 /**
  * @author pj567
@@ -381,18 +384,51 @@ public class ApiConfig {
                 setDefaultParse(parseBeanList.get(0));
         }
         // 直播源xuameng新增
+        initLiveSettings();
         if(infoJson.has("lives")){
             JsonArray lives_groups=infoJson.get("lives").getAsJsonArray();
             int live_group_index=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
 			if(live_group_index>lives_groups.size()-1){
 				Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);  //xuameng上次有两个直播源选中了第二个，下次进入第二个删除了，就会出错。判断一下，如果没有第二个，默认进第一个
-				int live_group_index_xu=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
-				JsonObject livesOBJ_xu = lives_groups.get(live_group_index_xu).getAsJsonObject();
+			    Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
+            //加载多源配置
+            try {
+                ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
+                for (int i=0; i< lives_groups.size();i++) {
+                    JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
+                    String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"线路"+(i+1);
+                    LiveSettingItem liveSettingItem = new LiveSettingItem();
+                    liveSettingItem.setItemIndex(i);
+                    liveSettingItem.setItemName(name);
+                    liveSettingItemList.add(liveSettingItem);
+                }
+                liveSettingGroupList.get(5).setLiveSettingItems(liveSettingItemList);
+            } catch (Exception e) {
+                // 捕获任何可能发生的异常
+                e.printStackTrace();
+            }
+			int live_group_index_xu=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
+			JsonObject livesOBJ_xu = lives_groups.get(live_group_index_xu).getAsJsonObject();
+			loadLiveApi(livesOBJ_xu);
+			}else{
 				Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
-				loadLiveApi(livesOBJ_xu);
-            }else{
-			JsonObject livesOBJ = lives_groups.get(live_group_index).getAsJsonObject();
-            Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
+            //加载多源配置
+            try {
+                ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
+                for (int i=0; i< lives_groups.size();i++) {
+                    JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
+                    String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"线路"+(i+1);
+                    LiveSettingItem liveSettingItem = new LiveSettingItem();
+                    liveSettingItem.setItemIndex(i);
+                    liveSettingItem.setItemName(name);
+                    liveSettingItemList.add(liveSettingItem);
+                }
+                liveSettingGroupList.get(5).setLiveSettingItems(liveSettingItemList);
+            } catch (Exception e) {
+                // 捕获任何可能发生的异常
+                e.printStackTrace();
+            }
+            JsonObject livesOBJ = lives_groups.get(live_group_index).getAsJsonObject();
             loadLiveApi(livesOBJ);
 			}
         }    //xuameng新增完
@@ -516,6 +552,45 @@ public class ApiConfig {
                 ijkCodes.get(0).selected(true);
             }
         }
+    }
+
+    private final List<LiveSettingGroup> liveSettingGroupList = new ArrayList<>();    //xuameng新增多源切换
+    private void initLiveSettings(){
+		ArrayList<String> groupNames = new ArrayList<>(Arrays.asList("线路选择", "画面比例", "播放解码", "超时换源", "偏好设置", "多源切换"));  //xuameng 换源
+        ArrayList < ArrayList < String >> itemsArrayList = new ArrayList < > ();
+        ArrayList < String > sourceItems = new ArrayList < > ();
+        ArrayList < String > scaleItems = new ArrayList < > (Arrays.asList("默认比例", "16:9比例", "4:3 比例", "填充比例", "原始比例", "裁剪比例"));
+        ArrayList < String > playerDecoderItems = new ArrayList < > (Arrays.asList("系统解码", "IJK  硬解", "IJK  软解", "EXO 解码"));
+        ArrayList < String > timeoutItems = new ArrayList < > (Arrays.asList("超时05秒", "超时10秒", "超时15秒", "超时20秒", "超时25秒", "超时30秒"));
+        ArrayList < String > personalSettingItems = new ArrayList < > (Arrays.asList("显示时间", "显示网速", "换台反转", "跨选分类"));
+        ArrayList<String> yumItems = new ArrayList<>();   //xuameng新增 换源
+
+        itemsArrayList.add(sourceItems);
+        itemsArrayList.add(scaleItems);
+        itemsArrayList.add(playerDecoderItems);
+        itemsArrayList.add(timeoutItems);
+        itemsArrayList.add(personalSettingItems);
+        itemsArrayList.add(yumItems);
+
+        liveSettingGroupList.clear();
+        for (int i = 0; i < groupNames.size(); i++) {
+            LiveSettingGroup liveSettingGroup = new LiveSettingGroup();
+            ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
+            liveSettingGroup.setGroupIndex(i);
+            liveSettingGroup.setGroupName(groupNames.get(i));
+            for (int j = 0; j < itemsArrayList.get(i).size(); j++) {
+                LiveSettingItem liveSettingItem = new LiveSettingItem();
+                liveSettingItem.setItemIndex(j);
+                liveSettingItem.setItemName(itemsArrayList.get(i).get(j));
+                liveSettingItemList.add(liveSettingItem);
+            }
+            liveSettingGroup.setLiveSettingItems(liveSettingItemList);
+            liveSettingGroupList.add(liveSettingGroup);
+        }
+    }
+
+    public List<LiveSettingGroup> getLiveSettingGroupList() {
+        return liveSettingGroupList;
     }
 
     public void loadLives(JsonArray livesArray) {
