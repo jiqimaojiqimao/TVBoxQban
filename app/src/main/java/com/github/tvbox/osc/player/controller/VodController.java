@@ -1070,7 +1070,7 @@ public class VodController extends BaseController {
             int width = mControlWrapper.getVideoSize()[0];
             int height = mControlWrapper.getVideoSize()[1];
             double screenSqrt = ScreenUtils.getSqrt(mActivity);
-            if (screenSqrt < 10.0 && width < height) {
+            if (screenSqrt < 10.0 && width <= height) {
                 mLandscapePortraitBtn.setVisibility(View.VISIBLE);
                 mLandscapePortraitBtn.setText("竖屏");
             }
