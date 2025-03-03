@@ -204,7 +204,6 @@ public class LivePlayActivity extends BaseActivity {
     private CountDownTimer countDownTimer7;
     private CountDownTimer countDownTimer8;
     private CountDownTimer countDownTimer10;
-    private CountDownTimer countDownTimer21;
     private CountDownTimer countDownTimer22;
     private CountDownTimer countDownTimer30;
     private final int videoWidth = 1920;
@@ -347,7 +346,7 @@ public class LivePlayActivity extends BaseActivity {
 				if(mVideoView == null) return;
                 long duration = mVideoView.getDuration();
                 long newPosition = (duration * seekBar.getProgress()) / sBar.getMax(); //xuameng停止触碰获取进度条进度
-                if(newPosition < 1000 && isVOD) { //xuameng主要解决某些M3U8文件不能快进到0\
+                if(newPosition < 1000 && isVOD) { //xuameng主要解决某些M3U8文件不能快进到0
                     mVideoView.release();
                     mVideoView.setUrl(currentLiveChannelItem.getUrl());
                     mVideoView.start();
@@ -1387,7 +1386,7 @@ public class LivePlayActivity extends BaseActivity {
         };
         countDownTimer7.start();
     }
-    private boolean playChannel(int channelGroupIndex, int liveChannelIndex, boolean changeSource) { //xuameng播放\
+    private boolean playChannel(int channelGroupIndex, int liveChannelIndex, boolean changeSource) { //xuameng播放
 		if(mVideoView == null) return true; //XUAMENG可能会引起空指针问题的修复
         if((channelGroupIndex == currentChannelGroupIndex && liveChannelIndex == currentLiveChannelIndex && !changeSource) || (changeSource && currentLiveChannelItem.getSourceNum() == 1)) {
             // xuamengEPG日期自动选今天
