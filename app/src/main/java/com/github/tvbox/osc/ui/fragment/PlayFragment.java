@@ -788,6 +788,8 @@ public class PlayFragment extends BaseLazyFragment {
 //                        Toast.makeText(mContext, "获取播放信息错误1", Toast.LENGTH_SHORT).show();
                     }
                 } else {
+					//   获取播放信息错误后只需再重试一次
+					autoRetryCount=2;
                     errorWithRetry("获取播放信息错误", true);
 //                    Toast.makeText(mContext, "获取播放信息错误", Toast.LENGTH_SHORT).show();
                 }
@@ -957,7 +959,7 @@ public class PlayFragment extends BaseLazyFragment {
 
     boolean autoRetry() {
         long currentTime = System.currentTimeMillis();
-        if (autoRetryCount<2 && currentTime - lastRetryTime > 10000){
+        if (autoRetryCount<2 && currentTime - lastRetryTime > 20_000){
             LOG.i("echo-reset-autoRetryCount");
             autoRetryCount = 0;
         }
