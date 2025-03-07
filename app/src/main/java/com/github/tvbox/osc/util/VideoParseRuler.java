@@ -9,7 +9,7 @@ public class VideoParseRuler {
 
     private static final HashMap<String, ArrayList<ArrayList<String>>> HOSTS_RULE = new HashMap<>();
     private static final HashMap<String, ArrayList<ArrayList<String>>> HOSTS_FILTER = new HashMap<>();
-	private static final HashMap<String, ArrayList<String>> HOSTS_REGEX = new HashMap<>();
+    private static final HashMap<String, ArrayList<String>> HOSTS_REGEX = new HashMap<>();
 
     public static void clearRule() {
         HOSTS_RULE.clear();
@@ -48,7 +48,7 @@ public class VideoParseRuler {
         return null;
     }
 
-    public static void addHostRegex(String host, ArrayList<String> regex) {    //xuameng广告过滤
+    public static void addHostRegex(String host, ArrayList<String> regex) {
         if (regex == null || regex.size() == 0) return;
         ArrayList<String> temp = new ArrayList<>();
         if (HOSTS_REGEX.get(host) != null && HOSTS_REGEX.get(host).size() > 0) temp = HOSTS_REGEX.get(host);
@@ -92,7 +92,7 @@ public class VideoParseRuler {
                             checkIsVideo = false;
                             break;
                         }
-                        LOG.i("VIDEO RULE:" + hostRules.get(i).get(j));
+                        LOG.i("echo-VIDEO RULE:" + hostRules.get(i).get(j));
                     }
                 } else {
                     checkIsVideo = false;
@@ -139,7 +139,7 @@ public class VideoParseRuler {
                             checkIsFilter = false;
                             break;
                         }
-                        LOG.i("FILTER RULE:" + hostFilters.get(i).get(j));
+                        LOG.i("echo-FILTER RULE:" + hostFilters.get(i).get(j));
                     }
                 } else {
                     checkIsFilter = false;
