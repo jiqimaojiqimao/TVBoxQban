@@ -234,7 +234,7 @@ public class PlayActivity extends BaseActivity {
                     play(true);
                 }else {
                     if(webPlayUrl!=null && !webPlayUrl.isEmpty()) {
-                        playUrl(webPlayUrl,webHeaderMap);
+                        goPlayUrl(webPlayUrl,webHeaderMap);
                     }else {
                         play(false);
                     }
@@ -263,6 +263,10 @@ public class PlayActivity extends BaseActivity {
             @Override
             public void prepared() {
                 initSubtitleView();
+            }
+            @Override
+            public void startPlayUrl(String url, HashMap<String, String> headers) {
+                goPlayUrl(url, headers);
             }
         });
         mVideoView.setVideoController(mController);
@@ -315,7 +319,7 @@ public class PlayActivity extends BaseActivity {
                             @Override
                             public void run() {
                                 String zimuUrl = subtitle.getUrl();
-                                LOG.i("Remote Subtitle Url: " + zimuUrl);
+                                LOG.i("echo-Remote Subtitle Url: " + zimuUrl);
                                 setSubtitle(zimuUrl);//设置字幕
                                 if (searchSubtitleDialog != null) {
                                     searchSubtitleDialog.dismiss();
@@ -342,7 +346,7 @@ public class PlayActivity extends BaseActivity {
                         .withChosenListener(new ChooserDialog.Result() {
                             @Override
                             public void onChoosePath(String path, File pathFile) {
-                                LOG.i("Local Subtitle Path: " + path);
+                                LOG.i("echo-Local Subtitle Path: " + path);
                                 setSubtitle(path);//设置字幕
                             }
                         })
@@ -536,6 +540,7 @@ public class PlayActivity extends BaseActivity {
                 @Override
                 public void run() {
                     if (finish) {
+						setTip(err, false, true);
                         Toast.makeText(mContext, err, Toast.LENGTH_SHORT).show();
                         finish();
                     } else {
@@ -547,7 +552,19 @@ public class PlayActivity extends BaseActivity {
     }
 
     void playUrl(String url, HashMap<String, String> headers) {
-        LOG.i("playUrl:" + url);
+        if (!Hawk.get(HawkConfig.M3U8_PURIFY, false)) {   //xuameng广告过滤
+            goPlayUrl(url,headers);
+            return;
+        }
+        if (url.startsWith("http://127.0.0.1") || !url.contains(".m3u8")) {
+            goPlayUrl(url,headers);
+            return;
+        }
+        LOG.i("echo-playM3u8:" + url);
+        mController.playM3u8(url,headers);
+    }
+    void goPlayUrl(String url, HashMap<String, String> headers) {
+        LOG.i("echo-goPlayUrl:" + url);
         if(autoRetryCount==0)webPlayUrl=url;  //xuameng新增
         final String finalUrl = url;
         runOnUiThread(new Runnable() {
@@ -767,8 +784,6 @@ public class PlayActivity extends BaseActivity {
                     } catch (Throwable th) {
                     }
                 } else {
-					//获取播放信息错误后只需再重试一次
-                    autoRetryCount=2;
                     errorWithRetry("获取播放信息错误", true);
                 }
             }
@@ -918,7 +933,8 @@ public class PlayActivity extends BaseActivity {
     boolean autoRetry() {
         long currentTime = System.currentTimeMillis();
         // 如果距离上次重试超过 10 秒（10000 毫秒），重置重试次数
-        if (autoRetryCount < 2 && currentTime - lastRetryTime > 20_000) {
+        if (currentTime - lastRetryTime > 60_000) {
+			LOG.i("echo-reset-autoRetryCount");
             autoRetryCount = 0;
         }
         lastRetryTime = currentTime;  // 更新上次调用时间
@@ -1590,7 +1606,7 @@ public class PlayActivity extends BaseActivity {
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view,url);
             String click=sourceBean.getClickSelector();
-            LOG.i("onPageFinished url:" + url);
+            LOG.i("echo-onPageFinished url:" + url);
             if(!click.isEmpty()){
                 String selector;
                 if(click.contains(";")){
@@ -1600,6 +1616,7 @@ public class PlayActivity extends BaseActivity {
                     selector=click.trim();
                 }
                 String js="$(\""+ selector+"\").click();";
+				LOG.i("echo-javascript:" + js);
                 mSysWebView.loadUrl("javascript:"+js);
             }
         }
@@ -1630,7 +1647,7 @@ public class PlayActivity extends BaseActivity {
                 if (checkVideoFormat(url)) {
                     loadFoundVideoUrls.add(url);
                     loadFoundVideoUrlsHeader.put(url, headers);
-                    LOG.i("loadFoundVideoUrl:" + url );
+                    LOG.i("echo-loadFoundVideoUrl:" + url );
                     if (loadFoundCount.incrementAndGet() == 1) {
                         url = loadFoundVideoUrls.poll();
                         mHandler.removeMessages(100);
@@ -1658,7 +1675,7 @@ public class PlayActivity extends BaseActivity {
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             String url = request.getUrl().toString();
-            LOG.i("shouldInterceptRequest url:" + url);
+            LOG.i("echo-shouldInterceptRequest url:" + url);
             HashMap<String, String> webHeaders = new HashMap<>();
             Map<String, String> hds = request.getRequestHeaders();
             if (hds != null && hds.keySet().size() > 0) {
@@ -1776,7 +1793,7 @@ public class PlayActivity extends BaseActivity {
         @Override
         public XWalkWebResourceResponse shouldInterceptLoadRequest(XWalkView view, XWalkWebResourceRequest request) {
             String url = request.getUrl().toString();
-            LOG.i("shouldInterceptLoadRequest url:" + url);
+            LOG.i("echo-shouldInterceptLoadRequest url:" + url);
             // suppress favicon requests as we don't display them anywhere
             if (url.endsWith("/favicon.ico")) {
                 if (url.startsWith("http://127.0.0.1")) {
@@ -1813,7 +1830,7 @@ public class PlayActivity extends BaseActivity {
                     }
                     loadFoundVideoUrls.add(url);
                     loadFoundVideoUrlsHeader.put(url, webHeaders);
-                    LOG.i("loadFoundVideoUrl:" + url );
+                    LOG.i("echo-loadFoundVideoUrl:" + url );
                     if (loadFoundCount.incrementAndGet() == 1) {
                         mHandler.removeMessages(100);
                         url = loadFoundVideoUrls.poll();
