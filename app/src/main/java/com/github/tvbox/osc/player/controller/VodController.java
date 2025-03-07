@@ -17,6 +17,16 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.graphics.Color;                          //xuameng获取颜色值
+import com.github.tvbox.osc.server.RemoteServer;   //xuameng新增广告过滤
+import com.github.tvbox.osc.util.M3u8;  //xuameng新增广告过滤
+import com.lzy.okgo.OkGo;  //xuameng新增广告过滤
+import com.lzy.okgo.callback.AbsCallback;  //xuameng新增广告过滤
+import com.lzy.okgo.model.HttpHeaders;  //xuameng新增广告过滤
+import com.lzy.okgo.model.Response;  //xuameng新增广告过滤
+import java.net.MalformedURLException; //xuameng新增广告过滤
+import java.net.URL;  //xuameng新增广告过滤
+import java.util.HashMap; //xuameng新增广告过滤
+import java.util.Map; //xuameng新增广告过滤
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -1159,6 +1169,8 @@ public class VodController extends BaseController {
         void selectSubtitle();
 
         void selectAudioTrack();
+
+		void startPlayUrl(String url, HashMap<String, String> headers);  //xuameng广告过滤
     }
 
     public void setListener(VodControlListener listener) {
@@ -1793,5 +1805,124 @@ public class VodController extends BaseController {
         }
         switchPlayerCount++;
         return false;
+    }
+    public void playM3u8(final String url, final HashMap<String, String> headers) {
+        OkGo.getInstance().cancelTag("m3u8-1");
+        OkGo.getInstance().cancelTag("m3u8-2");
+        final HttpHeaders okGoHeaders = new HttpHeaders();
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                okGoHeaders.put(entry.getKey(), entry.getValue());
+            }
+        }
+        OkGo.<String>get(url)
+                .tag("m3u8-1")
+                .headers(okGoHeaders)
+                .execute(new AbsCallback<String>() {
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        String content = response.body();
+                        if (!content.startsWith("#EXTM3U")) {
+                            listener.startPlayUrl(url, headers);
+                            return;
+                        }
+                        String forwardUrl = extractForwardUrl(url, content);
+                        if (forwardUrl.isEmpty()) {
+                            LOG.i("echo-m3u81-to-play");
+                            processM3u8Content(url, content, headers);
+                        } else {
+                            fetchAndProcessForwardUrl(forwardUrl, headers, okGoHeaders, url);
+                        }
+                    }
+
+                    @Override
+                    public String convertResponse(okhttp3.Response response) throws Throwable {
+                        return response.body().string();
+                    }
+
+                    @Override
+                    public void onError(Response<String> response) {
+                        super.onError(response);
+                        LOG.e("echo-m3u8请求错误1: " + response.getException());
+                        listener.startPlayUrl(url, headers);
+                    }
+                });
+    }
+
+    private String extractForwardUrl(String baseUrl, String content) {
+        String[] lines = content.split("\\r?\\n",50);
+        for (int i = 0; i < lines.length; i++) {
+            String line = lines[i].trim();
+            if (line.startsWith("#EXT-X-STREAM-INF")) {
+                // 只需要找接下来的几行
+                for (int j = i + 1; j < lines.length; j++) {
+                    String targetLine = lines[j].trim();
+                    if (targetLine.isEmpty()) continue;
+                    if (isValidM3u8Line(targetLine)) {
+                        return resolveForwardUrl(baseUrl, targetLine);
+                    }
+                }
+            }
+        }
+        return "";
+    }
+
+    private boolean isValidM3u8Line(String line) {
+        return !line.startsWith("#") && (line.endsWith(".m3u8") || line.contains(".m3u8?"));
+    }
+
+    private void processM3u8Content(String url, String content, HashMap<String, String> headers) {
+        String basePath = getBasePath(url);
+        RemoteServer.m3u8Content = M3u8.purify(basePath, content);
+        if (RemoteServer.m3u8Content == null) {
+            LOG.i("echo-m3u8内容解析：未检测到广告");
+            listener.startPlayUrl(url, headers);
+        } else {
+            listener.startPlayUrl(ControlManager.get().getAddress(true) + "proxyM3u8", headers);
+            Toast.makeText(getContext(), "聚汇影视已为您移除视频广告！", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void fetchAndProcessForwardUrl(final String forwardUrl, final HashMap<String, String> headers,
+                                           HttpHeaders okGoHeaders, final String fallbackUrl) {
+        OkGo.<String>get(forwardUrl)
+                .tag("m3u8-2")
+                .headers(okGoHeaders)
+                .execute(new AbsCallback<String>() {
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        String content = response.body();
+                        LOG.i("echo-m3u82-to-play");
+                        processM3u8Content(forwardUrl, content, headers);
+                    }
+                    @Override
+                    public String convertResponse(okhttp3.Response response) throws Throwable {
+                        return response.body().string();
+                    }
+                    @Override
+                    public void onError(Response<String> response) {
+                        super.onError(response);
+                        LOG.e("echo-重定向 m3u8 请求错误: " + response.getException());
+                        listener.startPlayUrl(fallbackUrl, headers);
+                    }
+                });
+    }
+
+    private String getBasePath(String url) {
+        int ilast = url.lastIndexOf('/');
+        return url.substring(0, ilast + 1);
+    }
+
+    private String resolveForwardUrl(String baseUrl, String line) {
+        try {
+            // 使用 URL 构造器自动解析相对路径
+            URL base = new URL(baseUrl);
+            URL resolved = new URL(base, line);
+            return resolved.toString();
+        } catch (MalformedURLException e) {
+            // 出现异常时可以记录日志，并返回原始 line
+            LOG.e("echo-resolveForwardUrl异常: " + e.getMessage());
+            return line;
+        }
     }
 }
