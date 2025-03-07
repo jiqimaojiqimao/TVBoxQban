@@ -174,8 +174,6 @@ public class LivePlayActivity extends BaseActivity {
     public static Date nowday = new Date();
     private boolean isSHIYI = false;
     private boolean isBack = false;
-	private boolean isInit = false;  //xuameng判断是否是播放状态
-	private boolean isPass = false;  //xuameng密码频道判断
 	private boolean isTouch = false;  //xuameng手机选择频道判断
     private boolean isVOD = false; //xuameng点播
     private boolean isKUAIJIN = false; //xuameng快进
@@ -204,6 +202,8 @@ public class LivePlayActivity extends BaseActivity {
     private CountDownTimer countDownTimer7;
     private CountDownTimer countDownTimer8;
     private CountDownTimer countDownTimer10;
+	private CountDownTimer countDownTimer20;
+	private CountDownTimer countDownTimer21;
     private CountDownTimer countDownTimer22;
     private CountDownTimer countDownTimer30;
     private final int videoWidth = 1920;
@@ -642,6 +642,9 @@ public class LivePlayActivity extends BaseActivity {
     //显示底部EPG
 	@SuppressLint("SetTextI18n") //xuameng乱码
     private void showBottomEpg() {
+		if(!isCurrentLiveChannelValid()){  //xuameng 未选择频道空指针问题
+			return;
+		}
         if(isSHIYI) return;
         if(channel_Name.getChannelName() != null) {
             ((TextView) findViewById(R.id.tv_channel_bar_name)).setText(channel_Name.getChannelName());
@@ -734,6 +737,9 @@ public class LivePlayActivity extends BaseActivity {
 
 	@SuppressLint("SetTextI18n") //xuameng乱码
     private void showBottomEpgXU() { //XUAMENG刷新EPG，要不不能自动刷新
+		if(!isCurrentLiveChannelValid()){  //xuameng 未选择频道空指针问题
+			return;
+		}
         if(isSHIYI) return;
         if(channel_Name.getChannelName() != null) {
             String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
@@ -770,6 +776,9 @@ public class LivePlayActivity extends BaseActivity {
     //XUAMENG显示底部回看时的EPG
 	@SuppressLint("SetTextI18n") //xuameng乱码
     private void showBottomEpgBack() {
+		if(!isCurrentLiveChannelValid()){  //xuameng 未选择频道空指针问题
+			return;
+		}
         if(channel_Name.getChannelName() != null) {
             ((TextView) findViewById(R.id.tv_channel_bar_name)).setText(channel_Name.getChannelName());
             ((TextView) findViewById(R.id.tv_channel_bottom_number)).setText("" + channel_Name.getChannelNum());
@@ -869,11 +878,8 @@ public class LivePlayActivity extends BaseActivity {
     }
     //频道列表
     public void divLoadEpgRight(View view) {
-		if (isPass){
-			Toast.makeText(mContext, "当前未选择频道，无法查看频道信息！", Toast.LENGTH_SHORT).show();
-			return;
-		}
-		else if (isTouch){
+		if(!isCurrentLiveChannelValid()) return;  //xuameng 未选择频道空指针问题
+		if (isTouch){
 			showChannelListTouch();
 		}
         mChannelGroupView.setVisibility(View.GONE);
@@ -1282,10 +1288,7 @@ public class LivePlayActivity extends BaseActivity {
         if(tvRightSettingLayout.getVisibility() == View.VISIBLE) {
             mHideSettingLayoutRun();
             return;
-        }
-		if (isInit){  //xuameng重要
-			isPass = false;
-		}	
+        }	
         if(isVOD) {
             Mtv_left_top_xu.setVisibility(View.GONE);
         }
@@ -1294,6 +1297,8 @@ public class LivePlayActivity extends BaseActivity {
             liveChannelItemAdapter.setNewData(getLiveChannels(currentChannelGroupIndex));
             if(currentLiveChannelIndex > -1) mLiveChannelView.scrollToPosition(currentLiveChannelIndex); //xuameng先滚动再选择防止空指针
             mChannelGroupView.scrollToPosition(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
+            mChannelGroupView.setSelection(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
+     //       mLiveChannelView.setSelection(currentLiveChannelIndex); //xuameng先滚动再选择防止空指针
             if(countDownTimer10 != null) {
                 countDownTimer10.cancel();
             }
@@ -1313,6 +1318,8 @@ public class LivePlayActivity extends BaseActivity {
             liveChannelItemAdapter.setNewData(getLiveChannels(currentChannelGroupIndex));
             if(currentLiveChannelIndex > -1) mLiveChannelView.scrollToPosition(currentLiveChannelIndex); //xuameng先滚动再选择防止空指针
             mChannelGroupView.scrollToPosition(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
+    //        mChannelGroupView.setSelection(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
+    //        mLiveChannelView.setSelection(currentLiveChannelIndex); //xuameng先滚动再选择防止空指针
             if(countDownTimer10 != null) {
                 countDownTimer10.cancel();
             }
@@ -1327,18 +1334,25 @@ public class LivePlayActivity extends BaseActivity {
     }
     private void mFocusCurrentChannelAndShowChannelList() { //xuameng左侧菜单显示
         if(mChannelGroupView.isScrolling() || mLiveChannelView.isScrolling() || mChannelGroupView.isComputingLayout() || mLiveChannelView.isComputingLayout()) {
-			Toast.makeText(App.getInstance(), "频道菜单加载中！请稍后重试!", Toast.LENGTH_LONG).show();
-			return;
-		}else{
-			//  mChannelGroupView.setSelection(currentChannelGroupIndex); //xuameng防止空指针
-            //  mLiveChannelView.setSelection(currentLiveChannelIndex); //xuameng防止空指针
+            if(countDownTimer20 != null) {
+                countDownTimer20.cancel();
+            }
+            countDownTimer20 = new CountDownTimer(100, 50) { //底部epg隐藏时间设定
+                public void onTick(long j) {
+                }
+                public void onFinish() {
+                    mFocusCurrentChannelAndShowChannelList();
+                }
+            };
+            countDownTimer20.start();
+        } else {
             mFocusCurrentChannelAndShowChannelListXu();
         }
     }
     private void mFocusCurrentChannelAndShowChannelListXu() { //xuameng左侧菜单显示
+        epgListAdapter.getSelectedIndex(); //xuamengEPG打开菜单自动变颜色 
         liveChannelGroupAdapter.setSelectedGroupIndex(currentChannelGroupIndex);
         liveChannelItemAdapter.setSelectedChannelIndex(currentLiveChannelIndex);
-		epgListAdapter.getSelectedIndex(); //xuamengEPG打开菜单自动变颜色 
         RecyclerView.ViewHolder holder = mLiveChannelView.findViewHolderForAdapterPosition(currentLiveChannelIndex);
         if(holder != null) holder.itemView.requestFocus();
         tvLeftChannelListLayout.setVisibility(View.VISIBLE);
@@ -1361,6 +1375,7 @@ public class LivePlayActivity extends BaseActivity {
         };
         countDownTimer5.start();
     }
+
     private void mHideChannelListRun() { //xuameng左侧菜单隐藏
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) tvLeftChannelListLayout.getLayoutParams();
 		isShowlist = false;
@@ -1451,7 +1466,6 @@ public class LivePlayActivity extends BaseActivity {
 		if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
            iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
         }
-		isInit = true;   //xuameng重要,有频道选中播放才可以显示EPG
         return true;
     }
     private boolean playChannelxu(int channelGroupIndex, int liveChannelIndex, boolean changeSource) { //xuameng播放
@@ -1545,9 +1559,17 @@ public class LivePlayActivity extends BaseActivity {
     }
     private void mFocusAndShowSettingGroup() { //XUAMENG显示右侧菜单
         if(mSettingGroupView.isScrolling() || mSettingItemView.isScrolling() || mSettingGroupView.isComputingLayout() || mSettingItemView.isComputingLayout()) {
-			Toast.makeText(App.getInstance(), "设置菜单加载中！请稍后重试!", Toast.LENGTH_LONG).show();
-			return;
-		}else{
+            if(countDownTimer21 != null) {
+                countDownTimer21.cancel();
+            }
+            countDownTimer21 = new CountDownTimer(100, 50) { //底部epg隐藏时间设定
+                public void onTick(long j) {}
+                public void onFinish() {
+                    mFocusAndShowSettingGroup();
+                }
+            };
+            countDownTimer21.start();
+        } else {
             mFocusAndShowSettingGroupXu();
         }
     }
@@ -1922,9 +1944,6 @@ public class LivePlayActivity extends BaseActivity {
             }
             @Override
             public boolean DoublePress() { //xuameng双击显示回看菜单并暂停
-                if(imgLiveIcon.getVisibility() == View.GONE) { //xuameng频道空双击空指针
-                    return true;
-                }
 				if(mVideoView == null) return true;
                 if(isBack) {
                     if(mVideoView.isPlaying()) {
@@ -2186,10 +2205,7 @@ public class LivePlayActivity extends BaseActivity {
             @Override
             public void onItemPreSelected(TvRecyclerView parent, View itemView, int position) {}
             @Override
-            public void onItemSelected(TvRecyclerView parent, View itemView, int position) {
-				if (isInit){
-					isPass = false;
-				}				
+            public void onItemSelected(TvRecyclerView parent, View itemView, int position) {				
                 selectChannelGroup(position, true, -1); //xuameng频道组
             }
             @Override
@@ -2203,9 +2219,6 @@ public class LivePlayActivity extends BaseActivity {
         liveChannelGroupAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-				if (isInit){
-					isPass = false;
-				}	
                 FastClickCheckUtil.check(view);
                 selectChannelGroup(position, false, -1);
             }
@@ -2217,13 +2230,13 @@ public class LivePlayActivity extends BaseActivity {
             liveChannelItemAdapter.setFocusedChannelIndex(-1); //xuameng修复频道名称移走焦点变色问题
         }
         if((groupIndex > -1 && groupIndex != liveChannelGroupAdapter.getSelectedGroupIndex()) || isNeedInputPassword(groupIndex)) {
+			isTouch = true;
             liveChannelGroupAdapter.setSelectedGroupIndex(groupIndex);
             if(isNeedInputPassword(groupIndex)) {
                 showPasswordDialog(groupIndex, liveChannelIndex);
                 return;
             }
             loadChannelGroupDataAndPlay(groupIndex, liveChannelIndex);
-			isTouch = true;
         }
         if(tvLeftChannelListLayout.getVisibility() == View.VISIBLE) {
             mHideChannelListRunXu(); //xuameng隐藏频道菜单
@@ -2253,7 +2266,6 @@ public class LivePlayActivity extends BaseActivity {
                 liveChannelGroupAdapter.setFocusedGroupIndex(-1);
                 liveChannelItemAdapter.setFocusedChannelIndex(position);
                 liveChannelItemAdapter.setSelectedChannelIndex(position);
-				isPass = false;
 				isTouch = false;
                 playChannelxu(liveChannelGroupAdapter.getSelectedGroupIndex(), liveChannelItemAdapter.getSelectedChannelIndex(), false); //xuameng换频道显示EPG
                 liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
@@ -2271,7 +2283,6 @@ public class LivePlayActivity extends BaseActivity {
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                 FastClickCheckUtil.check(view);
                 clickLiveChannel(position);
-				isPass = false;
 				isTouch = false;
                 mHideChannelListRun(); //xuameng隐藏左侧频道菜单
             }
@@ -2477,7 +2488,7 @@ public class LivePlayActivity extends BaseActivity {
             Uri parsedUrl = Uri.parse(url);
             url = new String(Base64.decode(parsedUrl.getQueryParameter("ext"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP), "UTF-8");
         } catch (Throwable th) {
-            Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表获取错误！", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -2787,7 +2798,6 @@ public class LivePlayActivity extends BaseActivity {
         }
         int groupIndexXu = liveChannelGroupAdapter.getSelectedGroupIndex(); //xuameng频道有密码先清空频道列表防止点击空指针
         liveChannelItemAdapter.setNewData(getLiveChannels(groupIndexXu)); //xuameng频道有密码先清空频道列表防止点击空指针
-		isPass = true;
         LivePasswordDialog dialog = new LivePasswordDialog(this);
         dialog.setOnListener(new LivePasswordDialog.OnListener() {
             @Override
@@ -2883,7 +2893,7 @@ public class LivePlayActivity extends BaseActivity {
     }
     private boolean isCurrentLiveChannelValid() {
         if(currentLiveChannelItem == null) {
-            Toast.makeText(App.getInstance(), "请先选择频道！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(App.getInstance(), "聚汇影视提示您：请先选择频道！", Toast.LENGTH_SHORT).show();
             return false;
         }
         return true;
