@@ -24,6 +24,7 @@ import com.github.tvbox.osc.ui.activity.PushActivity;
 import com.github.tvbox.osc.ui.activity.SearchActivity;
 import com.github.tvbox.osc.ui.activity.SettingActivity;
 import com.github.tvbox.osc.ui.adapter.HomeHotVodAdapter;
+import com.github.tvbox.osc.ui.adapter.HomeHotVodAdapterXu;      //xuameng首页单行
 import com.github.tvbox.osc.ui.dialog.xuamengAboutDialog;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.DefaultConfig;  //xuameng长按许大师制作重启APP
@@ -64,6 +65,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
     private LinearLayout tvCollect;
     private LinearLayout tvPush;
     public static HomeHotVodAdapter homeHotVodAdapter;
+	public static HomeHotVodAdapterXu homeHotVodAdapterxu;  //xuameng首页单行
     private List<Movie.Video> homeSourceRec;
     public static TvRecyclerView tvHotList1;
     public static TvRecyclerView tvHotList2;
@@ -91,8 +93,8 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         }else {
             tvHotList1.setVisibility(View.GONE);
             tvHotList2.setVisibility(View.VISIBLE);
-			tvHotList2.setHasFixedSize(true);
-            tvHotList2.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
+		//	tvHotList2.setHasFixedSize(true);      //xuameng不想显示单行
+        //    tvHotList2.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
         }
         super.onFragmentResume();
         if (Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
@@ -108,7 +110,11 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                     vod.note = "上次看到" + vodInfo.playNote;
                 vodList.add(vod);
             }
-            homeHotVodAdapter.setNewData(vodList);
+			if(!Hawk.get(HawkConfig.HOME_REC_STYLE, false)){
+				homeHotVodAdapterxu.setNewData(vodList);
+			}else{
+				homeHotVodAdapter.setNewData(vodList);
+			}
         }
     }
 
@@ -151,6 +157,48 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 // takagen99: CHeck if in Delete Mode
                 if ((vod.id != null && !vod.id.isEmpty()) && (Hawk.get(HawkConfig.HOME_REC, 0) == 2) && HawkConfig.hotVodDelete) {
                     homeHotVodAdapter.remove(position);
+                    VodInfo vodInfo = RoomDataManger.getVodInfo(vod.sourceKey, vod.id);
+                    RoomDataManger.deleteVodRecord(vod.sourceKey, vodInfo);
+                    Toast.makeText(mContext, "已删除当前记录", Toast.LENGTH_SHORT).show();
+               }  else if (vod.id != null && !vod.id.isEmpty()) {         //xuameng 修复首页聚汇推荐单击不能搜索的问题
+                    Bundle bundle = new Bundle();
+                    bundle.putString("id", vod.id);
+                    bundle.putString("sourceKey", vod.sourceKey);
+                    if (vod.id.startsWith("msearch:")) {
+                        bundle.putString("title", vod.name);
+                      if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
+                        jumpActivity(FastSearchActivity.class, bundle);
+                      }else {
+						jumpActivity(SearchActivity.class, bundle);
+					  }
+		              }else {
+                        jumpActivity(DetailActivity.class, bundle);
+                    }                           //xuameng 修复首页聚汇推荐单击不能搜索的问题结束
+                } else {
+                    Intent newIntent;
+                    if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
+                        newIntent = new Intent(mContext, FastSearchActivity.class);
+                    }else {
+                        newIntent = new Intent(mContext, SearchActivity.class);
+                    }
+                    newIntent.putExtra("title", vod.name);
+                    newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    mActivity.startActivity(newIntent);
+                }
+            }
+        });
+
+        homeHotVodAdapterxu = new HomeHotVodAdapterXu();
+        homeHotVodAdapterxu.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                if (ApiConfig.get().getSourceBeanList().isEmpty())
+                    return;
+                Movie.Video vod = ((Movie.Video) adapter.getItem(position));
+                
+                // takagen99: CHeck if in Delete Mode
+                if ((vod.id != null && !vod.id.isEmpty()) && (Hawk.get(HawkConfig.HOME_REC, 0) == 2) && HawkConfig.hotVodDelete) {
+                    homeHotVodAdapterxu.remove(position);
                     VodInfo vodInfo = RoomDataManger.getVodInfo(vod.sourceKey, vod.id);
                     RoomDataManger.deleteVodRecord(vod.sourceKey, vodInfo);
                     Toast.makeText(mContext, "已删除当前记录", Toast.LENGTH_SHORT).show();
@@ -245,6 +293,24 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             }    
         });
 
+        homeHotVodAdapterxu.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
+                if (ApiConfig.get().getSourceBeanList().isEmpty()) return false;
+                Movie.Video vod = ((Movie.Video) adapter.getItem(position));
+                // Additional Check if : Home Rec 0=豆瓣, 1=推荐, 2=历史
+                if ((vod.id != null && !vod.id.isEmpty()) && (Hawk.get(HawkConfig.HOME_REC, 0) == 2)) {
+                    HawkConfig.hotVodDelete = !HawkConfig.hotVodDelete;
+                    homeHotVodAdapterxu.notifyDataSetChanged();
+                } else {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("title", vod.name);
+                    jumpActivity(FastSearchActivity.class, bundle);                    
+                }
+                return true;
+            }    
+        });
+
         tvHotList1.setOnItemListener(new TvRecyclerView.OnItemListener() {
             @Override
             public void onItemPreSelected(TvRecyclerView parent, View itemView, int position) {
@@ -278,9 +344,9 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
 
             }
         });
-        tvHotList2.setAdapter(homeHotVodAdapter);
-
-        initHomeHotVod(homeHotVodAdapter);
+        tvHotList2.setAdapter(homeHotVodAdapterxu);
+			initHomeHotVodXu(homeHotVodAdapterxu);        //xuameng加载单行数据
+			initHomeHotVod(homeHotVodAdapter);
     }
 
     private void initHomeHotVod(HomeHotVodAdapter adapter) {
@@ -295,7 +361,64 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         setDouBanData(adapter);
     }
 
+    private void initHomeHotVodXu(HomeHotVodAdapterXu adapter) {
+        if (Hawk.get(HawkConfig.HOME_REC, 0) == 1) {
+            if (homeSourceRec != null) {
+                adapter.setNewData(homeSourceRec);
+                return;
+            }
+        } else if (Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
+            return;
+        }
+        setDouBanDataXu(adapter);
+    }
+
     private void setDouBanData(HomeHotVodAdapter adapter) {
+        try {
+            Calendar cal = Calendar.getInstance();
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH) + 1;
+            int day = cal.get(Calendar.DATE);
+            String today = String.format("%d%d%d", year, month, day);
+            String requestDay = Hawk.get("home_hot_day", "");
+            if (requestDay.equals(today)) {
+                String json = Hawk.get("home_hot", "");
+                if (!json.isEmpty()) {
+                    ArrayList<Movie.Video> hotMovies = loadHots(json);
+                    if (hotMovies != null && hotMovies.size() > 0) {
+                        adapter.setNewData(hotMovies);
+                        return;
+                    }
+                }
+            }
+            String doubanUrl = "https://movie.douban.com/j/new_search_subjects?sort=U&range=0,10&tags=&playable=1&start=0&year_range=" + year + "," + year;
+            OkGo.<String>get(doubanUrl)
+                    .headers("User-Agent", UA.randomOne())
+                    .execute(new AbsCallback<String>() {
+                        @Override
+                        public void onSuccess(Response<String> response) {
+                            String netJson = response.body();
+                            Hawk.put("home_hot_day", today);
+                            Hawk.put("home_hot", netJson);
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    adapter.setNewData(loadHots(netJson));
+                                }
+                            });
+                        }
+
+                        @Override
+                        public String convertResponse(okhttp3.Response response) throws Throwable {
+                            return response.body().string();
+                        }
+                    });
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
+    }
+
+    private void setDouBanDataXu(HomeHotVodAdapterXu adapter) {
         try {
             Calendar cal = Calendar.getInstance();
             int year = cal.get(Calendar.YEAR);
