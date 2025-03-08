@@ -14,6 +14,7 @@ public class VideoParseRuler {
     public static void clearRule() {
         HOSTS_RULE.clear();
         HOSTS_FILTER.clear();
+        HOSTS_REGEX.clear();
     }
 
     public static void addHostRule(String host, ArrayList<String> rule) {
