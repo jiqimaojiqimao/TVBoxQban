@@ -49,11 +49,13 @@ public class HawkConfig {
     public static final String LIVE_GROUP_LIST = "live_group_list";  //XUAMENG直播源list
     public static final String LIVE_API_URL = "live_api_url";
 	public static final String M3U8_PURIFY = "m3u8_purify";  //xuameng广告过滤
+	public static final String LIVE_API_HISTORY = "live_api_history";
 
 	public static boolean MSLIDEINFO = false;  //xuameng调节亮度声音
 	public static boolean intLIVEPLAYTYPE = false;  //xuameng是否有直播默认播放器
 	public static boolean intSYSplayer = false;  //xuameng是否进入系统播放器
 	public static boolean intVod = false;  //xuameng判断是否进入VOD界面
+	public static boolean ISrestore = false;  //xuameng判断是否进行恢复操作
 
     public static boolean hotVodDelete;
 }
