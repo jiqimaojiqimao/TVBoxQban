@@ -249,4 +249,19 @@ public class FileUtils {
         // 如果路径中有点号，并且点号在最后一个斜杠之后，认为有后缀
         return lastDotIndex > lastSlashIndex && lastDotIndex < path.length() - 1;
     }
+    public static void saveCache(File cache,String json){
+        try {
+            File cacheDir = cache.getParentFile();
+            if (!cacheDir.exists())
+                cacheDir.mkdirs();
+            if (cache.exists())
+                cache.delete();
+            FileOutputStream fos = new FileOutputStream(cache);
+            fos.write(json.getBytes("UTF-8"));
+            fos.flush();
+            fos.close();
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
+    }
 }
