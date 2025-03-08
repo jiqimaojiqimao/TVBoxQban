@@ -2,13 +2,13 @@ package com.github.tvbox.osc.ui.dialog;
 
 import android.app.Activity;
 import android.content.Context;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.KeyEvent;   //xuameng新增
-import android.view.inputmethod.EditorInfo;  //xuameng新增
 
 import androidx.annotation.NonNull;
 
@@ -42,11 +42,13 @@ public class ApiDialog extends BaseDialog {
     private ImageView ivQRCode;
     private TextView tvAddress;
     private EditText inputApi;
+    private EditText inputApiLive;
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void refresh(RefreshEvent event) {
         if (event.type == RefreshEvent.TYPE_API_URL_CHANGE) {
             inputApi.setText((String) event.obj);
+            inputApiLive.setText((String) event.obj);
         }
     }
 
@@ -57,8 +59,10 @@ public class ApiDialog extends BaseDialog {
         ivQRCode = findViewById(R.id.ivQRCode);
         tvAddress = findViewById(R.id.tvAddress);
         inputApi = findViewById(R.id.input);
+        inputApiLive = findViewById(R.id.inputLive);
         //内置网络接口在此处添加
         inputApi.setText(Hawk.get(HawkConfig.API_URL, ""));
+        inputApiLive.setText(Hawk.get(HawkConfig.LIVE_API_URL, Hawk.get(HawkConfig.API_URL)));
         findViewById(R.id.inputSubmit).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -70,12 +74,71 @@ public class ApiDialog extends BaseDialog {
                     if (history.size() > 30)
                         history.remove(30);
                     Hawk.put(HawkConfig.API_HISTORY, history);
-                    listener.onchange(newApi);
-                    dismiss();
-                }
+//                    String newLiveApi = inputApi.getText().toString().trim();
+                    if(!newApi.equals(Hawk.get(HawkConfig.API_URL, newApi))){
+                        inputApiLive.setText(newApi);
+                        Hawk.put(HawkConfig.LIVE_API_URL, newApi);
+                    }
+                }else{          //xuameng密码不能为空
+                Toast.makeText(getContext(), "请输入点播地址！", Toast.LENGTH_SHORT).show();
+				return;
+               }
+                listener.onchange(newApi);
+                dismiss();
             }
         });
-        findViewById(R.id.apiHistory).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.inputSubmitLive).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String newApi = inputApiLive.getText().toString().trim();
+                if (!newApi.isEmpty()) {
+                    ArrayList<String> history = Hawk.get(HawkConfig.LIVE_API_HISTORY, new ArrayList<String>());
+                    if (!history.contains(newApi)) {
+                        history.add(0, newApi);
+                    }
+                    if (history.size() > 30) {
+                        history.remove(30);
+                    }
+                    Hawk.put(HawkConfig.LIVE_API_HISTORY, history);
+                }else{          //xuameng密码不能为空
+                Toast.makeText(getContext(), "请输入直播地址！", Toast.LENGTH_SHORT).show();
+				return;
+               }
+                Hawk.put(HawkConfig.LIVE_API_URL, newApi);
+                dismiss();
+            }
+        });
+        findViewById(R.id.apiHistory_live).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ArrayList<String> history = Hawk.get(HawkConfig.LIVE_API_HISTORY, new ArrayList<String>());
+                if (history.isEmpty()){
+                    return;
+                }
+                String current = Hawk.get(HawkConfig.LIVE_API_URL, "");
+                int idx = 0;
+                if (history.contains(current))
+                    idx = history.indexOf(current);
+                ApiHistoryDialog dialog = new ApiHistoryDialog(getContext());
+                dialog.setTip("历史直播源");
+                dialog.setAdapter(new ApiHistoryDialogAdapter.SelectDialogInterface() {
+                    @Override
+                    public void click(String value) {
+                        inputApiLive.setText(value);
+                        Hawk.put(HawkConfig.LIVE_API_URL, value);
+                        dialog.dismiss();
+                    }
+
+                    @Override
+                    public void del(String value, ArrayList<String> data) {
+                        Hawk.put(HawkConfig.LIVE_API_HISTORY, data);
+                    }
+                }, history, idx);
+                dialog.show();
+            }
+        });
+
+        findViewById(R.id.apiHistory_vod).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ArrayList<String> history = Hawk.get(HawkConfig.API_HISTORY, new ArrayList<String>());
@@ -86,12 +149,22 @@ public class ApiDialog extends BaseDialog {
                 if (history.contains(current))
                     idx = history.indexOf(current);
                 ApiHistoryDialog dialog = new ApiHistoryDialog(getContext());
-                dialog.setTip("历史配置列表");
+                dialog.setTip("历史点播源");
                 dialog.setAdapter(new ApiHistoryDialogAdapter.SelectDialogInterface() {
                     @Override
                     public void click(String value) {
-                        inputApi.setText(value);
+                        Hawk.put(HawkConfig.API_URL, value);
+                        Hawk.put(HawkConfig.LIVE_API_URL, value);
+						inputApi.setText(value);
                         listener.onchange(value);
+                        ArrayList<String> history = Hawk.get(HawkConfig.LIVE_API_HISTORY, new ArrayList<String>());
+                        if (!history.contains(value)) {
+                            history.add(0, value);
+                        }
+                        if (history.size() > 30) {
+                            history.remove(30);
+                        }
+                        Hawk.put(HawkConfig.LIVE_API_HISTORY, history);
                         dialog.dismiss();
                     }
 
@@ -103,62 +176,13 @@ public class ApiDialog extends BaseDialog {
                 dialog.show();
             }
         });
-        findViewById(R.id.storagePermission).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (XXPermissions.isGranted(getContext(), Permission.Group.STORAGE)) {
-                    Toast.makeText(getContext(), "已获得存储权限", Toast.LENGTH_SHORT).show();
-                } else {
-                    XXPermissions.with(getContext())
-                            .permission(Permission.Group.STORAGE)
-                            .request(new OnPermissionCallback() {
-                                @Override
-                                public void onGranted(List<String> permissions, boolean all) {
-                                    if (all) {
-                                        Toast.makeText(getContext(), "已获得存储权限", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-
-                                @Override
-                                public void onDenied(List<String> permissions, boolean never) {
-                                    if (never) {
-                                        Toast.makeText(getContext(), "获取存储权限失败,请在系统设置中开启", Toast.LENGTH_SHORT).show();
-                                        XXPermissions.startPermissionActivity((Activity) getContext(), permissions);
-                                    } else {
-                                        Toast.makeText(getContext(), "获取存储权限失败", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            });
-                }
-            }
-        });
-       inputApi.setOnEditorActionListener(new TextView.OnEditorActionListener() {      //xuameng新增配置地址软键盘确定直接确定配置地址。
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
-                    String newApi = inputApi.getText().toString().trim();
-                    if (!newApi.isEmpty()) {
-                        ArrayList<String> history = Hawk.get(HawkConfig.API_HISTORY, new ArrayList<String>());
-                        if (!history.contains(newApi))
-                            history.add(0, newApi);
-                        if (history.size() > 30)
-                            history.remove(30);
-                        Hawk.put(HawkConfig.API_HISTORY, history);
-                        listener.onchange(newApi);
-                        dismiss();
-                    }
-                    return true;
-                }
-                return false;
-            }
-        });
-        refreshQRCode();
-    }
+		refreshQRCode();
+	}
 
     private void refreshQRCode() {
         String address = ControlManager.get().getAddress(false);
         tvAddress.setText(String.format("手机/电脑扫描上方二维码或者直接浏览器访问地址\n%s", address));
-        ivQRCode.setImageBitmap(QRCodeGen.generateBitmap(address+"api.html", AutoSizeUtils.mm2px(getContext(), 300), AutoSizeUtils.mm2px(getContext(), 300)));  //xuameng 增加API扫描自动进入接口
+        ivQRCode.setImageBitmap(QRCodeGen.generateBitmap(address+"api.html", AutoSizeUtils.mm2px(getContext(), 300), AutoSizeUtils.mm2px(getContext(), 300)));
     }
 
     public void setOnListener(OnListener listener) {
