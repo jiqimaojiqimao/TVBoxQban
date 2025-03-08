@@ -31,6 +31,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import com.github.tvbox.osc.util.HawkConfig;     //xuameng恢复判断
 
 public class BackupDialog extends BaseDialog {
 
@@ -63,7 +64,7 @@ public class BackupDialog extends BaseDialog {
             @Override
             public void onClick(View v) {
                 if (XXPermissions.isGranted(getContext(), Permission.Group.STORAGE)) {
-                    Toast.makeText(getContext(), "已获得存储权限", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "已获得存储权限！", Toast.LENGTH_SHORT).show();
                 } else {
                     XXPermissions.with(getContext())
                             .permission(Permission.Group.STORAGE)
@@ -72,17 +73,17 @@ public class BackupDialog extends BaseDialog {
                                 public void onGranted(List<String> permissions, boolean all) {
                                     if (all) {
                                         adapter.setNewData(allBackup());
-                                        Toast.makeText(getContext(), "已获得存储权限", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), "已获得存储权限！", Toast.LENGTH_SHORT).show();
                                     }
                                 }
 
                                 @Override
                                 public void onDenied(List<String> permissions, boolean never) {
                                     if (never) {
-                                        Toast.makeText(getContext(), "获取存储权限失败,请在系统设置中开启", Toast.LENGTH_SHORT).show();
-                                        XXPermissions.startPermissionActivity((Activity) getContext(), permissions);
+                                        Toast.makeText(getContext(), "获取存储权限失败,请在系统设置中开启！", Toast.LENGTH_SHORT).show();
+                                        XXPermissions.startPermissionActivity(getContext(), permissions);     //xuameng  (Activity) BUG
                                     } else {
-                                        Toast.makeText(getContext(), "获取存储权限失败", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), "获取存储权限失败！", Toast.LENGTH_SHORT).show();
                                     }
                                 }
                             });
@@ -143,7 +144,8 @@ public class BackupDialog extends BaseDialog {
                                 sharedPreferences.edit().putString(key, value).commit();
                             }
                         }
-                        Toast.makeText(getContext(), "恢复成功,请重启应用!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "恢复成功！退出设置页面将重启应用！", Toast.LENGTH_SHORT).show();
+						HawkConfig.ISrestore = true;  //xuameng恢复成功,请重启应用
                     } else {
                         Toast.makeText(getContext(), "Hawk恢复失败!", Toast.LENGTH_SHORT).show();
                     }
