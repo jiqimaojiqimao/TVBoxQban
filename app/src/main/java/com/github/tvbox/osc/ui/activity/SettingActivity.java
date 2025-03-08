@@ -46,6 +46,7 @@ public class SettingActivity extends BaseActivity {
     private String currentApi;
     private int homeRec;
     private int dnsOpt;
+    private String currentLiveApi;
 
     @Override
     protected int getLayoutResID() {
@@ -110,6 +111,7 @@ public class SettingActivity extends BaseActivity {
         homeSourceKey = ApiConfig.get().getHomeSourceBean().getKey();
         homeRec = Hawk.get(HawkConfig.HOME_REC, 0);
         dnsOpt = Hawk.get(HawkConfig.DOH_URL, 0);
+        currentLiveApi = Hawk.get(HawkConfig.LIVE_API_URL, "");
         List<String> sortList = new ArrayList<>();
         sortList.add("设置其他");
         sortAdapter.setNewData(sortList);
@@ -177,20 +179,24 @@ public class SettingActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
-        if ((homeSourceKey != null && !homeSourceKey.equals(Hawk.get(HawkConfig.HOME_API, ""))) ||
-                !currentApi.equals(Hawk.get(HawkConfig.API_URL, "")) ||
-                homeRec != Hawk.get(HawkConfig.HOME_REC, 0) ||
-                dnsOpt != Hawk.get(HawkConfig.DOH_URL, 0)) {
-            AppManager.getInstance().finishAllActivity();
-            if (currentApi.equals(Hawk.get(HawkConfig.API_URL, ""))) {
-                Bundle bundle = new Bundle();
-                bundle.putBoolean("useCache", true);
-                jumpActivity(HomeActivity.class, bundle);
-            } else {
-                jumpActivity(HomeActivity.class);
+        if (currentApi.equals(Hawk.get(HawkConfig.API_URL, ""))) {
+            if(dnsOpt != Hawk.get(HawkConfig.DOH_URL, 0)){
+                AppManager.getInstance().finishAllActivity();
+                jumpActivity(HomeActivity.class, createBundle());
+            }
+            else if ((homeSourceKey != null && !homeSourceKey.equals(Hawk.get(HawkConfig.HOME_API, "")))  || homeRec != Hawk.get(HawkConfig.HOME_REC, 0) || !currentLiveApi.equals(Hawk.get(HawkConfig.LIVE_API_URL, ""))) {
+                jumpActivity(HomeActivity.class, createBundle());
             }
         } else {
-            super.onBackPressed();
+            AppManager.getInstance().finishAllActivity();
+            jumpActivity(HomeActivity.class);
         }
+        super.onBackPressed();
+    }
+
+    private Bundle createBundle() {
+        Bundle bundle = new Bundle();
+        bundle.putBoolean("useCache", true);
+        return bundle;
     }
 }
