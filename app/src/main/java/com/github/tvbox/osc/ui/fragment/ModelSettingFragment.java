@@ -34,6 +34,7 @@ import com.owen.tvrecyclerview.widget.V7LinearLayoutManager; //xuameng优化首�
 import androidx.constraintlayout.widget.ConstraintLayout;  //xuameng优化首页数据源列表
 import android.view.ViewGroup;   //xuameng优化首页数据源列表
 import me.jessyan.autosize.utils.AutoSizeUtils;  //xuameng优化首页数据源列表
+import com.github.tvbox.osc.util.DefaultConfig;  //xuameng长按许大师制作重启APP
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.FileUtils;
 import com.github.tvbox.osc.util.HawkConfig;
@@ -46,6 +47,9 @@ import com.lzy.okgo.callback.FileCallback;
 import com.lzy.okgo.model.Progress;
 import com.lzy.okgo.model.Response;
 import com.orhanobut.hawk.Hawk;
+import com.hjq.permissions.OnPermissionCallback;
+import com.hjq.permissions.Permission;
+import com.hjq.permissions.XXPermissions;
 
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
@@ -170,12 +174,33 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 dialog.show();
             }
         });
-        findViewById(R.id.llAbout).setOnClickListener(new View.OnClickListener() {
+       findViewById(R.id.llAbout).setOnClickListener(new View.OnClickListener() {   //xuameng存储权限
             @Override
             public void onClick(View v) {
-                FastClickCheckUtil.check(v);
-                AboutDialog dialog = new AboutDialog(mActivity);
-                dialog.show();
+                if (XXPermissions.isGranted(getContext(), Permission.Group.STORAGE)) {
+                    Toast.makeText(getContext(), "已获得存储权限！", Toast.LENGTH_SHORT).show();
+                } else {
+                    XXPermissions.with(getContext())
+                            .permission(Permission.Group.STORAGE)
+                            .request(new OnPermissionCallback() {
+                                @Override
+                                public void onGranted(List<String> permissions, boolean all) {
+                                    if (all) {
+                                        Toast.makeText(getContext(), "已获得存储权限！", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onDenied(List<String> permissions, boolean never) {
+                                    if (never) {
+                                        Toast.makeText(getContext(), "获取存储权限失败,请在系统设置中开启！", Toast.LENGTH_SHORT).show();
+                                        XXPermissions.startPermissionActivity(getContext(), permissions);      //xuameng Activity去掉
+                                    } else {
+                                        Toast.makeText(getContext(), "获取存储权限失败！", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                }
             }
         });
         findViewById(R.id.llWp).setOnClickListener(new View.OnClickListener() {
@@ -748,6 +773,11 @@ public class ModelSettingFragment extends BaseLazyFragment {
 
     @Override
     public void onDestroyView() {
+		if (HawkConfig.ISrestore){
+			DefaultConfig.restartApp();
+			HawkConfig.ISrestore = false;  //xuameng恢复成功,请重启应用
+			return;
+		}
         super.onDestroyView();
         SettingActivity.callback = null;		
     }
