@@ -40,6 +40,7 @@ import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
 import android.graphics.Bitmap;  //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
 import android.annotation.SuppressLint; //xuamengEPG显示错误
+import java.util.Objects;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
@@ -2449,15 +2450,22 @@ public class LivePlayActivity extends BaseActivity {
                 if(position==Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0))break;
                 JsonArray live_groups=Hawk.get(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
                 JsonObject livesOBJ = live_groups.get(position).getAsJsonObject();
-                String type= livesOBJ.get("type").getAsString();
-                if(!type.equals("0")){
-                    Toast.makeText(App.getInstance(), "聚汇影视提示您：暂不支持该直播类型！", Toast.LENGTH_SHORT).show();
-                    break;
+                if(livesOBJ.has("type")){
+                    String type= livesOBJ.get("type").getAsString();
+                    if(!type.equals("0")){
+                        Toast.makeText(App.getInstance(), "聚汇影视提示您：暂不支持该直播类型！", Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+                }else {
+                    if(!livesOBJ.has("channels")){
+                        Toast.makeText(App.getInstance(), "聚汇影视提示您：暂不支持该直播类型！", Toast.LENGTH_SHORT).show();
+                        break;
+                    }
                 }
-				liveSettingItemAdapter.selectItem(position, true, true);
+                liveSettingItemAdapter.selectItem(position, true, true);
                 Hawk.put(HawkConfig.LIVE_GROUP_INDEX, position);
                 ApiConfig.get().loadLiveApi(livesOBJ);
-                if (mVideoView != null) {   //xuameng空指针
+                if (mVideoView != null) {
                     mVideoView.release();
                     mVideoView=null;
                 }
@@ -2467,16 +2475,30 @@ public class LivePlayActivity extends BaseActivity {
         mHideSettingLayoutRunXu();
     }
     private void initLiveChannelList() {
-        List < LiveChannelGroup > list = ApiConfig.get().getChannelGroupList();
-        if(list.isEmpty()) {
-			Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0);  //xuameng新增
-            Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        List<LiveChannelGroup> list = ApiConfig.get().getChannelGroupList();
+        if (list.isEmpty()) {
+            if(Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0)!=0){
+                Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0);
+                JsonArray live_groups=Hawk.get(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
+                if(!live_groups.isEmpty()){
+                    JsonObject livesOBJ = live_groups.get(0).getAsJsonObject();
+                    ApiConfig.get().loadLiveApi(livesOBJ);
+                }else {
+                    Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！", Toast.LENGTH_SHORT).show();
+                    finish();
+                    return;
+                }
+            }else {
+                Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
         }
-        if(list.size() == 1 && list.get(0).getGroupName().startsWith("http://127.0.0.1")) {
+
+        if (list.size() == 1 && list.get(0).getGroupName().startsWith("http://127.0.0.1")) {
             loadProxyLives(list.get(0).getGroupName());
-        } else {
+        }
+        else {
             liveChannelGroupList.clear();
             liveChannelGroupList.addAll(list);
             showSuccess();
@@ -2488,33 +2510,46 @@ public class LivePlayActivity extends BaseActivity {
             Uri parsedUrl = Uri.parse(url);
             url = new String(Base64.decode(parsedUrl.getQueryParameter("ext"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP), "UTF-8");
         } catch (Throwable th) {
-            Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表获取错误！", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+            if(!url.startsWith("http://127.0.0.1")){
+                Toast.makeText(App.getInstance(), "聚汇影视提示您：直播文件错误！", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
         }
         showLoading();
 
-		LOG.i("echo-live-url:"+url);  //xuameng新增
-        OkGo. < String > get(url).execute(new AbsCallback < String > () {
+        LOG.i("echo-live-url:"+url);
+        OkGo.<String>get(url).execute(new AbsCallback<String>() {
+
             @Override
             public String convertResponse(okhttp3.Response response) throws Throwable {
+                assert response.body() != null;
                 return response.body().string();
             }
+
             @Override
-            public void onSuccess(Response < String > response) {
+            public void onSuccess(Response<String> response) {
                 JsonArray livesArray;
-                LinkedHashMap < String, LinkedHashMap < String, ArrayList < String >>> linkedHashMap = new LinkedHashMap < > ();
+                LinkedHashMap<String, LinkedHashMap<String, ArrayList<String>>> linkedHashMap = new LinkedHashMap<>();
                 TxtSubscribe.parse(linkedHashMap, response.body());
                 livesArray = TxtSubscribe.live2JsonArray(linkedHashMap);
+
                 ApiConfig.get().loadLives(livesArray);
-                List < LiveChannelGroup > list = ApiConfig.get().getChannelGroupList();
-                if(list.isEmpty()) {
+                List<LiveChannelGroup> list = ApiConfig.get().getChannelGroupList();
+                if (list.isEmpty()) {
+					Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0);   //xuameng bug
                     Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！", Toast.LENGTH_SHORT).show();
-                    finish();
+					mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        jumpActivity(HomeActivity.class);   //xuameng bug
+                    }
+                });
                     return;
                 }
                 liveChannelGroupList.clear();
                 liveChannelGroupList.addAll(list);
+
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -2525,10 +2560,14 @@ public class LivePlayActivity extends BaseActivity {
             }
             @Override
             public void onError(Response<String> response) {
-                super.onError(response);
-				Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0);  //xuameng新增
-                Toast.makeText(App.getInstance(), "聚汇影视提示您：直播地址加载错误！", Toast.LENGTH_LONG).show();
-                finish();
+                Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表加载错误！", Toast.LENGTH_SHORT).show();
+                Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0);
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        jumpActivity(HomeActivity.class);
+                    }
+                });
             }
         });
     }
