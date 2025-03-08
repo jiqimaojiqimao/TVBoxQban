@@ -87,15 +87,15 @@ public class HomeActivity extends BaseActivity {
     private SortAdapter sortAdapter;
     private HomePageAdapter pageAdapter;
     private View currentView;
-    private List<BaseLazyFragment> fragments = new ArrayList<>();
+    private final List<BaseLazyFragment> fragments = new ArrayList<>();
     private boolean isDownOrUp = false;
     private boolean sortChange = false;
     private int currentSelected = 0;
     private int sortFocused = 0;
     public View sortFocusView = null;
-    private Handler mHandler = new Handler();
+    private final Handler mHandler = new Handler();
     private long mExitTime = 0;
-    private Runnable mRunnable = new Runnable() {
+    private final Runnable mRunnable = new Runnable() {
         @SuppressLint({"DefaultLocale", "SetTextI18n"})
         @Override
         public void run() {
@@ -159,9 +159,7 @@ public class HomeActivity extends BaseActivity {
                             }
                             textView.invalidate();
                         }
-
-                        public View v = view;
-                        public int p = position;
+                        public final int p = position;
                     }, 10);
                 }
             }
@@ -302,7 +300,7 @@ public class HomeActivity extends BaseActivity {
         if (home != null && home.getName() != null && !home.getName().isEmpty())
             tvName.setText(home.getName());
         if (dataInitOk && jarInitOk) {
-            showLoading();
+//            showLoading();
             sourceViewModel.getSort(ApiConfig.get().getHomeSourceBean().getKey());
             if (hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 LOG.e("有");
@@ -339,8 +337,13 @@ public class HomeActivity extends BaseActivity {
                     }
 
                     @Override
-                    public void retry() {
-
+                    public void notice(String msg) {
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
 
                     @Override
@@ -362,11 +365,11 @@ public class HomeActivity extends BaseActivity {
             TipDialog dialog = null;
 
             @Override
-            public void retry() {
+            public void notice(String msg) {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        initData();
+                        Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
