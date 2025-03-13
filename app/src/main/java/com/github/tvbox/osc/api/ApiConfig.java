@@ -35,6 +35,8 @@ import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.AbsCallback;
 import com.lzy.okgo.model.Response;
 import com.orhanobut.hawk.Hawk;
+import java.io.IOException;
+import java.io.InputStream;
 
 import org.json.JSONObject;
 
@@ -194,9 +196,7 @@ public class ApiConfig {
                                         FileUtils.saveCache(live_cache,json);
                                     } catch (Throwable th) {
                                         th.printStackTrace();
-                                        callback.notice("聚汇影视提示您：解析直播配置失败！已清空直播配置！");
-										Hawk.put(HawkConfig.LIVE_API_URL, "");
-										Hawk.put(HawkConfig.LIVE_GROUP_LIST,"");
+                                        callback.notice("聚汇影视提示您：解析直播配置失败！");
                                     }
                                 }
 
@@ -212,9 +212,9 @@ public class ApiConfig {
                                             th.printStackTrace();
                                         }
                                     }
-                                    callback.notice("聚汇影视提示您：直播配置拉取失败！已清空直播配置！");
-									Hawk.put(HawkConfig.LIVE_API_URL, "");
-									Hawk.put(HawkConfig.LIVE_GROUP_LIST,"");
+                                    callback.notice("聚汇影视提示您：直播配置拉取失败！");
+									//Hawk.put(HawkConfig.LIVE_API_URL, "");
+									//Hawk.put(HawkConfig.LIVE_GROUP_LIST,"");
                                 }
 
                                 public String convertResponse(okhttp3.Response response) throws Throwable {
@@ -319,51 +319,76 @@ public class ApiConfig {
         }
 
         boolean isJarInImg = jarUrl.startsWith("img+");
+		LOG.i("echo---jar_start");
         jarUrl = jarUrl.replace("img+", "");
         OkGo.<File>get(jarUrl)
                 .headers("User-Agent", userAgent)
                 .headers("Accept", requestAccept)
                 .execute(new AbsCallback<File>() {
 
-            @Override
-            public File convertResponse(okhttp3.Response response) throws Throwable {
-                File cacheDir = cache.getParentFile();
-                if (!cacheDir.exists())
-                    cacheDir.mkdirs();
-                if (cache.exists())
-                    cache.delete();
-                FileOutputStream fos = new FileOutputStream(cache);
-                if(isJarInImg) {
-                    String respData = response.body().string();
-                    byte[] imgJar = getImgJar(respData);
-                    fos.write(imgJar);
-                } else {
-                    fos.write(response.body().bytes());
-                }
-                fos.flush();
-                fos.close();
-                return cache;
-            }
-
-            @Override
-            public void onSuccess(Response<File> response) {
-                if (response.body().exists()) {
-                    if (jarLoader.load(response.body().getAbsolutePath())) {
-                        callback.success();
-                    } else {
-                        callback.error("");
+                    @Override
+                    public File convertResponse(okhttp3.Response response) throws Throwable {
+                        File cacheDir = cache.getParentFile();
+                        assert cacheDir != null;
+                        if (!cacheDir.exists()) cacheDir.mkdirs();
+                        if (cache.exists()) cache.delete();
+                        // 3. 使用 try-with-resources 确保流关闭
+                        assert response.body() != null;
+                        try (FileOutputStream fos = new FileOutputStream(cache)) {
+                            if (isJarInImg) {
+                                String respData = response.body().string();
+                                LOG.i("echo---jar Response: " + respData);
+                                byte[] imgJar = getImgJar(respData);
+                                if (imgJar == null || imgJar.length == 0) {
+                                    throw new IOException("Generated JAR data is empty");
+                                }
+                                fos.write(imgJar);
+                            } else {
+                                // 使用流式传输避免内存溢出
+                                InputStream inputStream = response.body().byteStream();
+                                byte[] buffer = new byte[4096];
+                                int bytesRead;
+                                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                                    fos.write(buffer, 0, bytesRead);
+                                }
+                            }
+                            fos.flush();
+                        } catch (IOException e) {
+                            return null;
+                        }
+                        return cache;
                     }
-                } else {
-                    callback.error("");
-                }
-            }
 
-            @Override
-            public void onError(Response<File> response) {
-                super.onError(response);
-                callback.error("");
-            }
-        });
+                    @Override
+                    public void onSuccess(Response<File> response) {
+                        File file = response.body();
+                        if (file != null && file.exists()) {
+                            try {
+                                if (jarLoader.load(file.getAbsolutePath())) {
+                                    callback.success();
+                                } else {
+                                    LOG.e("echo---jar Loader returned false");
+                                    callback.error("JAR加载失败！");
+                                }
+                            } catch (Exception e) {
+                                LOG.e("echo---jar Loader threw exception: " + e.getMessage());
+                                callback.error("加载异常: " + e.getMessage());
+                            }
+                        } else {
+                            LOG.e("echo---jar File not found");
+                            callback.error("文件不存在！");
+                        }
+                    }
+
+                    @Override
+                    public void onError(Response<File> response) {
+                        Throwable ex = response.getException();
+                        if (ex != null) {
+                            LOG.i("echo---jar Request failed: " + ex.getMessage());
+                        }
+                        callback.error(ex != null ? ex.getMessage() : "未知网络错误！");
+                    }
+                });
     }
 
     private void parseJson(String apiUrl, File f) throws Throwable {
@@ -379,6 +404,7 @@ public class ApiConfig {
     }
 
     private void parseJson(String apiUrl, String jsonStr) {
+		LOG.i("echo-parseJson"+jsonStr);
         JsonObject infoJson = gson.fromJson(jsonStr, JsonObject.class);
         // spider
         spider = DefaultConfig.safeJsonString(infoJson, "spider", "");
@@ -409,16 +435,17 @@ public class ApiConfig {
             sb.setPlayerType(DefaultConfig.safeJsonInt(obj, "playerType", -1));
             sb.setCategories(DefaultConfig.safeJsonStringList(obj, "categories"));
             sb.setClickSelector(DefaultConfig.safeJsonString(obj, "click", ""));
-            if (firstSite == null)
+            if (firstSite == null && sb.getFilterable()==1)
                 firstSite = sb;
             sourceBeanList.put(siteKey, sb);
         }
         if (sourceBeanList != null && sourceBeanList.size() > 0) {
             String home = Hawk.get(HawkConfig.HOME_API, "");
             SourceBean sh = getSource(home);
-            if (sh == null)
+            if (sh == null) {
+                assert firstSite != null;
                 setSourceBean(firstSite);
-            else
+            }else
                 setSourceBean(sh);
         }
         // 需要使用vip解析的flag
@@ -453,37 +480,20 @@ public class ApiConfig {
         // 直播源
         String live_api_url=Hawk.get(HawkConfig.LIVE_API_URL,"");
         if(live_api_url.isEmpty() || apiUrl.equals(live_api_url)){
+			initLiveSettings();
+			liveSettingGroupList.clear();
+			Hawk.put(HawkConfig.LIVE_GROUP_LIST,"");
             LOG.i("echo-load-config_live");
-            initLiveSettings();
             if(infoJson.has("lives")){
                 JsonArray lives_groups=infoJson.get("lives").getAsJsonArray();
-                int live_group_index=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
-                if(live_group_index>lives_groups.size()-1){           //xuameng 重要BUG
-				Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
-                Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
-                //加载多源配置
-                try {
-                    ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
-                    for (int i=0; i< lives_groups.size();i++) {
-                        JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
-                        String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"线路"+(i+1);
-                        LiveSettingItem liveSettingItem = new LiveSettingItem();
-                        liveSettingItem.setItemIndex(i);
-                        liveSettingItem.setItemName(name);
-                        liveSettingItemList.add(liveSettingItem);
-                    }
-                    liveSettingGroupList.get(5).setLiveSettingItems(liveSettingItemList);
-                } catch (Exception e) {
-                    // 捕获任何可能发生的异常
-                    e.printStackTrace();
-                }
-				int live_group_index_xu=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
-				JsonObject livesOBJ_xu = lives_groups.get(live_group_index_xu).getAsJsonObject();
-				loadLiveApi(livesOBJ_xu);
-				}else{
-					Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
-					//加载多源配置
-					try {
+				if (lives_groups.size() > 0) {  
+                    initLiveSettings();
+					int live_group_index=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
+					if(live_group_index>lives_groups.size()-1){           //xuameng 重要BUG
+						Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
+						Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
+						//加载多源配置
+						try {
 						ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
 						for (int i=0; i< lives_groups.size();i++) {
 							JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
@@ -495,12 +505,44 @@ public class ApiConfig {
 						}
 						liveSettingGroupList.get(5).setLiveSettingItems(liveSettingItemList);
 					} catch (Exception e) {
-                    // 捕获任何可能发生的异常
+						// 捕获任何可能发生的异常
 						e.printStackTrace();
-                }
-                JsonObject livesOBJ = lives_groups.get(live_group_index).getAsJsonObject();
-                loadLiveApi(livesOBJ);
+					}
+					int live_group_index_xu=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
+					JsonObject livesOBJ_xu = lives_groups.get(live_group_index_xu).getAsJsonObject();
+					loadLiveApi(livesOBJ_xu);
+					}else{
+						Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
+						//加载多源配置
+						try {
+							ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
+							for (int i=0; i< lives_groups.size();i++) {
+							JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
+							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"线路"+(i+1);
+							LiveSettingItem liveSettingItem = new LiveSettingItem();
+							liveSettingItem.setItemIndex(i);
+							liveSettingItem.setItemName(name);
+							liveSettingItemList.add(liveSettingItem);
+							}
+							liveSettingGroupList.get(5).setLiveSettingItems(liveSettingItemList);
+						} catch (Exception e) {
+						// 捕获任何可能发生的异常
+							e.printStackTrace();
+					}
+					JsonObject livesOBJ = lives_groups.get(live_group_index).getAsJsonObject();
+					loadLiveApi(livesOBJ);
+					}
+				}else{
+					initLiveSettings();
+					liveSettingGroupList.clear();
+					Hawk.put(HawkConfig.LIVE_GROUP_LIST,"");
+					Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
 				}
+			}else{
+				initLiveSettings();
+				liveSettingGroupList.clear();
+				Hawk.put(HawkConfig.LIVE_GROUP_LIST,"");
+				Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
 			}
 
             myHosts = new HashMap<>();
@@ -639,34 +681,70 @@ public class ApiConfig {
     }
     private void parseLiveJson(String apiUrl, String jsonStr) {
         JsonObject infoJson = gson.fromJson(jsonStr, JsonObject.class);
+		initLiveSettings();
+		liveSettingGroupList.clear();
+		Hawk.put(HawkConfig.LIVE_GROUP_LIST,"");
         // 直播源
-        initLiveSettings();
         if(infoJson.has("lives")){
             JsonArray lives_groups=infoJson.get("lives").getAsJsonArray();
-
-            int live_group_index=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
-            if(live_group_index>lives_groups.size()-1)Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
-            Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
-            //加载多源配置
-            try {
-                ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
-                for (int i=0; i< lives_groups.size();i++) {
-                    JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
-                    String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"线路"+(i+1);
-                    LiveSettingItem liveSettingItem = new LiveSettingItem();
-                    liveSettingItem.setItemIndex(i);
-                    liveSettingItem.setItemName(name);
-                    liveSettingItemList.add(liveSettingItem);
-                }
-                liveSettingGroupList.get(5).setLiveSettingItems(liveSettingItemList);
-            } catch (Exception e) {
-                // 捕获任何可能发生的异常
-                e.printStackTrace();
-            }
-
-            JsonObject livesOBJ = lives_groups.get(live_group_index).getAsJsonObject();
-            loadLiveApi(livesOBJ);
-        }
+				if (lives_groups.size() > 0) { 
+				initLiveSettings();
+				int live_group_index=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
+					if(live_group_index>lives_groups.size()-1){           //xuameng 重要BUG
+						Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
+						Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
+				   		//加载多源配置
+						try {
+						ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
+						for (int i=0; i< lives_groups.size();i++) {
+							JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
+							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"线路"+(i+1);
+							LiveSettingItem liveSettingItem = new LiveSettingItem();
+							liveSettingItem.setItemIndex(i);
+							liveSettingItem.setItemName(name);
+							liveSettingItemList.add(liveSettingItem);
+						}
+						liveSettingGroupList.get(5).setLiveSettingItems(liveSettingItemList);
+					} catch (Exception e) {
+						// 捕获任何可能发生的异常
+						e.printStackTrace();
+					}
+					int live_group_index_xu=Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0);
+					JsonObject livesOBJ_xu = lives_groups.get(live_group_index_xu).getAsJsonObject();
+					loadLiveApi(livesOBJ_xu);
+					}else{
+						Hawk.put(HawkConfig.LIVE_GROUP_LIST,lives_groups);
+						//加载多源配置
+					try {
+						ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
+						for (int i=0; i< lives_groups.size();i++) {
+							JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
+							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"线路"+(i+1);
+							LiveSettingItem liveSettingItem = new LiveSettingItem();
+							liveSettingItem.setItemIndex(i);
+							liveSettingItem.setItemName(name);
+							liveSettingItemList.add(liveSettingItem);
+						}
+						liveSettingGroupList.get(5).setLiveSettingItems(liveSettingItemList);
+					} catch (Exception e) {
+					// 捕获任何可能发生的异常
+						e.printStackTrace();
+					}
+					JsonObject livesOBJ = lives_groups.get(live_group_index).getAsJsonObject();
+					loadLiveApi(livesOBJ);
+					}
+				}else{
+					initLiveSettings();
+					liveSettingGroupList.clear();
+					Hawk.put(HawkConfig.LIVE_GROUP_LIST,"");
+					Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
+				}
+			}else{
+				initLiveSettings();
+				liveSettingGroupList.clear();
+				Hawk.put(HawkConfig.LIVE_GROUP_LIST,"");
+				Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
+		}
 
         myHosts = new HashMap<>();
         if (infoJson.has("hosts")) {
@@ -813,6 +891,15 @@ public class ApiConfig {
             }else{
 				HawkConfig.intLIVEPLAYTYPE = false;   //xuameng是否有直播默认播放器
 			}
+            //xuameng设置UA信息
+            if(livesOBJ.has("ua")){
+                String ua =livesOBJ.get("ua").getAsString();
+                HashMap<String,String> liveHeader=new HashMap<>();
+                liveHeader.put("User-Agent",ua);
+                Hawk.put(HawkConfig.LIVE_WEB_HEADER,liveHeader);
+            }else {
+                Hawk.put(HawkConfig.LIVE_WEB_HEADER,null);
+            }
             LiveChannelGroup liveChannelGroup = new LiveChannelGroup();
             liveChannelGroup.setGroupName(url);
             liveChannelGroupList.clear();
@@ -882,6 +969,16 @@ public class ApiConfig {
 
     public List<SourceBean> getSourceBeanList() {
         return new ArrayList<>(sourceBeanList.values());
+    }
+
+    public List<SourceBean> getSwitchSourceBeanList() {
+        List<SourceBean> filteredList = new ArrayList<>();
+        for (SourceBean bean : sourceBeanList.values()) {
+            if (bean.getFilterable() == 1) {
+                filteredList.add(bean);
+            }
+        }
+        return filteredList;
     }
 
     public List<ParseBean> getParseBeanList() {
