@@ -96,6 +96,7 @@ public class JarLoader {
 //        return success;
 //    }
     private boolean loadClassLoader(String jar, String key) {
+		if (classLoaders.contains(key)) return true;
         final String TAG = "JarLoader";
         final File jarFile = new File(jar);
         final AtomicBoolean success = new AtomicBoolean(false);
