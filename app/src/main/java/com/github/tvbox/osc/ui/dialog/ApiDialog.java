@@ -79,10 +79,10 @@ public class ApiDialog extends BaseDialog {
                         inputApiLive.setText(newApi);
                         Hawk.put(HawkConfig.LIVE_API_URL, newApi);
                     }
-                }else{          //xuameng密码不能为空
+                } /*else{          //xuameng不能为空
                 Toast.makeText(getContext(), "请输入点播地址！", Toast.LENGTH_SHORT).show();
 				return;
-               }
+               } */
                 listener.onchange(newApi);
                 dismiss();
             }
@@ -100,10 +100,10 @@ public class ApiDialog extends BaseDialog {
                         history.remove(30);
                     }
                     Hawk.put(HawkConfig.LIVE_API_HISTORY, history);
-                }else{          //xuameng密码不能为空
+                }/*else{          //xuameng不能为空
                 Toast.makeText(getContext(), "请输入直播地址！", Toast.LENGTH_SHORT).show();
 				return;
-               }
+               } */
                 Hawk.put(HawkConfig.LIVE_API_URL, newApi);
                 dismiss();
             }
