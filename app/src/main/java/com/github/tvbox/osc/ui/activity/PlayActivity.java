@@ -234,6 +234,9 @@ public class PlayActivity extends BaseActivity {
                     play(true);
                 }else {
                     if(webPlayUrl!=null && !webPlayUrl.isEmpty()) {
+                        stopParse();
+                        initParseLoadFound();
+                        if(mVideoView!=null) mVideoView.release();
                         goPlayUrl(webPlayUrl,webHeaderMap);
                     }else {
                         play(false);
@@ -623,6 +626,11 @@ public class PlayActivity extends BaseActivity {
             }else{
 				mController.mSubtitleView.hasInternal = false;  //xuameng修复切换播放器内置字幕不刷新
 			}
+            //默认选中第一个音轨 一般第一个音轨是国语
+            if (trackInfo != null && trackInfo.getAudio().size() > 1) {
+                int firsIndex=trackInfo.getAudio().get(0).trackId;
+                ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setTrack(firsIndex);
+            }
             ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setOnTimedTextListener(new IMediaPlayer.OnTimedTextListener() {
                 @Override
                 public void onTimedText(IMediaPlayer mp, IjkTimedText text) {
@@ -751,6 +759,9 @@ public class PlayActivity extends BaseActivity {
                         }
                         String flag = info.optString("flag");
                         String url = info.getString("url");
+                        if(url.startsWith("[")){
+                            url=mController.firstUrlByArray(url);
+                        }
                         HashMap<String, String> headers = null;
                         webUserAgent = null;
                         webHeaderMap = null;
@@ -938,7 +949,7 @@ public class PlayActivity extends BaseActivity {
             autoRetryCount = 0;
         }
         lastRetryTime = currentTime;  // 更新上次调用时间
-        if (loadFoundVideoUrls != null && !loadFoundVideoUrls.isEmpty()) {
+        if (loadFoundVideoUrls != null && loadFoundVideoUrls.size() > 0) {
             autoRetryFromLoadFoundVideoUrls();
             return true;
         }
@@ -947,23 +958,25 @@ public class PlayActivity extends BaseActivity {
             if(autoRetryCount==1){
                 //第二次重试时重新调用接口
                 play(false);
-   //xuameng暂时去除自动切换播放器              autoRetryCount++;
+              autoRetryCount++;
             }else {
-				/* xuameng暂时去除自动切换播放器   //切换播放器不占用重试次数
+                //切换播放器不占用重试次数
                 if(mController.switchPlayer()){
                     autoRetryCount++;
-                    webPlayUrl=mController.getWebPlayUrlIfNeeded(webPlayUrl);
+  //                  webPlayUrl=mController.getWebPlayUrlIfNeeded(webPlayUrl);
                 }else {
 //                    Toast.makeText(mContext, "自动切换播放器重试", Toast.LENGTH_SHORT).show();
-                }//xuameng暂时去除自动切换播放器完 */
+                }  //xuameng自动切换播放器完 
                 //第一次重试直接带着原地址继续播放
                 if(webPlayUrl!=null){
+                    stopParse();
+                    initParseLoadFound();
+                    if(mVideoView!=null) mVideoView.release();
                     playUrl(webPlayUrl, webHeaderMap);
                 }else {
                     play(false);
                 }
             }                 
-			autoRetryCount++;    //xuameng新增完
             return true;
         } else {
             autoRetryCount = 0;
@@ -1404,7 +1417,7 @@ public class PlayActivity extends BaseActivity {
                     if(webUserAgent != null) {
                         mXwalkWebView.getSettings().setUserAgentString(webUserAgent);
                     }
-                    //mXwalkWebView.clearCache(true);
+                    mXwalkWebView.clearCache(true);
                     if(webHeaderMap != null){
                         mXwalkWebView.loadUrl(url,webHeaderMap);
                     }else {
@@ -1416,7 +1429,7 @@ public class PlayActivity extends BaseActivity {
                     if(webUserAgent != null) {
                         mSysWebView.getSettings().setUserAgentString(webUserAgent);
                     }
-                    //mSysWebView.clearCache(true);
+                    mSysWebView.clearCache(true);
                     if(webHeaderMap != null){
                         mSysWebView.loadUrl(url,webHeaderMap);
                     }else {
@@ -1436,7 +1449,7 @@ public class PlayActivity extends BaseActivity {
                     mXwalkWebView.stopLoading();
                     mXwalkWebView.loadUrl("about:blank");
                     if (destroy) {
-//                        mXwalkWebView.clearCache(true);
+                        mXwalkWebView.clearCache(true);
                         mXwalkWebView.removeAllViews();
                         mXwalkWebView.onDestroy();
                         mXwalkWebView = null;
@@ -1446,7 +1459,7 @@ public class PlayActivity extends BaseActivity {
                     mSysWebView.stopLoading();
                     mSysWebView.loadUrl("about:blank");
                     if (destroy) {
-//                        mSysWebView.clearCache(true);
+                        mSysWebView.clearCache(true);
                         mSysWebView.removeAllViews();
                         mSysWebView.destroy();
                         mSysWebView = null;
