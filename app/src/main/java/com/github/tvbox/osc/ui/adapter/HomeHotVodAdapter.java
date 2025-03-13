@@ -17,7 +17,7 @@ import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.MD5;
 import com.orhanobut.hawk.Hawk;
 import com.squareup.picasso.Picasso;
-import com.github.tvbox.osc.util.Base64Img;   //xuameng base64图片
+import com.github.tvbox.osc.util.ImgUtil;   //xuameng base64图片
 
 import java.util.ArrayList;
 
@@ -62,9 +62,9 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
         //由于部分电视机使用glide报错
         if (!TextUtils.isEmpty(item.pic)) {
             item.pic=item.pic.trim();
-            if(Base64Img.isBase64Image(item.pic)){
+            if(ImgUtil.isBase64Image(item.pic)){
                 // 如果是 Base64 图片，解码并设置
-                ivThumb.setImageBitmap(Base64Img.decodeBase64ToBitmap(item.pic));
+                ivThumb.setImageBitmap(ImgUtil.decodeBase64ToBitmap(item.pic));
             }else {
                 Picasso.get()
                         .load(DefaultConfig.checkReplaceProxy(item.pic))
