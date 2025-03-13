@@ -888,6 +888,7 @@ public class LivePlayActivity extends BaseActivity {
         divLoadEpgleft.setVisibility(View.VISIBLE);
         divLoadEpg.setVisibility(View.GONE);
         epgListAdapter.getSelectedIndex(); //xuamengEPG打开菜单自动变颜色
+		mHideChannelListRunXu();  //xuameng BUG
     }
     //频道列表
     public void divLoadEpgLeft(View view) {
@@ -895,6 +896,7 @@ public class LivePlayActivity extends BaseActivity {
         divEpg.setVisibility(View.GONE);
         divLoadEpgleft.setVisibility(View.GONE);
         divLoadEpg.setVisibility(View.VISIBLE);
+		mHideChannelListRunXu();
     }
     private void xuexit() { //xuameng双击退出
         if(System.currentTimeMillis() - mExitTime < 2000) {
@@ -909,6 +911,10 @@ public class LivePlayActivity extends BaseActivity {
             mHandler.removeCallbacks(mUpdateTimeRunXu);
 			iv_circle_bg_xu.setVisibility(View.GONE);  //xuameng音乐播放时图标
 			MxuamengMusic.setVisibility(View.GONE);  //xuameng播放音乐背景
+			if (mHandler != null) {
+			mHandler.removeCallbacksAndMessages(null);
+			}
+			OkGo.getInstance().cancelTag("xuameng");   //xuameng退出清空OKGO进程
             super.onBackPressed();
         } else {
             mExitTime = System.currentTimeMillis();
@@ -1283,6 +1289,7 @@ public class LivePlayActivity extends BaseActivity {
             mVideoView.release();
             mVideoView = null;
         }
+		OkGo.getInstance().cancelTag("xuameng");  //xuameng退出清空OKGO进程
     }
     private void showChannelList() {
 		if(liveChannelGroupList.isEmpty()) return;  //xuameng新增
@@ -1298,7 +1305,7 @@ public class LivePlayActivity extends BaseActivity {
             liveChannelItemAdapter.setNewData(getLiveChannels(currentChannelGroupIndex));
             if(currentLiveChannelIndex > -1) mLiveChannelView.scrollToPosition(currentLiveChannelIndex); //xuameng先滚动再选择防止空指针
             mChannelGroupView.scrollToPosition(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
-            mChannelGroupView.setSelection(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
+      //      mChannelGroupView.setSelection(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
      //       mLiveChannelView.setSelection(currentLiveChannelIndex); //xuameng先滚动再选择防止空指针
             if(countDownTimer10 != null) {
                 countDownTimer10.cancel();
@@ -1354,6 +1361,8 @@ public class LivePlayActivity extends BaseActivity {
         epgListAdapter.getSelectedIndex(); //xuamengEPG打开菜单自动变颜色 
         liveChannelGroupAdapter.setSelectedGroupIndex(currentChannelGroupIndex);
         liveChannelItemAdapter.setSelectedChannelIndex(currentLiveChannelIndex);
+		mChannelGroupView.setSelection(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
+		mLiveChannelView.setSelection(currentLiveChannelIndex); //xuameng先滚动再选择防止空指针
         RecyclerView.ViewHolder holder = mLiveChannelView.findViewHolderForAdapterPosition(currentLiveChannelIndex);
         if(holder != null) holder.itemView.requestFocus();
         tvLeftChannelListLayout.setVisibility(View.VISIBLE);
@@ -2479,20 +2488,14 @@ public class LivePlayActivity extends BaseActivity {
         if (list.isEmpty()) {
             if(Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0)!=0){
                 Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0);
-                JsonArray live_groups=Hawk.get(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
-                if(!live_groups.isEmpty()){
-                    JsonObject livesOBJ = live_groups.get(0).getAsJsonObject();
-                    ApiConfig.get().loadLiveApi(livesOBJ);
-                }else {
-                    Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！", Toast.LENGTH_SHORT).show();
-                    finish();
-                    return;
-                }
-            }else {
                 Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！", Toast.LENGTH_SHORT).show();
                 finish();
-                return;
-            }
+				return;
+			}else{
+                Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！", Toast.LENGTH_SHORT).show();
+                finish();
+				return;
+			}
         }
 
         if (list.size() == 1 && list.get(0).getGroupName().startsWith("http://127.0.0.1")) {
@@ -2519,7 +2522,7 @@ public class LivePlayActivity extends BaseActivity {
         showLoading();
 
         LOG.i("echo-live-url:"+url);
-        OkGo.<String>get(url).execute(new AbsCallback<String>() {
+        OkGo.<String>get(url).tag("xuameng").execute(new AbsCallback<String>() {
 
             @Override
             public String convertResponse(okhttp3.Response response) throws Throwable {
@@ -2560,8 +2563,17 @@ public class LivePlayActivity extends BaseActivity {
             }
             @Override
             public void onError(Response<String> response) {
-                Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表加载错误！", Toast.LENGTH_SHORT).show();
-                Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0);
+                JsonArray live_groups=Hawk.get(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
+				if(live_groups.size() > 1){
+					Toast.makeText(App.getInstance(), "聚汇影视提示您：直播源加载错误，请重试！", Toast.LENGTH_SHORT).show();
+				}else{
+					Toast.makeText(App.getInstance(), "聚汇影视提示您：直播源加载错误！", Toast.LENGTH_SHORT).show();
+				}
+
+                Hawk.put(HawkConfig.LIVE_GROUP_INDEX,Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0)+1);
+                if(Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0)>live_groups.size()-1){
+                    Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
+                }
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
@@ -2606,6 +2618,8 @@ public class LivePlayActivity extends BaseActivity {
         return iv_Play_Xu.getVisibility() == View.VISIBLE;
     }
     private void initLiveSettingGroupList() {      //xuameng
+        List<LiveChannelGroup> listxu = ApiConfig.get().getChannelGroupList();
+        if (!listxu.isEmpty()) {
         liveSettingGroupList=ApiConfig.get().getLiveSettingGroupList();
         liveSettingGroupList.get(3).getLiveSettingItems().get(Hawk.get(HawkConfig.LIVE_CONNECT_TIMEOUT, 1)).setItemSelected(true);
         liveSettingGroupList.get(4).getLiveSettingItems().get(0).setItemSelected(Hawk.get(HawkConfig.LIVE_SHOW_TIME, false));
@@ -2613,6 +2627,7 @@ public class LivePlayActivity extends BaseActivity {
         liveSettingGroupList.get(4).getLiveSettingItems().get(2).setItemSelected(Hawk.get(HawkConfig.LIVE_CHANNEL_REVERSE, false));
         liveSettingGroupList.get(4).getLiveSettingItems().get(3).setItemSelected(Hawk.get(HawkConfig.LIVE_CROSS_GROUP, false));
         liveSettingGroupList.get(5).getLiveSettingItems().get(Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0)).setItemSelected(true);   //xuameng新增 换源
+		}
     }
     private void loadCurrentSourceList() {
         ArrayList < String > currentSourceNames = currentLiveChannelItem.getChannelSourceNames();
@@ -2797,7 +2812,7 @@ public class LivePlayActivity extends BaseActivity {
 				mHandler.postDelayed(this, 15000);
 				return;
 				}
-				if (!ApiConfig.get().wallpaper.isEmpty()){
+				else if (!ApiConfig.get().wallpaper.isEmpty()){
 				String Url = ApiConfig.get().wallpaper;
 				Picasso.get()
 				.load(Url)
@@ -3120,14 +3135,14 @@ public class LivePlayActivity extends BaseActivity {
                 return false;
             }
         });
-		if(mVideoView == null) return;
-        if(mVideoView.isPlaying()) {
-            iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
-        }
         if(countDownTimer != null) {
             countDownTimer.cancel();
         }
         countDownTimer.start();
+		if(mVideoView == null) return;
+        if(mVideoView.isPlaying()) {
+            iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
+        }
     }
     private boolean simSlideStart = false;
     private int simSeekPosition = 0;
@@ -3156,7 +3171,6 @@ public class LivePlayActivity extends BaseActivity {
                 mVideoView.seekTo(simSeekPosition);
             }
         }
-		if(mVideoView == null) return;
         if(!mVideoView.isPlaying())
             //xuameng快进暂停就暂停测试    mVideoView.start();  如果想暂停时快进自动播放取消注销
             simSlideStart = false;
