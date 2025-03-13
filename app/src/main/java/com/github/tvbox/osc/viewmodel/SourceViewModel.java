@@ -95,6 +95,10 @@ public class SourceViewModel extends ViewModel {
             return;
         }
         SourceBean sourceBean = ApiConfig.get().getSource(sourceKey);
+        if(sourceBean.getName().contains("搜")){
+            sortResult.postValue(null);
+            return;
+        }
         int type = sourceBean.getType();
         if (type == 3) {
             Runnable waitResponse = new Runnable() {
