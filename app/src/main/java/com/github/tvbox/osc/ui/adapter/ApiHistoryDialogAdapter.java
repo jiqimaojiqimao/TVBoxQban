@@ -98,7 +98,6 @@ public class ApiHistoryDialogAdapter extends ListAdapter<String, ApiHistoryDialo
                 notifyItemRemoved(data.indexOf(value));
                 data.remove(value);
                 dialogInterface.del(value, data);
-				notifyDataSetChanged();
             }
         });
     }
