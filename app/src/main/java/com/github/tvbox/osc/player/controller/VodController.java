@@ -27,6 +27,7 @@ import java.net.MalformedURLException; //xuameng新增广告过滤
 import java.net.URL;  //xuameng新增广告过滤
 import java.util.HashMap; //xuameng新增广告过滤
 import java.util.Map; //xuameng新增广告过滤
+import org.json.JSONArray;   //xuameng  b站
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 import com.chad.library.adapter.base.BaseQuickAdapter;
@@ -368,7 +369,7 @@ public class VodController extends BaseController {
 				mHandler.postDelayed(this, 15000);
 				return;
 				}
-			if (!ApiConfig.get().wallpaper.isEmpty()){
+			else if (!ApiConfig.get().wallpaper.isEmpty()){
 				String Url = ApiConfig.get().wallpaper;
 				Picasso.get()
 				.load(Url)
@@ -1788,11 +1789,11 @@ public class VodController extends BaseController {
             int playerType= mPlayerConfig.getInt("pl");
             int p_type = (playerType == 1) ? playerType + 1 : (playerType == 2) ? playerType - 1 : playerType;
             if (p_type != playerType) {
-                LOG.i("echo-切换播放器");
+                LOG.i("echo-切换播放器"+(p_type==1?"IJK":"exo"));
                 mPlayerConfig.put("pl", p_type);
                 updatePlayerCfgView();
                 listener.updatePlayerCfg();
-                listener.replay(false);
+//                listener.replay(false);
             }else {
                 return true;
             }
@@ -1807,6 +1808,10 @@ public class VodController extends BaseController {
         return false;
     }
     public void playM3u8(final String url, final HashMap<String, String> headers) {
+        if(url.contains("url=")){
+            listener.startPlayUrl(url, headers);
+            return;
+        }
         OkGo.getInstance().cancelTag("m3u8-1");
         OkGo.getInstance().cancelTag("m3u8-2");
         final HttpHeaders okGoHeaders = new HttpHeaders();
@@ -1924,5 +1929,20 @@ public class VodController extends BaseController {
             LOG.e("echo-resolveForwardUrl异常: " + e.getMessage());
             return line;
         }
+    }
+    public String firstUrlByArray(String url)      //xuameng B站
+    {
+        try {
+            JSONArray urlArray = new JSONArray(url);
+            for (int i = 0; i < urlArray.length(); i++) {
+                String item = urlArray.getString(i);
+                if (item.contains("http")) {
+                    url = item;
+                    break; // 找到第一个立即终止循环
+                }
+            }
+        } catch (JSONException e) {
+        }
+        return url;
     }
 }
