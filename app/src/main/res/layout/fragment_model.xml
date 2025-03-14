@@ -279,7 +279,7 @@
                             android:textColor="@android:color/white"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="聚合模式"/>
+                            android:text="聚合搜索"/>
                         <Space
                             android:layout_width="0.0dip"
                             android:layout_height="wrap_content"
