@@ -734,6 +734,7 @@ public class PlayFragment extends BaseLazyFragment {
         sourceViewModel.playResult.observe(this, new Observer<JSONObject>() {
             @Override
             public void onChanged(JSONObject info) {
+				webPlayUrl = null;
                 if (info != null) {
                     try {
                         progressKey = info.optString("proKey", null);
@@ -783,7 +784,6 @@ public class PlayFragment extends BaseLazyFragment {
                         HashMap<String, String> headers = null;
                         webUserAgent = null;
                         webHeaderMap = null;
-						webPlayUrl = null;
                         if (info.has("header")) {
                             try {
                                 JSONObject hds = new JSONObject(info.getString("header"));
