@@ -152,7 +152,7 @@ public class SearchActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         if (pauseRunnable != null && pauseRunnable.size() > 0) {
-            searchExecutorService = Executors.newFixedThreadPool(5);
+            searchExecutorService = Executors.newFixedThreadPool(10);
             allRunCount.set(pauseRunnable.size());
             for (Runnable runnable : pauseRunnable) {
                 searchExecutorService.execute(runnable);
@@ -216,7 +216,7 @@ public class SearchActivity extends BaseActivity {
 					allRunCount.incrementAndGet();
 				}
 				if (siteKey.size() <= 0) {
-					Toast.makeText(mContext, "没有指定搜索源", Toast.LENGTH_SHORT).show();
+					Toast.makeText(mContext, "聚汇影视提示：请指定搜索源！", Toast.LENGTH_SHORT).show();
 					return;
 				}    //xuameng修复不选择搜索源还进行搜索，还显示搜索动画完 
 
@@ -287,7 +287,7 @@ public class SearchActivity extends BaseActivity {
 					allRunCount.incrementAndGet();
 				}
 				if (siteKey.size() <= 0) {
-					Toast.makeText(mContext, "没有指定搜索源", Toast.LENGTH_SHORT).show();
+					Toast.makeText(mContext, "聚汇影视提示：请指定搜索源！", Toast.LENGTH_SHORT).show();
 					return;
 				}    //xuameng修复不选择搜索源还进行搜索，还显示搜索动画完 
 
@@ -299,7 +299,7 @@ public class SearchActivity extends BaseActivity {
                         search(keyword);
                     }
                 } else {
-                    Toast.makeText(mContext, "输入内容不能为空", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mContext, "输入内容不能为空！", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -459,7 +459,7 @@ public class SearchActivity extends BaseActivity {
 					allRunCount.incrementAndGet();
 				}
 				if (siteKey.size() <= 0) {
-					Toast.makeText(mContext, "没有指定搜索源", Toast.LENGTH_SHORT).show();
+					Toast.makeText(mContext, "聚汇影视提示：请指定搜索源！", Toast.LENGTH_SHORT).show();
 					return;
 				}    //xuameng修复不选择搜索源还进行搜索，还显示搜索动画完 
 
@@ -636,7 +636,9 @@ public class SearchActivity extends BaseActivity {
             allRunCount.incrementAndGet();
         }
         if (siteKey.size() <= 0) {
-			Toast.makeText(mContext, "没有指定搜索源", Toast.LENGTH_SHORT).show();
+			Toast.makeText(mContext, "聚汇影视提示：请指定搜索源！", Toast.LENGTH_SHORT).show();
+			showSuccess();
+
             return;
         }           //xuameng修复不选择搜索源还进行搜索，还显示搜索动画完
 
@@ -665,7 +667,7 @@ public class SearchActivity extends BaseActivity {
             searchAdapter.setNewData(new ArrayList<>());
             allRunCount.set(0);
         }
-        searchExecutorService = Executors.newFixedThreadPool(5);
+        searchExecutorService = Executors.newFixedThreadPool(10);
         List<SourceBean> searchRequestList = new ArrayList<>();
         searchRequestList.addAll(ApiConfig.get().getSourceBeanList());
         SourceBean home = ApiConfig.get().getHomeSourceBean();
@@ -684,7 +686,7 @@ public class SearchActivity extends BaseActivity {
             allRunCount.incrementAndGet();
         }
         if (siteKey.size() <= 0) {
-            Toast.makeText(mContext, "没有指定搜索源", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mContext, "聚汇影视提示：请指定搜索源！", Toast.LENGTH_SHORT).show();
    //         showEmpty();  //xuameng
             return;
         }
