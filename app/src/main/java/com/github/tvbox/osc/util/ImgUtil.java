@@ -44,7 +44,7 @@ public class ImgUtil {
         }
         int width = 150, height = 200; // 设定图片大小
         int randomColor = getRandomColor();
-        float cornerRadius = AutoSizeUtils.mm2px(App.getInstance(), 7); // 圆角半径
+        float cornerRadius = AutoSizeUtils.mm2px(App.getInstance(), 3); // 圆角半径
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
