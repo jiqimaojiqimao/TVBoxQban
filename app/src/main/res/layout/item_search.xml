@@ -3,11 +3,11 @@
     android:background="@drawable/shape_user_focus_1"
     android:padding="@dimen/vs_1"
     android:focusable="true"
-    android:layout_width="wrap_content"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <FrameLayout
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="@dimen/vs_280">
         <ImageView
             android:id="@+id/ivThumb"
