@@ -74,11 +74,13 @@ public class HomeHotVodAdapterXu extends BaseQuickAdapter<Movie.Video, BaseViewH
                                 .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
                         .placeholder(R.drawable.img_loading_placeholder)
                         .noFade()
-                        .error(R.drawable.img_loading_placeholder)
+                     //   .error(R.drawable.img_loading_placeholder)
+						.error(ImgUtil.createTextDrawable(item.name))
                         .into(ivThumb);
             }
         } else {
-            ivThumb.setImageResource(R.drawable.img_loading_placeholder);
+           // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
+			ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
         }
     }
 }
