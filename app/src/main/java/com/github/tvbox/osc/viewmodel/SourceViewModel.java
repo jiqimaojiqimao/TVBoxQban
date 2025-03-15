@@ -95,7 +95,7 @@ public class SourceViewModel extends ViewModel {
             return;
         }
         SourceBean sourceBean = ApiConfig.get().getSource(sourceKey);
-        if(sourceBean.getName().contains("搜")){
+        if(sourceBean.getName().length()<=3 && sourceBean.getName().endsWith("搜")){
             sortResult.postValue(null);
             return;
         }
@@ -296,7 +296,9 @@ public class SourceViewModel extends ViewModel {
                 public void run() {
                     try {
                         Spider sp = ApiConfig.get().getCSP(homeSourceBean);
-                        json(listResult, sp.categoryContent(sortData.id, page + "", true, sortData.filterSelect), homeSourceBean.getKey());
+                        String json = sp.categoryContent(sortData.id, page + "", true, sortData.filterSelect);
+                        LOG.i("categoryContent:"+json);
+                        json(listResult, json,homeSourceBean.getKey());
                     } catch (Throwable th) {
                         th.printStackTrace();
                     }
