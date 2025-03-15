@@ -17,6 +17,7 @@ import com.github.tvbox.osc.util.DefaultConfig;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.MD5;
 import com.squareup.picasso.Picasso;
+import com.github.tvbox.osc.util.ImgUtil;   //xuamengBASE64图片
 
 import java.util.ArrayList;
 
@@ -56,10 +57,12 @@ public class CollectAdapter extends BaseQuickAdapter<VodCollect, BaseViewHolder>
                             .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
                     .placeholder(R.drawable.img_loading_placeholder)
                     .noFade()
-                    .error(R.drawable.img_loading_placeholder)
+                   // .error(R.drawable.img_loading_placeholder)
+					.error(ImgUtil.createTextDrawable(item.name))
                     .into(ivThumb);
         } else {
-            ivThumb.setImageResource(R.drawable.img_loading_placeholder);
+           // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
+			ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
         }
     }
 }
