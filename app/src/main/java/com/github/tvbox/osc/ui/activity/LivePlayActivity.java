@@ -1022,15 +1022,25 @@ public class LivePlayActivity extends BaseActivity {
             int keyCode = event.getKeyCode();
             if(keyCode == KeyEvent.KEYCODE_MENU) { //xuameng回看时控制
                 if(isBack) {
-                    Toast.makeText(mContext, "当前回看中，请按返回键退出回看！", Toast.LENGTH_SHORT).show();
+                   if(backcontroller.getVisibility() == View.VISIBLE) {
+                      backcontroller.setVisibility(View.GONE);
+                      ll_epg.setVisibility(View.GONE); //xuameng下面EPG菜单隐藏
+                      hideTimeXu(); //xuameng隐藏系统时间
+                      hideNetSpeedXu(); //XUAMENG隐藏左上网速
+                   } else {
+                      showProgressBars(true);
+                      showBottomEpgBack(); //xuameng回看EPG
+                    }
                     return true;
-                } else showSettingGroup();
-                ll_epg.setVisibility(View.GONE); //xuameng下面EPG菜单隐藏
-                ll_right_top_loading.setVisibility(View.GONE); //xuameng右上菜单隐藏
-                backcontroller.setVisibility(View.GONE);
-                hideTimeXu(); //xuameng隐藏系统时间
-                hideNetSpeedXu(); //XUAMENG隐藏左上网速
-                return false;
+                } else {
+					showSettingGroup();
+					ll_epg.setVisibility(View.GONE); //xuameng下面EPG菜单隐藏
+					ll_right_top_loading.setVisibility(View.GONE); //xuameng右上菜单隐藏
+					backcontroller.setVisibility(View.GONE);
+					hideTimeXu(); //xuameng隐藏系统时间
+					hideNetSpeedXu(); //XUAMENG隐藏左上网速
+					return false;
+				}
             } else if(!isListOrSettingLayoutVisible()) {
                 switch(keyCode) {
                     case KeyEvent.KEYCODE_DPAD_UP:
