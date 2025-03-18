@@ -228,7 +228,6 @@ public class PlayActivity extends BaseActivity {
 
             @Override
             public void replay(boolean replay) {
-                LOG.i("echo-replay");  //xuameng新增
                 autoRetryCount = 0;
                 if(replay){    //xuameng新增
                     play(true);
