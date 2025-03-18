@@ -166,10 +166,10 @@ public class PlayFragment extends BaseLazyFragment {
             try {
                 rec = Long.parseLong((String) theCache);
             } catch (NumberFormatException e) {
-                System.out.println("String value is not a valid long.");
+                LOG.i("echo-String value is not a valid long.");
             }
         } else {
-            System.out.println("Value cannot be converted to long.");
+            LOG.i("echo-Value cannot be converted to long.");
         }
         return Math.max(rec, skip);
     }
