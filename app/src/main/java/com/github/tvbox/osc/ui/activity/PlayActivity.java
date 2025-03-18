@@ -377,12 +377,12 @@ public class PlayActivity extends BaseActivity {
 			trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
 		}
         if (trackInfo == null) {
-            Toast.makeText(mContext, "没有音轨", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mContext, "没有音轨！", Toast.LENGTH_SHORT).show();
             return;
         }
         List<TrackInfoBean> bean = trackInfo.getAudio();
         if (bean.size() < 1){
-			Toast.makeText(mContext, "没有内置音轨", Toast.LENGTH_SHORT).show();
+			Toast.makeText(mContext, "没有内置音轨！", Toast.LENGTH_SHORT).show();
 			return;
 		}
         SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(PlayActivity.this);
@@ -446,12 +446,12 @@ public class PlayActivity extends BaseActivity {
 			trackInfo = ((EXOmPlayer)mediaPlayer).getTrackInfo();
 		}
         if (trackInfo == null) {
-            Toast.makeText(mContext, "没有内置字幕", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mContext, "没有内置字幕！", Toast.LENGTH_SHORT).show();
             return;
         }
         List<TrackInfoBean> bean = trackInfo.getSubtitle();
         if (bean.size() < 1) {
-			Toast.makeText(mContext, "没有内置字幕", Toast.LENGTH_SHORT).show();
+			Toast.makeText(mContext, "没有内置字幕！", Toast.LENGTH_SHORT).show();
 			return;
 		}
         SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(PlayActivity.this);
@@ -911,9 +911,9 @@ public class PlayActivity extends BaseActivity {
         if (!hasNext) {
             if(isProgress && mVodInfo!= null){
                 mVodInfo.playIndex=0;
-                Toast.makeText(this, "已经是最后一集了!,即将跳到第一集继续播放", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "已经是最后一集了！即将跳到第一集继续播放！", Toast.LENGTH_SHORT).show();
             }else {
-                Toast.makeText(this, "已经是最后一集了!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "已经是最后一集了！", Toast.LENGTH_SHORT).show();
                 return;
             }
         }else {
@@ -930,7 +930,7 @@ public class PlayActivity extends BaseActivity {
             hasPre = mVodInfo.playIndex - 1 >= 0;
         }
         if (!hasPre) {
-            Toast.makeText(this, "已经是第一集了!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "已经是第一集了！", Toast.LENGTH_SHORT).show();
             return;
         }
         mVodInfo.playIndex--;
