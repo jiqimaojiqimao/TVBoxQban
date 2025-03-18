@@ -387,7 +387,7 @@ public class DetailActivity extends BaseActivity {
                 ClipboardManager cm = (ClipboardManager)getSystemService(mContext.CLIPBOARD_SERVICE);
                 //设置内容到剪切板
                 cm.setPrimaryClip(ClipData.newPlainText(null, tvPlayUrl.getText().toString().replace("播放地址：","")));
-                Toast.makeText(DetailActivity.this, "已复制", Toast.LENGTH_SHORT).show();
+                Toast.makeText(DetailActivity.this, "播放地址已复制！", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -430,7 +430,7 @@ public class DetailActivity extends BaseActivity {
                         String cpContent = removeHtmlTag(mVideo.des);
                         ClipData clipData = ClipData.newPlainText(null, cpContent);
                         clipprofile.setPrimaryClip(clipData);
-                        Toast.makeText(DetailActivity.this, "已复制：" + cpContent, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(DetailActivity.this, "简介内容已复制：" + cpContent, Toast.LENGTH_SHORT).show();
                     }
                 });
                 return true;
@@ -956,7 +956,7 @@ public class DetailActivity extends BaseActivity {
                                 if (response.body() != null) {
                                     return response.body().string();
                                 } else {
-                                    Toast.makeText(DetailActivity.this, "推送失败，填的地址可能不对", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(DetailActivity.this, "推送失败，地址可能填写错误！", Toast.LENGTH_SHORT).show();
                                     throw new IllegalStateException("网络请求错误");
                                 }
                             }
@@ -967,13 +967,13 @@ public class DetailActivity extends BaseActivity {
                                 if ("mirrored".equals(r))
                                     Toast.makeText(DetailActivity.this, "推送成功", Toast.LENGTH_SHORT).show();
                                 else
-                                    Toast.makeText(DetailActivity.this, "推送失败，远端聚汇影视版本不支持", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(DetailActivity.this, "推送失败，远端聚汇影视版本不支持！", Toast.LENGTH_SHORT).show();
                             }
 
                             @Override
                             public void onError(Response<String> response) {
                                 super.onError(response);
-                                Toast.makeText(DetailActivity.this, "推送失败，填的地址可能不对", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(DetailActivity.this, "推送失败，地址可能填写错误！", Toast.LENGTH_SHORT).show();
                             }
                         });
             }
