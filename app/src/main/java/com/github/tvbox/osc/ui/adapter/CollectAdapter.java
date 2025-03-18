@@ -44,7 +44,7 @@ public class CollectAdapter extends BaseQuickAdapter<VodCollect, BaseViewHolder>
         helper.setText(R.id.tvName, item.name);
         TextView tvYear = helper.getView(R.id.tvYear);
         SourceBean source = ApiConfig.get().getSource(item.sourceKey);
-        tvYear.setText(source!=null?source.getName():"");
+        tvYear.setText(source!=null?source.getName():"🔍搜索影片");
         
         ImageView ivThumb = helper.getView(R.id.ivThumb);
         //由于部分电视机使用glide报错
