@@ -57,6 +57,7 @@ public class HawkConfig {
 	public static boolean intSYSplayer = false;  //xuameng是否进入系统播放器
 	public static boolean intVod = false;  //xuameng判断是否进入VOD界面
 	public static boolean ISrestore = false;  //xuameng判断是否进行恢复操作
+	public static boolean LIVEerror = false;  //xuameng判断直播文件读取成功
 
     public static boolean hotVodDelete;
 }
