@@ -1001,7 +1001,7 @@ public class VodController extends BaseController {
 					hideBottom();
 					}
 					mSubtitleView.setVisibility(VISIBLE);
-                    Toast.makeText(getContext(), "字幕已开启!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "字幕已开启！", Toast.LENGTH_SHORT).show();
 				} else if (mSubtitleView.getVisibility() == View.VISIBLE){
 						if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE){
 						hideBottom();
@@ -1010,7 +1010,7 @@ public class VodController extends BaseController {
 //                  mSubtitleView.destroy();
 //                  mSubtitleView.clearSubtitleCache();
 //                  mSubtitleView.isInternal = false;
-                    Toast.makeText(getContext(), "字幕已关闭!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "字幕已关闭！", Toast.LENGTH_SHORT).show();
 				} 
 			    return true;
             }
