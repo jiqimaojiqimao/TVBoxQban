@@ -1789,11 +1789,10 @@ public class VodController extends BaseController {
             int playerType= mPlayerConfig.getInt("pl");
             int p_type = (playerType == 1) ? playerType + 1 : (playerType == 2) ? playerType - 1 : playerType;
             if (p_type != playerType) {
-                LOG.i("echo-切换播放器"+(p_type==1?"IJK":"exo"));
+                Toast.makeText(getContext(), "切换到"+(p_type==1?"IJK":"EXO")+"播放器重试！", Toast.LENGTH_SHORT).show();
                 mPlayerConfig.put("pl", p_type);
                 updatePlayerCfgView();
                 listener.updatePlayerCfg();
-//                listener.replay(false);
             }else {
                 return true;
             }
