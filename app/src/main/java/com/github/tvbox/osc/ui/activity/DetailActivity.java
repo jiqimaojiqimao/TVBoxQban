@@ -965,7 +965,7 @@ public class DetailActivity extends BaseActivity {
                             public void onSuccess(Response<String> response) {
                                 String r = response.body();
                                 if ("mirrored".equals(r))
-                                    Toast.makeText(DetailActivity.this, "推送成功", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(DetailActivity.this, "推送成功！", Toast.LENGTH_SHORT).show();
                                 else
                                     Toast.makeText(DetailActivity.this, "推送失败，远端聚汇影视版本不支持！", Toast.LENGTH_SHORT).show();
                             }
