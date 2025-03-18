@@ -19,6 +19,8 @@ import com.github.tvbox.osc.ui.adapter.CollectAdapter;
 import com.github.tvbox.osc.ui.dialog.ConfirmClearDialog;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.HawkConfig;
+import com.github.tvbox.osc.bean.SourceBean;
+import com.orhanobut.hawk.Hawk;
 import com.owen.tvrecyclerview.widget.TvRecyclerView;
 import com.owen.tvrecyclerview.widget.V7GridLayoutManager;
 
@@ -115,16 +117,19 @@ public class CollectActivity extends BaseActivity {
                         collectAdapter.remove(position);
                         RoomDataManger.deleteVodCollect(vodInfo.getId());
                     } else {
-                        if (ApiConfig.get().getSource(vodInfo.sourceKey) != null) {
-                            Bundle bundle = new Bundle();
-                            bundle.putString("id", vodInfo.vodId);
-                            bundle.putString("sourceKey", vodInfo.sourceKey);
+                        Bundle bundle = new Bundle();
+                        bundle.putString("id", vodInfo.vodId);
+                        bundle.putString("sourceKey", vodInfo.sourceKey);
+                        SourceBean sourceBean = ApiConfig.get().getSource(vodInfo.sourceKey);
+                        if(sourceBean!=null){
                             jumpActivity(DetailActivity.class, bundle);
-                        } else {
-                            Intent newIntent = new Intent(mContext, SearchActivity.class);
-                            newIntent.putExtra("title", vodInfo.name);
-                            newIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                            startActivity(newIntent);
+                        }else {
+                            bundle.putString("title", vodInfo.name);
+                            if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
+                                jumpActivity(FastSearchActivity.class, bundle);
+                            }else {
+                                jumpActivity(SearchActivity.class, bundle);
+                            }
                         }
                     }
                 }
