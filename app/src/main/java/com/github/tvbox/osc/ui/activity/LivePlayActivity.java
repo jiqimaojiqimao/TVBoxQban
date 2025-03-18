@@ -1952,7 +1952,15 @@ public class LivePlayActivity extends BaseActivity {
             @Override
             public void longPress() { //xuameng长按显示左边设置菜单
                 if(isBack) {
-                    Toast.makeText(mContext, "当前回看中，请按返回键退出回看！", Toast.LENGTH_SHORT).show();
+                   if(backcontroller.getVisibility() == View.VISIBLE) {
+                      backcontroller.setVisibility(View.GONE);
+                      ll_epg.setVisibility(View.GONE); //xuameng下面EPG菜单隐藏
+                      hideTimeXu(); //xuameng隐藏系统时间
+                      hideNetSpeedXu(); //XUAMENG隐藏左上网速
+                   } else {
+                      showProgressBars(true);
+                      showBottomEpgBack(); //xuameng回看EPG
+                    }
                 } else {
                     showSettingGroup();
                     ll_epg.setVisibility(View.GONE); //xuameng下面EPG菜单隐藏
