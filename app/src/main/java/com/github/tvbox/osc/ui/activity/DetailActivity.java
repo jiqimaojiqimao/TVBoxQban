@@ -230,6 +230,7 @@ public class DetailActivity extends BaseActivity {
                 if (vodInfo != null && vodInfo.seriesMap.size() > 0) {
                     vodInfo.reverseSort = !vodInfo.reverseSort;
                     isReverse = !isReverse;
+					tvSort.setText(isReverse?"正序":"倒序");
                     vodInfo.reverse();
                     vodInfo.playIndex=(vodInfo.seriesMap.get(vodInfo.playFlag).size()-1)-vodInfo.playIndex;
 //                    insertVod(sourceKey, vodInfo);
@@ -765,7 +766,7 @@ public class DetailActivity extends BaseActivity {
                     if (!TextUtils.isEmpty(mVideo.pic)) {
                         Picasso.get()
                                 .load(DefaultConfig.checkReplaceProxy(mVideo.pic))
-                                .transform(new RoundTransformation(MD5.string2MD5(mVideo.pic + mVideo.name))
+                                .transform(new RoundTransformation(MD5.string2MD5(mVideo.pic))
                                         .centerCorp(true)
                                         .override(AutoSizeUtils.mm2px(mContext, 300), AutoSizeUtils.mm2px(mContext, 400))
                                         .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
