@@ -10,7 +10,7 @@
         android:layout_width="fill_parent"
         android:layout_height="@dimen/vs_280">
         <ImageView
-            android:id="@+id/ivThumb"
+            android:id="@+id/ivThumbXu"
             android:padding="@dimen/vs_1"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
