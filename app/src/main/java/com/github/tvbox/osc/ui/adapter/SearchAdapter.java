@@ -36,7 +36,7 @@ public class SearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder>
             if (item.note != null && !item.note.isEmpty()) {
                 helper.setText(R.id.tvNote, item.note);
             }
-            ImageView ivThumb = helper.getView(R.id.ivThumb);
+            ImageView ivThumbXu = helper.getView(R.id.ivThumbXu);
             if (!TextUtils.isEmpty(item.pic)) {
                 Picasso.get()
                         .load(item.pic)
@@ -48,10 +48,10 @@ public class SearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder>
                         .noFade()
                     //    .error(R.drawable.img_loading_placeholder)
 						.error(ImgUtil.createTextDrawable(item.name))
-                        .into(ivThumb);
+                        .into(ivThumbXu);
             } else {
-             //   ivThumb.setImageResource(R.drawable.img_loading_placeholder);
-				ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
+             //   ivThumbXu.setImageResource(R.drawable.img_loading_placeholder);
+				ivThumbXu.setImageDrawable(ImgUtil.createTextDrawable(item.name));
             }
         }
     }
