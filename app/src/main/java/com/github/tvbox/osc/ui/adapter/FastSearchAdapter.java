@@ -13,7 +13,7 @@ import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.MD5;
 import com.orhanobut.hawk.Hawk;
 import com.squareup.picasso.Picasso;
-import com.github.tvbox.osc.util.ImgUtil;   //xuamengBASE64图片
+import com.github.tvbox.osc.util.ImgUtilXufa;   //xuamengBASE64图片
 
 import java.util.ArrayList;
 
@@ -34,7 +34,7 @@ public class FastSearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
         if (item.note != null && !item.note.isEmpty()) {
             helper.setText(R.id.tvNote, item.note);
         }
-        ImageView ivThumbXu = helper.getView(R.id.ivThumbXu);
+        ImageView ivThumb = helper.getView(R.id.ivThumb);
         if (!TextUtils.isEmpty(item.pic)) {
             Picasso.get()
                     .load(item.pic)
@@ -45,11 +45,11 @@ public class FastSearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
                     .placeholder(R.drawable.img_loading_placeholder)
                     .noFade()
                    // .error(R.drawable.img_loading_placeholder)
-					.error(ImgUtil.createTextDrawable(item.name))
-                    .into(ivThumbXu);
+					.error(ImgUtilXufa.createTextDrawable(item.name))
+                    .into(ivThumb);
         } else {
-           // ivThumbXu.setImageResource(R.drawable.img_loading_placeholder);
-			ivThumbXu.setImageDrawable(ImgUtil.createTextDrawable(item.name));
+           // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
+			ivThumb.setImageDrawable(ImgUtilXufa.createTextDrawable(item.name));
         }
 
     }
