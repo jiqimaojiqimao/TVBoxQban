@@ -35,8 +35,19 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
     @Override
     protected void convert(BaseViewHolder helper, Movie.Video item) {
         if(this.mShowList) {
+        if (TextUtils.isEmpty(item.note)) {
+        //    helper.setVisible(R.id.tvNote, false);
+			helper.setText(R.id.tvNote, "暂无信息");
+        } else {
+            helper.setVisible(R.id.tvNote, true);
             helper.setText(R.id.tvNote, item.note);
+        }
+        if (TextUtils.isEmpty(item.name)) {
+            helper.setText(R.id.tvName, "聚汇影视");
+        } else {
             helper.setText(R.id.tvName, item.name);
+        }
+ //           helper.setText(R.id.tvName, item.name);
             ImageView ivThumb = helper.getView(R.id.ivThumb);
             //由于部分电视机使用glide报错
             if (!TextUtils.isEmpty(item.pic)) {
@@ -88,12 +99,18 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
             tvArea.setVisibility(View.VISIBLE);
         }*/
         if (TextUtils.isEmpty(item.note)) {
-            helper.setVisible(R.id.tvNote, false);
+        //    helper.setVisible(R.id.tvNote, false);
+			helper.setText(R.id.tvNote, "暂无信息");
         } else {
             helper.setVisible(R.id.tvNote, true);
             helper.setText(R.id.tvNote, item.note);
         }
-        helper.setText(R.id.tvName, item.name);
+        if (TextUtils.isEmpty(item.name)) {
+            helper.setText(R.id.tvName, "聚汇影视");
+        } else {
+            helper.setText(R.id.tvName, item.name);
+        }
+ //       helper.setText(R.id.tvName, item.name);
         helper.setText(R.id.tvActor, item.actor);
         ImageView ivThumb = helper.getView(R.id.ivThumb);
         //由于部分电视机使用glide报错
