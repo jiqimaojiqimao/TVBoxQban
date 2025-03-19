@@ -31,12 +31,12 @@ public class ImgUtil {
     public static Bitmap decodeBase64ToBitmap(String base64Str) {
         // 去掉 Base64 数据的头部前缀，例如 "data:image/png;base64,"
         String base64Data = base64Str.substring(base64Str.indexOf(",") + 1);
-        byte[] decodedBytes = Base64.decode(base64Data, Base64.DEFAULT);
+        byte[] decodedBytes = Base64.decode(base64Data, Base64.NO_WRAP);
         return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
     }
 
     public static Drawable createTextDrawable(String text) {
-        if(text.isEmpty())text="J";
+        if(text.isEmpty())text="聚";
         text=text.substring(0, 1);
         // 如果缓存中已存在，直接返回
         if (drawableCache.containsKey(text)) {
@@ -55,7 +55,7 @@ public class ImgUtil {
         RectF rectF = new RectF(0, 0, width, height);
         canvas.drawRoundRect(rectF, cornerRadius, cornerRadius, paint);
         paint.setColor(Color.WHITE); // 文字颜色
-        paint.setTextSize(50); // 文字大小
+        paint.setTextSize(40); // 文字大小
         paint.setTextAlign(Paint.Align.CENTER);
         Paint.FontMetrics fontMetrics = paint.getFontMetrics();
         float x = width / 2f;
