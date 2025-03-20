@@ -78,7 +78,7 @@
                 android:clipToPadding="false"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                app:tv_horizontalSpacingWithMargins="@dimen/vs_5"
+                app:tv_horizontalSpacingWithMargins="@dimen/vs_10"
                 app:tv_selectedItemIsCentered="true"
                 app:tv_verticalSpacingWithMargins="@dimen/vs_5"/>
         </LinearLayout>
