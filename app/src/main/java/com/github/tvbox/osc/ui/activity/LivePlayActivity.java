@@ -2504,6 +2504,22 @@ public class LivePlayActivity extends BaseActivity {
     private void initLiveChannelList() {
         List<LiveChannelGroup> list = ApiConfig.get().getChannelGroupList();
         if (list.isEmpty()) {
+           JsonArray live_groups=Hawk.get(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
+           if(live_groups.size() > 1){
+              Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！请重试！", Toast.LENGTH_SHORT).show();
+              Hawk.put(HawkConfig.LIVE_GROUP_INDEX,Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0)+1);
+			  if(Hawk.get(HawkConfig.LIVE_GROUP_INDEX,0)>live_groups.size()-1){
+				  Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
+			  }
+           mHandler.post(new Runnable() {
+             @Override
+			 public void run() {
+				jumpActivity(HomeActivity.class);
+				}
+			});
+			HawkConfig.LIVEerror = true;
+			return;
+		  }
             Toast.makeText(App.getInstance(), "聚汇影视提示您：频道列表为空！", Toast.LENGTH_SHORT).show();
             finish();
 			return;
