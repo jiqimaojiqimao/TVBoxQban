@@ -99,6 +99,32 @@ public class RemoteServer extends NanoHTTPD {
         isStarted = false;
     }
 
+	private Response getProxy(Object[] rs){
+        try {
+            int code = (int) rs[0];
+            String mime = (String) rs[1];
+            InputStream stream = rs[2] != null ? (InputStream) rs[2] : null;
+            Response response = NanoHTTPD.newChunkedResponse(
+                    Response.Status.lookup(code),
+                    mime,
+                    stream
+            );
+            // 添加头部信息
+            if (rs.length >= 4 && rs[3] instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, String> mapHeader = (Map<String, String>) rs[3];
+                if(!mapHeader.isEmpty()){
+                    for (String key : mapHeader.keySet()) {
+                        response.addHeader(key, mapHeader.get(key));
+                    }
+                }
+            }
+            return response;
+        } catch (Throwable th) {
+            return NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "500");
+        }
+    }
+
     @Override
     public Response serve(IHTTPSession session) {
         EventBus.getDefault().post(new ServerEvent(ServerEvent.SERVER_CONNECTION));
@@ -117,52 +143,11 @@ public class RemoteServer extends NanoHTTPD {
                     Map<String, String> params = session.getParms();
                     if (params.containsKey("do")) {
                         Object[] rs = ApiConfig.get().proxyLocal(params);
-                        try {
-							int code = (int) rs[0];   //xuameng新增
-                            String mime = (String) rs[1];
-                            InputStream stream = rs[2] != null ? (InputStream) rs[2] : null;
-                            Response response = NanoHTTPD.newChunkedResponse(
-                                    NanoHTTPD.Response.Status.lookup(code),
-                                    mime,
-                                    stream
-                            );
-                            if(rs.length>=4){
-                                HashMap<String, String> mapHeader = (HashMap<String, String>) rs[3];
-                                if(!mapHeader.isEmpty()){
-                                    for (String key : mapHeader.keySet()) {
-                                        response.addHeader(key, mapHeader.get(key));
-                                    }
-                                }
-                            }
-                            return response;
-                        } catch (Throwable th) {
-                            return NanoHTTPD.newFixedLengthResponse(NanoHTTPD.Response.Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "500");
-                        }
+						return getProxy(rs);
                     }
                     if (params.containsKey("go")) {
                         Object[] rs = Proxy.proxy(params);
-                        try {        
-                            assert rs != null;  //xuameng新增完
-                            int code = (int) rs[0];
-                            String mime = (String) rs[1];
-                            InputStream stream = rs[2] != null ? (InputStream) rs[2] : null;
-                            Response response = NanoHTTPD.newChunkedResponse(
-                                    NanoHTTPD.Response.Status.lookup(code),
-                                    mime,
-                                    stream
-                            );
-                            if(rs.length>=4){
-                                HashMap<String, String> mapHeader = (HashMap<String, String>) rs[3];
-                                if(!mapHeader.isEmpty()){
-                                    for (String key : mapHeader.keySet()) {
-                                        response.addHeader(key, mapHeader.get(key));
-                                    }
-                                }
-                            }
-                            return response;
-                        } catch (Throwable th) {
-                            return NanoHTTPD.newFixedLengthResponse(NanoHTTPD.Response.Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "500");
-                        }
+						return getProxy(rs);
                     }
                 } else if (fileName.startsWith("/file/")) {
                     try {
