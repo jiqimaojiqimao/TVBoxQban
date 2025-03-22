@@ -229,18 +229,11 @@ public class PlayActivity extends BaseActivity {
             @Override
             public void replay(boolean replay) {
                 autoRetryCount = 0;
-                if(replay){    //xuameng新增
+                if(replay){  //xuameng新增
                     play(true);
                 }else {
-                    if(webPlayUrl!=null && !webPlayUrl.isEmpty()) {
-                        stopParse();
-                        initParseLoadFound();
-                        if(mVideoView!=null) mVideoView.release();
-                        goPlayUrl(webPlayUrl,webHeaderMap);
-                    }else {
-                        play(false);
-                    }
-                }   //xuameng新增完
+                    play(false);
+                }  //xuameng新增完
             }
 
             @Override
@@ -942,40 +935,30 @@ public class PlayActivity extends BaseActivity {
 
     boolean autoRetry() {
         long currentTime = System.currentTimeMillis();
-        // 如果距离上次重试超过 10 秒（10000 毫秒），重置重试次数
-        if (currentTime - lastRetryTime > 60_000) {
-			LOG.i("echo-reset-autoRetryCount");
+        if (currentTime - lastRetryTime > 60_000){
+            LOG.i("echo-reset-autoRetryCount");
             autoRetryCount = 0;
         }
+
         lastRetryTime = currentTime;  // 更新上次调用时间
         if (loadFoundVideoUrls != null && loadFoundVideoUrls.size() > 0) {
             autoRetryFromLoadFoundVideoUrls();
             return true;
         }
-
         if (autoRetryCount < 2) {
             if(autoRetryCount==1){
                 //第二次重试时重新调用接口
                 play(false);
-              autoRetryCount++;
+                autoRetryCount++;
             }else {
                 //切换播放器不占用重试次数
                 if(mController.switchPlayer()){
-                    autoRetryCount++;
-  //                  webPlayUrl=mController.getWebPlayUrlIfNeeded(webPlayUrl);
-                }else {
-//                    Toast.makeText(mContext, "自动切换播放器重试", Toast.LENGTH_SHORT).show();
-                }  //xuameng自动切换播放器完 
-                //第一次重试直接带着原地址继续播放
-                if(webPlayUrl!=null){
-                    stopParse();
-                    initParseLoadFound();
-                    if(mVideoView!=null) mVideoView.release();
-                    playUrl(webPlayUrl, webHeaderMap);
+					autoRetryCount++;
+					play(false);
                 }else {
                     play(false);
                 }
-            }                 
+            }
             return true;
         } else {
             autoRetryCount = 0;
