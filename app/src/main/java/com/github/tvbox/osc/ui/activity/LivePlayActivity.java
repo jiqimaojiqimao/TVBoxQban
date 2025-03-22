@@ -40,6 +40,7 @@ import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
 import android.graphics.Bitmap;  //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
 import android.annotation.SuppressLint; //xuamengEPG显示错误
+import java.util.HashMap;   //XUAMENG自定义UA
 import java.util.Objects;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
@@ -183,6 +184,7 @@ public class LivePlayActivity extends BaseActivity {
 	private boolean isBuffer = false; //xuameng缓冲
 	private boolean isShowlist = false; //xuameng判断菜单显示
 	private boolean isVideoplaying = false;  //xuameng判断视频开始播放
+	private boolean XuSource = false; //xuameng退出回看
     private int selectedChannelNumber = 0; // xuameng遥控器数字键输入的要切换的频道号码
     private TextView tvSelectedChannel; //xuameng频道编号
 	private ImageView iv_circle_bg_xu;  //xuameng音乐播放时图标
@@ -349,7 +351,7 @@ public class LivePlayActivity extends BaseActivity {
                 long newPosition = (duration * seekBar.getProgress()) / sBar.getMax(); //xuameng停止触碰获取进度条进度
                 if(newPosition < 1000 && isVOD) { //xuameng主要解决某些M3U8文件不能快进到0
                     mVideoView.release();
-                    mVideoView.setUrl(currentLiveChannelItem.getUrl());
+                    mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveWebHeader());
                     mVideoView.start();
 					if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
 						iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -924,6 +926,7 @@ public class LivePlayActivity extends BaseActivity {
     private void xubackexit() { //xuameng双击退出回看
         if(System.currentTimeMillis() - mExitTime < 2000) {
             isBack = false;
+			isSHIYI = false;
             Mtv_left_top_xu.setVisibility(View.GONE); //xuameng返回键隐藏左上回看菜单
             iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
             hideTimeXu(); //xuameng隐藏系统时间
@@ -1421,11 +1424,18 @@ public class LivePlayActivity extends BaseActivity {
         };
         countDownTimer7.start();
     }
+
+    private HashMap<String,String> liveWebHeader(){       //xuameng自定义UA
+        return Hawk.get(HawkConfig.LIVE_WEB_HEADER);
+    }
+
     private boolean playChannel(int channelGroupIndex, int liveChannelIndex, boolean changeSource) { //xuameng播放
 		if(mVideoView == null) return true; //XUAMENG可能会引起空指针问题的修复
-        if((channelGroupIndex == currentChannelGroupIndex && liveChannelIndex == currentLiveChannelIndex && !changeSource) || (changeSource && currentLiveChannelItem.getSourceNum() == 1)) {
+        if((channelGroupIndex == currentChannelGroupIndex && liveChannelIndex == currentLiveChannelIndex && !changeSource) || (changeSource && currentLiveChannelItem.getSourceNum() == 1) && !XuSource) {
             // xuamengEPG日期自动选今天
             liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
+            isSHIYI = false;
+            isBack = false;
             if(isVOD) {
                 if(backcontroller.getVisibility() == View.GONE) {
                     showProgressBars(true);
@@ -1439,8 +1449,6 @@ public class LivePlayActivity extends BaseActivity {
                 mHideChannelListRun(); //xuameng显示EPG就隐藏左右菜单
                 mHideSettingLayoutRun(); //xuameng显示EPG就隐藏左右菜单
             }
-            isSHIYI = false;
-            isBack = false;
             return true;
         }
 		mVideoView.release();  //XUAMENG可能会引起空指针问题的修复
@@ -1456,6 +1464,7 @@ public class LivePlayActivity extends BaseActivity {
         channel_Name = currentLiveChannelItem;
         isSHIYI = false;
         isBack = false;
+		XuSource = false;
         if(currentLiveChannelItem.getUrl().indexOf("PLTV/") != -1) { //xuameng判断直播源URL中有没有PLTV字符，有才可以时移
             currentLiveChannelItem.setinclude_back(true);
         } else {
@@ -1478,10 +1487,10 @@ public class LivePlayActivity extends BaseActivity {
         backcontroller.setVisibility(View.GONE);
         ll_right_top_huikan.setVisibility(View.GONE);
         Mtv_left_top_xu.setVisibility(View.GONE); //xuameng直播时隐藏回看的菜单
-        iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
         simSeekPosition = 0; //XUAMENG重要,换视频时重新记录进度
         simSlideOffset = 0; //XUAMENG重要,换视频时重新记录进度
-        mVideoView.setUrl(currentLiveChannelItem.getUrl());
+        if(liveWebHeader()!=null)LOG.i("echo-"+liveWebHeader().toString());
+        mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveWebHeader());
         mVideoView.start();
 		if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
            iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -1497,8 +1506,6 @@ public class LivePlayActivity extends BaseActivity {
             liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
         }
         channel_NameXu = currentLiveChannelItemXu; //xuameng重要EPG名称
-        isSHIYI = false;
-        isBack = false;
         if(currentLiveChannelItemXu.getUrl().indexOf("PLTV/") != -1) { //xuameng判断直播源URL中有没有PLTV字符，有才可以时移
             currentLiveChannelItemXu.setinclude_back(true);
         } else {
@@ -1543,6 +1550,7 @@ public class LivePlayActivity extends BaseActivity {
         if(mVideoView == null) {
             return;
         }
+		XuSource = true;
         if(!isCurrentLiveChannelValid()) return;
         currentLiveChannelItem.getUrl();
         playChannel(currentChannelGroupIndex, currentLiveChannelIndex, true);
@@ -1694,7 +1702,7 @@ public class LivePlayActivity extends BaseActivity {
                 if(now.compareTo(selectedData.startdateTime) >= 0 && now.compareTo(selectedData.enddateTime) <= 0) {
 					if(mVideoView == null) return; 
                     mVideoView.release();
-					mVideoView.setUrl(currentLiveChannelItem.getUrl());
+					mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveWebHeader());
                     mVideoView.start();
                     isSHIYI = false;
 					if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
@@ -1724,7 +1732,7 @@ public class LivePlayActivity extends BaseActivity {
                         Log.d("PLTV播放地址", "playUrl   " + shiyiUrl);
                     }
                     playUrl = shiyiUrl;
-                    mVideoView.setUrl(playUrl);
+                    mVideoView.setUrl(playUrl,liveWebHeader());
                     mVideoView.start();
 					if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
 						iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -1776,7 +1784,7 @@ public class LivePlayActivity extends BaseActivity {
 					if(mVideoView == null) return;
                     mVideoView.release();
                     isSHIYI = false;
-                    mVideoView.setUrl(currentLiveChannelItem.getUrl());
+                    mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveWebHeader());
                     mVideoView.start();
 					if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
 						iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -1805,7 +1813,8 @@ public class LivePlayActivity extends BaseActivity {
                         Log.d("PLTV播放地址", "playUrl   " + shiyiUrl);
                     }
                     playUrl = shiyiUrl;
-                    mVideoView.setUrl(playUrl);
+					if(liveWebHeader()!=null)LOG.i("echo-liveWebHeader :"+ liveWebHeader().toString());
+                    mVideoView.setUrl(playUrl,liveWebHeader());
                     mVideoView.start();
 					if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
 						iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -2087,6 +2096,11 @@ public class LivePlayActivity extends BaseActivity {
                             mHandler.postDelayed(mConnectTimeoutChangeSourceRunBack, 5000); //xuameng回看超时5秒退出
                             return;
                         }
+						else if(isVOD){
+                            mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunVod);
+                            mHandler.postDelayed(mConnectTimeoutChangeSourceRunVod, 5000); //xuameng回看超时5秒退出
+							return;
+						}
                         mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);
                         mHandler.postDelayed(mConnectTimeoutChangeSourceRun, 10000); //xuameng播放超时10秒换源
                         break;
@@ -2205,15 +2219,16 @@ public class LivePlayActivity extends BaseActivity {
     private Runnable mConnectTimeoutChangeSourceRunBack = new Runnable() { //xuameng为回看失败准备
         @Override
         public void run() {
-            currentLiveChangeSourceTimes++;
-            if(currentLiveChannelItem.getSourceNum() == currentLiveChangeSourceTimes) {
-                currentLiveChangeSourceTimes = 0;
-                Integer[] groupChannelIndex = getNextChannel(Hawk.get(HawkConfig.LIVE_CHANNEL_REVERSE, false) ? -1 : 1);
-                playChannel(groupChannelIndex[0], groupChannelIndex[1], false);
-            } else {
-                playXuSource();
-                showToastXu();
-            }
+             playXuSource();
+             showToastXu();
+        }
+    };
+    private Runnable mConnectTimeoutChangeSourceRunVod = new Runnable() {
+        @Override
+        public void run() {
+            currentLiveChangeSourceTimes = 0;
+            Integer[] groupChannelIndex = getNextChannel(Hawk.get(HawkConfig.LIVE_CHANNEL_REVERSE, false) ? -1 : 1);
+            playChannel(groupChannelIndex[0], groupChannelIndex[1], false);
         }
     };
     private void initChannelGroupView() {
@@ -2439,7 +2454,7 @@ public class LivePlayActivity extends BaseActivity {
 			    if(mVideoView == null) return;
                 mVideoView.release();
                 livePlayerManager.changeLivePlayerType(mVideoView, position, currentLiveChannelItem.getChannelName());
-                mVideoView.setUrl(currentLiveChannelItem.getUrl());
+                mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveWebHeader());
                 mVideoView.start();
 				if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
 					iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -3107,7 +3122,7 @@ public class LivePlayActivity extends BaseActivity {
                 long newPosition = (duration * seekBar.getProgress()) / sBar.getMax(); //xuameng停止触碰获取进度条进度
                 if(newPosition < 1000 && isVOD) { //xuameng主要解决某些M3U8文件不能快进到0
                     mVideoView.release();
-                    mVideoView.setUrl(currentLiveChannelItem.getUrl());
+                    mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveWebHeader());
                     mVideoView.start();
 					if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
 						iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -3200,7 +3215,7 @@ public class LivePlayActivity extends BaseActivity {
             if(isSEEKBAR) {
                 if(simSeekPosition < 1000) { //xuameng主要解决某些M3U8文件不能快进到0
                     mVideoView.release();
-                    mVideoView.setUrl(currentLiveChannelItem.getUrl());
+                    mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveWebHeader());
                     mVideoView.start();
 					if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
 						iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
