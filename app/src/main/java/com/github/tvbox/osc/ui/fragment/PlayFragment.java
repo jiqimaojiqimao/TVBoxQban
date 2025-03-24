@@ -1320,6 +1320,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
  
     private void parseMix(ParseBean pb,boolean isSuper){
+        setTip("正在解析播放地址", true, false);
         parseThreadPool = Executors.newSingleThreadExecutor();
         LinkedHashMap<String, HashMap<String, String>> jxs = new LinkedHashMap<>();
         String extendName = "";
@@ -1342,7 +1343,6 @@ public class PlayFragment extends BaseLazyFragment {
 //                        errorWithRetry("解析错误", false);
                     setTip("解析错误", false, true);
                 } else {
-					setTip("正在嗅探播放地址", true, false);
                     if (rs.has("parse") && rs.optInt("parse", 0) == 1) {
                         if (rs.has("ua")) {
                             webUserAgent = rs.optString("ua").trim();
@@ -1353,13 +1353,13 @@ public class PlayFragment extends BaseLazyFragment {
                             public void run() {
                                 String mixParseUrl = DefaultConfig.checkReplaceProxy(rs.optString("url", ""));
                                 stopParse();
+                                setTip("正在嗅探播放地址", true, false);
                                 mHandler.removeMessages(100);
                                 mHandler.sendEmptyMessageDelayed(100, 20 * 1000);
                                 loadWebView(mixParseUrl);
                             }
                         });
                     } else {
-						setTip("正在解析播放地址", true, false);
                         HashMap<String, String> headers = null;
                         if (rs.has("header")) {
                             try {
