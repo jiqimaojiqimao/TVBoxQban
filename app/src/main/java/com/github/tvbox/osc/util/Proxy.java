@@ -1,6 +1,7 @@
 package com.github.tvbox.osc.util;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.tvbox.osc.server.ControlManager;
+import com.github.tvbox.osc.util.parser.SuperParse;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -28,6 +29,9 @@ public class Proxy {
             else if (what.equals("ad")) {
                 //TODO
                 return null;
+            }
+            else if (what.equals("SuperParse")) {
+                return SuperParse.loadHtml(params.get("flag"), params.get("url"));
             }
 
         } catch (Throwable ignored) {
