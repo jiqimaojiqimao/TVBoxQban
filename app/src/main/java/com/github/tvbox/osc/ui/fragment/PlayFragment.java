@@ -1359,6 +1359,15 @@ public class PlayFragment extends BaseLazyFragment {
                                 loadWebView(mixParseUrl);
                             }
                         });
+                        if (rs.has("jxFrom")) {
+                            if(!isAdded())return;
+                            requireActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(mContext, "解析来自:" + rs.optString("jxFrom"), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
                     } else {
                         HashMap<String, String> headers = null;
                         if (rs.has("header")) {
