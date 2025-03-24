@@ -24,6 +24,8 @@ import android.util.TypedValue;              //xuameng TypedValue依赖
 import android.view.LayoutInflater;			//xuameng LayoutInflater依赖
 import androidx.recyclerview.widget.RecyclerView;  //xuameng主页默认焦点
 import java.util.Objects;   //xuameng主页默认焦点
+import com.github.tvbox.osc.util.FastClickCheckUtil;   //xuameng cache
+import com.github.tvbox.osc.util.MD5;  //xuameng cache
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -234,13 +236,22 @@ public class HomeActivity extends BaseActivity {
         tvName.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+				FastClickCheckUtil.check(v);
                 if(dataInitOk && jarInitOk){
 				String cachePath = FileUtils.getCachePath();          //xuameng点击清空缓存
+                String cspCachePath = FileUtils.getFilePath()+"/csp/";
+                String jar=ApiConfig.get().getHomeSourceBean().getJar();
+                String jarUrl=!jar.isEmpty()?jar:ApiConfig.get().getSpider();
+                File cspCacheDir = new File(cspCachePath + MD5.string2MD5(jarUrl)+".jar");
 				File cacheDir = new File(cachePath);
-				if (!cacheDir.exists()) return;
+				if (!cacheDir.exists() && !cspCacheDir.exists()) return;
 				new Thread(() -> {
 					try {
-						FileUtils.cleanDirectory(cacheDir);
+						if(cacheDir.exists())FileUtils.cleanDirectory(cacheDir);
+						if(cspCacheDir.exists()){
+							FileUtils.deleteFile(cspCacheDir);
+						}
+                       // ApiConfig.get().clearJarLoader();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
