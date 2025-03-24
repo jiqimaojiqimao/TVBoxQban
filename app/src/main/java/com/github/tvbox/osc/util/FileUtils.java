@@ -132,6 +132,9 @@ public class FileUtils {
     public static String getCachePath() {
         return getCacheDir().getAbsolutePath();
     }
+    public static String getFilePath() {
+        return App.getInstance().getFilesDir().getAbsolutePath();
+    }
 
     public static void cleanDirectory(File dir) {
         if (!dir.exists()) return;
@@ -144,6 +147,13 @@ public class FileUtils {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static boolean isWeekAgo(File file)
+    {
+        long oneWeekMillis = 15L * 24 * 60 * 60 * 1000;
+        long timeDiff = System.currentTimeMillis() - file.lastModified();
+        return timeDiff > oneWeekMillis;
     }
 
     public static void deleteFile(File file) {
