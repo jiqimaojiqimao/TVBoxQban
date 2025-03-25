@@ -312,6 +312,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
         deltaX = -deltaX;
         int width = getMeasuredWidth();
         int duration = (int) mControlWrapper.getDuration();
+		if (duration >= 1000){
         int currentPosition = (int) mControlWrapper.getCurrentPosition();
         int position = (int) (deltaX / width * 120000 + currentPosition);
         if (position > duration) position = duration;
@@ -324,6 +325,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
         }
         updateSeekUI(currentPosition, position, duration);
         mSeekPosition = position;
+		}
     }
 
     protected void updateSeekUI(int curr, int seekTo, int duration) {
