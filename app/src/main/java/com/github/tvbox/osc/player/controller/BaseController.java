@@ -16,6 +16,7 @@ import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -325,6 +326,8 @@ public abstract class BaseController extends BaseVideoController implements Gest
         }
         updateSeekUI(currentPosition, position, duration);
         mSeekPosition = position;
+		}else{
+			Toast.makeText(getContext(), "当前视频不可调节播放进度！", Toast.LENGTH_SHORT).show();
 		}
     }
 
