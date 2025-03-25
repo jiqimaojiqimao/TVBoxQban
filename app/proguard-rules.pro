@@ -211,3 +211,12 @@
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
+# Cronet支持http3
+-keep class com.google.net.cronet.**{*;}
+-keep class org.chromium.net.**{*;}
+
+# Python支持
+-keep public class com.undcover.freedom.pyramid.** { *; }
+-dontwarn com.undcover.freedom.pyramid.**
+-keep public class com.chaquo.python.** { *; }
+-dontwarn com.chaquo.python.**
