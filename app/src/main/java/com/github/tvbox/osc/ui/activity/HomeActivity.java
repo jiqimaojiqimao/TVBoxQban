@@ -352,9 +352,9 @@ public class HomeActivity extends BaseActivity {
 										}
 										HawkConfig.LIVEerror = false;
                                    }
-									if (!ApiConfig.get().warningText.isEmpty()){
-										String warningText = ApiConfig.get().warningText;
-										Toast.makeText(HomeActivity.this, (warningText), Toast.LENGTH_LONG).show();
+									if (!ApiConfig.get().JvhuiWarning.isEmpty()){
+										String JvhuiWarning = ApiConfig.get().JvhuiWarning;
+										Toast.makeText(HomeActivity.this, (JvhuiWarning), Toast.LENGTH_LONG).show();
 									}else{
 										Toast.makeText(HomeActivity.this, "聚汇影视提示：jar加载成功！", Toast.LENGTH_SHORT).show();
 									}
