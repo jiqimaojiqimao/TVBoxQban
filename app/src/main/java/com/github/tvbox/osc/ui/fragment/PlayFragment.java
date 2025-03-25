@@ -1089,9 +1089,17 @@ public class PlayFragment extends BaseLazyFragment {
         parseFlag = flag;
         webUrl = url;
         ParseBean parseBean = null;
-        mController.showParse(useParse);
         if (useParse) {
             parseBean = ApiConfig.get().getDefaultParse();
+            if (parseBean == null) {
+                parseBean = new ParseBean();
+                parseBean.setType(0);
+                parseBean.setUrl(playUrl);
+				mController.showParse(false);
+				Toast.makeText(mContext, "解析站点未配置，直接嗅探播放！", Toast.LENGTH_SHORT).show();
+            }else{
+				mController.showParse(useParse);
+			}
         } else {
             if (playUrl.startsWith("json:")) {
                 parseBean = new ParseBean();
