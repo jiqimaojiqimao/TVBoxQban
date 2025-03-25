@@ -565,7 +565,7 @@ public class VodController extends BaseController {
         mGridView.setAdapter(parseAdapter);
         parseAdapter.setNewData(ApiConfig.get().getParseBeanList());
 
-        mParseRoot.setVisibility(VISIBLE);
+   //     mParseRoot.setVisibility(VISIBLE);
 
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
