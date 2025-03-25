@@ -1268,7 +1268,7 @@ public class VodController extends BaseController {
         mControlWrapper.stopProgress();		//xuameng结束进程
         mControlWrapper.stopFadeOut();
         int duration = (int) mControlWrapper.getDuration();
-        if (duration <= 0)
+        if (duration <= 1000)
             return;
         if (!simSlideStart) {
             simSlideStart = true;
@@ -1305,7 +1305,7 @@ public class VodController extends BaseController {
         mControlWrapper.stopProgress();		//xuameng结束进程
         mControlWrapper.stopFadeOut();
         int duration = (int) mControlWrapper.getDuration();
-        if (duration <= 0)
+        if (duration <= 1000)
             return;
         if (!simSlideStart) {
             simSlideStart = true;
