@@ -1268,8 +1268,7 @@ public class VodController extends BaseController {
         mControlWrapper.stopProgress();		//xuameng结束进程
         mControlWrapper.stopFadeOut();
         int duration = (int) mControlWrapper.getDuration();
-        if (duration <= 1000)
-            return;
+        if (duration >= 1000){
         if (!simSlideStart) {
             simSlideStart = true;
         }
@@ -1297,6 +1296,9 @@ public class VodController extends BaseController {
         simSeekPosition = position;
 		mSeekBar.setProgress(simSeekPosition);  //xuameng设置SEEKBAR当前进度
 		mCurrentTime.setText(PlayerUtils.stringForTime(simSeekPosition));  //xuameng设置SEEKBAR当前进度
+		}else{
+			Toast.makeText(getContext(), "当前视频不可调节播放进度！", Toast.LENGTH_SHORT).show();
+		}
     }
 
 	public void tvSlideStartXu(int dir) {
@@ -1305,8 +1307,7 @@ public class VodController extends BaseController {
         mControlWrapper.stopProgress();		//xuameng结束进程
         mControlWrapper.stopFadeOut();
         int duration = (int) mControlWrapper.getDuration();
-        if (duration <= 1000)
-            return;
+        if (duration >= 1000){
         if (!simSlideStart) {
             simSlideStart = true;
         }
@@ -1333,6 +1334,9 @@ public class VodController extends BaseController {
         simSeekPosition = position;
 		mSeekBar.setProgress(simSeekPosition);  //xuameng设置SEEKBAR当前进度
 		mCurrentTime.setText(PlayerUtils.stringForTime(simSeekPosition));  //xuameng设置SEEKBAR当前进度
+		}else{
+			Toast.makeText(getContext(), "当前视频不可调节播放进度！", Toast.LENGTH_SHORT).show();
+		}
     }
 
     @Override
