@@ -1296,8 +1296,6 @@ public class VodController extends BaseController {
         simSeekPosition = position;
 		mSeekBar.setProgress(simSeekPosition);  //xuameng设置SEEKBAR当前进度
 		mCurrentTime.setText(PlayerUtils.stringForTime(simSeekPosition));  //xuameng设置SEEKBAR当前进度
-		}else{
-			Toast.makeText(getContext(), "当前视频不可调节播放进度！", Toast.LENGTH_SHORT).show();
 		}
     }
 
@@ -1334,8 +1332,6 @@ public class VodController extends BaseController {
         simSeekPosition = position;
 		mSeekBar.setProgress(simSeekPosition);  //xuameng设置SEEKBAR当前进度
 		mCurrentTime.setText(PlayerUtils.stringForTime(simSeekPosition));  //xuameng设置SEEKBAR当前进度
-		}else{
-			Toast.makeText(getContext(), "当前视频不可调节播放进度！", Toast.LENGTH_SHORT).show();
 		}
     }
 
