@@ -15,11 +15,11 @@
     <ImageView
         android:enabled="true"
         android:id="@+id/xuamengMusic"
-        android:visibility="gone"
         android:background="@drawable/xumusic"
-		android:scaleType="fitXY" 
+        android:visibility="gone"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"/>
+        android:layout_height="fill_parent"
+        android:scaleType="fitXY"/>
     <LinearLayout
         android:orientation="vertical"
         android:id="@+id/tv_top_l_container"
@@ -506,11 +506,11 @@
         <com.github.tvbox.osc.ui.tv.widget.MarqueeTextView
             android:textSize="@dimen/ts_30"
             android:textColor="@android:color/white"
+            android:ellipsize="marquee"
             android:layout_gravity="center|right"
             android:id="@+id/tv_pause_progress_text"
             android:tag="vod_control_pause_t"
             android:paddingLeft="@dimen/vs_10"
-            android:ellipsize="marquee"
             android:focusable="false"
             android:focusableInTouchMode="false"
             android:layout_width="wrap_content"
@@ -610,11 +610,36 @@
         android:paddingHorizontal="@dimen/vs_20"/>
     <ImageView
         android:layout_gravity="center"
-        android:visibility="gone"
         android:id="@+id/iv_circle_bg"
-		android:tag="music_iv_circle_bg"
+        android:tag="music_iv_circle_bg"
         android:padding="@dimen/vs_10"
+        android:visibility="gone"
         android:layout_width="@dimen/vs_80"
         android:layout_height="@dimen/vs_80"
         android:src="@drawable/app_icon"/>
+    <FrameLayout
+        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:id="@+id/play_speed_3_container"
+        android:background="@drawable/bg_speed_indicator"
+        android:visibility="gone"
+        android:layout_width="@dimen/vs_200"
+        android:layout_height="@dimen/vs_100">
+        <TextView
+            android:textSize="@dimen/ts_30"
+            android:layout_gravity="center|left"
+            android:layout_marginLeft="@dimen/vs_20"
+            android:textColor="@color/color_FFFFFF"
+            android:id="@+id/tv_speed_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="倍速播放"/>
+        <ImageView
+            android:layout_gravity="center|right"
+            android:layout_marginRight="@dimen/vs_20"
+            android:layout_marginLeft="@dimen/vs_0"
+            android:layout_width="@dimen/vs_30"
+            android:layout_height="@dimen/vs_30"
+            android:src="@drawable/scrollview"/>
+    </FrameLayout>
 </FrameLayout>
