@@ -426,7 +426,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      * 保存播放进度
      */
     protected void saveProgress() {
-        if (mProgressManager != null && mCurrentPosition > 0 && duration > 0) {  //xuameng视频时长大于0才记忆进度
+        if (mProgressManager != null && mCurrentPosition > 0 && duration > 31000  && duration <= 180000000) {  //xuameng视频时长大于31秒才记忆进度
             L.d("saveProgress: " + mCurrentPosition);
             mProgressManager.saveProgress(mProgressKey == null ? mUrl : mProgressKey, mCurrentPosition);
         }
