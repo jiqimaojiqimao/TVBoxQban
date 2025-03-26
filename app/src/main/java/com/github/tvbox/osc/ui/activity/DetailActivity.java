@@ -1169,6 +1169,26 @@ public class DetailActivity extends BaseActivity {
         return super.dispatchKeyEvent(event);
     }
 
+	@Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (event != null && playFragment != null && fullWindows) {
+            if (playFragment.onKeyDown(keyCode,event)) {
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (event != null && playFragment != null && fullWindows) {
+            if (playFragment.onKeyUp(keyCode,event)) {
+                return true;
+            }
+        }
+        return super.onKeyUp(keyCode, event);
+    }
+
     // preview
     VodInfo previewVodInfo = null;
     boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // true 开启 false 关闭
