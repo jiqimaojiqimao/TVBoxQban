@@ -860,6 +860,26 @@ public class PlayActivity extends BaseActivity {
     }
 
     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (event != null ) {
+            if (mController.onKeyDown(keyCode,event)) {
+                return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (event != null ) {
+            if (mController.onKeyUp(keyCode,event)) {
+                return true;
+            }
+        }
+        return super.onKeyUp(keyCode, event);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         if (mVideoView != null) {
@@ -1413,7 +1433,7 @@ public class PlayActivity extends BaseActivity {
                     if(webUserAgent != null) {
                         mXwalkWebView.getSettings().setUserAgentString(webUserAgent);
                     }
-                    mXwalkWebView.clearCache(true);
+             //       mXwalkWebView.clearCache(true);
                     if(webHeaderMap != null){
                         mXwalkWebView.loadUrl(url,webHeaderMap);
                     }else {
@@ -1425,7 +1445,7 @@ public class PlayActivity extends BaseActivity {
                     if(webUserAgent != null) {
                         mSysWebView.getSettings().setUserAgentString(webUserAgent);
                     }
-                    mSysWebView.clearCache(true);
+        //            mSysWebView.clearCache(true);
                     if(webHeaderMap != null){
                         mSysWebView.loadUrl(url,webHeaderMap);
                     }else {
