@@ -7,7 +7,6 @@ import android.util.Base64;
 
 import com.github.catvod.crawler.JarLoader;
 import com.github.catvod.crawler.JsLoader;
-import com.github.catvod.crawler.PyLoader;
 import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.bean.LiveChannelGroup;
@@ -36,7 +35,6 @@ import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.AbsCallback;
 import com.lzy.okgo.model.Response;
 import com.orhanobut.hawk.Hawk;
-import com.github.catvod.crawler.SpiderNull;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -63,11 +61,11 @@ import java.util.regex.Pattern;
  */
 public class ApiConfig {
     private static ApiConfig instance;
-    private LinkedHashMap<String, SourceBean> sourceBeanList;
+    private final LinkedHashMap<String, SourceBean> sourceBeanList;
     private SourceBean mHomeSource;
     private ParseBean mDefaultParse;
-    private List<LiveChannelGroup> liveChannelGroupList;
-    private List<ParseBean> parseBeanList;
+	private final List<LiveChannelGroup> liveChannelGroupList;
+	private final List<ParseBean> parseBeanList;
     private List<String> vipParseFlags;
     private Map<String,String> myHosts;
     private List<IJKCode> ijkCodes;
@@ -80,7 +78,6 @@ public class ApiConfig {
 
     private final JarLoader jarLoader = new JarLoader();
     private final JsLoader jsLoader = new JsLoader();
-	private final PyLoader pyLoader = new PyLoader();
     private final Gson gson;
 
     private final String userAgent = "okhttp/3.15";
@@ -420,7 +417,6 @@ public class ApiConfig {
     }
 	private static  String jarCache ="true";
     private void parseJson(String apiUrl, String jsonStr) {
-		pyLoader.setConfig(jsonStr);
 		LOG.i("echo-parseJson"+jsonStr);
         JsonObject infoJson = gson.fromJson(jsonStr, JsonObject.class);
         // spider
@@ -442,11 +438,7 @@ public class ApiConfig {
             sb.setApi(obj.get("api").getAsString().trim());
             sb.setSearchable(DefaultConfig.safeJsonInt(obj, "searchable", 1));
             sb.setQuickSearch(DefaultConfig.safeJsonInt(obj, "quickSearch", 1));
-            if(siteKey.startsWith("py_")){
-                sb.setFilterable(1);
-            }else {
-                sb.setFilterable(DefaultConfig.safeJsonInt(obj, "filterable", 1));
-            }
+			sb.setFilterable(DefaultConfig.safeJsonInt(obj, "filterable", 1));
             sb.setPlayerUrl(DefaultConfig.safeJsonString(obj, "playUrl", ""));
             if(obj.has("ext") && (obj.get("ext").isJsonObject() || obj.get("ext").isJsonArray())){
                 sb.setExt(obj.get("ext").toString());
@@ -915,11 +907,18 @@ public class ApiConfig {
 				HawkConfig.intLIVEPLAYTYPE = false;   //xuameng是否有直播默认播放器
 			}
             //xuameng设置UA信息
-            if(livesOBJ.has("ua")){
-                String ua =livesOBJ.get("ua").getAsString();
-                HashMap<String,String> liveHeader=new HashMap<>();
-                liveHeader.put("User-Agent",ua);
-                Hawk.put(HawkConfig.LIVE_WEB_HEADER,liveHeader);
+            if(livesOBJ.has("header")) {
+                JsonObject headerObj = livesOBJ.getAsJsonObject("header");
+                HashMap<String, String> liveHeader = new HashMap<>();
+                for (Map.Entry<String, JsonElement> entry : headerObj.entrySet()) {
+                    liveHeader.put(entry.getKey(), entry.getValue().getAsString());
+                }
+                Hawk.put(HawkConfig.LIVE_WEB_HEADER, liveHeader);
+            } else if(livesOBJ.has("ua")) {
+                String ua = livesOBJ.get("ua").getAsString();
+                HashMap<String,String> liveHeader = new HashMap<>();
+                liveHeader.put("User-Agent", ua);
+                Hawk.put(HawkConfig.LIVE_WEB_HEADER, liveHeader);
             }else {
                 Hawk.put(HawkConfig.LIVE_WEB_HEADER,null);
             }
@@ -939,23 +938,11 @@ public class ApiConfig {
     public Spider getCSP(SourceBean sourceBean) {
         boolean js = sourceBean.getApi().endsWith(".js") || sourceBean.getApi().contains(".js?");
         if (js) return jsLoader.getSpider(sourceBean.getKey(), sourceBean.getApi(), sourceBean.getExt(), sourceBean.getJar());
-        if (sourceBean.getKey().startsWith("py_") || sourceBean.getApi().endsWith(".py")) {
-            try {
-                return pyLoader.getSpider(sourceBean.getKey(), sourceBean.getApi(), sourceBean.getExt());
-            } catch (Exception e) {
-                return new SpiderNull();
-            }
-        }
         return jarLoader.getSpider(sourceBean.getKey(), sourceBean.getApi(), sourceBean.getExt(), sourceBean.getJar());
     }
 
     public Object[] proxyLocal(Map<String,String> param) {
-        SourceBean sourceBean = ApiConfig.get().getHomeSourceBean();
-        if (sourceBean.getKey().startsWith("py_") || sourceBean.getApi().endsWith(".py")) {
-            return pyLoader.proxyInvoke(sourceBean.getKey(), getPyUrl(sourceBean), param);
-        }else {
-            return jarLoader.proxyInvoke(param);
-        }
+		return jarLoader.proxyInvoke(param);
     }
 
     public JSONObject jsonExt(String key, LinkedHashMap<String, String> jxs, String url) {
@@ -1088,15 +1075,5 @@ public class ApiConfig {
         superPb.setExt("");
         superPb.setType(4);
         parseBeanList.add(0, superPb);
-    }
-    private String getPyUrl(SourceBean sb)
-    {
-        String api = sb.getApi();
-        String ext = sb.getExt();
-        StringBuilder urlBuilder = new StringBuilder(api);
-        if (!ext.isEmpty()) {
-            urlBuilder.append(api.contains("?") ? "&" : "?").append("extend=").append(ext);
-        }
-        return urlBuilder.toString();
     }
 }
