@@ -81,7 +81,7 @@
                 <TextView
                     android:textSize="@dimen/ts_24"
                     android:textColor="@android:color/white"
-                    android:ellipsize="marquee"
+                    android:ellipsize="end"
                     android:id="@+id/tvHomeApi"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -119,7 +119,7 @@
                 <TextView
                     android:textSize="@dimen/ts_24"
                     android:textColor="@android:color/white"
-                    android:ellipsize="marquee"
+                    android:ellipsize="end"
                     android:id="@+id/tvApi"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -379,6 +379,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:maxEms="4"
+							android:ellipsize="end"
                             android:singleLine="true"/>
                         <TextView
                             android:textSize="@dimen/ts_30"
@@ -629,6 +630,9 @@
                             android:textSize="@dimen/ts_24"
                             android:textColor="@android:color/white"
                             android:id="@+id/tvDns"
+							android:maxEms="4"
+							android:ellipsize="end"
+                            android:singleLine="true"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"/>
                         <TextView
