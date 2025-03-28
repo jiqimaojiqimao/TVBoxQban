@@ -2,11 +2,11 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId 'com.jvhuiys.player'
-        minSdkVersion 21
+        minSdkVersion 16
         targetSdkVersion 26
         versionCode 1
         versionName '20250326-2222'
@@ -64,7 +64,6 @@ repositories {
         dirs 'libs'
     }
 }
-
 dependencies {
     api fileTree(dir: "libs", include: ["*.jar"])
     
@@ -104,26 +103,26 @@ dependencies {
     // implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'
     implementation 'com.owen:tv-recyclerview:3.0.0'
 
-     //   implementation 'com.github.getActivity:XXPermissions:13.6'
+ //   implementation 'com.github.getActivity:XXPermissions:13.6'
     implementation 'com.github.getActivity:XXPermissions:18.5'
     implementation 'org.jsoup:jsoup:1.14.1'
     implementation 'com.github.hedzr:android-file-chooser:v1.2.0-final'
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
-    implementation(name:'pyramid',ext:'aar')      //xuameng   py
-    implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
+    implementation(name:'pyramid',ext:'aar')
+    implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')
         //支持http3
     implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
 //    implementation 'com.google.android.gms:play-services-cronet:18.0.1'
     implementation ('org.chromium.net:cronet-embedded:101.4951.41')
       //工具类
-    implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     implementation 'com.blankj:utilcodex:1.31.0'
+    implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     //xuameng exo
-    def exoplayerVersion = "2.18.7"
-    api "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-dash:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
-    api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
+    api "com.google.android.exoplayer:exoplayer-core:2.14.2"
+    api "com.google.android.exoplayer:exoplayer-dash:2.14.2"
+    api "com.google.android.exoplayer:exoplayer-hls:2.14.2"
+    api "com.google.android.exoplayer:exoplayer-rtsp:2.14.2"
+    api "com.google.android.exoplayer:extension-rtmp:2.14.2"
+    api "com.google.android.exoplayer:extension-okhttp:2.14.2"
 }
