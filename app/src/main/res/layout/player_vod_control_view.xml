@@ -542,18 +542,19 @@
         android:focusable="false"
         android:focusableInTouchMode="false"
         android:visibility="gone"
-        android:layout_width="@dimen/vs_280"
-        android:layout_height="@dimen/vs_160">
+        android:layout_width="@dimen/vs_200"
+        android:layout_height="@dimen/vs_100">
         <ImageView
             android:layout_gravity="center"
             android:id="@+id/tv_progress_icon"
             android:focusable="false"
             android:focusableInTouchMode="false"
-            android:layout_width="@dimen/vs_70"
-            android:layout_height="@dimen/vs_60"
+            android:layout_width="@dimen/vs_50"
+            android:layout_height="@dimen/vs_45"
+            android:singleLine="true"
             android:scaleType="fitXY"/>
         <TextView
-            android:textSize="@dimen/ts_30"
+            android:textSize="@dimen/ts_22"
             android:textColor="@android:color/white"
             android:layout_gravity="center"
             android:id="@+id/tv_progress_text"
@@ -561,7 +562,8 @@
             android:focusableInTouchMode="false"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/vs_45"/>
+            android:layout_marginBottom="@dimen/vs_5"
+            android:layout_marginTop="@dimen/vs_5"/>
     </LinearLayout>
     <ProgressBar
         android:layout_gravity="center"
@@ -618,8 +620,8 @@
         android:layout_height="@dimen/vs_80"
         android:src="@drawable/app_icon"/>
     <FrameLayout
-        android:orientation="horizontal"
         android:layout_gravity="center"
+        android:orientation="horizontal"
         android:id="@+id/play_speed_3_container"
         android:background="@drawable/bg_speed_indicator"
         android:visibility="gone"
@@ -627,19 +629,19 @@
         android:layout_height="@dimen/vs_100">
         <TextView
             android:textSize="@dimen/ts_30"
-            android:layout_gravity="center|left"
-            android:layout_marginLeft="@dimen/vs_20"
             android:textColor="@color/color_FFFFFF"
+            android:layout_gravity="center|left"
             android:id="@+id/tv_speed_3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/vs_20"
             android:text="倍速播放"/>
         <ImageView
             android:layout_gravity="center|right"
-            android:layout_marginRight="@dimen/vs_20"
-            android:layout_marginLeft="@dimen/vs_0"
             android:layout_width="@dimen/vs_30"
             android:layout_height="@dimen/vs_30"
+            android:layout_marginLeft="@dimen/vs_0"
+            android:layout_marginRight="@dimen/vs_20"
             android:src="@drawable/scrollview"/>
     </FrameLayout>
 </FrameLayout>
