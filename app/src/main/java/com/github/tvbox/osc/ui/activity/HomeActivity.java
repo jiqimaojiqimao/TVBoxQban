@@ -530,7 +530,7 @@ public class HomeActivity extends BaseActivity {
 		
         // 检查 fragments 状态
         if (this.fragments.size() <= 0 || this.sortFocused >= this.fragments.size() || this.sortFocused < 0) {
-            Exit();
+            exit();
             return;
         }
 
@@ -551,7 +551,7 @@ public class HomeActivity extends BaseActivity {
                 this.mGridView.setSelection(0);
                 return;
             } else {
-                Exit();
+                exit();
                 return;
             }
         } else if (baseLazyFragment instanceof UserFragment && UserFragment.tvHotList1.canScrollVertically(-1)) {
@@ -560,7 +560,7 @@ public class HomeActivity extends BaseActivity {
             this.mGridView.setSelection(0);
             return;
         } else {
-            Exit();
+            exit();
             return;
         }
     }
