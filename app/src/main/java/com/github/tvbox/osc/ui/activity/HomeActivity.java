@@ -747,7 +747,7 @@ public class HomeActivity extends BaseActivity {
             clp.width = AutoSizeUtils.mm2px(dialog.getContext(), 380+200*spanCount);
             dialog.setTip("请选择首页数据源");
             int select = sites.indexOf(ApiConfig.get().getHomeSourceBean());
-            if (select<0) select = 0;
+			if (select < 0 || select >= sites.size()) select = 0;
             dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<SourceBean>() {
                 @Override
                 public void click(SourceBean value, int pos) {
