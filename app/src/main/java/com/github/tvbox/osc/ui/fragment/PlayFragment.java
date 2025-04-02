@@ -868,9 +868,9 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     public boolean onBackPressed() {
-        int requestedOrientation = getActivity().getRequestedOrientation();
+        int requestedOrientation = requireActivity().getRequestedOrientation();
         if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT) {
-            getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            requireActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
             mController.mLandscapePortraitBtn.setText("竖屏");
         }
         if (mController.onBackPressed()) {
