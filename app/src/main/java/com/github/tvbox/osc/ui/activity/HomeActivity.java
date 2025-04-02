@@ -96,6 +96,7 @@ public class HomeActivity extends BaseActivity {
     private boolean sortChange = false;
     private int currentSelected = 0;
     private int sortFocused = 0;
+	private int PositionXu = 0;
     public View sortFocusView = null;
     private final Handler mHandler = new Handler();
     private long mExitTime = 0;
@@ -191,6 +192,7 @@ public class HomeActivity extends BaseActivity {
                     textView.getPaint().setFakeBoldText(true);
                     textView.setTextColor(HomeActivity.this.getResources().getColor(R.color.color_FFFFFF));
                     textView.invalidate();
+					PositionXu = position;
                     MovieSort.SortData sortData = sortAdapter.getItem(position);
                     if (!sortData.filters.isEmpty()) {
                         showFilterIcon(sortData.filterSelectCount());
@@ -301,12 +303,17 @@ public class HomeActivity extends BaseActivity {
         //mHandler.postDelayed(mFindFocus, 500);
     }
 
+	private boolean skipNextUpdate = false;
 
     private void initViewModel() {
         sourceViewModel = new ViewModelProvider(this).get(SourceViewModel.class);
         sourceViewModel.sortResult.observe(this, new Observer<AbsSortXml>() {
             @Override
             public void onChanged(AbsSortXml absXml) {
+                if (skipNextUpdate) {
+                    skipNextUpdate = false;
+                    return;
+                }
                 showSuccess();
                 if (absXml != null && absXml.classes != null && absXml.classes.sortList != null) {
                     sortAdapter.setNewData(DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), absXml.classes.sortList, true));
@@ -516,6 +523,10 @@ public class HomeActivity extends BaseActivity {
 	@SuppressLint("NotifyDataSetChanged")
     @Override
     public void onBackPressed() {
+        if(isLoading() && dataInitOk){
+            refreshEmpty();
+            return;
+        }
 
          // 如果处于 VOD 删除模式，则退出该模式并刷新界面
         if (HawkConfig.hotVodDelete) {
@@ -614,8 +625,12 @@ public class HomeActivity extends BaseActivity {
                 HomeActivity.this.startActivity(newIntent);
             }
         } else if (event.type == RefreshEvent.TYPE_FILTER_CHANGE) {
-            if (currentView != null) {
-                showFilterIcon((int) event.obj);
+            if (currentView != null && PositionXu !=0) {
+                MovieSort.SortData sortData = sortAdapter.getItem(PositionXu);
+                if (!sortData.filters.isEmpty()) {
+                    showFilterIcon(sortData.filterSelectCount());
+                }
+          //      showFilterIcon((int) event.obj);
             }
         }
     }
@@ -779,5 +794,12 @@ public class HomeActivity extends BaseActivity {
         }else {
 			Toast.makeText(HomeActivity.this, "主页暂无数据！联系许大师吧！", Toast.LENGTH_SHORT).show();
 		}
+    }
+    private void refreshEmpty(){
+        skipNextUpdate=true;
+        showSuccess();
+        sortAdapter.setNewData(DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), new ArrayList<>(), true));
+        initViewPager(null);
+		Toast.makeText(HomeActivity.this, "聚汇影视提示：已打断当前源加载！", Toast.LENGTH_SHORT).show();
     }
 }
