@@ -317,7 +317,7 @@ public class ApiConfig {
                 if (jarLoader.load(cache.getAbsolutePath())) {
                     callback.success();
                 } else {
-                    callback.error("");
+                    callback.error("md5缓存失效");
                 }
                 return;
             }
@@ -325,10 +325,8 @@ public class ApiConfig {
             if (Boolean.parseBoolean(jarCache) && cache.exists() && !FileUtils.isWeekAgo(cache)) {
                 if (jarLoader.load(cache.getAbsolutePath())) {
                     callback.success();
-                } else {
-                    callback.error("");
-                }
-                return;
+					return;
+                } 
             }
 		}
 
@@ -340,7 +338,7 @@ public class ApiConfig {
                 .execute(new AbsCallback<File>() {
 
                     @Override
-                    public File convertResponse(okhttp3.Response response) throws Throwable {
+                    public File convertResponse(okhttp3.Response response){
                         File cacheDir = cache.getParentFile();
                         assert cacheDir != null;
                         if (!cacheDir.exists()) cacheDir.mkdirs();
@@ -353,7 +351,8 @@ public class ApiConfig {
                                 LOG.i("echo---jar Response: " + respData);
                                 byte[] imgJar = getImgJar(respData);
                                 if (imgJar == null || imgJar.length == 0) {
-                                    throw new IOException("Generated JAR data is empty");
+                                    LOG.e("echo---Generated JAR data is empty");
+                                    callback.error("JAR data is empty");
                                 }
                                 fos.write(imgJar);
                             } else {
@@ -386,11 +385,11 @@ public class ApiConfig {
                                 }
                             } catch (Exception e) {
                                 LOG.e("echo---jar Loader threw exception: " + e.getMessage());
-                                callback.error("加载异常: " + e.getMessage());
+                                callback.error("JAR加载异常: " + e.getMessage());
                             }
                         } else {
                             LOG.e("echo---jar File not found");
-                            callback.error("文件不存在！");
+                            callback.error("JAR文件不存在");
                         }
                     }
 
@@ -890,6 +889,7 @@ public class ApiConfig {
                     }
                     LOG.i("echo-live-proxy-url:"+url);
                 }else {
+					liveChannelGroupList.clear();
                     return;
                 }
             }
