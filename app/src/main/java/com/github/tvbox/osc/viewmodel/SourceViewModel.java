@@ -553,7 +553,7 @@ public class SourceViewModel extends ViewModel {
 
                     String json = null;
                     try {
-                        json = future.get(10, TimeUnit.SECONDS);
+                        json = future.get(15, TimeUnit.SECONDS);
                         LOG.i("echo--getDetail--result:" + json);
                     } catch (TimeoutException e) {
                         LOG.i("echo--getDetail--timeout");
@@ -802,7 +802,7 @@ public class SourceViewModel extends ViewModel {
                     });
 
                     try {
-                        String json = future.get(10, TimeUnit.SECONDS);
+                        String json = future.get(15, TimeUnit.SECONDS);
                         LOG.i("echo--getPlay--result:" + json);
                         // 处理返回的 JSON
                         if (!TextUtils.isEmpty(json)) {
