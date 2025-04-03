@@ -88,7 +88,9 @@ public class GridFragment extends BaseLazyFragment {
 
     @Override
     protected void init() {
-		sortData.filterSelect.clear();    //xuameng换源，刷新页面过滤BUG
+		if (sortData.filterSelect != null || sortData.filterSelect.size() > 0){
+			sortData.filterSelect.clear();    //xuameng换源，刷新页面过滤BUG
+		}
         initView();
         initViewModel();
         initData();
