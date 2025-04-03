@@ -352,7 +352,7 @@ public class ApiConfig {
                                 byte[] imgJar = getImgJar(respData);
                                 if (imgJar == null || imgJar.length == 0) {
                                     LOG.e("echo---Generated JAR data is empty");
-                                    callback.error("JAR data is empty");
+                                    callback.error("JAR数据为空");
                                 }
                                 fos.write(imgJar);
                             } else {
@@ -385,7 +385,7 @@ public class ApiConfig {
                                 }
                             } catch (Exception e) {
                                 LOG.e("echo---jar Loader threw exception: " + e.getMessage());
-                                callback.error("JAR加载异常: " + e.getMessage());
+                                callback.error("JAR加载异常");
                             }
                         } else {
                             LOG.e("echo---jar File not found");
@@ -399,7 +399,7 @@ public class ApiConfig {
                         if (ex != null) {
                             LOG.i("echo---jar Request failed: " + ex.getMessage());
                         }
-                        callback.error(ex != null ? ex.getMessage() : "未知网络错误！");
+                        callback.error("网络错误");
                     }
                 });
     }
