@@ -591,7 +591,6 @@ public class DetailActivity extends BaseActivity {
     private void onGridViewFocusChange(View view, boolean hasFocus) {
         if (llPlayerFragmentContainerBlock.getVisibility() != View.VISIBLE) return;
         llPlayerFragmentContainerBlock.setFocusable(!hasFocus);
-		llPlayerFragmentContainerBlock.setNextFocusUpId(R.id.mGridView); 
     }
 
     private void initCheckedSourcesForSearch() {
@@ -851,6 +850,7 @@ public class DetailActivity extends BaseActivity {
 						tvCollect.setNextFocusUpId(R.id.mGridView); 
 						tvDesc.setNextFocusUpId(R.id.mGridView); 
 						tvPush.setNextFocusUpId(R.id.mGridView); 
+						llPlayerFragmentContainerBlock.setNextFocusUpId(R.id.mGridView); 
 
                         if (showPreview) {
                             jumpToPlay();
