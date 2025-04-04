@@ -1,12 +1,15 @@
 package com.github.tvbox.osc.ui.adapter;
 
+import android.app.Activity;
 import android.graphics.Color;
+import android.view.View;
 import android.widget.TextView;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.bean.VodInfo;
+import com.owen.tvrecyclerview.widget.V7GridLayoutManager;
 
 import java.util.ArrayList;
 
@@ -16,8 +19,10 @@ import java.util.ArrayList;
  * @description:
  */
 public class SeriesAdapter extends BaseQuickAdapter<VodInfo.VodSeries, BaseViewHolder> {
-    public SeriesAdapter() {
+    private V7GridLayoutManager mGridLayoutManager;
+    public SeriesAdapter(V7GridLayoutManager gridLayoutManager) {
         super(R.layout.item_series, new ArrayList<>());
+        this.mGridLayoutManager = gridLayoutManager;
     }
 
     @Override
@@ -29,5 +34,18 @@ public class SeriesAdapter extends BaseQuickAdapter<VodInfo.VodSeries, BaseViewH
             tvSeries.setTextColor(Color.WHITE);
         }
         helper.setText(R.id.tvSeries, item.name);
+
+ /*       if (getData().size() == 1 && helper.getLayoutPosition() == 0) {
+            helper.itemView.setNextFocusUpId(R.id.mGridViewFlag);
+        }
+xuameng 选集列表*/ 
+        int spanCount = mGridLayoutManager.getSpanCount();
+        int position = helper.getLayoutPosition();
+        int totalCount = getData().size();
+        int remainder = totalCount % spanCount;
+        int lastRowStart = remainder == 0 ? totalCount - spanCount : totalCount - remainder;
+        if (position >= lastRowStart) {
+            helper.itemView.setNextFocusDownId(R.id.tvPlay);
+        }
     }
 }
