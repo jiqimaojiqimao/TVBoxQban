@@ -452,16 +452,6 @@ public class DetailActivity extends BaseActivity {
             public void onItemClick(TvRecyclerView parent, View itemView, int position) {
             }
         });
-        mGridView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-             @Override
-             public void onFocusChange(View v, boolean hasFocus) {
-                 if (hasFocus && vodInfo.playIndex != -1) {
-                     // 当获得焦点且有目标位置时，执行滚动和聚焦
-                     LOG.i("echo-onFocusChange");
-                     mGridView.setSelection(vodInfo.playIndex);
-                 }
-             }
-         });
 
         mGridViewFlag.setOnItemListener(new TvRecyclerView.OnItemListener() {
             private void refresh(View itemView, int position) {
@@ -485,7 +475,6 @@ public class DetailActivity extends BaseActivity {
                     vodInfo.playFlag = newFlag;
                     seriesFlagAdapter.notifyItemChanged(position);
                     refreshList();
-					mGridView.clearFocus();
                 }
                 seriesFlagFocus = itemView;
             }
@@ -847,6 +836,7 @@ public class DetailActivity extends BaseActivity {
 								if (newState == mGridView.SCROLL_STATE_IDLE) {   //xuameng剧集滚动完成后焦点选择为剧集
 								// 滚动已经停止，执行你需要的操作
 								mGridView.requestFocus();
+								mGridView.setSelection(vodInfo.playIndex);
 								mGridView.removeOnScrollListener(this);    //xuameng删除滚动监听
 								}
 							}
@@ -1145,6 +1135,7 @@ public class DetailActivity extends BaseActivity {
 					if (newState == mGridView.SCROLL_STATE_IDLE) {    //xuameng剧集滚动完成后焦点选择为剧集
 					// 滚动已经停止，执行你需要的操作
 					mGridView.requestFocus();
+					mGridView.setSelection(vodInfo.playIndex);
 					mGridView.removeOnScrollListener(this);				//xuameng删除滚动监听				
 					}
 				}
