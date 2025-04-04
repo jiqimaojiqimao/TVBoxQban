@@ -1147,7 +1147,7 @@ public class DetailActivity extends BaseActivity {
             return;
         }
         else if (seriesSelect) {
-            if (mGridViewFlag.getVisibility() = View.VISIBLE && seriesFlags.size() > 1 && !seriesFlagFocus.isFocused()) {
+            if (mGridViewFlag.getVisibility() = View.VISIBLE && vodInfo.seriesFlags.size() > 1 && !seriesFlagFocus.isFocused()) {
                 seriesFlagFocus.requestFocus();
                 return;
             }else {
