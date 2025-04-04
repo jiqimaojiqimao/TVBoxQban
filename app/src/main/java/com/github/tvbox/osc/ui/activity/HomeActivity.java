@@ -385,6 +385,7 @@ public class HomeActivity extends BaseActivity {
                     @Override
                     public void error(String msg) {
                         jarInitOk = true;
+						dataInitOk = true;
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
