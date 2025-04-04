@@ -189,7 +189,7 @@ public class DetailActivity extends BaseActivity {
         this.mGridViewLayoutMgr = new V7GridLayoutManager(this.mContext, 6);
         mGridView.setLayoutManager(this.mGridViewLayoutMgr);
 //        mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
-        seriesAdapter = new SeriesAdapter();
+        seriesAdapter = new SeriesAdapter(this.mGridViewLayoutMgr);
         mGridView.setAdapter(seriesAdapter);
         mGridViewFlag = findViewById(R.id.mGridViewFlag);
         mGridViewFlag.setHasFixedSize(true);
@@ -214,6 +214,15 @@ public class DetailActivity extends BaseActivity {
             protected void convert(BaseViewHolder helper, String item) {
                 TextView tvSeries = helper.getView(R.id.tvSeriesGroup);
                 tvSeries.setText(item);
+                if (helper.getLayoutPosition() == getData().size() - 1) {   //xuameng 选集分组
+                    helper.itemView.setNextFocusRightId(R.id.tvPlay);
+                }
+				if(mGridViewFlag.getVisibility() == View.VISIBLE) {
+					helper.itemView.setNextFocusUpId(R.id.mGridViewFlag);
+				}else{
+					helper.itemView.setNextFocusUpId(R.id.tvPlay);
+				}
+
             }
         };
         mSeriesGroupView.setAdapter(seriesGroupAdapter);
@@ -582,6 +591,7 @@ public class DetailActivity extends BaseActivity {
     private void onGridViewFocusChange(View view, boolean hasFocus) {
         if (llPlayerFragmentContainerBlock.getVisibility() != View.VISIBLE) return;
         llPlayerFragmentContainerBlock.setFocusable(!hasFocus);
+		llPlayerFragmentContainerBlock.setNextFocusUpId(R.id.mGridView); 
     }
 
     private void initCheckedSourcesForSearch() {
@@ -841,7 +851,6 @@ public class DetailActivity extends BaseActivity {
 						tvCollect.setNextFocusUpId(R.id.mGridView); 
 						tvDesc.setNextFocusUpId(R.id.mGridView); 
 						tvPush.setNextFocusUpId(R.id.mGridView); 
-						mGridView.setNextFocusDownId(R.id.tvPlay);   //xuameng下面焦点是播放
 
                         if (showPreview) {
                             jumpToPlay();
@@ -1147,7 +1156,7 @@ public class DetailActivity extends BaseActivity {
             return;
         }
         else if (seriesSelect) {
-            if (mGridViewFlag.getVisibility() = View.VISIBLE && vodInfo.seriesFlags.size() > 1 && !seriesFlagFocus.isFocused()) {
+            if (seriesFlagFocus != null && !seriesFlagFocus.isFocused()) {
                 seriesFlagFocus.requestFocus();
                 return;
             }else {
