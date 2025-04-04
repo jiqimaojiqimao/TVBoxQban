@@ -821,6 +821,7 @@ public class DetailActivity extends BaseActivity {
                         seriesFlagAdapter.setNewData(vodInfo.seriesFlags);
                         mGridViewFlag.scrollToPosition(flagScrollTo);
 
+						mGridView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 						@Override
 						public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
 								super.onScrollStateChanged(recyclerView, newState);
@@ -841,7 +842,6 @@ public class DetailActivity extends BaseActivity {
 						tvDesc.setNextFocusUpId(R.id.mGridView); 
 						tvPush.setNextFocusUpId(R.id.mGridView); 
 						mGridView.setNextFocusDownId(R.id.tvPlay);   //xuameng下面焦点是播放
-						mGridView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
                         if (showPreview) {
                             jumpToPlay();
