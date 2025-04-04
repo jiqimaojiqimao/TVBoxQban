@@ -1126,7 +1126,7 @@ public class DetailActivity extends BaseActivity {
         if (fullWindows) {
             if (playFragment.onBackPressed())  //xuameng上一级交给VODController控制
                 return;
-
+            toggleFullPreview();
 			mGridView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 			@Override
 			public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
@@ -1144,11 +1144,10 @@ public class DetailActivity extends BaseActivity {
 //            mGridView.requestFocus(); 没用了
             List<VodInfo.VodSeries> list = vodInfo.seriesMap.get(vodInfo.playFlag);
             mSeriesGroupView.setVisibility(list.size()>GroupCount ? View.VISIBLE : View.GONE);
-            toggleFullPreview();
             return;
         }
         else if (seriesSelect) {
-            if (seriesFlagFocus != null && !seriesFlagFocus.isFocused()) {
+            if (mGridViewFlag.getVisibility() = View.VISIBLE && seriesFlags.size() > 1 && !seriesFlagFocus.isFocused()) {
                 seriesFlagFocus.requestFocus();
                 return;
             }else {
