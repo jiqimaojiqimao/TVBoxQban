@@ -10,7 +10,7 @@ import com.github.tvbox.osc.bean.VodInfo;
 
 import java.util.ArrayList;
 
-/**
+/**   xuameng 选源列表
  * @author pj567
  * @date :2020/12/22
  * @description:
@@ -30,5 +30,8 @@ public class SeriesFlagAdapter extends BaseQuickAdapter<VodInfo.VodSeriesFlag, B
             select.setVisibility(View.GONE);
         }
         helper.setText(R.id.tvSeriesFlag, item.name);
+        if (helper.getLayoutPosition() == getData().size() - 1) {
+            helper.itemView.setNextFocusRightId(R.id.tvPlay);
+        }
     }
 }
