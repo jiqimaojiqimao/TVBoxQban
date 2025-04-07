@@ -101,6 +101,7 @@ public class RemoteServer extends NanoHTTPD {
 
 	private Response getProxy(Object[] rs){
         try {
+			if (rs[0] instanceof NanoHTTPD.Response) return (NanoHTTPD.Response) rs[0];
             int code = (int) rs[0];
             String mime = (String) rs[1];
             InputStream stream = rs[2] != null ? (InputStream) rs[2] : null;
@@ -141,6 +142,7 @@ public class RemoteServer extends NanoHTTPD {
                 }
                 if (fileName.equals("/proxy")) {
                     Map<String, String> params = session.getParms();
+					params.putAll(session.getHeaders());
                     if (params.containsKey("do")) {
                         Object[] rs = ApiConfig.get().proxyLocal(params);
 						return getProxy(rs);
