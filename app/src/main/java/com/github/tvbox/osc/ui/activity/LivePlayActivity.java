@@ -1669,6 +1669,10 @@ public class LivePlayActivity extends BaseActivity {
             @Override
             public void onItemPreSelected(TvRecyclerView parent, View itemView, int position) {
                 if(mRightEpgList.isScrolling() || mRightEpgList.isComputingLayout()) { //xuameng如果EPG正在滚动返回，解决BUG
+                   if (currentLiveChannelIndex != -1 && currentChannelGroupIndex != -1){
+					   mChannelGroupView.setSelection(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
+                       mLiveChannelView.setSelection(currentLiveChannelIndex); //xuameng先滚动再选择防止空指针
+		           }
                     return;
                 } else epgListAdapter.setFocusedEpgIndex(-1);
             }
