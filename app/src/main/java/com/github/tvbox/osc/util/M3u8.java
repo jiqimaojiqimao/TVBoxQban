@@ -52,12 +52,15 @@ public class M3u8 {
      * @author asdfgh
      * <a href="https://github.com/asdfgh"> asdfgh </a>
      */
+
+    private static int timesNoAd = 10;  //出现超过多少次的域名不认为是广告
     private static String removeMinorityUrl(String tsUrlPre, String m3u8content) {
         String linesplit = "\n";
         if (m3u8content.contains("\r\n"))
             linesplit = "\r\n";
         String[] lines = m3u8content.split(linesplit);
 
+        // 第一阶段：按去掉文件后缀后统计各前缀出现次数
         HashMap<String, Integer> preUrlMap = new HashMap<>();
         for (String line : lines) {
             if (line.length() == 0 || line.charAt(0) == '#') {
@@ -76,8 +79,9 @@ public class M3u8 {
             }
         }
         if (preUrlMap.size() <= 1) return null;
+        boolean domainFiltering = false;
         if (maxPercent(preUrlMap) < 0.8) {
-            //尝试判断域名，取同域名最多的链接，其它域名当作广告去除
+            // 尝试判断域名，取同域名最多的链接，其它域名当作广告去除
             preUrlMap.clear();
             for (String line : lines) {
                 if (line.length() == 0 || line.charAt(0) == '#') {
@@ -86,7 +90,7 @@ public class M3u8 {
                 if (!line.startsWith("http://") && !line.startsWith("https://")) {
                     return null;
                 }
-                int ifirst = line.indexOf('/', 9);//skip http:// or https://
+                int ifirst = line.indexOf('/', 9); // skip http:// 或 https://
                 if (ifirst <= 0) {
                     continue;
                 }
@@ -102,7 +106,10 @@ public class M3u8 {
             if (maxPercent(preUrlMap) < 0.8) {
                 return null; //视频非广告片断占比不够大
             }
+            domainFiltering = true;
         }
+
+        // 找出出现次数最多的 key（文件前缀或域名均适用）
         int maxTimes = 0;
         String maxTimesPreUrl = "";
         for (Map.Entry<String, Integer> entry : preUrlMap.entrySet()) {
@@ -115,6 +122,7 @@ public class M3u8 {
 
         boolean dealedExtXKey = false;
         for (int i = 0; i < lines.length; ++i) {
+            // 处理解密KEY的绝对路径拼接
             if (!dealedExtXKey && lines[i].startsWith("#EXT-X-KEY")) {
                 String keyUrl = "";
                 int start = lines[i].indexOf("URI=\"");
@@ -127,7 +135,7 @@ public class M3u8 {
                     if (!keyUrl.startsWith("http://") && !keyUrl.startsWith("https://")) {
                         String newKeyUrl;
                         if (keyUrl.charAt(0) == '/') {
-                            int ifirst = tsUrlPre.indexOf('/', 9);//skip https://, http://
+                            int ifirst = tsUrlPre.indexOf('/', 9); //skip https://, http://
                             newKeyUrl = tsUrlPre.substring(0, ifirst) + keyUrl;
                         } else
                             newKeyUrl = tsUrlPre + keyUrl;
@@ -139,19 +147,46 @@ public class M3u8 {
             if (lines[i].length() == 0 || lines[i].charAt(0) == '#') {
                 continue;
             }
-            if (lines[i].startsWith(maxTimesPreUrl)) {
-                if (!lines[i].startsWith("http://") && !lines[i].startsWith("https://")) {
-                    if (lines[i].charAt(0) == '/') {
-                        int ifirst = tsUrlPre.indexOf('/', 9);//skip https://, http://
-                        lines[i] = tsUrlPre.substring(0, ifirst) + lines[i];
-                    } else
-                        lines[i] = tsUrlPre + lines[i];
+            // 根据判断方式过滤
+            if (!domainFiltering) {
+                if (lines[i].startsWith(maxTimesPreUrl)) {
+                    if (!lines[i].startsWith("http://") && !lines[i].startsWith("https://")) {
+                        if (lines[i].charAt(0) == '/') {
+                            int ifirst = tsUrlPre.indexOf('/', 9); //skip https://, http://
+                            lines[i] = tsUrlPre.substring(0, ifirst) + lines[i];
+                        } else
+                            lines[i] = tsUrlPre + lines[i];
+                    }
+                } else {
+                    if (i > 0 && lines[i - 1].length() > 0 && lines[i - 1].charAt(0) == '#') {
+                        lines[i - 1] = "";
+                    }
+                    lines[i] = "";
                 }
             } else {
-                if (i > 0 && lines[i - 1].length() > 0 && lines[i - 1].charAt(0) == '#') {
-                    lines[i - 1] = "";
+                // 域名过滤模式：先转换为绝对 URL
+                String absoluteUrl = lines[i];
+                if (!absoluteUrl.startsWith("http://") && !absoluteUrl.startsWith("https://")) {
+                    if (absoluteUrl.charAt(0) == '/') {
+                        int ifirst = tsUrlPre.indexOf('/', 9);
+                        absoluteUrl = tsUrlPre.substring(0, ifirst) + absoluteUrl;
+                    } else {
+                        absoluteUrl = tsUrlPre + absoluteUrl;
+                    }
                 }
-                lines[i] = "";
+                // 提取域名部分（http://xxx或https://xxx）
+                int ifirst = absoluteUrl.indexOf('/', 9);
+                String domain = (ifirst > 0) ? absoluteUrl.substring(0, ifirst) : absoluteUrl;
+                // 保留条件：域名等于出现次数最多的，或者该域名出现次数超过timesNoAd次
+                Integer cnt = preUrlMap.get(domain);
+                if (domain.equals(maxTimesPreUrl) || (cnt != null && cnt >= timesNoAd)) {
+                    lines[i] = absoluteUrl;
+                } else {
+                    if (i > 0 && lines[i - 1].length() > 0 && lines[i - 1].charAt(0) == '#') {
+                        lines[i - 1] = "";
+                    }
+                    lines[i] = "";
+                }
             }
         }
         return String.join(linesplit, lines);
