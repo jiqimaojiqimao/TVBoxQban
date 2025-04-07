@@ -214,4 +214,6 @@
 # Cronet支持http3
 -keep class com.google.net.cronet.**{*;}
 -keep class org.chromium.net.**{*;}
+# Nano
+-keep class fi.iki.elonen.** { *; }
 
