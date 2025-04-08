@@ -53,8 +53,8 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
         this.mShowList = showList;
         if(style!=null ){
             if(style.type.equals("list"))this.mShowList=true;
-            if(style.ratio<1)this.defaultWidth=220;
-            if(style.ratio>1.7)this.defaultWidth=340;
+            if(style.ratio<1)this.defaultWidth=300;
+            if(style.ratio>1.7)this.defaultWidth=400;
         }
         this.style = style;
     }
