@@ -44,6 +44,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * @author pj567
@@ -61,7 +63,8 @@ public class GridFragment extends BaseLazyFragment {
     private boolean isLoad = false;
     private boolean isTop = true;
     private View focusedView = null;
-    private class GridInfo{
+	private String bStyle="";
+    private static class GridInfo{
         public String sortID="";
         public TvRecyclerView mGridView;
         public GridAdapter gridAdapter;
@@ -91,6 +94,7 @@ public class GridFragment extends BaseLazyFragment {
 		if (sortData.filterSelect != null || sortData.filterSelect.size() > 0){
 			sortData.filterSelect.clear();    //xuameng换源，刷新页面过滤BUG
 		}
+		bStyle=ApiConfig.get().getHomeSourceBean().getStyle();
         initView();
         initViewModel();
         initData();
@@ -98,7 +102,7 @@ public class GridFragment extends BaseLazyFragment {
 
     private void changeView(String id,Boolean isFolder){
         if(isFolder){
-            this.sortData.flag ="1"; // 修改sortData.flag
+            this.sortData.flag =bStyle.isEmpty()?"1":"2"; // 修改sortData.flag
         }else {
             this.sortData.flag ="2"; // 修改sortData.flag
         }
@@ -145,6 +149,8 @@ public class GridFragment extends BaseLazyFragment {
         if(mGridView != null) mGridView.requestFocus();
         return true;
     }
+
+	private GridAdapter.Style style;
     // 更改当前页面
     private void createView(){
         this.saveCurrentView(); // 保存当前页面
@@ -162,7 +168,17 @@ public class GridFragment extends BaseLazyFragment {
             mGridView.setVisibility(View.VISIBLE);
         }
         mGridView.setHasFixedSize(true);
-        gridAdapter = new GridAdapter(isFolederMode());
+         if(!bStyle.isEmpty()){
+             try {
+                 JSONObject jsonObject = new JSONObject(bStyle);
+                 float ratio = (float) jsonObject.getDouble("ratio");
+                 String type = jsonObject.getString("type");
+                 style = new GridAdapter.Style(ratio, type);
+             }catch (JSONException e){
+ 
+             }
+         }
+         gridAdapter = new GridAdapter(isFolederMode(), style);
         this.page =1;
         this.maxPage =1;
         this.isLoad = false;
@@ -174,7 +190,19 @@ public class GridFragment extends BaseLazyFragment {
         if(isFolederMode()){
             mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
         }else{
-            mGridView.setLayoutManager(new V7GridLayoutManager(this.mContext, isBaseOnWidth() ? 5 : 6));
+            int spanCount = isBaseOnWidth()?5:6;
+            if(!bStyle.isEmpty() && style!=null){
+                if ("rect".equals(style.type)) {
+                    if (style.ratio >= 1.7) {
+                        spanCount = 3; // 横图
+                    } else if (style.ratio >= 1.3) {
+                        spanCount = 4; // 4:3
+                    }
+                } else if ("list".equals(style.type)) {
+                    spanCount = 1;
+                }
+            }
+            mGridView.setLayoutManager(new V7GridLayoutManager(this.mContext, spanCount));
         }
 
         gridAdapter.setOnLoadMoreListener(new BaseQuickAdapter.RequestLoadMoreListener() {
