@@ -18,6 +18,7 @@ import com.github.tvbox.osc.util.MD5;
 import com.orhanobut.hawk.Hawk;
 import com.squareup.picasso.Picasso;
 import com.github.tvbox.osc.util.ImgUtil;   //xuameng base64图片
+import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
@@ -25,8 +26,18 @@ import me.jessyan.autosize.utils.AutoSizeUtils;
 
 public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
 
-    public HomeHotVodAdapter() {
+    private int defaultWidth;
+    private final ImgUtil.Style style;
+
+    /**
+     * style 数据结构：ratio 指定宽高比（宽 / 高），type 表示风格（例如 rect、list）
+     */
+    public HomeHotVodAdapter(ImgUtil.Style style) {
         super(R.layout.item_user_hot_vod, new ArrayList<>());
+        if(style!=null){
+            this.defaultWidth=ImgUtil.getStyleDefaultWidth(style);
+        }
+        this.style=style;
     }
 
     @Override
@@ -66,6 +77,13 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
         }
   //      helper.setText(R.id.tvName, item.name);
         ImageView ivThumb = helper.getView(R.id.ivThumb);
+
+        int newWidth = ImgUtil.defaultWidth;
+        int newHeight = ImgUtil.defaultHeight;
+        if(style!=null){
+            newWidth = defaultWidth;
+            newHeight = (int)(newWidth / style.ratio);
+        }
         //由于部分电视机使用glide报错
         if (!TextUtils.isEmpty(item.pic)) {
             item.pic=item.pic.trim();
@@ -77,7 +95,7 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
                         .load(DefaultConfig.checkReplaceProxy(item.pic))
                         .transform(new RoundTransformation(MD5.string2MD5(item.pic))
                                 .centerCorp(true)
-                                .override(AutoSizeUtils.mm2px(mContext, 300), AutoSizeUtils.mm2px(mContext, 400))
+                                .override(AutoSizeUtils.mm2px(mContext, newWidth), AutoSizeUtils.mm2px(mContext, newHeight))
                                 .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
                         .placeholder(R.drawable.img_loading_placeholder)
                         .noFade()
@@ -88,6 +106,21 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
         } else {
         //    ivThumb.setImageResource(R.drawable.img_loading_placeholder);
 			ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
+        }
+		        applyStyleToImage(ivThumb);//动态设置宽高
+    }
+    /**
+     * 根据传入的 style 动态设置 ImageView 的高度：高度 = 宽度 / ratio
+     */
+    private void applyStyleToImage(final ImageView ivThumb) {
+        if(style!=null){
+            ViewGroup container = (ViewGroup) ivThumb.getParent();
+            int width = defaultWidth;
+            int height = (int) (width / style.ratio);
+            ViewGroup.LayoutParams containerParams = container.getLayoutParams();
+            containerParams.height = AutoSizeUtils.mm2px(mContext, height); // 高度
+            containerParams.width = ViewGroup.LayoutParams.MATCH_PARENT; // 宽度
+            container.setLayoutParams(containerParams);
         }
     }
 }
