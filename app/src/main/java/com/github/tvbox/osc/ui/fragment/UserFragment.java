@@ -29,6 +29,7 @@ import com.github.tvbox.osc.ui.dialog.xuamengAboutDialog;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.DefaultConfig;  //xuameng长按许大师制作重启APP
 import com.github.tvbox.osc.ui.activity.HomeActivity;  //xuameng长按历史键重新载入主页数据
+import com.github.tvbox.osc.util.ImgUtil;
 
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.UA;
@@ -89,7 +90,9 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             tvHotList1.setVisibility(View.VISIBLE);
             tvHotList2.setVisibility(View.GONE);
             tvHotList1.setHasFixedSize(true);
-            tvHotList1.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
+			int spanCount = 5;
+			 if(style!=null && Hawk.get(HawkConfig.HOME_REC, 0) == 1)spanCount=ImgUtil.spanCountByStyle(style,spanCount);
+			tvHotList1.setLayoutManager(new V7GridLayoutManager(this.mContext, spanCount));
         }else {
             tvHotList1.setVisibility(View.GONE);
             tvHotList2.setVisibility(View.VISIBLE);
@@ -123,6 +126,8 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         return R.layout.fragment_user;
     }
 
+	private ImgUtil.Style style;
+
     @Override
     protected void init() {
         EventBus.getDefault().register(this);
@@ -146,7 +151,10 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         tvCollect.setOnFocusChangeListener(focusChangeListener);
         tvHotList1 = findViewById(R.id.tvHotList1);
         tvHotList2 = findViewById(R.id.tvHotList2);
-        homeHotVodAdapter = new HomeHotVodAdapter();
+        if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec!=null) {
+            style=ImgUtil.initStyle();
+        }
+		homeHotVodAdapter = new HomeHotVodAdapter(style);
         homeHotVodAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
@@ -188,7 +196,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             }
         });
 
-        homeHotVodAdapterxu = new HomeHotVodAdapterXu();
+        homeHotVodAdapterxu = new HomeHotVodAdapterXu(style);
         homeHotVodAdapterxu.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
@@ -345,8 +353,11 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             }
         });
         tvHotList2.setAdapter(homeHotVodAdapterxu);
-			initHomeHotVodXu(homeHotVodAdapterxu);        //xuameng加载单行数据
+
+			initHomeHotVodXu(homeHotVodAdapterxu);
+
 			initHomeHotVod(homeHotVodAdapter);
+		
     }
 
     private void initHomeHotVod(HomeHotVodAdapter adapter) {
