@@ -193,9 +193,13 @@ public class SettingActivity extends BaseActivity {
             jumpActivity(HomeActivity.class);
 			HawkConfig.ISrestore = false;  //xuameng恢复成功,请重启应用
 			}
-            else if ((homeSourceKey != null && !homeSourceKey.equals(Hawk.get(HawkConfig.HOME_API, "")))  || homeRec != Hawk.get(HawkConfig.HOME_REC, 0)) {
+            else if ((homeSourceKey != null && !homeSourceKey.equals(Hawk.get(HawkConfig.HOME_API, "")))) {
                 jumpActivity(HomeActivity.class, createBundle());
             }
+			else if (homeRec != Hawk.get(HawkConfig.HOME_REC, 0)){
+            AppManager.getInstance().finishAllActivity();
+            jumpActivity(HomeActivity.class);
+			}
         } else {
             AppManager.getInstance().finishAllActivity();
             jumpActivity(HomeActivity.class);
