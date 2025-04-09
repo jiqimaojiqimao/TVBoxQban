@@ -242,16 +242,15 @@ public class HomeActivity extends BaseActivity {
                 if(dataInitOk && jarInitOk){
 				String cachePath = FileUtils.getCachePath();          //xuameng点击清空缓存
                 String cspCachePath = FileUtils.getFilePath()+"/csp/";
-                String jar=ApiConfig.get().getHomeSourceBean().getJar();
-                String jarUrl=!jar.isEmpty()?jar:ApiConfig.get().getSpider();
-                File cspCacheDir = new File(cspCachePath + MD5.string2MD5(jarUrl)+".jar");
+				File cspCacheDir = new File(cspCachePath);
 				File cacheDir = new File(cachePath);
 				if (!cacheDir.exists() && !cspCacheDir.exists()) return;
 				new Thread(() -> {
 					try {
 						if(cacheDir.exists())FileUtils.cleanDirectory(cacheDir);
 						if(cspCacheDir.exists()){
-							FileUtils.deleteFile(cspCacheDir);
+					//		FileUtils.deleteFile(cspCacheDir);
+					       FileUtils.cleanDirectory(cspCacheDir);
 						}
                        // ApiConfig.get().clearJarLoader();
 					} catch (Exception e) {
