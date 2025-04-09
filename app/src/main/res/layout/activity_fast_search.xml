@@ -27,6 +27,7 @@
             android:clipToPadding="false"
             android:layout_width="fill_parent"
             android:layout_height="@dimen/vs_50"
+			android:layout_marginRight="@dimen/vs_20"
             app:tv_horizontalSpacingWithMargins="@dimen/vs_5"
             app:tv_selectedItemIsCentered="true"
             app:tv_verticalSpacingWithMargins="@dimen/vs_5"/>
