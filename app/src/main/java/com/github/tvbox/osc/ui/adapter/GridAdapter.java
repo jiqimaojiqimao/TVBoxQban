@@ -106,6 +106,7 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
               //  ivThumb.setImageResource(R.drawable.img_loading_placeholder);
 				ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
             }
+			applyStyleToImage(ivThumb);//动态设置宽高
             return;
         }
 
@@ -146,6 +147,12 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
         }
  //       helper.setText(R.id.tvName, item.name);
         helper.setText(R.id.tvActor, item.actor);
+        int newWidth = ImgUtil.defaultWidth;
+        int newHeight = ImgUtil.defaultHeight;
+        if(style!=null){
+             newWidth = defaultWidth;
+             newHeight = (int)(newWidth / style.ratio);
+         }
         ImageView ivThumb = helper.getView(R.id.ivThumb);
         //由于部分电视机使用glide报错
         if (!TextUtils.isEmpty(item.pic)) {
@@ -158,7 +165,7 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
                         .load(DefaultConfig.checkReplaceProxy(item.pic))
                         .transform(new RoundTransformation(MD5.string2MD5(item.pic))
                                 .centerCorp(true)
-                                .override(AutoSizeUtils.mm2px(mContext, 240), AutoSizeUtils.mm2px(mContext, 320))
+                                .override(AutoSizeUtils.mm2px(mContext,newWidth), AutoSizeUtils.mm2px(mContext,newHeight))
                                 .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
                         .placeholder(R.drawable.img_loading_placeholder)
                         .noFade()
