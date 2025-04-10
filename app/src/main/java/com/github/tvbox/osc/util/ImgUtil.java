@@ -30,8 +30,8 @@ public class ImgUtil {
     public static boolean isBase64Image(String picUrl) {
         return picUrl.startsWith("data:image");
     }
-    public static int defaultWidth = 300;
-    public static int defaultHeight = 400;
+    public static int defaultWidth = 240;
+    public static int defaultHeight = 320;
 
    /**
      * style 数据结构：ratio 指定宽高比（宽 / 高），type 表示风格（例如 rect、list）
@@ -77,9 +77,9 @@ public class ImgUtil {
     }
 
     public static int getStyleDefaultWidth(Style style){
-        int styleDefaultWidth = 350;
-        if(style.ratio<1)styleDefaultWidth=300;
-        if(style.ratio>1.7)styleDefaultWidth=400;
+        int styleDefaultWidth = 280;
+        if(style.ratio<1)styleDefaultWidth=220;
+        if(style.ratio>1.7)styleDefaultWidth=380;
         return styleDefaultWidth;
     }
 
