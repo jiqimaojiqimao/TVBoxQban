@@ -47,7 +47,7 @@ public class HawkConfig {
 	public static final String DOH_JSON = "doh_json";    //xuameng DNS JSON
     public static final String LIVE_GROUP_INDEX = "live_group_index";    //XUAMENG直播源index
     public static final String LIVE_GROUP_LIST = "live_group_list";  //XUAMENG直播源list
-    public static final String LIVE_API_URL = "live_api_url";
+    public static final String LIVE_API_URL = "live_api_url";     //xuameng直播接口地址
 	public static final String M3U8_PURIFY = "m3u8_purify";  //xuameng广告过滤
 	public static final String LIVE_API_HISTORY = "live_api_history";   //xuameng直播历史列表
 	public static final String LIVE_WEB_HEADER = "live_web_header";    //xuameng直播定义UA
@@ -57,7 +57,6 @@ public class HawkConfig {
 	public static boolean intSYSplayer = false;  //xuameng是否进入系统播放器
 	public static boolean intVod = false;  //xuameng判断是否进入VOD界面
 	public static boolean ISrestore = false;  //xuameng判断是否进行恢复操作
-	public static boolean LIVEerror = false;  //xuameng判断直播文件读取成功
 
     public static boolean hotVodDelete;
 }
