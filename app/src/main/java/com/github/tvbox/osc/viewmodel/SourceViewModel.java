@@ -114,8 +114,12 @@ public class SourceViewModel extends ViewModel {
         AbsSortXml cached = sortCache.get(sourceKey);
         if (cached != null) {
             LOG.i("echo--getSort-cached--"+sourceKey);
-            sortResult.postValue(cached);
-            return;
+            int homeRec = Hawk.get(HawkConfig.HOME_REC, 0);
+            boolean shouldUseCache = (homeRec != 1) || (cached.videoList != null && !cached.videoList.isEmpty());
+            if (shouldUseCache) {
+                sortResult.postValue(cached);
+                return;
+            }
         }
 
         SourceBean sourceBean = ApiConfig.get().getSource(sourceKey);
@@ -140,7 +144,7 @@ public class SourceViewModel extends ViewModel {
                     });
                     String sortJson = null;
                     try {
-                         sortJson = future.get(20, TimeUnit.SECONDS);
+                        sortJson = future.get(20, TimeUnit.SECONDS);
                     } catch (TimeoutException e) {
                         e.printStackTrace();
                         future.cancel(true);
