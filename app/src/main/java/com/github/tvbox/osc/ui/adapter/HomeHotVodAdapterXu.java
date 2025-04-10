@@ -119,7 +119,7 @@ public class HomeHotVodAdapterXu extends BaseQuickAdapter<Movie.Video, BaseViewH
             int height = (int) (width / style.ratio);
             ViewGroup.LayoutParams containerParams = container.getLayoutParams();
             containerParams.height = AutoSizeUtils.mm2px(mContext, height); // 高度
-            containerParams.width = ViewGroup.LayoutParams.MATCH_PARENT; // 宽度
+			containerParams.width = AutoSizeUtils.mm2px(mContext, width); // 宽度
             container.setLayoutParams(containerParams);
         }
     }
