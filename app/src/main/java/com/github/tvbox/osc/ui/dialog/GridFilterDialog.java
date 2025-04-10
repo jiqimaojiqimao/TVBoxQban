@@ -28,17 +28,10 @@ public class GridFilterDialog extends BaseDialog {
 
     public GridFilterDialog(@NonNull @NotNull Context context) {
         super(context);
-        setCanceledOnTouchOutside(true);
+        setCanceledOnTouchOutside(false);
         setCancelable(true);
         setContentView(R.layout.dialog_grid_filter);
         filterRoot = findViewById(R.id.filterRoot);
-        View rootView = findViewById(R.id.root);
-        rootView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
     }
 
     public interface Callback {
