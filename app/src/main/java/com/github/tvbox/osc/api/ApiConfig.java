@@ -556,19 +556,19 @@ public class ApiConfig {
 				Hawk.put(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
 				Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
 			}
-
-            myHosts = new HashMap<>();
-            if (infoJson.has("hosts")) {
-                JsonArray hostsArray = infoJson.getAsJsonArray("hosts");
-                for (int i = 0; i < hostsArray.size(); i++) {
-                    String entry = hostsArray.get(i).getAsString();
-                    String[] parts = entry.split("=", 2); // 只分割一次，防止 value 里有 =
-                    if (parts.length == 2) {
-                        myHosts.put(parts[0], parts[1]);
-                    }
-                }
-            }
         }
+
+         myHosts = new HashMap<>();
+         if (infoJson.has("hosts")) {
+             JsonArray hostsArray = infoJson.getAsJsonArray("hosts");
+             for (int i = 0; i < hostsArray.size(); i++) {
+                 String entry = hostsArray.get(i).getAsString();
+                 String[] parts = entry.split("=", 2); // 只分割一次，防止 value 里有 =
+                 if (parts.length == 2) {
+                     myHosts.put(parts[0], parts[1]);
+                 }
+             }
+         }
 
         //video parse rule for host
         if (infoJson.has("rules")) {
@@ -878,7 +878,8 @@ public class ApiConfig {
             } else {
                 String type= livesOBJ.get("type").getAsString();
                 if(type.equals("0")){
-                    url = livesOBJ.get("url").getAsString();
+                    url = livesOBJ.has("url")?livesOBJ.get("url").getAsString():"";
+                    if(url.isEmpty())url=livesOBJ.has("api")?livesOBJ.get("api").getAsString():"";
                     if(!url.startsWith("http://127.0.0.1")){
                         if(url.startsWith("http")){
                             url = Base64.encodeToString(url.getBytes("UTF-8"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP);
@@ -1051,6 +1052,7 @@ public class ApiConfig {
 
     String fixContentPath(String url, String content) {
         if (content.contains("\"./")) {
+			url=url.replace("file://","clan://localhost/");
             if(!url.startsWith("http") && !url.startsWith("clan://")){
                 url = "http://" + url;
             }
@@ -1068,7 +1070,7 @@ public class ApiConfig {
     }
     private void addSuperParse(){
         ParseBean superPb = new ParseBean();
-        superPb.setName("聚汇解析");
+        superPb.setName("聚汇超级解析");
         superPb.setUrl("SuperParse");
         superPb.setExt("");
         superPb.setType(4);
