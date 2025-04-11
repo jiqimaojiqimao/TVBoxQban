@@ -151,7 +151,7 @@ public class FileUtils {
 
     public static boolean isWeekAgo(File file)
     {
-        long oneWeekMillis = 15L * 24 * 60 * 60 * 1000;
+        long oneWeekMillis = 3L * 24 * 60 * 60 * 1000;
         long timeDiff = System.currentTimeMillis() - file.lastModified();
         return timeDiff > oneWeekMillis;
     }
