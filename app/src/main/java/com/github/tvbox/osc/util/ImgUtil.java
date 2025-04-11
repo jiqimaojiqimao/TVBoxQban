@@ -97,9 +97,9 @@ public class ImgUtil {
         if (drawableCache.containsKey(text)) {
             return drawableCache.get(text);
         }
-        int width = 150, height = 200; // 设定图片大小
+        int width = 240, height = 320; // 设定图片大小
         int randomColor = getRandomColor();
-        float cornerRadius = AutoSizeUtils.mm2px(App.getInstance(), 3); // 圆角半径
+        float cornerRadius = AutoSizeUtils.mm2px(App.getInstance(), 7); // 圆角半径
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
@@ -110,7 +110,7 @@ public class ImgUtil {
         RectF rectF = new RectF(0, 0, width, height);
         canvas.drawRoundRect(rectF, cornerRadius, cornerRadius, paint);
         paint.setColor(Color.WHITE); // 文字颜色
-        paint.setTextSize(40); // 文字大小
+        paint.setTextSize(60); // 文字大小
         paint.setTextAlign(Paint.Align.CENTER);
         Paint.FontMetrics fontMetrics = paint.getFontMetrics();
         float x = width / 2f;
