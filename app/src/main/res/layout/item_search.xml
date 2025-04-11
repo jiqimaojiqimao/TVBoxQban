@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
-    android:background="@drawable/shape_user_focus_1"
+    android:background="@drawable/shape_user_focus"
     android:padding="@dimen/vs_1"
     android:focusable="true"
     android:layout_width="fill_parent"
