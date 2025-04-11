@@ -556,6 +556,10 @@ public class PlayActivity extends BaseActivity {
             goPlayUrl(url,headers);
             return;
         }
+        if(DefaultConfig.noAd(mVodInfo.playFlag)){
+            goPlayUrl(url,headers);
+            return;
+        }
         LOG.i("echo-playM3u8:" + url);
         mController.playM3u8(url,headers);
     }
