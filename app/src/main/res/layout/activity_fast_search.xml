@@ -71,7 +71,7 @@
                 android:layout_height="fill_parent"
                 app:tv_horizontalSpacingWithMargins="@dimen/vs_10"
                 app:tv_selectedItemIsCentered="true"
-                app:tv_verticalSpacingWithMargins="@dimen/vs_5"/>
+                app:tv_verticalSpacingWithMargins="@dimen/vs_10"/>
             <com.owen.tvrecyclerview.widget.TvRecyclerView
                 android:id="@+id/mGridViewFilter"
                 android:visibility="invisible"
@@ -81,7 +81,7 @@
                 android:layout_height="fill_parent"
                 app:tv_horizontalSpacingWithMargins="@dimen/vs_10"
                 app:tv_selectedItemIsCentered="true"
-                app:tv_verticalSpacingWithMargins="@dimen/vs_5"/>
+                app:tv_verticalSpacingWithMargins="@dimen/vs_10"/>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
