@@ -1395,7 +1395,7 @@ public class PlayFragment extends BaseLazyFragment {
                             if (rs.has("ua")) {
                                 webUserAgent = rs.optString("ua").trim();
                             }
-                            setTip("聚汇超级解析中！", true, false);
+                            setTip("聚汇超级解析中", true, false);
 
                             if(!isAdded())return;
                             requireActivity().runOnUiThread(new Runnable() {
