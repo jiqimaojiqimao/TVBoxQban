@@ -283,6 +283,7 @@
     <dimen name="vs_76">76.0mm</dimen>
     <dimen name="vs_8">8.0mm</dimen>
     <dimen name="vs_80">80.0mm</dimen>
+	<dimen name="vs_9">9.0mm</dimen>
     <dimen name="vs_90">90.0mm</dimen>
     <dimen name="vs_960">960.0mm</dimen>
     <dimen name="vs_xu">30.899994mm</dimen>
