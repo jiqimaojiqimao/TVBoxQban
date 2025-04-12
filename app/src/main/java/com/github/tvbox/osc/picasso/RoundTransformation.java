@@ -5,6 +5,7 @@ import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Shader;
@@ -62,44 +63,37 @@ public class RoundTransformation implements Transformation {
 
     @Override
     public Bitmap transform(Bitmap source) {
-        final int sourceWidth = source.getWidth();
-        final int sourceHeight = source.getHeight();
+        int width = source.getWidth();
+        int height = source.getHeight();
         if (viewWidth == 0 || viewHeight == 0) {
-            viewWidth = sourceWidth;
-            viewHeight = sourceHeight;
+            viewWidth = width;
+            viewHeight = height;
         }
-        final float scale;
-        final int targetWidth;
-        final int targetHeight;
-        if (sourceWidth != viewWidth || sourceHeight != viewHeight) {
-            if (sourceWidth * 1f / viewWidth > sourceHeight * 1f / viewHeight) {
-                scale = (float) viewHeight / sourceHeight;
-                targetWidth = (int) (sourceWidth * scale);
-                targetHeight = viewHeight;
+        Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
+        BitmapShader mBitmapShader = new BitmapShader(source, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        if (viewWidth != width || viewHeight != height) {
+            //是否以宽计算
+            float scale;
+            if (width * 1f / viewWidth > height * 1f / viewHeight) {
+                scale = viewHeight * 1f / height;
+                width = (int) (width * scale);
+                height = viewHeight;
             } else {
-                scale = (float) viewWidth / sourceWidth;
-                targetWidth = viewWidth;
-                targetHeight = (int) (sourceHeight * scale);
+                scale = viewWidth * 1f / width;
+                height = (int) (height * scale);
+                width = viewWidth;
             }
-        } else {
-            scale = 1f;
-            targetWidth = sourceWidth;
-            targetHeight = sourceHeight;
-        }
-        BitmapShader shader = new BitmapShader(source, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-        if (scale != 1f) {
             Matrix matrix = new Matrix();
-            matrix.setScale(scale, scale);
-            shader.setLocalMatrix(matrix);
+            matrix.postScale(scale, scale);
+            mBitmapShader.setLocalMatrix(matrix);
         }
-        Bitmap bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(viewWidth, viewHeight, Bitmap.Config.ARGB_8888);          //xuameng重要RGB8888可以透明，解决边角圆角问题
         bitmap.setHasAlpha(true);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setShader(shader);
-        Canvas canvas = new Canvas(bitmap);
-        RectF rect = new RectF(0, 0, targetWidth, targetHeight);
-        canvas.drawRoundRect(rect, radius, radius, paint);
-
+        Canvas mCanvas = new Canvas(bitmap);
+        mPaint.setShader(mBitmapShader);
+        // mPaint.setAntiAlias(true);
+        mCanvas.setDrawFilter(new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG));
+        drawRoundRect(mCanvas, mPaint, width, height);
         source.recycle();
         return bitmap;
     }
