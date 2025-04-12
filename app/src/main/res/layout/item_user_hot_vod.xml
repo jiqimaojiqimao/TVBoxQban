@@ -9,7 +9,7 @@
     <FrameLayout
         android:id="@+id/mItemFrame"
         android:layout_width="fill_parent"
-        android:layout_height="291mm">
+        android:layout_height="@dimen/vs_280">
         <ImageView
             android:id="@+id/ivThumb"
             android:padding="@dimen/vs_1"
