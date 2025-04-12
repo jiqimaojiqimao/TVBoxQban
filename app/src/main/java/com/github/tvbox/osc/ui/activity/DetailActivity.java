@@ -93,8 +93,8 @@ import android.text.TextPaint;
 import androidx.annotation.NonNull;
 import android.graphics.Typeface;
 import androidx.recyclerview.widget.RecyclerView;
+import com.github.tvbox.osc.util.ImgUtilXude;   //xuameng base64图片
 import com.github.tvbox.osc.util.ImgUtil;   //xuameng base64图片
-
 /**
  * @author pj567
  * @date :2020/12/22
@@ -843,12 +843,12 @@ public class DetailActivity extends BaseActivity {
                                         .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
                                 .placeholder(R.drawable.img_loading_placeholder)
                                 .noFade()
-                             //   .error(R.drawable.img_loading_placeholder)
-						        .error(ImgUtil.createTextDrawable(mVideo.pic))
+                            //    .error(R.drawable.img_loading_placeholder)
+						        .error(ImgUtilXude.createTextDrawable(mVideo.name))
                                 .into(ivThumb);
                     } else {
-                     //   ivThumb.setImageResource(R.drawable.img_loading_placeholder);
-						ivThumb.setImageDrawable(ImgUtil.createTextDrawable(mVideo.pic));
+                      //  ivThumb.setImageResource(R.drawable.img_loading_placeholder);
+						ivThumb.setImageDrawable(ImgUtilXude.createTextDrawable(mVideo.name));
                     }
 
                     if (vodInfo.seriesMap != null && vodInfo.seriesMap.size() > 0) {
