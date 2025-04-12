@@ -1332,7 +1332,7 @@ public class PlayActivity extends BaseActivity {
                             if (rs.has("ua")) {
                                 webUserAgent = rs.optString("ua").trim();
                             }
-                            setTip("聚汇超级解析中！", true, false);
+                            setTip("聚汇超级解析中", true, false);
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
