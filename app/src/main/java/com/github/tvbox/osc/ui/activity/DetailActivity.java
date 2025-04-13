@@ -339,16 +339,17 @@ public class DetailActivity extends BaseActivity {
 						super.onScrollStateChanged(recyclerView, newState);
 						if (newState == mGridView.SCROLL_STATE_IDLE) {    //xuameng剧集滚动完成后焦点选择为剧集
 						// 滚动已经停止，执行你需要的操作
-						mGridView.requestFocus();    //xuameng如果不满足滚动条件直接获得焦点
+				//		mGridView.requestFocus();    //xuameng如果不满足滚动条件直接获得焦点
 						mGridView.setSelection(vodInfo.playIndex);
 						mGridView.removeOnScrollListener(this);				//xuameng删除滚动监听				
 						}
 					}
 				});
             refreshList();   //xuameng返回键、长按播放刷新滚动到剧集
-			if(!mGridView.isScrolling() && !mGridView.isComputingLayout()) {
-			   mGridView.requestFocus();  //xuameng如果不满足滚动条件直接获得焦点
-			   mGridView.setSelection(vodInfo.playIndex);
+			if(mGridView.isScrolling() || mGridView.isComputingLayout()) {
+			}else{
+			//	mGridView.requestFocus();  //xuameng如果不满足滚动条件直接获得焦点
+			    mGridView.setSelection(vodInfo.playIndex);
 			}
 			Toast.makeText(DetailActivity.this, "滚动到当前播放剧集！", Toast.LENGTH_SHORT).show();
 			return true;
@@ -902,17 +903,14 @@ public class DetailActivity extends BaseActivity {
 								super.onScrollStateChanged(recyclerView, newState);
 								if (newState == mGridView.SCROLL_STATE_IDLE) {   //xuameng剧集滚动完成后焦点选择为剧集
 								// 滚动已经停止，执行你需要的操作
-								mGridView.requestFocus();
+							//	mGridView.requestFocus();
 								mGridView.setSelection(vodInfo.playIndex);
 								mGridView.removeOnScrollListener(this);    //xuameng删除滚动监听
 								}
 							}
 						});
                        refreshList();   //xuameng返回键、长按播放刷新滚动到剧集
-			           if(!mGridView.isScrolling() && !mGridView.isComputingLayout()) {
-			              mGridView.requestFocus();  //xuameng如果不满足滚动条件直接获得焦点
-			              mGridView.setSelection(vodInfo.playIndex);
-			           }
+
 						tvPlay.setNextFocusUpId(R.id.mGridView);   //xuameng上面焦点是选剧集
 						tvQuickSearch.setNextFocusUpId(R.id.mGridView); 
 						tvSort.setNextFocusUpId(R.id.mGridView); 
@@ -1211,16 +1209,17 @@ public class DetailActivity extends BaseActivity {
 					super.onScrollStateChanged(recyclerView, newState);
 					if (newState == mGridView.SCROLL_STATE_IDLE) {    //xuameng剧集滚动完成后焦点选择为剧集
 					// 滚动已经停止，执行你需要的操作
-					mGridView.requestFocus();
+				//	mGridView.requestFocus();
 					mGridView.setSelection(vodInfo.playIndex);
 					mGridView.removeOnScrollListener(this);				//xuameng删除滚动监听				
 					}
 				}
 			});
             refreshList();   //xuameng返回键、长按播放刷新滚动到剧集
-			if(!mGridView.isScrolling() && !mGridView.isComputingLayout()) {
-			   mGridView.requestFocus();  //xuameng如果不满足滚动条件直接获得焦点
-			   mGridView.setSelection(vodInfo.playIndex);
+			if(mGridView.isScrolling() || mGridView.isComputingLayout()) {
+			}else{
+			//	mGridView.requestFocus();  //xuameng如果不满足滚动条件直接获得焦点
+			    mGridView.setSelection(vodInfo.playIndex);
 			}
 //            mGridView.requestFocus(); 没用了
             List<VodInfo.VodSeries> list = vodInfo.seriesMap.get(vodInfo.playFlag);
