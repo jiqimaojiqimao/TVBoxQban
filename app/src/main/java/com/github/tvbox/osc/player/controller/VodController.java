@@ -1478,6 +1478,9 @@ public class VodController extends BaseController {
 				isVideoPlay = true;
                 break;
             case VideoView.STATE_PREPARING:
+				if (isBottomVisible()) {
+					mxuPlay.requestFocus();				    //底部菜单默认焦点为播放
+				}
 				simSeekPosition = 0;       //XUAMENG重要,换视频时重新记录进度
 				isVideoplaying = false;
 				isVideoPlay = false;
