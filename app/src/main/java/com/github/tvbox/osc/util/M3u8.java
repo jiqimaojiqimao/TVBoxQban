@@ -53,7 +53,7 @@ public class M3u8 {
      * <a href="https://github.com/asdfgh"> asdfgh </a>
      */
 
-    private static int timesNoAd = 10;  //出现超过多少次的域名不认为是广告
+    private static int timesNoAd = 15;  //出现超过多少次的域名不认为是广告
     private static String removeMinorityUrl(String tsUrlPre, String m3u8content) {
         String linesplit = "\n";
         if (m3u8content.contains("\r\n"))
@@ -179,7 +179,7 @@ public class M3u8 {
                 String domain = (ifirst > 0) ? absoluteUrl.substring(0, ifirst) : absoluteUrl;
                 // 保留条件：域名等于出现次数最多的，或者该域名出现次数超过timesNoAd次
                 Integer cnt = preUrlMap.get(domain);
-                if (domain.equals(maxTimesPreUrl) || (cnt != null && cnt >= timesNoAd)) {
+                if (domain.equals(maxTimesPreUrl) || (cnt != null && cnt > timesNoAd)) {
                     lines[i] = absoluteUrl;
                 } else {
                     if (i > 0 && lines[i - 1].length() > 0 && lines[i - 1].charAt(0) == '#') {
@@ -228,7 +228,7 @@ public class M3u8 {
             String group = m1.group();
             BigDecimal t = BigDecimal.ZERO;
             Matcher m2 = REGEX_MEDIA_DURATION.matcher(group);
-            while (m2.find()) t = t.add(new BigDecimal(m2.group(1)));
+            if (m2.find()) t = t.add(new BigDecimal(m2.group(1)));
             for (String ad : ads) if (t.toString().startsWith(ad)) line = line.replace(group.replace(TAG_ENDLIST, ""), "");
         }
         return line;
