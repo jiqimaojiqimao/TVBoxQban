@@ -1936,6 +1936,14 @@ public class VodController extends BaseController {
                 }, 1500);
 		        
             }else {
+			    new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+						if (isBottomVisible()) {
+					        mxuPlay.requestFocus();				    //底部菜单默认焦点为播放
+						}
+                    }
+                }, 1500);
                 return true;
             }
         }catch (Exception e){
