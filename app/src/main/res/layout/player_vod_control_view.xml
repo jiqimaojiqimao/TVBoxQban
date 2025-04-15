@@ -304,6 +304,8 @@
                 android:padding="@dimen/vs_10"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+				android:focusable="false"
+				android:focusableInTouchMode="false"
                 android:layout_marginRight="@dimen/vs_5"
                 android:text="片头片尾"
                 android:singleLine="true"
@@ -395,10 +397,13 @@
                 android:background="@drawable/button_dialog_main_1"
                 android:padding="@dimen/vs_10"
                 android:paddingRight="@dimen/vs_10"
+				android:focusable="false"
+				android:focusableInTouchMode="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="0Kb/s"
-                android:maxLines="1"
+				android:ellipsize="end"
+                android:singleLine="true"
                 android:layout_marginEnd="@dimen/vs_0"/>
         </LinearLayout>
         <LinearLayout
