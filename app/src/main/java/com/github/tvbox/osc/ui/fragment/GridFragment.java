@@ -64,7 +64,6 @@ public class GridFragment extends BaseLazyFragment {
     private boolean isLoad = false;
     private boolean isTop = true;
     private View focusedView = null;
-	private boolean mShowList = false;
     private static class GridInfo{
         public String sortID="";
         public TvRecyclerView mGridView;
@@ -168,14 +167,8 @@ public class GridFragment extends BaseLazyFragment {
             mGridView.setVisibility(View.VISIBLE);
         }
         mGridView.setHasFixedSize(true);
-		if(style.type.equals("list")){
-			mShowList=true;
-		}else{
-			mShowList=false;
-		}
-
 		style=ImgUtil.initStyle();
-         gridAdapter = new GridAdapter(mShowList, style);
+         gridAdapter = new GridAdapter(isFolederMode(), style);
         this.page =1;
         this.maxPage =1;
         this.isLoad = false;
