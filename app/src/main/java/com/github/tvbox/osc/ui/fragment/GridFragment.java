@@ -168,11 +168,7 @@ public class GridFragment extends BaseLazyFragment {
             mGridView.setVisibility(View.VISIBLE);
         }
         mGridView.setHasFixedSize(true);
-		if(style.type.equals("list")){
-			mShowList=true;
-		}else{
-			mShowList=false;
-		}
+
 
 		style=ImgUtil.initStyle();
          gridAdapter = new GridAdapter(mShowList, style);
