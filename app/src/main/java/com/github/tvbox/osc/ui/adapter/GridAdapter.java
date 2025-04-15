@@ -36,7 +36,7 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
      * 如果 style 传 null，则采用 item_grid.xml 中的默认尺寸
      */
     public GridAdapter(boolean showList, ImgUtil.Style style) {
-        super( showList ? R.layout.item_grid:R.layout.item_grid, new ArrayList<>());
+        super( showList ? R.layout.item_list:R.layout.item_grid, new ArrayList<>());
         this.mShowList = showList;
         if(style!=null ){
             if(style.type.equals("list"))this.mShowList=true;
@@ -62,7 +62,17 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
         } else {
             helper.setText(R.id.tvName, item.name);
         }
-
+        TextView tvYear = helper.getView(R.id.tvYear);
+        if (item.year <= 0) {
+            tvYear.setVisibility(View.GONE);
+        } else {
+            tvYear.setText(String.valueOf(item.year));
+            tvYear.setVisibility(View.VISIBLE);
+        }
+        TextView tvLang = helper.getView(R.id.tvLang);
+        tvLang.setVisibility(View.GONE);
+        TextView tvArea = helper.getView(R.id.tvArea);
+        tvArea.setVisibility(View.GONE);
  //           helper.setText(R.id.tvName, item.name);
             ImageView ivThumb = helper.getView(R.id.ivThumb);
 
