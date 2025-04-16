@@ -221,7 +221,7 @@ public class DefaultConfig {
         return urlOri;
     }
     private static final List<String> NO_AD_KEYWORDS = Arrays.asList(
-            "tx", "youku", "qq","qiyi", "letv", "sohu", "mgtv", "bilibili", "优酷", "芒果", "腾讯", "奇艺"
+		"tx", "youku", "qq","qiyi", "letv", "leshi","sohu", "mgtv", "bilibili", "imgo","优酷", "芒果", "腾讯", "奇艺"
     );
 
     public static boolean noAd(String flag) {
