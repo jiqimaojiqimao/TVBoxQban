@@ -1,57 +1,48 @@
 package com.github.tvbox.osc.ui.adapter;
 
-import android.app.Activity;
-import android.graphics.Color;
 import android.view.View;
 import android.widget.TextView;
+import android.app.Activity;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.bean.VodInfo;
-import com.owen.tvrecyclerview.widget.V7GridLayoutManager;
 
 import java.util.ArrayList;
 
-/**
+/**   xuameng 选源列表
  * @author pj567
  * @date :2020/12/22
  * @description:
- *  xuameng选集列表
  */
-public class SeriesAdapter extends BaseQuickAdapter<VodInfo.VodSeries, BaseViewHolder> {
-    private V7GridLayoutManager mGridLayoutManager;
-    public SeriesAdapter(V7GridLayoutManager gridLayoutManager) {
-        super(R.layout.item_series, new ArrayList<>());
-        this.mGridLayoutManager = gridLayoutManager;
+public class SeriesFlagAdapter extends BaseQuickAdapter<VodInfo.VodSeriesFlag, BaseViewHolder> {
+    public SeriesFlagAdapter() {
+        super(R.layout.item_series_flag, new ArrayList<>());
     }
 
     @Override
-    protected void convert(BaseViewHolder helper, VodInfo.VodSeries item) {
-        TextView tvSeries = helper.getView(R.id.tvSeries);
+    protected void convert(BaseViewHolder helper, VodInfo.VodSeriesFlag item) {
+        TextView tvSeries = helper.getView(R.id.tvSeriesFlag);
+        View select = helper.getView(R.id.tvSeriesFlagSelect);
         if (item.selected) {
-            tvSeries.setTextColor(mContext.getResources().getColor(R.color.color_02F8E1));
+            select.setVisibility(View.VISIBLE);
         } else {
-            tvSeries.setTextColor(Color.WHITE);
+            select.setVisibility(View.GONE);
         }
-        helper.setText(R.id.tvSeries, item.name);
-
-        View mGridViewFlag = ((Activity) helper.itemView.getContext()).findViewById(R.id.mGridViewFlag);
+        helper.setText(R.id.tvSeriesFlag, item.name);
         View mSeriesGroupView = ((Activity) helper.itemView.getContext()).findViewById(R.id.mSeriesGroupView);
-        if (mGridViewFlag != null && mGridViewFlag.getVisibility() == View.VISIBLE && mSeriesGroupView.getVisibility() == View.GONE) {
-            helper.itemView.setNextFocusUpId(R.id.mGridViewFlag);
-		}
-        if (getData().size()>1 && mSeriesGroupView != null && mSeriesGroupView.getVisibility() == View.VISIBLE) {
-            helper.itemView.setNextFocusUpId(R.id.mSeriesGroupView);
+        if (mSeriesGroupView != null && mSeriesGroupView.getVisibility() == View.VISIBLE) {
+            helper.itemView.setNextFocusDownId(R.id.mSeriesGroupView);
+        }else {
+            helper.itemView.setNextFocusDownId(R.id.mGridView);
         }
-
-        int spanCount = mGridLayoutManager.getSpanCount();
-        int position = helper.getLayoutPosition();
-        int totalCount = getData().size();
-        int remainder = totalCount % spanCount;
-        int lastRowStart = remainder == 0 ? totalCount - spanCount : totalCount - remainder;
-        if (position >= lastRowStart) {
-            helper.itemView.setNextFocusDownId(R.id.tvPlay);
+        if (helper.getLayoutPosition() == getData().size() - 1) {
+            helper.itemView.setId(View.generateViewId());
+            helper.itemView.setNextFocusRightId(helper.itemView.getId());  
+        }else {
+            helper.itemView.setNextFocusRightId(View.NO_ID);  //xuameng不超出item
         }
+		helper.itemView.setNextFocusUpId(R.id.tvPlay);
     }
 }
