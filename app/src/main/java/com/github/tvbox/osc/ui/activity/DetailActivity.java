@@ -231,14 +231,24 @@ public class DetailActivity extends BaseActivity {
             protected void convert(BaseViewHolder helper, String item) {
                 TextView tvSeries = helper.getView(R.id.tvSeriesGroup);
                 tvSeries.setText(item);
-                if (helper.getLayoutPosition() == getData().size() - 1) {   //xuameng 选集分组
-                   // helper.itemView.setNextFocusRightId(View.NO_ID); //xuameng 选集分组右边移动不出
-					helper.itemView.setNextFocusRightId(R.id.tvPlay);
+        //        if (helper.getLayoutPosition() == getData().size() - 1) {   //xuameng 选集分组
+		//			helper.itemView.setNextFocusRightId(R.id.tvPlay);
+        //        }
+                if (helper.getLayoutPosition() == getData().size() - 1) {
+                    helper.itemView.setId(View.generateViewId());
+                    helper.itemView.setNextFocusRightId(helper.itemView.getId()); 
+                }else {
+                    helper.itemView.setNextFocusRightId(View.NO_ID);   //xuameng不超出item
                 }
-				if(mGridViewFlag.getVisibility() == View.VISIBLE) {
+				if(mGridViewFlag != null && mGridViewFlag.getVisibility() == View.VISIBLE) {
 					helper.itemView.setNextFocusUpId(R.id.mGridViewFlag);
 				}else{
 					helper.itemView.setNextFocusUpId(R.id.tvPlay);
+				}
+				if(mGridView != null && mGridView.getVisibility() == View.VISIBLE) {
+				    helper.itemView.setNextFocusDownId(R.id.mGridView);
+				}else{
+					helper.itemView.setNextFocusDownId(R.id.tvPlay);
 				}
 
             }
@@ -248,7 +258,13 @@ public class DetailActivity extends BaseActivity {
         //禁用播放地址焦点
         tvPlayUrl.setFocusable(false);
 
-        llPlayerFragmentContainerBlock.setOnClickListener((view -> toggleFullPreview()));
+        llPlayerFragmentContainerBlock.setOnClickListener(v -> {
+            toggleFullPreview();
+            if (firstReverse) {     //倒叙不刷新播放时存储列表解决
+                jumpToPlay();
+                firstReverse=false;
+            }
+        });
 
         tvSort.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("NotifyDataSetChanged")
@@ -986,7 +1002,9 @@ public class DetailActivity extends BaseActivity {
                     }
                     seriesAdapter.getData().get(index).selected = true;
                     seriesAdapter.notifyItemChanged(index);
-                    mGridView.setSelection(index);
+			//xuameng解决焦点丢失		if (!fullWindows){
+            //            mGridView.setSelection(index);
+			//		}
                     vodInfo.playIndex = index;
                     //保存历史
                     insertVod(firstsourceKey, vodInfo);
