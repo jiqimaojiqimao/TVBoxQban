@@ -1438,9 +1438,9 @@ public class VodController extends BaseController {
 			    //pauseIngXu();
                 break;
             case VideoView.STATE_ERROR:
-				if (isBottomVisible()) {
-					mxuPlay.requestFocus();				    //底部菜单默认焦点为播放
-				}
+			//	if (isBottomVisible()) {
+			//		mxuPlay.requestFocus();				    //底部菜单默认焦点为播放
+			//	}
                 listener.errReplay();
 				isVideoPlay = false;
 				mxuPlay.setText("准备");
@@ -1934,16 +1934,7 @@ public class VodController extends BaseController {
                 Toast.makeText(getContext(), "切换到"+(p_type==1?"IJK":"EXO")+"播放器重试！", Toast.LENGTH_SHORT).show();
                 mPlayerConfig.put("pl", p_type);
                 updatePlayerCfgView();
-                listener.updatePlayerCfg();
-			    new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-						if (isBottomVisible()) {
-					        mxuPlay.requestFocus();				    //底部菜单默认焦点为播放
-						}
-                    }
-                }, 1500);
-		        
+                listener.updatePlayerCfg();		        
             }else {
                 return true;
             }
@@ -2029,12 +2020,12 @@ public class VodController extends BaseController {
     private void processM3u8Content(String url, String content, HashMap<String, String> headers) {
         String basePath = getBasePath(url);
         RemoteServer.m3u8Content = M3u8.purify(basePath, content);
-        if (RemoteServer.m3u8Content == null) {
+        if (RemoteServer.m3u8Content == null || M3u8.currentAdCount==0) {
             LOG.i("echo-m3u8内容解析：未检测到广告");
             listener.startPlayUrl(url, headers);
         } else {
             listener.startPlayUrl(ControlManager.get().getAddress(true) + "proxyM3u8", headers);
-            Toast.makeText(getContext(), "聚汇影视已为您移除视频广告！", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "聚汇影视已移除"+M3u8.currentAdCount+"条视频广告！", Toast.LENGTH_SHORT).show();
         }
     }
 
