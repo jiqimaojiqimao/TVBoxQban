@@ -279,6 +279,10 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             mPlayerContainer.removeView(mRenderView.getView());
             mRenderView.release();
         }
+		String cleanUrl = mUrl.split("\\?")[0];
+		if (cleanUrl.endsWith(".mp3") || cleanUrl.endsWith(".m4a") || cleanUrl.endsWith(".wma") || cleanUrl.endsWith(".wav") || cleanUrl.endsWith(".flac") || cleanUrl.endsWith(".aac") || cleanUrl.endsWith(".mid")) {
+			return;      //xuameng如果是上述音频文件执行
+		}
         mRenderView = mRenderViewFactory.createRenderView(getContext());
         mRenderView.attachToPlayer(mMediaPlayer);
         LayoutParams params = new LayoutParams(
@@ -558,7 +562,15 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
 			seekTo(Progress);
 			Progress = 0;
 		}
-
+		String width = Integer.toString(getVideoSize()[0]);
+		String height = Integer.toString(getVideoSize()[1]);
+		if (width.length() <= 1 && height.length() <= 1){
+			if (mRenderView != null) {
+				mPlayerContainer.removeView(mRenderView.getView());      //xuameng重要当视频为空时释放当前VIDEO VIEW
+                mRenderView.release();
+                mRenderView = null;
+			}
+		}
     }
 
     /**
@@ -576,13 +588,6 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             case AbstractPlayer.MEDIA_INFO_RENDERING_START: // 视频/音频开始渲染
                 setPlayState(STATE_PLAYING);
                 mPlayerContainer.setKeepScreenOn(true);
-				String width = Integer.toString(getVideoSize()[0]);
-				String height = Integer.toString(getVideoSize()[1]);
-				if (width.length() <= 1 && height.length() <= 1){
-					if (mRenderView != null) {
-					mPlayerContainer.removeView(mRenderView.getView());      //xuameng重要当视频为空时释放当前VIDEO VIEW
-					}
-				}
                 break;
             case AbstractPlayer.MEDIA_INFO_VIDEO_ROTATION_CHANGED:
                 if (mRenderView != null) mRenderView.setVideoRotation(extra);
@@ -923,9 +928,14 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
 
     @Override
     public void onVideoSizeChanged(int videoWidth, int videoHeight) {
-        mVideoSize[0] = videoWidth;
-        mVideoSize[1] = videoHeight;
-
+		String cleanUrl = mUrl.split("\\?")[0];
+		if (cleanUrl.endsWith(".mp3") || cleanUrl.endsWith(".m4a") || cleanUrl.endsWith(".wma") || cleanUrl.endsWith(".wav") || cleanUrl.endsWith(".flac") || cleanUrl.endsWith(".aac") || cleanUrl.endsWith(".mid")) {
+			mVideoSize[0] = 0;   //xuameng如果是上述音频文件执行
+			mVideoSize[1] = 0;
+        }else{
+            mVideoSize[0] = videoWidth;
+            mVideoSize[1] = videoHeight;
+		}
         if (mRenderView != null) {
             mRenderView.setScaleType(mCurrentScreenScaleType);
             mRenderView.setVideoSize(videoWidth, videoHeight);
