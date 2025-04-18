@@ -170,7 +170,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/vs_10">
                 <TextView
-                    android:textSize="@dimen/ts_30"
+                    android:textSize="@dimen/ts_26"
                     android:textColor="@color/color_85000000"
                     android:gravity="center"
                     android:layout_gravity="center"
