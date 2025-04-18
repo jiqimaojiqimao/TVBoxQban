@@ -44,7 +44,7 @@ public class ImgUtilXufa {
         }
         int width = 240, height = 320; // 设定图片大小
         int randomColor = getRandomColor();
-        float cornerRadius = AutoSizeUtils.mm2px(App.getInstance(), 7); // 圆角半径
+        float cornerRadius = AutoSizeUtils.mm2px(App.getInstance(), 8); // 圆角半径
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
