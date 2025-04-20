@@ -906,6 +906,8 @@ public class ApiConfig {
             if(livesOBJ.has("epg")){
                 String epg =livesOBJ.get("epg").getAsString();
                 Hawk.put(HawkConfig.EPG_URL,epg);
+            }else {
+                Hawk.put(HawkConfig.EPG_URL,"");
             }
             //直播播放器类型
             if(livesOBJ.has("playerType")){
