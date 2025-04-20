@@ -1430,7 +1430,6 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     private boolean playChannel(int channelGroupIndex, int liveChannelIndex, boolean changeSource) { //xuameng播放
-		if(mVideoView == null) return true; //XUAMENG可能会引起空指针问题的修复
         if((channelGroupIndex == currentChannelGroupIndex && liveChannelIndex == currentLiveChannelIndex && !changeSource) || (changeSource && currentLiveChannelItem.getSourceNum() == 1) && !XuSource) {
             // xuamengEPG日期自动选今天
             liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
@@ -1451,6 +1450,7 @@ public class LivePlayActivity extends BaseActivity {
             }
             return true;
         }
+		if(mVideoView == null) return true; //XUAMENG可能会引起空指针问题的修复
 		mVideoView.release();  //XUAMENG可能会引起空指针问题的修复
         if(!changeSource) {
             currentChannelGroupIndex = channelGroupIndex;
@@ -1669,10 +1669,6 @@ public class LivePlayActivity extends BaseActivity {
             @Override
             public void onItemPreSelected(TvRecyclerView parent, View itemView, int position) {
                 if(mRightEpgList.isScrolling() || mRightEpgList.isComputingLayout()) { //xuameng如果EPG正在滚动返回，解决BUG
-                   if (currentLiveChannelIndex != -1 && currentChannelGroupIndex != -1){
-					   mChannelGroupView.setSelection(currentChannelGroupIndex); //xuameng先滚动再选择防止空指针
-                       mLiveChannelView.setSelection(currentLiveChannelIndex); //xuameng先滚动再选择防止空指针
-		           }
                     return;
                 } else epgListAdapter.setFocusedEpgIndex(-1);
             }
@@ -3254,7 +3250,7 @@ public class LivePlayActivity extends BaseActivity {
         defaultChannel.setChannelNum(1);
         ArrayList<String> defaultSourceNames = new ArrayList<>();
         ArrayList<String> defaultSourceUrls = new ArrayList<>();
-        defaultSourceNames.add("源1");
+        defaultSourceNames.add("默认源1");
         defaultSourceUrls.add("http://default.play.url/stream");
         defaultChannel.setChannelSourceNames(defaultSourceNames);
         defaultChannel.setChannelUrls(defaultSourceUrls);
