@@ -69,6 +69,11 @@ import com.squareup.picasso.MemoryPolicy;  //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy;  //xuameng播放音频切换图片
 import android.graphics.Bitmap;  //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig;  //xuameng播放音频切换图片
+import android.os.Build;
+import android.webkit.WebView;
+import com.github.tvbox.osc.bean.SourceBean;
+import com.github.tvbox.osc.util.VideoParseRuler;
+import org.xwalk.core.XWalkView;
 
 public class VodController extends BaseController {
     public VodController(@NonNull @NotNull Context context) {
@@ -2090,5 +2095,38 @@ public class VodController extends BaseController {
         } catch (JSONException e) {
         }
         return url;
+    }
+
+    public void evaluateScript(SourceBean sourceBean,String url, WebView web_view, XWalkView xWalk_view){
+        String clickSelector = sourceBean.getClickSelector().trim();
+        clickSelector=clickSelector.isEmpty()?VideoParseRuler.getHostScript(url):clickSelector;
+        if (!clickSelector.isEmpty()) {
+            String selector;
+            if (clickSelector.contains(";") && !clickSelector.endsWith(";")) {
+                String[] parts = clickSelector.split(";", 2);
+                if (!url.contains(parts[0])) {
+                    return;
+                }
+                selector = parts[1].trim();
+            } else {
+                selector = clickSelector.trim();
+            }
+            // 构造点击的 JS 代码
+            String js = selector;
+//            if(!selector.contains("click()"))js+=".click();";
+            LOG.i("echo-javascript:" + js);
+            if(web_view!=null){
+                //4.4以上才支持这种写法
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    web_view.evaluateJavascript(js, null);
+                } else {
+                    web_view.loadUrl("javascript:" + js);
+                }
+            }
+            if(xWalk_view!=null){
+                //4.0+开始全部支持这种写法
+                xWalk_view.evaluateJavascript(js, null);
+            }
+        }
     }
 }
