@@ -1,5 +1,7 @@
 package com.github.tvbox.osc.util;
 
+import static com.github.tvbox.osc.util.RegexUtils.getPattern;
+
 import com.google.android.exoplayer2.util.UriUtil;
 
 import java.math.BigDecimal;
@@ -32,12 +34,16 @@ public class M3u8 {
     }
 
     public static String purify(String tsUrlPre, String m3u8content) {
+        long start = System.currentTimeMillis();
         currentAdCount = 0;
         if (null == m3u8content || m3u8content.length() == 0) return null;
         if (!m3u8content.startsWith("#EXTM3U")) return null;
         String result = removeMinorityUrl(tsUrlPre, m3u8content);
         if (result != null) return result;
-        return get(tsUrlPre, m3u8content);
+        result = get(tsUrlPre, m3u8content);
+        long cost = System.currentTimeMillis() - start;
+        LOG.i("echo-fixAdM3u8Ai 耗时：" + cost + "ms");
+        return result;
     }
 
     private static double maxPercent(HashMap<String, Integer> preUrlMap) {
@@ -234,15 +240,6 @@ public class M3u8 {
         return scan ? scan(line, ads) : line;
     }
 
-    private static final Map<String, Pattern> patternCache = new HashMap<>();
-    private static Pattern getPattern(String regex) {
-        Pattern pattern = patternCache.get(regex);
-        if (pattern == null) {
-            pattern = Pattern.compile(regex);
-            patternCache.put(regex, pattern);
-        }
-        return pattern;
-    }
     private static String scanAd(String line,String TAG_AD) {
         Matcher m1 = getPattern(TAG_AD).matcher(line);
         List<String> needRemoveAd = new ArrayList<>();
@@ -270,26 +267,28 @@ public class M3u8 {
             String group = m1.group();
             String groupCleaned = group.replace(TAG_ENDLIST, "");
             Matcher m2 = REGEX_MEDIA_DURATION.matcher(group);
-            BigDecimal ft = BigDecimal.ZERO;
-            BigDecimal lt = BigDecimal.ZERO;
+            BigDecimal ft = BigDecimal.ZERO,lt = BigDecimal.ZERO,t = BigDecimal.ZERO;
             int tCount = 0;
             while (m2.find()) {
                 if (ft.equals(BigDecimal.ZERO))ft = new BigDecimal(m2.group(1));
                 lt = new BigDecimal(m2.group(1));
+                t = t.add(lt);
                 tCount+=1;
             }
-            String ftStr = ft.toString();
-            String ltStr = lt.toString();
+
+            String ftStr = ft.toString(),ltStr = lt.toString(),tStr = t.toString();
             for (String ad : ads) {
                 if (ad.startsWith("-")) {
                     String adClean = ad.substring(1);
+                    //匹配最后一条切片
                     if (ltStr.startsWith(adClean)) {
                         needRemoveAd.add(groupCleaned);
                         currentAdCount+=tCount;
                         break;
                     }
                 } else {
-                    if (ftStr.startsWith(ad)) {
+                    //匹配第一条切片或广告切片总时长
+                    if (ftStr.startsWith(ad) || tStr.startsWith(ad)) {
                         needRemoveAd.add(groupCleaned);
                         currentAdCount+=tCount;
                         break;
