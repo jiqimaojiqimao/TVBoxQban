@@ -15,7 +15,8 @@ import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.LOG;
 import com.github.tvbox.osc.util.OkGoHelper;
 import com.github.tvbox.osc.util.PlayerHelper;
-import com.github.tvbox.osc.util.js.JSEngine;
+import com.whl.quickjs.android.QuickJSLoader;
+ import com.github.catvod.crawler.JsLoader;
 import com.kingja.loadsir.core.LoadSir;
 import com.orhanobut.hawk.Hawk;
 import com.p2p.P2PClass;
@@ -57,8 +58,8 @@ public class App extends MultiDexApplication {
                 .setSupportSP(false)
                 .setSupportSubunits(Subunits.MM);
         PlayerHelper.init();
-        JSEngine.getInstance().create();
- //       FileUtils.cleanPlayerCache();        xuameng
+        QuickJSLoader.init();
+        FileUtils.cleanPlayerCache();        //xuameng
 		String cachePath = FileUtils.getCachePath();       //xuameng清空缓存
 			File cacheDir = new File(cachePath);
 			if (!cacheDir.exists()) return;
@@ -104,7 +105,7 @@ public class App extends MultiDexApplication {
     @Override
     public void onTerminate() {
         super.onTerminate();
-        JSEngine.getInstance().destroy();
+        JsLoader.destroy();
     }
 
 
