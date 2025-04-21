@@ -96,3 +96,6 @@ lint/tmp/
 /LTDecodeNew3.exe
 
 .idea/
+
+*.hprof
+output-metadata.json
