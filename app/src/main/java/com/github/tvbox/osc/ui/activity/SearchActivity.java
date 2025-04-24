@@ -123,28 +123,6 @@ public class SearchActivity extends BaseActivity {
         isSearchBack = false;
     }
 
-    /*
-     * 禁止软键盘
-     * @param activity Activity
-     */
-    public static void disableKeyboard(Activity activity) {
-        hasKeyBoard = false;
-        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
-    }
-
-    /*
-     * 启用软键盘
-     * @param activity Activity
-     */
-    public static void enableKeyboard(Activity activity) {
-        hasKeyBoard = true;
-        activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
-    }
-
-    public void openSystemKeyBoard() {
-        InputMethodManager imm = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.showSoftInput(this.getCurrentFocus(), InputMethodManager.SHOW_FORCED);
-    }
 
     private List<Runnable> pauseRunnable = null;
 
@@ -342,16 +320,6 @@ public class SearchActivity extends BaseActivity {
             }
         });
 
-        etSearch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                Toast.makeText(mContext,"点击",Toast.LENGTH_SHORT).show();
-                if (!hasKeyBoard) enableKeyboard(SearchActivity.this);
-                openSystemKeyBoard();//再次尝试拉起键盘
-                SearchActivity.this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-            }
-        });
-
 //        etSearch.setOnFocusChangeListener(tvSearchFocusChangeListener);
 
         clearHistory.setOnClickListener(v -> {
@@ -402,15 +370,13 @@ public class SearchActivity extends BaseActivity {
         tvSearchCheckboxBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                List<SourceBean> searchAbleSource = ApiConfig.get().getSearchSourceBeanList();
                 if (mSearchCheckboxDialog == null) {
-                    List<SourceBean> allSourceBean = ApiConfig.get().getSourceBeanList();
-                    List<SourceBean> searchAbleSource = new ArrayList<>();
-                    for(SourceBean sourceBean : allSourceBean) {
-                        if (sourceBean.isSearchable()) {
-                            searchAbleSource.add(sourceBean);
-                        }
-                    }
                     mSearchCheckboxDialog = new SearchCheckboxDialog(SearchActivity.this, searchAbleSource, mCheckSources);
+                }else {
+                    if(searchAbleSource.size()!=mSearchCheckboxDialog.mSourceList.size()){
+                        mSearchCheckboxDialog.setMSourceList(searchAbleSource);
+                    }
                 }
                 mSearchCheckboxDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
@@ -533,7 +499,6 @@ public class SearchActivity extends BaseActivity {
 		mGridView.setVisibility(View.GONE);
         if (intent != null && intent.hasExtra("title")) {
             String title = intent.getStringExtra("title");
-            showLoading();
             if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
                 Bundle bundle = new Bundle();
                 bundle.putString("title", title);
@@ -541,6 +506,7 @@ public class SearchActivity extends BaseActivity {
                 jumpActivity(FastSearchActivity.class, bundle);
             }else {
                 search(title);
+				showLoading();
             }
         }
         // 加载热词
@@ -582,7 +548,6 @@ public class SearchActivity extends BaseActivity {
     public void server(ServerEvent event) {
         if (event.type == ServerEvent.SERVER_SEARCH) {
             String title = (String) event.obj;
-            showLoading();
             if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
                 Bundle bundle = new Bundle();
                 bundle.putString("title", title);
@@ -590,6 +555,7 @@ public class SearchActivity extends BaseActivity {
                 jumpActivity(FastSearchActivity.class, bundle);
             }else{
                 search(title);
+				showLoading();
             }
         }
     }
@@ -801,5 +767,4 @@ public class SearchActivity extends BaseActivity {
                     }
                 });
 		} 
-
 }
