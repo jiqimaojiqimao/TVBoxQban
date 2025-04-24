@@ -185,7 +185,10 @@ public class LivePlayActivity extends BaseActivity {
 	private boolean isShowlist = false; //xuameng判断菜单显示
 	private boolean isVideoplaying = false;  //xuameng判断视频开始播放
 	private boolean XuSource = false; //xuameng退出回看
+	private boolean isScrollingXu = false;  //xuameng判断EPG是否正在滚动
     private int selectedChannelNumber = 0; // xuameng遥控器数字键输入的要切换的频道号码
+	private int ChannelPosition = -100; // xuameng Channel Position
+	private int ChannelGroupPosition = -100; // xuameng ChannelGroup Position
     private TextView tvSelectedChannel; //xuameng频道编号
 	private ImageView iv_circle_bg_xu;  //xuameng音乐播放时图标
 	private ImageView MxuamengMusic;       //xuameng播放音乐背景
@@ -208,7 +211,6 @@ public class LivePlayActivity extends BaseActivity {
 	private CountDownTimer countDownTimer20;
 	private CountDownTimer countDownTimer21;
     private CountDownTimer countDownTimer22;
-    private CountDownTimer countDownTimer30;
     private final int videoWidth = 1920;
     private final int videoHeight = 1080;
     private TextView tv_currentpos;
@@ -461,12 +463,16 @@ public class LivePlayActivity extends BaseActivity {
                 //xuameng防止跳焦点                 mRightEpgList.setSelection(i);
                 epgListAdapter.setSelectedEpgIndex(i);
                 int finalI = i;
-                mRightEpgList.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mRightEpgList.smoothScrollToPosition(finalI);
-                    }
-                });
+				if (!isScrollingXu){
+					isScrollingXu = true;
+				    mRightEpgList.scrollToPositionWithOffset(finalI, 0);
+                    mRightEpgList.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+						    mRightEpgList.smoothScrollToPosition(finalI);
+                        }
+                    }, 50);
+				}
             }
         } else { //xuameng无EPG时提示信息
             Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
@@ -515,12 +521,16 @@ public class LivePlayActivity extends BaseActivity {
                 int finalI = i;
                 mRightEpgList.setSelectedPosition(i);
                 epgListAdapter.setSelectedEpgIndex(i);
-                mRightEpgList.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mRightEpgList.smoothScrollToPosition(finalI);
-                    }
-                });
+				if (!isScrollingXu){
+					isScrollingXu = true;
+				    mRightEpgList.scrollToPositionWithOffset(finalI, 0);
+                    mRightEpgList.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+						    mRightEpgList.smoothScrollToPosition(finalI);
+                        }
+                    }, 50);
+				}
             }
         } else { //xuameng无EPG时提示信息
             Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
@@ -1470,19 +1480,10 @@ public class LivePlayActivity extends BaseActivity {
         } else {
             currentLiveChannelItem.setinclude_back(false);
         }
+		getEpg(new Date());
         showBottomEpg(); //XUAMENG重要点击频道播放，上面的不重新播放。只显示EPG
         mHideChannelListRun(); //xuameng显示EPG就隐藏左右菜单
         mHideSettingLayoutRun(); //xuameng显示EPG就隐藏左右菜单
-        if(countDownTimer30 != null) {
-            countDownTimer30.cancel();
-        }
-        countDownTimer30 = new CountDownTimer(300, 50) { //底部epg隐藏时间设定
-            public void onTick(long j) {}
-            public void onFinish() {
-                getEpg(new Date());
-            }
-        };
-        countDownTimer30.start();
         liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
         backcontroller.setVisibility(View.GONE);
         ll_right_top_huikan.setVisibility(View.GONE);
@@ -1662,15 +1663,18 @@ public class LivePlayActivity extends BaseActivity {
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 mHideChannelListRunXu();
+                if (newState == mRightEpgList.SCROLL_STATE_IDLE) {
+                    isScrollingXu = false; // xuameng滚动完成后重置状态
+                }
             }
         });
         //电视
         mRightEpgList.setOnItemListener(new TvRecyclerView.OnItemListener() {
             @Override
             public void onItemPreSelected(TvRecyclerView parent, View itemView, int position) {
-                if(mRightEpgList.isScrolling() || mRightEpgList.isComputingLayout()) { //xuameng如果EPG正在滚动返回，解决BUG
-                    return;
-                } else epgListAdapter.setFocusedEpgIndex(-1);
+                if(!mRightEpgList.isScrolling() && !mRightEpgList.isComputingLayout()) { //xuameng如果EPG正在滚动返回，解决BUG
+                    epgListAdapter.setFocusedEpgIndex(-1);
+                }
             }
             @Override
             public void onItemSelected(TvRecyclerView parent, View itemView, int position) {
@@ -2250,6 +2254,10 @@ public class LivePlayActivity extends BaseActivity {
             @Override
             public void onItemSelected(TvRecyclerView parent, View itemView, int position) {				
                 selectChannelGroup(position, true, -1); //xuameng频道组
+				if (ChannelGroupPosition != position){
+					ChannelGroupPosition = position;
+					isScrollingXu = false;
+				}
             }
             @Override
             public void onItemClick(TvRecyclerView parent, View itemView, int position) {
@@ -2264,6 +2272,10 @@ public class LivePlayActivity extends BaseActivity {
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                 FastClickCheckUtil.check(view);
                 selectChannelGroup(position, false, -1);
+				if (ChannelGroupPosition != position){
+					ChannelGroupPosition = position;
+					isScrollingXu = false;
+				}
             }
         });
     }
@@ -2305,6 +2317,10 @@ public class LivePlayActivity extends BaseActivity {
             }
             @Override
             public void onItemSelected(TvRecyclerView parent, View itemView, int position) {
+				if (ChannelPosition != position){
+					ChannelPosition = position;
+					isScrollingXu = false;
+				}
                 if(position < 0) return;
                 liveChannelGroupAdapter.setFocusedGroupIndex(-1);
                 liveChannelItemAdapter.setFocusedChannelIndex(position);
@@ -2324,6 +2340,10 @@ public class LivePlayActivity extends BaseActivity {
         liveChannelItemAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+				if (ChannelPosition != position){
+					ChannelPosition = position;
+					isScrollingXu = false;
+				}
                 FastClickCheckUtil.check(view);
                 clickLiveChannel(position);
 				isTouch = false;
