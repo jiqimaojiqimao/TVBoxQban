@@ -87,11 +87,11 @@ public class ApiConfig {
 
     private String defaultLiveObjString="{\"lives\":[{\"name\":\"txt_m3u\",\"type\":0,\"url\":\"txt_m3u_url\"}]}";
     private ApiConfig() {
-		jarLoader.clear();
-		jsLoader.clear();
+		clearJarLoader();
         sourceBeanList = new LinkedHashMap<>();
         liveChannelGroupList = new ArrayList<>();
         parseBeanList = new ArrayList<>();
+		searchSourceBeanList = new ArrayList<>();
         gson = new Gson();
 		Hawk.put(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
         loadDefaultConfig();
@@ -1032,6 +1032,20 @@ public class ApiConfig {
         return filteredList;
     }
 
+    private List<SourceBean> searchSourceBeanList;
+    public List<SourceBean> getSearchSourceBeanList() {
+        if(searchSourceBeanList.isEmpty()){
+            LOG.i("echo-第一次getSearchSourceBeanList");
+            searchSourceBeanList = new ArrayList<>();
+            for (SourceBean bean : sourceBeanList.values()) {
+                if (bean.isSearchable()) {
+                    searchSourceBeanList.add(bean);
+                }
+            }
+        }
+        return searchSourceBeanList;
+    }
+
     public List<ParseBean> getParseBeanList() {
         return parseBeanList;
     }
@@ -1097,6 +1111,7 @@ public class ApiConfig {
     }
     public void clearJarLoader(){
         jarLoader.clear();
+		jsLoader.clear();
     }
     private void addSuperParse(){
         ParseBean superPb = new ParseBean();
