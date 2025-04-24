@@ -144,7 +144,7 @@ public class BackupDialog extends BaseDialog {
                                 sharedPreferences.edit().putString(key, value).commit();
                             }
                         }
-                        Toast.makeText(getContext(), "数据恢复成功！请重启应用！", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "数据恢复成功！退出设置页面将重启应用！", Toast.LENGTH_SHORT).show();
 						HawkConfig.ISrestore = true;  //xuameng恢复成功,请重启应用
                     } else {
                         Toast.makeText(getContext(), "Hawk恢复失败!", Toast.LENGTH_SHORT).show();
