@@ -85,6 +85,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
     private TextView tvFastSearchText;
     private TextView tvRecStyleText;
     private TextView tvIjkCachePlay;
+	private SelectDialog<SourceBean> mSiteSwitchDialog;
 
 
     public static ModelSettingFragment newInstance() {
@@ -238,56 +239,56 @@ public class ModelSettingFragment extends BaseLazyFragment {
 				Toast.makeText(mContext, "壁纸已重置！", Toast.LENGTH_LONG).show();
             }
         });
+
         findViewById(R.id.llHomeApi).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
                 List<SourceBean> sites = ApiConfig.get().getSwitchSourceBeanList();
-                if (sites.size() > 0) {
-                    SelectDialog<SourceBean> dialog = new SelectDialog<>(mActivity);
-					TvRecyclerView tvRecyclerView = dialog.findViewById(R.id.list);  //xuameng首页数据源显示优化
-					int spanCount;
-					spanCount = (int)Math.floor(sites.size()/20);
-					spanCount = Math.min(spanCount, 2);
-					tvRecyclerView.setLayoutManager(new V7GridLayoutManager(dialog.getContext(), spanCount+1));
-					ConstraintLayout cl_root = dialog.findViewById(R.id.cl_root);
-					ViewGroup.LayoutParams clp = cl_root.getLayoutParams();
-					clp.width = AutoSizeUtils.mm2px(dialog.getContext(), 380+200*spanCount);  //xuameng首页数据源显示优化完
-                    dialog.setTip("请选择首页数据源");
-					int select = sites.indexOf(ApiConfig.get().getHomeSourceBean());
-					if (select<0) select = 0;
-                    dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<SourceBean>() {
-                        @Override
-                        public void click(SourceBean value, int pos) {
-                            ApiConfig.get().setSourceBean(value);
-                            tvHomeApi.setText(ApiConfig.get().getHomeSourceBean().getName());
-
-                            Intent intent =new Intent(mContext, HomeActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            Bundle bundle = new Bundle();
-                            bundle.putBoolean("useCache", true);
-                            intent.putExtras(bundle);
-                            startActivity(intent);
-                        }
-
-                        @Override
-                        public String getDisplay(SourceBean val) {
-                            return val.getName();
-                        }
-                    }, new DiffUtil.ItemCallback<SourceBean>() {
-                        @Override
-                        public boolean areItemsTheSame(@NonNull @NotNull SourceBean oldItem, @NonNull @NotNull SourceBean newItem) {
-                            return oldItem == newItem;
-                        }
-
-                        @Override
-                        public boolean areContentsTheSame(@NonNull @NotNull SourceBean oldItem, @NonNull @NotNull SourceBean newItem) {
-                            return oldItem.getKey().equals(newItem.getKey());
-                        }
-                    }, sites, select);
-                    dialog.show();
-                } else {
-						Toast.makeText(mContext, "主页暂无数据！联系许大师吧！", Toast.LENGTH_LONG).show();
+                if (!sites.isEmpty()){
+                int select = sites.indexOf(ApiConfig.get().getHomeSourceBean());
+                if (select < 0 || select >= sites.size()) select = 0;
+                if (mSiteSwitchDialog == null) {
+					mSiteSwitchDialog = new SelectDialog<>(mActivity);
+                    TvRecyclerView tvRecyclerView = mSiteSwitchDialog.findViewById(R.id.list);
+                    // 根据 sites 数量动态计算列数
+                    int spanCount = (int) Math.floor(sites.size() / 20.0);
+                    spanCount = Math.min(spanCount, 2);
+                    tvRecyclerView.setLayoutManager(new V7GridLayoutManager(mSiteSwitchDialog.getContext(), spanCount + 1));
+                    // 设置对话框宽度
+                    ConstraintLayout cl_root = mSiteSwitchDialog.findViewById(R.id.cl_root);
+                    ViewGroup.LayoutParams clp = cl_root.getLayoutParams();
+                    clp.width = AutoSizeUtils.mm2px(mSiteSwitchDialog.getContext(), 380 + 200 * spanCount);
+                    mSiteSwitchDialog.setTip("请选择首页数据源");
+                }
+                mSiteSwitchDialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<SourceBean>() {
+                    @Override
+                    public void click(SourceBean value, int pos) {
+                        ApiConfig.get().setSourceBean(value);
+                        Intent intent =new Intent(mContext, HomeActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        Bundle bundle = new Bundle();
+                        bundle.putBoolean("useCache", true);
+                        intent.putExtras(bundle);
+                        startActivity(intent);
+                    }
+                    @Override
+                    public String getDisplay(SourceBean val) {
+                        return val.getName();
+                    }
+                }, new DiffUtil.ItemCallback<SourceBean>() {
+                    @Override
+                    public boolean areItemsTheSame(@NonNull SourceBean oldItem, @NonNull SourceBean newItem) {
+                        return oldItem == newItem;
+                    }
+                    @Override
+                    public boolean areContentsTheSame(@NonNull SourceBean oldItem, @NonNull SourceBean newItem) {
+                        return oldItem.getKey().equals(newItem.getKey());
+                    }
+                }, sites, select);
+                mSiteSwitchDialog.show();
+            }else {
+				Toast.makeText(mContext, "主页暂无数据！联系许大师吧！", Toast.LENGTH_LONG).show();
 				}
             }
         });
