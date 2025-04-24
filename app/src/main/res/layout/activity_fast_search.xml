@@ -20,6 +20,8 @@
             android:layout_width="@dimen/vs_180"
             android:layout_height="fill_parent"
             android:text="搜索(0/0)"
+			android:singleLine="true"
+			android:ellipsize="end"
             android:textAlignment="center"/>
         <com.owen.tvrecyclerview.widget.TvRecyclerView
             android:id="@+id/mGridViewWordFenci"
