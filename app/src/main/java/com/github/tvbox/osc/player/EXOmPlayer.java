@@ -20,6 +20,9 @@ import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedT
 import com.google.android.exoplayer2.util.MimeTypes;
 
 import xyz.doikki.videoplayer.exo.ExoMediaPlayer;
+import android.util.Pair;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EXOmPlayer extends ExoMediaPlayer {
     private String audioId = "";
@@ -125,6 +128,9 @@ public class EXOmPlayer extends ExoMediaPlayer {
         return data;
     }
 
+    /** 缓存：key=播放地址，value=已选的 {groupIndex, trackIndex} */
+    private static final Map<String, Pair<Integer, Integer>> mTrackOverrideCache = new HashMap<>();
+
     @SuppressLint("UnsafeOptInUsageError")
     private void getExoSelectedTrack() {
         audioId = "";
@@ -165,8 +171,58 @@ public class EXOmPlayer extends ExoMediaPlayer {
                 parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
                 getTrackSelector().setParameters(parametersBuilder);
             }
+            //xuameng记忆选择音轨
+            if (currentPlayPath != null) {
+                mTrackOverrideCache.put(currentPlayPath, Pair.create(videoTrackBean.trackGroupId, videoTrackBean.trackId));
+            }
+        }
+    }
+
+    //xuameng记忆选择音轨
+    public void loadDefaultTrack() {    
+        Pair<Integer, Integer> pair = mTrackOverrideCache.get(currentPlayPath);
+        if (pair == null) return;
+
+        MappingTrackSelector.MappedTrackInfo mappedInfo = getTrackSelector().getCurrentMappedTrackInfo();
+        if (mappedInfo == null) return;
+
+        int audioRendererIndex = findAudioRendererIndex(mappedInfo);
+        if (audioRendererIndex == C.INDEX_UNSET) return;
+
+        TrackGroupArray audioGroups = mappedInfo.getTrackGroups(audioRendererIndex);
+        int groupIndex = pair.first;
+        int trackIndex = pair.second;
+        if (!isTrackIndexValid(audioGroups, groupIndex, trackIndex)) return;
+
+        DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(groupIndex, trackIndex);
+
+        DefaultTrackSelector.ParametersBuilder builder = getTrackSelector().buildUponParameters();
+        builder.clearSelectionOverrides(audioRendererIndex);
+        builder.setSelectionOverride(audioRendererIndex, audioGroups, override);
+        getTrackSelector().setParameters(builder.build());
+    }
+    /**
+     * 查找音频渲染器索引
+     */
+    private int findAudioRendererIndex(MappingTrackSelector.MappedTrackInfo mappedInfo) {
+        for (int i = 0; i < mappedInfo.getRendererCount(); i++) {
+            if (mappedInfo.getRendererType(i) == C.TRACK_TYPE_AUDIO) {
+                return i;
+            }
+        }
+        return C.INDEX_UNSET;
+    }
+
+    /**
+     * 验证音轨索引是否有效
+     */
+    private boolean isTrackIndexValid(TrackGroupArray groups, int groupIndex, int trackIndex) {
+        if (groupIndex < 0 || groupIndex >= groups.length) {
+            return false;
         }
 
+        TrackGroup group = groups.get(groupIndex);
+        return trackIndex >= 0 && trackIndex < group.length;
     }
 
     public void setOnTimedTextListener(Player.Listener listener) {
