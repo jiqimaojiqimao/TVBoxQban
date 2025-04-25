@@ -116,7 +116,7 @@ public class FastSearchActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         if (pauseRunnable != null && pauseRunnable.size() > 0) {
-            searchExecutorService = Executors.newFixedThreadPool(10);
+            searchExecutorService = Executors.newFixedThreadPool(5);
             allRunCount.set(pauseRunnable.size());
             for (Runnable runnable : pauseRunnable) {
                 searchExecutorService.execute(runnable);
@@ -313,9 +313,9 @@ public class FastSearchActivity extends BaseActivity {
     private void initData() {
         initCheckedSourcesForSearch();
         Intent intent = getIntent();
+		showSuccess();  //xuameng 
         if (intent != null && intent.hasExtra("title")) {
             String title = intent.getStringExtra("title");
-            showLoading();
             search(title);
         }
     }
@@ -324,7 +324,6 @@ public class FastSearchActivity extends BaseActivity {
     public void server(ServerEvent event) {
         if (event.type == ServerEvent.SERVER_SEARCH) {
             String title = (String) event.obj;
-            showLoading();
             search(title);
         }
     }
@@ -353,42 +352,22 @@ public class FastSearchActivity extends BaseActivity {
     }
 
     private void search(String title) {
-		List<SourceBean> searchRequestList = new ArrayList<>();  //xuameng修复不选择搜索源还进行搜索，还显示搜索动画
-		searchRequestList.addAll(ApiConfig.get().getSourceBeanList());
-		SourceBean home = ApiConfig.get().getHomeSourceBean();
-		searchRequestList.remove(home);
-		searchRequestList.add(0, home);
-		ArrayList<String> siteKey = new ArrayList<>();
-		for (SourceBean bean : searchRequestList) {
-			if (!bean.isSearchable()) {
-				continue;
-			}
-			if (mCheckSources != null && !mCheckSources.containsKey(bean.getKey())) {
-				continue;
-			}
-			siteKey.add(bean.getKey());
-			allRunCount.incrementAndGet();
-		}
-		if (siteKey.size() <= 0) {
-			Toast.makeText(FastSearchActivity.this, "聚汇影视提示：请指定搜索源！", Toast.LENGTH_SHORT).show();
-			showSuccess();
+		if (TextUtils.isEmpty(title)){
+			Toast.makeText(mContext, "输入内容不能为空！", Toast.LENGTH_SHORT).show();
 			return;
-		}    //xuameng修复不选择搜索源还进行搜索，还显示搜索动画完 
+		}
         cancel();
-        showLoading();
         this.searchTitle = title;
         fenci();
         mGridView.setVisibility(View.INVISIBLE);
         mGridViewFilter.setVisibility(View.GONE);
         searchAdapter.setNewData(new ArrayList<>());
         searchAdapterFilter.setNewData(new ArrayList<>());
-
         spListAdapter.reset();
         resultVods.clear();
         searchFilterKey = "";
         isFilterMode = false;
         spNames.clear();
-
         searchResult();
     }
 
@@ -409,7 +388,7 @@ public class FastSearchActivity extends BaseActivity {
             searchAdapterFilter.setNewData(new ArrayList<>());
             allRunCount.set(0);
         }
-        searchExecutorService = Executors.newFixedThreadPool(10);
+        searchExecutorService = Executors.newFixedThreadPool(5);
         List<SourceBean> searchRequestList = new ArrayList<>();
         searchRequestList.addAll(ApiConfig.get().getSourceBeanList());
         SourceBean home = ApiConfig.get().getHomeSourceBean();
@@ -433,7 +412,12 @@ public class FastSearchActivity extends BaseActivity {
             this.spNames.put(bean.getName(), bean.getKey());
             allRunCount.incrementAndGet();
         }
+		if (siteKey.size() <= 0) {
+			Toast.makeText(FastSearchActivity.this, "聚汇影视提示：请指定搜索源！", Toast.LENGTH_SHORT).show();
+			return;
+		}    //xuameng修复不选择搜索源还进行搜索，还显示搜索动画完 
 
+        showLoading();
         for (String key : siteKey) {
             searchExecutorService.execute(new Runnable() {
                 @Override
