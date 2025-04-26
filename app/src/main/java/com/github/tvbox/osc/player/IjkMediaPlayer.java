@@ -17,6 +17,7 @@ import java.net.URI;  //xuameng新增
 import java.net.URLEncoder;  //xuameng新增
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.HashMap;  //xuameng记忆选择音轨
 
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.misc.ITrackInfo;
@@ -26,6 +27,7 @@ import xyz.doikki.videoplayer.ijk.IjkPlayer;
 public class IjkMediaPlayer extends IjkPlayer {
 
     private IJKCode codec = null;
+	protected String currentPlayPath;   //xuameng记忆选择音轨
 
     public IjkMediaPlayer(Context context, IJKCode codec) {
         super(context);
@@ -133,7 +135,8 @@ public class IjkMediaPlayer extends IjkPlayer {
         }
         setDataSourceHeader(headers);
         mMediaPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "protocol_whitelist", "ijkio,ffio,async,cache,crypto,file,dash,http,https,ijkhttphook,ijkinject,ijklivehook,ijklongurl,ijksegment,ijktcphook,pipe,rtp,tcp,tls,udp,ijkurlhook,data");
-        super.setDataSource(path, null);
+        currentPlayPath = path; //xuameng记忆选择音轨
+		super.setDataSource(path, null);
     }
 
     /**
@@ -219,10 +222,17 @@ public class IjkMediaPlayer extends IjkPlayer {
         return data;
     }
 
+	 //xuameng记忆选择音轨
+     private static final Map<String, Integer> mTrackIndexCache = new HashMap<>();
+
     public void setTrack(int trackIndex) {
         int audioSelected = mMediaPlayer.getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_AUDIO);
         int subtitleSelected = mMediaPlayer.getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT);
         if (trackIndex!=audioSelected && trackIndex!=subtitleSelected){
+            //xuameng记忆选择音轨
+             if (currentPlayPath != null) {
+                 mTrackIndexCache.put(currentPlayPath, trackIndex);
+             }
             mMediaPlayer.selectTrack(trackIndex);
         }
     }
@@ -231,4 +241,16 @@ public class IjkMediaPlayer extends IjkPlayer {
         mMediaPlayer.setOnTimedTextListener(listener);
     }
 
+    //xuameng默认选中第一个音轨 一般第一个音轨是国语 && 加载上一次选中的
+    public void loadDefaultTrack(TrackInfo trackInfo) {
+         Integer trackIndex = mTrackIndexCache.get(currentPlayPath);
+         if (trackIndex == null) {
+             if(trackInfo!=null && trackInfo.getAudio().size()>1){
+				 int firsIndex=trackInfo.getAudio().get(0).trackId;
+                 setTrack(firsIndex);
+             }
+             return;
+         };
+         setTrack(trackIndex);
+     }
 }
