@@ -84,7 +84,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         this.path = path;
         this.headers = headers;
         mMediaSource = mMediaSourceHelper.getMediaSource(path, headers, false, errorCode);
-		currentPlayPath = path;    // 缓存到 map：下次同一路径播放时使用
+		currentPlayPath = path;    // xuameng 缓存到 map：下次同一路径播放时使用  //xuameng记忆选择音轨
         errorCode = -1;
     }
 
