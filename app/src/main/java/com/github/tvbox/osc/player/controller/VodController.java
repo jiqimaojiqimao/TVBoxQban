@@ -25,6 +25,9 @@ import com.lzy.okgo.callback.AbsCallback;  //xuameng新增广告过滤
 import com.lzy.okgo.model.HttpHeaders;  //xuameng新增广告过滤
 import com.lzy.okgo.model.Response;  //xuameng新增广告过滤
 import java.net.MalformedURLException; //xuameng新增广告过滤
+import com.github.tvbox.osc.base.App;  //xuameng停止磁力下载
+import com.github.tvbox.osc.util.thunder.Jianpian;  //xuameng停止磁力下载
+import com.github.tvbox.osc.util.thunder.Thunder;  //xuameng停止磁力下载
 import java.net.URL;  //xuameng新增广告过滤
 import java.util.HashMap; //xuameng新增广告过滤
 import java.util.Map; //xuameng新增广告过滤
@@ -2148,4 +2151,10 @@ public class VodController extends BaseController {
             }
         }
     }
+    public void stopOther()   //xuameng停止磁力下载
+     {
+         Thunder.stop(false);//停止磁力下载
+         Jianpian.finish();//停止p2p下载
+         App.getInstance().setDashData(null);
+     }
 }
