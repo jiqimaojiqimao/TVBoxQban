@@ -20,9 +20,9 @@ import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedT
 import com.google.android.exoplayer2.util.MimeTypes;
 
 import xyz.doikki.videoplayer.exo.ExoMediaPlayer;
-import android.util.Pair;
-import java.util.HashMap;
-import java.util.Map;
+import android.util.Pair;  //xuameng记忆选择音轨
+import java.util.HashMap;  //xuameng记忆选择音轨
+import java.util.Map;  //xuameng记忆选择音轨
 
 public class EXOmPlayer extends ExoMediaPlayer {
     private String audioId = "";
@@ -128,7 +128,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
         return data;
     }
 
-    /** 缓存：key=播放地址，value=已选的 {groupIndex, trackIndex} */
+    //xuameng记忆选择音轨
     private static final Map<String, Pair<Integer, Integer>> mTrackOverrideCache = new HashMap<>();
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -170,10 +170,10 @@ public class EXOmPlayer extends ExoMediaPlayer {
                 parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
                 parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
                 getTrackSelector().setParameters(parametersBuilder);
-            }
-            //xuameng记忆选择音轨
-            if (currentPlayPath != null) {
-                mTrackOverrideCache.put(currentPlayPath, Pair.create(videoTrackBean.trackGroupId, videoTrackBean.trackId));
+                //xuameng记忆选择音轨
+                if (currentPlayPath != null) {
+                    mTrackOverrideCache.put(currentPlayPath, Pair.create(videoTrackBean.trackGroupId, videoTrackBean.trackId));
+                }
             }
         }
     }
@@ -202,7 +202,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
         getTrackSelector().setParameters(builder.build());
     }
     /**
-     * 查找音频渲染器索引
+     * 查找音频渲染器索引    //xuameng记忆选择音轨
      */
     private int findAudioRendererIndex(MappingTrackSelector.MappedTrackInfo mappedInfo) {
         for (int i = 0; i < mappedInfo.getRendererCount(); i++) {
@@ -214,7 +214,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
     }
 
     /**
-     * 验证音轨索引是否有效
+     * 验证音轨索引是否有效   //xuameng记忆选择音轨
      */
     private boolean isTrackIndexValid(TrackGroupArray groups, int groupIndex, int trackIndex) {
         if (groupIndex < 0 || groupIndex >= groups.length) {
