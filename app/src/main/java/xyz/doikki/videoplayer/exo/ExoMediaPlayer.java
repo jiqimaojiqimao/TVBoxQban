@@ -46,7 +46,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private int errorCode = -100;
     private String path;
     private Map<String, String> headers;
-	protected String currentPlayPath;  //xuameng记忆选择音轨
 
     public ExoMediaPlayer(Context context) {
         mAppContext = context.getApplicationContext();
@@ -84,7 +83,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         this.path = path;
         this.headers = headers;
         mMediaSource = mMediaSourceHelper.getMediaSource(path, headers, false, errorCode);
-		currentPlayPath = path;    // xuameng 缓存到 map：下次同一路径播放时使用  //xuameng记忆选择音轨
         errorCode = -1;
     }
 
