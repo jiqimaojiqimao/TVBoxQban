@@ -641,7 +641,10 @@ public class ApiConfig {
 
         if (infoJson.has("doh")) {
             String doh_json = infoJson.getAsJsonArray("doh").toString();
-            Hawk.put(HawkConfig.DOH_JSON,doh_json);
+            if(!Hawk.get(HawkConfig.DOH_JSON, "").equals(doh_json)){
+                Hawk.put(HawkConfig.DOH_URL, 0);
+                Hawk.put(HawkConfig.DOH_JSON,doh_json);
+            }
         }else {
             Hawk.put(HawkConfig.DOH_JSON,"");
         }
