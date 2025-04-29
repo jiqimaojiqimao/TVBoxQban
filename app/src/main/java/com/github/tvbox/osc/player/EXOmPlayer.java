@@ -21,15 +21,17 @@ import com.google.android.exoplayer2.util.MimeTypes;
 
 import xyz.doikki.videoplayer.exo.ExoMediaPlayer;
 import android.util.Pair;  //xuameng记忆选择音轨
-import java.util.HashMap;  //xuameng记忆选择音轨
 import java.util.Map;  //xuameng记忆选择音轨
+import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 
 public class EXOmPlayer extends ExoMediaPlayer {
     private String audioId = "";
     private String subtitleId = "";
+	private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 
     public EXOmPlayer(Context context) {
         super(context);
+		memory = AudioTrackMemory.getInstance(context);  //xuameng记忆选择音轨
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -65,7 +67,11 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							if(audioCodecs.contains(tex4)) {  //xuameng过滤字幕类型里application/字符串
 								audioCodecs = audioCodecs.replace(tex4, textString4);  //xuameng过滤字幕类型里application/字符串
 							}
-
+							String tex5 = "-L2";  //xuameng过滤字幕类型里application/字符串
+							String textString5 = "";
+							if(audioCodecs.contains(tex5)) {  //xuameng过滤字幕类型里application/字符串
+								audioCodecs = audioCodecs.replace(tex5, textString5);  //xuameng过滤字幕类型里application/字符串
+							}
 							if (TextUtils.isEmpty(formatCodecs)){
 								formatCodecs = "";
 							}
@@ -128,9 +134,6 @@ public class EXOmPlayer extends ExoMediaPlayer {
         return data;
     }
 
-    //xuameng记忆选择音轨
-    private static final Map<String, Pair<Integer, Integer>> mTrackOverrideCache = new HashMap<>();
-
     @SuppressLint("UnsafeOptInUsageError")
     private void getExoSelectedTrack() {
         audioId = "";
@@ -170,17 +173,41 @@ public class EXOmPlayer extends ExoMediaPlayer {
                 parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
                 parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
                 getTrackSelector().setParameters(parametersBuilder);
+            }
+        }
+    }
+
+    @SuppressLint("UnsafeOptInUsageError")
+    public void selectExoTrackAudio(@Nullable TrackInfoBean videoTrackBean,String playKey) {
+        MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
+        if (trackInfo != null) {
+            if (videoTrackBean == null) {
+                for (int renderIndex = 0; renderIndex < trackInfo.getRendererCount(); renderIndex++) {
+                    if (trackInfo.getRendererType(renderIndex) == C.TRACK_TYPE_TEXT) {
+                        DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().getParameters().buildUpon();
+                        parametersBuilder.setRendererDisabled(renderIndex, true);
+                        getTrackSelector().setParameters(parametersBuilder);
+                        break;
+                    }
+                }
+            } else {
+                TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(videoTrackBean.renderId);
+                @SuppressLint("UnsafeOptInUsageError") DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(videoTrackBean.trackGroupId, videoTrackBean.trackId);
+                DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().buildUponParameters();
+                parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
+                parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
+                getTrackSelector().setParameters(parametersBuilder);
                 //xuameng记忆选择音轨
-                if (currentPlayPath != null) {
-                    mTrackOverrideCache.put(currentPlayPath, Pair.create(videoTrackBean.trackGroupId, videoTrackBean.trackId));
+                if (!playKey.isEmpty()) {
+                    memory.save(playKey,videoTrackBean.trackGroupId, videoTrackBean.trackId);
                 }
             }
         }
     }
 
     //xuameng记忆选择音轨
-    public void loadDefaultTrack() {    
-        Pair<Integer, Integer> pair = mTrackOverrideCache.get(currentPlayPath);
+    public void loadDefaultTrack(String playKey) {
+        Pair<Integer, Integer> pair = memory.exoLoad(playKey);
         if (pair == null) return;
 
         MappingTrackSelector.MappedTrackInfo mappedInfo = getTrackSelector().getCurrentMappedTrackInfo();
@@ -196,7 +223,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
 
         DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(groupIndex, trackIndex);
 
-        DefaultTrackSelector.Parameters.Builder builder = getTrackSelector().buildUponParameters();
+        DefaultTrackSelector.ParametersBuilder builder = getTrackSelector().buildUponParameters();
         builder.clearSelectionOverrides(audioRendererIndex);
         builder.setSelectionOverride(audioRendererIndex, audioGroups, override);
         getTrackSelector().setParameters(builder.build());
