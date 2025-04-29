@@ -18,7 +18,6 @@
 package tv.danmaku.ijk.media.player.misc;
 
 import android.text.TextUtils;
-import java.util.Locale;     //xuameng getSampleRateInline依赖
 
 import tv.danmaku.ijk.media.player.IjkMediaMeta;
 
@@ -297,16 +296,6 @@ public class IjkTrackInfo implements ITrackInfo {
         }
 	}
 
-    public String getSampleRateInline() {       //XUAMENG显示K赫兹
-        if (mStreamMeta.mSampleRate <= 0) {
-            return "N/A";
-        } else if (mStreamMeta.mSampleRate < 1000) {
-				return String.format(Locale.US, "%d Hz", mStreamMeta.mSampleRate);
-	    } else {
-                return String.format(Locale.US, "%d KHz", mStreamMeta.mSampleRate / 1000);
-        }
-    }
-
     public String getMCodecName() {
         if (getCodecName() == null || TextUtils.isEmpty(getCodecName()))
             return "未知";
@@ -377,9 +366,9 @@ public class IjkTrackInfo implements ITrackInfo {
                 out.append(", ");
                 out.append(getMCodecName()); //xuameng编码
                 out.append(", ");
-                out.append(mStreamMeta.getBitrateInline());
+                out.append(mStreamMeta.getBitrateInline());   //xuameng音频比特率
                 out.append(", ");
-                out.append(getSampleRateInline());  //XUAMENG显示K赫兹
+                out.append(mStreamMeta.getSampleRateInline());  //XUAMENG显示K赫兹
                 break;
             case MEDIA_TRACK_TYPE_TIMEDTEXT:
 				out.append(getLanguage());
