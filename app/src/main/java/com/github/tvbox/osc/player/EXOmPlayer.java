@@ -222,8 +222,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
         if (!isTrackIndexValid(audioGroups, groupIndex, trackIndex)) return;
 
         DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(groupIndex, trackIndex);
-
-        DefaultTrackSelector.ParametersBuilder builder = getTrackSelector().buildUponParameters();
+		DefaultTrackSelector.Parameters.Builder builder = getTrackSelector().buildUponParameters();
         builder.clearSelectionOverrides(audioRendererIndex);
         builder.setSelectionOverride(audioRendererIndex, audioGroups, override);
         getTrackSelector().setParameters(builder.build());
