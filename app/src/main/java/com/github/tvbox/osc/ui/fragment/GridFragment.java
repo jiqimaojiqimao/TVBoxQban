@@ -234,7 +234,7 @@ public class GridFragment extends BaseLazyFragment {
                     bundle.putString("title", video.name);
                     if( video.tag !=null && (video.tag.equals("folder") || video.tag.equals("cover"))){
                         focusedView = view;
-                        if(("12".indexOf(getUITag()) != -1)){
+                        if(("12".indexOf(getUITag()) != -1) && style == null){
                             changeView(video.id,video.tag.equals("folder"));
                         }else {
                             changeView(video.id,false);
