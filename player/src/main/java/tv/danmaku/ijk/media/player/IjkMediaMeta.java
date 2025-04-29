@@ -366,23 +366,27 @@ public class IjkMediaMeta {
             }
         }
 
-        public String getBitrateInline() {
+        public String getBitrateInline() {     //xuameng 音频比特率
             if (mBitrate <= 0) {
                 return "N/A";
             } else if (mBitrate < 1000) {
                 return String.format(Locale.US, "%d bit/s", mBitrate);
-            } else {
+            } else if (mBitrate > 1000000) {
+                return String.format(Locale.US, "%d mb/s",  mBitrate / 1000  / 1000);
+            }else {
                 return String.format(Locale.US, "%d kb/s", mBitrate / 1000);
             }
         }
 
-        public String getSampleRateInline() {
-            if (mSampleRate <= 0) {
-                return "N/A";
-            } else {
-                return String.format(Locale.US, "%d Hz", mSampleRate);
-            }
+    public String getSampleRateInline() {       //XUAMENG显示K赫兹
+        if (mSampleRate <= 0) {
+            return "N/A";
+        } else if (mSampleRate < 1000) {
+				return String.format(Locale.US, "%d Hz", mSampleRate);
+	    } else {
+                return String.format(Locale.US, "%d KHz", mSampleRate / 1000);
         }
+    }
 
         public String getChannelLayoutInline() {
             if (mChannelLayout <= 0) {
