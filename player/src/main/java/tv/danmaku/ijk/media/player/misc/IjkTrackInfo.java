@@ -274,6 +274,11 @@ public class IjkTrackInfo implements ITrackInfo {
 				if(Language.contains(rum)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(rum, changerum);  //xuameng过滤字幕类型里application/字符串
 				}
+				String mul = "mul";  //xuameng过滤字幕类型里application/字符串
+				String changemul = "多语言";
+				if(Language.contains(mul)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(mul, changemul);  //xuameng过滤字幕类型里application/字符串
+				}
 				String und = "und";  //xuameng过滤字幕类型里application/字符串
 				String changeund = "未知";
 				if(Language.contains(und)) {  //xuameng过滤字幕类型里application/字符串
@@ -330,6 +335,11 @@ public class IjkTrackInfo implements ITrackInfo {
 		String textString4 = "";
 		if(zimuCodecs.contains(text4)) {  //xuameng过滤字幕类型里application/字符串
 			zimuCodecs = zimuCodecs.replace(text4, textString4);  //xuameng过滤字幕类型里application/字符串
+		}
+		String text5 = "_s24le";  //xuameng过滤字幕类型里application/字符串
+		String textString5 = "";
+		if(zimuCodecs.contains(text5)) {  //xuameng过滤字幕类型里application/字符串
+			zimuCodecs = zimuCodecs.replace(text5, textString5);  //xuameng过滤字幕类型里application/字符串
 		}
         return zimuCodecs;
     }
