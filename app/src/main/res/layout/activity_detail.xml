@@ -65,6 +65,7 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:maxLines="1"
                         android:singleLine="true"
+                        android:maxEms="12"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/ts_20"
@@ -76,6 +77,7 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:maxLines="1"
                         android:singleLine="true"
+                        android:maxEms="10"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/ts_20"
@@ -87,6 +89,7 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:maxLines="1"
                         android:singleLine="true"
+                        android:maxEms="10"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/ts_20"
@@ -98,6 +101,7 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:maxLines="1"
                         android:singleLine="true"
+                        android:maxEms="10"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/ts_20"
@@ -109,6 +113,7 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:maxLines="1"
                         android:singleLine="true"
+                        android:maxEms="10"
                         android:layout_marginEnd="@dimen/vs_10"/>
                 </LinearLayout>
                 <TextView
@@ -179,12 +184,12 @@
                         android:focusable="true"
                         android:layout_width="@dimen/vs_100"
                         android:layout_height="@dimen/vs_40"
+                        android:layout_marginLeft="@dimen/vs_10"
                         android:layout_marginTop="@dimen/vs_10"
                         android:layout_marginRight="@dimen/vs_10"
                         android:layout_marginBottom="@dimen/vs_10"
-                        android:layout_marginLeft="@dimen/vs_10"
-                        android:layout_marginStart="@dimen/vs_10"
                         android:text="快搜"
+                        android:layout_marginStart="@dimen/vs_10"
                         android:layout_marginEnd="@dimen/vs_10"
                         android:letterSpacing="0.2"/>
                     <TextView
