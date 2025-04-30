@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     android:id="@+id/live_root"
+    android:background="#ff000000"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-	android:background="#ff000000"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <ImageView
         android:enabled="true"
         android:id="@+id/xuamengMusic"
-        android:visibility="gone"
         android:background="@drawable/xumusic"
-		android:scaleType="fitXY" 
+        android:visibility="gone"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"/>
+        android:layout_height="fill_parent"
+        android:scaleType="fitXY"/>
     <xyz.doikki.videoplayer.player.VideoView
         android:id="@+id/mVideoView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"/>
     <ImageView
         android:layout_gravity="center"
-        android:visibility="gone"
         android:id="@+id/iv_circle_bg_xu"
         android:padding="@dimen/vs_10"
+        android:visibility="gone"
         android:layout_width="@dimen/vs_80"
         android:layout_height="@dimen/vs_80"
         android:src="@drawable/app_icon"/>
@@ -45,7 +45,7 @@
             android:baselineAligned="false">
             <LinearLayout
                 android:orientation="horizontal"
-                android:background="#40000000"
+                android:background="#40111111"
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent">
                 <com.owen.tvrecyclerview.widget.TvRecyclerView
@@ -63,7 +63,7 @@
             </LinearLayout>
             <LinearLayout
                 android:id="@+id/divLoadEpgleft"
-                android:background="#40000000"
+                android:background="#40111111"
                 android:visibility="gone"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
@@ -116,7 +116,7 @@
                 </LinearLayout>
             </LinearLayout>
             <LinearLayout
-                android:background="#4d000000"
+                android:background="#4d111111"
                 android:layout_width="@dimen/vs_1"
                 android:layout_height="fill_parent"
                 android:layout_margin="0.0dip"/>
@@ -134,7 +134,7 @@
                 android:divider="@null"
                 android:fadeScrollbars="false"/>
             <LinearLayout
-                android:background="#4d000000"
+                android:background="#4d111111"
                 android:layout_width="@dimen/vs_1"
                 android:layout_height="fill_parent"
                 android:layout_margin="0.0dip"/>
@@ -202,7 +202,7 @@
                 <com.owen.tvrecyclerview.widget.TvRecyclerView
                     android:layout_gravity="center_vertical"
                     android:id="@+id/mEpgDateGridView"
-                    android:background="#40000000"
+                    android:background="#40111111"
                     android:paddingLeft="5.0mm"
                     android:paddingTop="10.0mm"
                     android:paddingRight="5.0mm"
@@ -214,7 +214,7 @@
                     app:tv_selectedItemIsCentered="true"
                     app:tv_verticalSpacingWithMargins="10.0mm"/>
                 <LinearLayout
-                    android:background="#4d000000"
+                    android:background="#4d111111"
                     android:layout_width="@dimen/vs_1"
                     android:layout_height="fill_parent"
                     android:layout_margin="@dimen/vs_0"/>
@@ -269,14 +269,14 @@
             app:tv_selectedItemIsCentered="true"
             app:tv_verticalSpacingWithMargins="10.0mm"/>
         <LinearLayout
-            android:background="#4d000000"
+            android:background="#4d111111"
             android:layout_width="@dimen/vs_1"
             android:layout_height="fill_parent"
             android:layout_margin="@dimen/vs_0"/>
         <com.owen.tvrecyclerview.widget.TvRecyclerView
             android:gravity="center"
             android:id="@+id/mSettingGroupView"
-            android:background="#40000000"
+            android:background="#40111111"
             android:paddingLeft="5.0mm"
             android:paddingTop="10.0mm"
             android:paddingRight="5.0mm"
@@ -614,7 +614,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="@dimen/vs_0"
-				android:text="[频道编号]"
+                android:text="[频道编号]"
                 android:layout_alignParentRight="true"/>
         </LinearLayout>
     </RelativeLayout>
