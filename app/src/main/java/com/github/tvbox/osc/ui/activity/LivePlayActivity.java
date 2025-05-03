@@ -574,7 +574,7 @@ public class LivePlayActivity extends BaseActivity {
 		}else if(logoUrl.equals("false")){
             updateChannelIcon(channelName, null);
 		}else {
-            String logo= logoUrl.replace("{name}",epgTagName);
+            String logo= logoUrl.replace("{name}",channelName);
             updateChannelIcon(channelName, logo);
         }
         if(epgInfo != null && !epgInfo[1].isEmpty()) {
@@ -678,13 +678,13 @@ public class LivePlayActivity extends BaseActivity {
             String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
-		if (logoUrl==null || logoUrl.isEmpty()){
+						if (logoUrl==null || logoUrl.isEmpty()){
 		updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]);
 		}else if(logoUrl.equals("false")){
-            updateChannelIcon(channelName, null);
+            updateChannelIcon(channel_Name.getChannelName(), null);
 		}else {
-            String logo= logoUrl.replace("{name}",epgTagName);
-            updateChannelIcon(channelName, logo);
+            String logo= logoUrl.replace("{name}",channel_Name.getChannelName());
+            updateChannelIcon(channel_Name.getChannelName(), logo);
         }
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
@@ -777,10 +777,10 @@ public class LivePlayActivity extends BaseActivity {
 						if (logoUrl==null || logoUrl.isEmpty()){
 		updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]);
 		}else if(logoUrl.equals("false")){
-            updateChannelIcon(channelName, null);
+            updateChannelIcon(channel_Name.getChannelName(), null);
 		}else {
-            String logo= logoUrl.replace("{name}",epgTagName);
-            updateChannelIcon(channelName, logo);
+            String logo= logoUrl.replace("{name}",channel_Name.getChannelName());
+            updateChannelIcon(channel_Name.getChannelName(), logo);
         }
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
@@ -828,10 +828,10 @@ public class LivePlayActivity extends BaseActivity {
 						if (logoUrl==null || logoUrl.isEmpty()){
 		updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]);
 		}else if(logoUrl.equals("false")){
-            updateChannelIcon(channelName, null);
+            updateChannelIcon(channel_Name.getChannelName(), null);
 		}else {
-            String logo= logoUrl.replace("{name}",epgTagName);
-            updateChannelIcon(channelName, logo);
+            String logo= logoUrl.replace("{name}",channel_Name.getChannelName());
+            updateChannelIcon(channel_Name.getChannelName(), logo);
         }
  
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
