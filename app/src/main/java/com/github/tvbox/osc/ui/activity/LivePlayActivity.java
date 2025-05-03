@@ -115,6 +115,7 @@ public class LivePlayActivity extends BaseActivity {
     private long mExitTimeUp = 0; //xuameng上键间隔时间
     private long mExitTimeDown = 0; //xuameng下键间隔时间
     private long mSpeedTimeUp = 0; //xuameng上键间隔时间
+	private String logoUrl=null;
     private LinearLayout tvRightSettingLayout;
     private TvRecyclerView mSettingGroupView;
     private TvRecyclerView mSettingItemView;
@@ -568,7 +569,14 @@ public class LivePlayActivity extends BaseActivity {
         timeFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
         String[] epgInfo = EpgUtil.getEpgInfo(channelName);
         String epgTagName = channelName;
-        updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]);
+		if (logoUrl==null || logoUrl.isEmpty()){
+            updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]);
+		}else if(logoUrl.equals("false")){
+            updateChannelIcon(channelName, null);
+		}else {
+            String logo= logoUrl.replace("{name}",epgTagName);
+            updateChannelIcon(channelName, logo);
+        }
         if(epgInfo != null && !epgInfo[1].isEmpty()) {
             epgTagName = epgInfo[1];
         }
@@ -670,7 +678,14 @@ public class LivePlayActivity extends BaseActivity {
             String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
-                updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]);
+		if (logoUrl==null || logoUrl.isEmpty()){
+        updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]);
+		}else if(logoUrl.equals("false")){
+            updateChannelIcon(channelName, null);
+		}else {
+            String logo= logoUrl.replace("{name}",epgTagName);
+            updateChannelIcon(channelName, logo);
+        }
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
                     int size = arrayList.size() - 1;
@@ -759,7 +774,14 @@ public class LivePlayActivity extends BaseActivity {
             String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
-                updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]);
+		if (logoUrl==null || logoUrl.isEmpty()){
+        updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]);
+		}else if(logoUrl.equals("false")){
+            updateChannelIcon(channelName, null);
+		}else {
+            String logo= logoUrl.replace("{name}",epgTagName);
+            updateChannelIcon(channelName, logo);
+        }
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
                     int size = arrayList.size() - 1;
@@ -803,7 +825,14 @@ public class LivePlayActivity extends BaseActivity {
             String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
-                updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]);
+ 		if (logoUrl==null || logoUrl.isEmpty()){
+        updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]);
+		}else if(logoUrl.equals("false")){
+            updateChannelIcon(channelName, null);
+		}else {
+            String logo= logoUrl.replace("{name}",epgTagName);
+            updateChannelIcon(channelName, logo);
+        }
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
                     int size = arrayList.size() - 1;
@@ -2549,6 +2578,7 @@ public class LivePlayActivity extends BaseActivity {
             finish();
 			return;
         }
+		initLiveObj();
 
         if (list.size() == 1 && list.get(0).getGroupName().startsWith("http://127.0.0.1")) {
             loadProxyLives(list.get(0).getGroupName());
@@ -3321,5 +3351,14 @@ public class LivePlayActivity extends BaseActivity {
         liveChannelGroupList.add(defaultGroup);
         showSuccess();
         initLiveState();
+    }
+    private void initLiveObj(){
+        int position=Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0);
+        JsonArray live_groups=Hawk.get(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
+        JsonObject livesOBJ = live_groups.get(position).getAsJsonObject();
+        String type = livesOBJ.has("type")?livesOBJ.get("type").getAsString():"0";
+        if(livesOBJ.has("logo")){
+            logoUrl = livesOBJ.get("logo").getAsString();
+        }
     }
 }
