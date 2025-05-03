@@ -679,7 +679,7 @@ public class LivePlayActivity extends BaseActivity {
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
 		if (logoUrl==null || logoUrl.isEmpty()){
-        updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]);
+		updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]);
 		}else if(logoUrl.equals("false")){
             updateChannelIcon(channelName, null);
 		}else {
@@ -774,8 +774,8 @@ public class LivePlayActivity extends BaseActivity {
             String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
-		if (logoUrl==null || logoUrl.isEmpty()){
-        updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]);
+						if (logoUrl==null || logoUrl.isEmpty()){
+		updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]);
 		}else if(logoUrl.equals("false")){
             updateChannelIcon(channelName, null);
 		}else {
@@ -825,14 +825,15 @@ public class LivePlayActivity extends BaseActivity {
             String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
- 		if (logoUrl==null || logoUrl.isEmpty()){
-        updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]);
+						if (logoUrl==null || logoUrl.isEmpty()){
+		updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]);
 		}else if(logoUrl.equals("false")){
             updateChannelIcon(channelName, null);
 		}else {
             String logo= logoUrl.replace("{name}",epgTagName);
             updateChannelIcon(channelName, logo);
         }
+ 
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
                     int size = arrayList.size() - 1;
