@@ -122,6 +122,7 @@ public class CollectActivity extends BaseActivity {
                         bundle.putString("sourceKey", vodInfo.sourceKey);
                         SourceBean sourceBean = ApiConfig.get().getSource(vodInfo.sourceKey);
                         if(sourceBean!=null){
+						    bundle.putString("picture", vodInfo.pic);   //xuameng某些网站图片部显示
                             jumpActivity(DetailActivity.class, bundle);
                         }else {
                             bundle.putString("title", vodInfo.name);
