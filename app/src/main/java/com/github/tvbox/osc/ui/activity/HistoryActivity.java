@@ -123,6 +123,7 @@ public class HistoryActivity extends BaseActivity {
                         Bundle bundle = new Bundle();
                         bundle.putString("id", vodInfo.id);
                         bundle.putString("sourceKey", vodInfo.sourceKey);
+						bundle.putString("picture", vodInfo.pic);    //xuameng某些网站图片部显示
                         jumpActivity(DetailActivity.class, bundle);
                     }
                 }
