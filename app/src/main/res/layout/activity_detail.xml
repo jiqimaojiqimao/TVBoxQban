@@ -77,7 +77,6 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:maxLines="1"
                         android:singleLine="true"
-                        android:maxEms="10"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/ts_20"
@@ -89,7 +88,6 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:maxLines="1"
                         android:singleLine="true"
-                        android:maxEms="10"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/ts_20"
@@ -101,7 +99,6 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:maxLines="1"
                         android:singleLine="true"
-                        android:maxEms="10"
                         android:layout_marginEnd="@dimen/vs_10"/>
                     <TextView
                         android:textSize="@dimen/ts_20"
@@ -113,7 +110,6 @@
                         android:layout_marginRight="@dimen/vs_10"
                         android:maxLines="1"
                         android:singleLine="true"
-                        android:maxEms="10"
                         android:layout_marginEnd="@dimen/vs_10"/>
                 </LinearLayout>
                 <TextView
