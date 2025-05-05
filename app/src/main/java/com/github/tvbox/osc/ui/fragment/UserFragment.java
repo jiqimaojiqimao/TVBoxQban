@@ -180,6 +180,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
 						jumpActivity(SearchActivity.class, bundle);
 					  }
 		              }else {
+						bundle.putString("picture", vod.pic);
                         jumpActivity(DetailActivity.class, bundle);
                     }                           //xuameng 修复首页聚汇推荐单击不能搜索的问题结束
                 } else {
@@ -222,6 +223,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
 						jumpActivity(SearchActivity.class, bundle);
 					  }
 		              }else {
+						bundle.putString("picture", vod.pic);   //xuameng某些网站图片部显示
                         jumpActivity(DetailActivity.class, bundle);
                     }                           //xuameng 修复首页聚汇推荐单击不能搜索的问题结束
                 } else {
