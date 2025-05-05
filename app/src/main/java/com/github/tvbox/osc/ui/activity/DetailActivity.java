@@ -834,6 +834,9 @@ public class DetailActivity extends BaseActivity {
                     mVideo.id = vodId;
                     if (TextUtils.isEmpty(mVideo.name))mVideo.name = "🥇聚汇影视";
                     vodInfo = new VodInfo();
+                    if((mVideo.pic==null || mVideo.pic.isEmpty()) && !vod_picture.isEmpty()){    //xuameng某些网站图片部显示
+                        mVideo.pic=vod_picture;
+                    }
                     vodInfo.setVideo(mVideo);
                     vodInfo.sourceKey = mVideo.sourceKey;
                     sourceKey = mVideo.sourceKey;
@@ -966,10 +969,12 @@ public class DetailActivity extends BaseActivity {
         return label + "<font color=\"#FFFFFF\">" + content + "</font>";
     }
 
+    private String  vod_picture="";
     private void initData() {
         Intent intent = getIntent();
         if (intent != null && intent.getExtras() != null) {
             Bundle bundle = intent.getExtras();
+			vod_picture=bundle.getString("picture", "");
             loadDetail(bundle.getString("id", null), bundle.getString("sourceKey", ""));
         }
     }
