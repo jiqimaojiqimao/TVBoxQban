@@ -39,7 +39,7 @@ public class M3u8 {
         if (null == m3u8content || m3u8content.length() == 0) return null;
         if (!m3u8content.startsWith("#EXTM3U")) return null;
         String result = removeMinorityUrl(tsUrlPre, m3u8content);
-        if (result != null) return result;
+        if (result != null && currentAdCount>0) return result;
         result = get(tsUrlPre, m3u8content);
         long cost = System.currentTimeMillis() - start;
         LOG.i("echo-fixAdM3u8Ai 耗时：" + cost + "ms");
