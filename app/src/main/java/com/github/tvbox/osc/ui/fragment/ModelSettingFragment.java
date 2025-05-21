@@ -208,17 +208,22 @@ public class ModelSettingFragment extends BaseLazyFragment {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
-                if (!ApiConfig.get().wallpaper.isEmpty())
+                if (!ApiConfig.get().wallpaper.isEmpty()){
+				HawkConfig.isGetWp = true;  //xuameng下载壁纸
 	            Toast.makeText(mContext, "壁纸更换中！", Toast.LENGTH_SHORT).show();   //xuameng
-                    OkGo.<File>get(ApiConfig.get().wallpaper).execute(new FileCallback(requireActivity().getFilesDir().getAbsolutePath(), "wp") {
+                    OkGo.<File>get(ApiConfig.get().wallpaper).tag("xuameng").execute(new FileCallback(requireActivity().getFilesDir().getAbsolutePath(), "wp") {  //xuameng增加tag以便打断下载
                         @Override
                         public void onSuccess(Response<File> response) {
-                            ((BaseActivity) requireActivity()).changeWallpaper(true);
+							if (HawkConfig.isGetWp){
+							   ((BaseActivity) requireActivity()).changeWallpaper(true);
+							   HawkConfig.isGetWp = false;  //xuameng下载壁纸
+							}
                         }
 
                         @Override
                         public void onError(Response<File> response) {
                             super.onError(response);
+							HawkConfig.isGetWp = false;  //xuameng下载壁纸
                         }
 
                         @Override
@@ -226,6 +231,9 @@ public class ModelSettingFragment extends BaseLazyFragment {
                             super.downloadProgress(progress);
                         }
                     });
+				}else{
+					Toast.makeText(mContext, "壁纸站点未配置！", Toast.LENGTH_SHORT).show();   //xuameng
+				}
             }
         });
         findViewById(R.id.llWpRecovery).setOnClickListener(new View.OnClickListener() {
@@ -782,8 +790,11 @@ public class ModelSettingFragment extends BaseLazyFragment {
 
     @Override
     public void onDestroyView() {
+		if (HawkConfig.isGetWp){
+			OkGo.getInstance().cancelTag("xuameng");   //xuameng打断下载
+		}
         super.onDestroyView();
-        SettingActivity.callback = null;		
+        SettingActivity.callback = null;
     }
 
     String getHomeRecName(int type) {
