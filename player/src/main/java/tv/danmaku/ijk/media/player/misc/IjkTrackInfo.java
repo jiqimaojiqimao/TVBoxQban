@@ -113,6 +113,36 @@ public class IjkTrackInfo implements ITrackInfo {
 				if(Language.contains(fre)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(fre, changefre);  //xuameng过滤字幕类型里application/字符串
 				}
+				String fra = "fra";  //xuameng过滤字幕类型里application/字符串
+				String changefra = "法语";
+				if(Language.contains(fra)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(fra, changefra);  //xuameng过滤字幕类型里application/字符串
+				}
+				String hrv = "hrv";  //xuameng过滤字幕类型里application/字符串
+				String changehrv = "克罗地亚语";
+				if(Language.contains(hrv)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(hrv, changehrv);  //xuameng过滤字幕类型里application/字符串
+				}
+				String ell = "ell";  //xuameng过滤字幕类型里application/字符串
+				String changeell = "爱沙尼亚语";
+				if(Language.contains(ell)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(ell, changeell);  //xuameng过滤字幕类型里application/字符串
+				}
+				String deu = "deu";  //xuameng过滤字幕类型里application/字符串
+				String changedeu = "德语";
+				if(Language.contains(deu)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(deu, changedeu);  //xuameng过滤字幕类型里application/字符串
+				}
+				String nld = "nld";  //xuameng过滤字幕类型里application/字符串
+				String changenld = "荷兰语";
+				if(Language.contains(nld)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(nld, changenld);  //xuameng过滤字幕类型里application/字符串
+				}
+				String ron = "ron";  //xuameng过滤字幕类型里application/字符串
+				String changeron = "罗马尼亚语";
+				if(Language.contains(ron)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(ron, changeron);  //xuameng过滤字幕类型里application/字符串
+				}
 				String heb = "heb";  //xuameng过滤字幕类型里application/字符串
 				String changeheb = "希伯来语";
 				if(Language.contains(heb)) {  //xuameng过滤字幕类型里application/字符串
