@@ -2119,7 +2119,7 @@ public class LivePlayActivity extends BaseActivity {
 						isBuffer = false;
 						if(isBack) {          //xuameng 回看不成功返回直播
 							int durationXu = (int) mVideoView.getDuration();
-                            if(durationXu < 130000) {
+                            if(durationXu < 60000) {
                                if(mVideoView != null) {
                                   mVideoView.release();
                                }
