@@ -464,6 +464,7 @@ public class LivePlayActivity extends BaseActivity {
                 mRightEpgList.setSelectedPosition(i);
                 //xuameng防止跳焦点                 mRightEpgList.setSelection(i);
                 epgListAdapter.setSelectedEpgIndex(i);
+//				epgListAdapter.notifyDataSetChanged();
                 int finalI = i;
 				if (!isScrollingXu){
 					isScrollingXu = true;
@@ -523,6 +524,7 @@ public class LivePlayActivity extends BaseActivity {
                 int finalI = i;
                 mRightEpgList.setSelectedPosition(i);
                 epgListAdapter.setSelectedEpgIndex(i);
+//				epgListAdapter.notifyDataSetChanged();
 				if (!isScrollingXu){
 					isScrollingXu = true;
 				    mRightEpgList.scrollToPositionWithOffset(finalI, 0);
@@ -661,6 +663,53 @@ public class LivePlayActivity extends BaseActivity {
             }
         });
     }
+
+    public void getEpgxuBack(Date date) {
+        String channelName = channel_Name.getChannelName();
+        SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd");
+        timeFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+        String[] epgInfo = EpgUtil.getEpgInfo(channelName);
+        String epgTagName = channelName;
+        if(epgInfo != null && !epgInfo[1].isEmpty()) {
+            epgTagName = epgInfo[1];
+        }
+        String finalChannelName = channelName;
+        epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back()); //xuameng重要EPG滚动菜单检测可不可以回看
+        //epgListAdapter.updateData(date, new ArrayList<>());
+        String url;
+        if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
+            url = epgStringAddress.replace("{name}", URLEncoder.encode(epgTagName)).replace("{date}", timeFormat.format(date));
+        } else {
+            url = epgStringAddress + "?ch=" + URLEncoder.encode(epgTagName) + "&date=" + timeFormat.format(date);
+        }
+        UrlHttpUtil.get(url, new CallBackUtil.CallBackString() {
+            public void onFailure(int i, String str) {
+                showEpg(date, new ArrayList());
+            }
+            public void onResponse(String paramString) {
+                ArrayList arrayList = new ArrayList();
+                Log.d("返回的EPG信息", paramString);
+                try {
+                    if(paramString.contains("epg_data")) {
+                        final JSONArray jSONArray = new JSONObject(paramString).optJSONArray("epg_data");
+                        if(jSONArray != null)
+                            for(int b = 0; b < jSONArray.length(); b++) {
+                                JSONObject jSONObject = jSONArray.getJSONObject(b);
+                                Epginfo epgbcinfo = new Epginfo(date, jSONObject.optString("title"), date, jSONObject.optString("start"), jSONObject.optString("end"), b);
+                                arrayList.add(epgbcinfo);
+                                Log.d("EPG信息:", day + "  " + jSONObject.optString("start") + " - " + jSONObject.optString("end") + "  " + jSONObject.optString("title"));
+                            }
+                    }
+                } catch (JSONException jSONException) {
+                    jSONException.printStackTrace();
+                }
+                showEpg(date, arrayList);
+                String savedEpgKey = channelName + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
+                if(!hsEpg.contains(savedEpgKey)) hsEpg.put(savedEpgKey, arrayList);
+				showBottomEpgBack(); //xuameng回看EPG
+            }
+        });
+    }
     //显示底部EPG
 	@SuppressLint("SetTextI18n") //xuameng乱码
     private void showBottomEpg() {
@@ -668,6 +717,7 @@ public class LivePlayActivity extends BaseActivity {
 			return;
 		}
         if(isSHIYI) return;
+		liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
         if(channel_Name.getChannelName() != null) {
             ((TextView) findViewById(R.id.tv_channel_bar_name)).setText(channel_Name.getChannelName());
             ((TextView) findViewById(R.id.tv_channel_bottom_number)).setText("" + channel_Name.getChannelNum());
@@ -839,10 +889,10 @@ public class LivePlayActivity extends BaseActivity {
                     while(size >= 0) {
                         if(new Date().compareTo(((Epginfo) arrayList.get(size)).startdateTime) >= 0) {
                             tip_epg1.setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);
-                            ((TextView) findViewById(R.id.tv_current_program_name)).setText(((Epginfo) arrayList.get(size)).title);
+                            ((TextView) findViewById(R.id.tv_current_program_name)).setText("正在直播：" + ((Epginfo) arrayList.get(size)).title);
                             if(size != arrayList.size() - 1) {
                                 tip_epg2.setText(((Epginfo) arrayList.get(size + 1)).start + "--" + ((Epginfo) arrayList.get(size + 1)).end); //xuameng修复EPG低菜单下一个节目结束的时间
-                                ((TextView) findViewById(R.id.tv_next_program_name)).setText(((Epginfo) arrayList.get(size + 1)).title);
+                                ((TextView) findViewById(R.id.tv_next_program_name)).setText("将要直播：" + ((Epginfo) arrayList.get(size + 1)).title);
                             }
                             break;
                         } else {
@@ -920,6 +970,7 @@ public class LivePlayActivity extends BaseActivity {
         }
     }
     //频道列表
+	@SuppressLint("NotifyDataSetChanged")
     public void divLoadEpgRight(View view) {
 		if(!isCurrentLiveChannelValid()) return;  //xuameng 未选择频道空指针问题
 		if (isTouch){
@@ -1483,8 +1534,8 @@ public class LivePlayActivity extends BaseActivity {
                 }
             }
             if(!isVOD) {
-                showBottomEpg();
                 getEpg(new Date());
+                showBottomEpg();
                 mHideChannelListRun(); //xuameng显示EPG就隐藏左右菜单
                 mHideSettingLayoutRun(); //xuameng显示EPG就隐藏左右菜单
             }
@@ -1715,6 +1766,7 @@ public class LivePlayActivity extends BaseActivity {
                 mHideChannelListRunXu();
                 epgListAdapter.setFocusedEpgIndex(position);
             }
+			@SuppressLint("NotifyDataSetChanged")
             @Override
             public void onItemClick(TvRecyclerView parent, View itemView, int position) {
                 currentChannelGroupIndex = liveChannelGroupAdapter.getSelectedGroupIndex();
@@ -1779,6 +1831,7 @@ public class LivePlayActivity extends BaseActivity {
                     lp.width = videoHeight / 7;
                     lp.height = videoHeight / 7;
                     showProgressBars(true);
+					getEpgxuBack(new Date());
                     showBottomEpgBack(); //xuameng回看EPG
                     isBack = true;
                     isVOD = false;
@@ -1789,6 +1842,7 @@ public class LivePlayActivity extends BaseActivity {
         });
         //手机/模拟器
         epgListAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+			@SuppressLint("NotifyDataSetChanged")
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                 currentChannelGroupIndex = liveChannelGroupAdapter.getSelectedGroupIndex();
@@ -1853,6 +1907,7 @@ public class LivePlayActivity extends BaseActivity {
                     lp.width = videoHeight / 7;
                     lp.height = videoHeight / 7;
                     showProgressBars(true);
+					getEpgxuBack(new Date());
                     showBottomEpgBack(); //xuameng回看EPG
                     isBack = true;
                     isVOD = false;
