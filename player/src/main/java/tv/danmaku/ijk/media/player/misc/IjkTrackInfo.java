@@ -303,22 +303,22 @@ public class IjkTrackInfo implements ITrackInfo {
 				if(Language.contains(rum)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(rum, changerum);  //xuameng过滤字幕类型里application/字符串
 				}
-				String wuu = "aka";  //xuameng过滤字幕类型里application/字符串
+				String aka = "aka";  //xuameng过滤字幕类型里application/字符串
 				String changeaka = "阿坎语";
 				if(Language.contains(aka)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(aka, changeaka);  //xuameng过滤字幕类型里application/字符串
 				}
-				String wuu = "aym";  //xuameng过滤字幕类型里application/字符串
+				String aym = "aym";  //xuameng过滤字幕类型里application/字符串
 				String changeaym = "艾马拉语";
 				if(Language.contains(aym)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(aym, changeaym);  //xuameng过滤字幕类型里application/字符串
 				}
-				String wuu = "aze";  //xuameng过滤字幕类型里application/字符串
+				String aze = "aze";  //xuameng过滤字幕类型里application/字符串
 				String changeaze = "阿塞拜疆语";
 				if(Language.contains(aze)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(aze, changeaze);  //xuameng过滤字幕类型里application/字符串
 				}
-				String wuu = "mon";  //xuameng过滤字幕类型里application/字符串
+				String mon = "mon";  //xuameng过滤字幕类型里application/字符串
 				String changemon = "蒙古语";
 				if(Language.contains(mon)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(mon, changemon);  //xuameng过滤字幕类型里application/字符串
