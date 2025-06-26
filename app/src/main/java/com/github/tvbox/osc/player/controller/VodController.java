@@ -276,7 +276,8 @@ public class VodController extends BaseController {
     TextView mAudioTrackBtn;
     public TextView mLandscapePortraitBtn;
     private View backBtn;//返回键
-    private boolean isClickBackBtn;
+    private boolean isClickBackBtn = false;   //xuameng判断点击返回键
+	private boolean isShowBottom = false;   //xuameng判断显示底部菜单
 	private double DOUBLE_CLICK_TIME = 0L;    //xuameng返回键防连击1.5秒（为动画）
 	private double DOUBLE_CLICK_TIME_2 = 0L;    //xuameng防连击1秒（为动画）
    
@@ -1561,6 +1562,7 @@ public class VodController extends BaseController {
 
     void showBottom() {
 		isSEEKBAR = false;        //XUAMENG隐藏菜单时修复进度条BUG
+		isShowBottom = true;   //xuameng判断显示底部菜单
         mHandler.removeMessages(1003);
         mHandler.sendEmptyMessage(1002);
     }
@@ -1883,6 +1885,15 @@ public class VodController extends BaseController {
     
     @Override
     public boolean onBackPressed() {
+        if (isShowBottom) {   //xuameng 罕见BUG
+			new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                  isShowBottom = false;
+                }
+            }, 350);
+			return true;
+		}
 		if (isBottomVisible() && (System.currentTimeMillis() - DOUBLE_CLICK_TIME) < 350) {               //xuameng返回键防连击1.5秒（为动画,当动画显示时）
             DOUBLE_CLICK_TIME = System.currentTimeMillis();
             return true;
@@ -1898,7 +1909,8 @@ public class VodController extends BaseController {
                   isClickBackBtn = false;
                 }
             }, 350);
-            if ((System.currentTimeMillis() - DOUBLE_CLICK_TIME) > 350) {                                //xuameng  屏幕上的返回键退出
+		}
+        if ((System.currentTimeMillis() - DOUBLE_CLICK_TIME) > 350) {                                //xuameng  屏幕上的返回键退出
             DOUBLE_CLICK_TIME = System.currentTimeMillis();
             mBottomRoot.setVisibility(GONE);	        //动画结束后隐藏下菜单
             mTopRoot1.setVisibility(GONE);	            //动画结束后隐藏上菜单
@@ -1908,7 +1920,6 @@ public class VodController extends BaseController {
             backBtn.setVisibility(INVISIBLE);           //返回键隐藏菜单
 			mTvPausexu.setVisibility(GONE);				//隐藏暂停菜单
 			mLockView.setVisibility(INVISIBLE);         //xuameng隐藏屏幕锁
-            }
             return false;
         }
         if (super.onBackPressed()) {                                                                      //xuameng返回退出
