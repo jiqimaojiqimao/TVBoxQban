@@ -1834,12 +1834,12 @@ public class VodController extends BaseController {
     }
 
     @Override
-    public boolean onSingleTapConfirmed(MotionEvent e) {
-		if ((System.currentTimeMillis() - DOUBLE_CLICK_TIME_2) < 350){                  //xuameng 防播放打断动画					
+    public boolean onSingleTapConfirmed(MotionEvent e) {            //延时回调,延迟时间是 180 ms,
+		if ((System.currentTimeMillis() - DOUBLE_CLICK_TIME_2) < 350){                  //xuameng 防止180ms内点击返回键，又会弹击菜单				
 			return false;
 			}
 		DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();
-		if (isClickBackBtn) {   //xuameng 罕见BUG
+		if (isClickBackBtn) {   //xuameng 罕见BUG  防止180ms内点击BackBtn键，又会弹击菜单	
 			return false;
 		}
         myHandle.removeCallbacks(myRunnable);
