@@ -303,6 +303,31 @@ public class IjkTrackInfo implements ITrackInfo {
 				if(Language.contains(rum)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(rum, changerum);  //xuameng过滤字幕类型里application/字符串
 				}
+				String wuu = "aka";  //xuameng过滤字幕类型里application/字符串
+				String changeaka = "阿坎语";
+				if(Language.contains(aka)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(aka, changeaka);  //xuameng过滤字幕类型里application/字符串
+				}
+				String wuu = "aym";  //xuameng过滤字幕类型里application/字符串
+				String changeaym = "艾马拉语";
+				if(Language.contains(aym)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(aym, changeaym);  //xuameng过滤字幕类型里application/字符串
+				}
+				String wuu = "aze";  //xuameng过滤字幕类型里application/字符串
+				String changeaze = "阿塞拜疆语";
+				if(Language.contains(aze)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(aze, changeaze);  //xuameng过滤字幕类型里application/字符串
+				}
+				String wuu = "mon";  //xuameng过滤字幕类型里application/字符串
+				String changemon = "蒙古语";
+				if(Language.contains(mon)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(mon, changemon);  //xuameng过滤字幕类型里application/字符串
+				}
+				String wuu = "wuu";  //xuameng过滤字幕类型里application/字符串
+				String changewuu = "吴语";
+				if(Language.contains(wuu)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(wuu, changewuu);  //xuameng过滤字幕类型里application/字符串
+				}
 				String mul = "mul";  //xuameng过滤字幕类型里application/字符串
 				String changemul = "多语言";
 				if(Language.contains(mul)) {  //xuameng过滤字幕类型里application/字符串
@@ -401,12 +426,12 @@ public class IjkTrackInfo implements ITrackInfo {
                 out.append(mStreamMeta.getSampleRateInline());  //XUAMENG显示K赫兹
                 break;
             case MEDIA_TRACK_TYPE_TIMEDTEXT:
-				out.append(getLanguage());
+                out.append(getLanguage());
   //              out.append(mStreamMeta.mLanguage);  //xuameng显示语言
                 out.append(", ");
-				out.append("[");
-				out.append(getMCodecName()); //xuameng编码
-				out.append("字幕]");
+                out.append("[");
+                out.append(getMCodecName()); //xuameng编码
+                out.append("字幕]");
                 break;
             case MEDIA_TRACK_TYPE_SUBTITLE:
                 out.append("SUBTITLE");
