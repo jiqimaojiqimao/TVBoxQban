@@ -1836,7 +1836,7 @@ public class VodController extends BaseController {
     @Override
     public boolean onSingleTapConfirmed(MotionEvent e) {
 		if ((System.currentTimeMillis() - DOUBLE_CLICK_TIME_2) < 350){                  //xuameng 防播放打断动画					
-			return true;
+			return false;
 			}
 		DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();
 		if (isClickBackBtn) {   //xuameng 罕见BUG
