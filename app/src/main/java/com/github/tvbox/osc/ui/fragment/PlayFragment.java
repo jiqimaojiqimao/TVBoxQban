@@ -125,6 +125,7 @@ public class PlayFragment extends BaseLazyFragment {
     private VodController mController;
     private SourceViewModel sourceViewModel;
     private Handler mHandler;
+	private boolean isJianpian = false;  //xuameng判断视频是否为荐片
 
     private final long videoDuration = -1;
 
@@ -581,7 +582,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
     public void goPlayUrl(String url, HashMap<String, String> headers) {
 		LOG.i("echo-goPlayUrl:" + url);
-		if(autoRetryCount==0)webPlayUrl=url;
+//		if(autoRetryCount==0)webPlayUrl=url;
         if (mActivity == null) return;
 		if (!isAdded()) return;
         LOG.i("playUrl:" + url);
@@ -731,7 +732,7 @@ public class PlayFragment extends BaseLazyFragment {
         sourceViewModel.playResult.observe(this, new Observer<JSONObject>() {
             @Override
             public void onChanged(JSONObject info) {
-				webPlayUrl = null;
+//				webPlayUrl = null;
                 if (info != null) {
                     try {
                         progressKey = info.optString("proKey", null);
@@ -1014,6 +1015,12 @@ public class PlayFragment extends BaseLazyFragment {
                 play(false);
                 autoRetryCount++;
             }else {
+				if (isJianpian){
+					Toast.makeText(mContext, "播放失败！重试一次！", Toast.LENGTH_SHORT).show();
+					autoRetryCount++;
+					play(false);
+					return true;
+				}
                 //切换播放器不占用重试次数
                 if(mController.switchPlayer()){
 					autoRetryCount++;
@@ -1056,6 +1063,7 @@ public class PlayFragment extends BaseLazyFragment {
 
     public void play(boolean reset) {
         if(mVodInfo==null)return;
+		isJianpian = false;
         VodInfo.VodSeries vs = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodInfo.playIndex));
         setTip("正在获取播放信息", true, false);
@@ -1079,8 +1087,10 @@ public class PlayFragment extends BaseLazyFragment {
             mController.showParse(false);
             if(vs.url.startsWith("tvbox-xg:")){
                 playUrl(Jianpian.JPUrlDec(jp_url.substring(9)), null);
+				isJianpian = true;
             }else {
                 playUrl(Jianpian.JPUrlDec(jp_url), null);
+				isJianpian = true;
             }
             return;
         }
@@ -1116,7 +1126,7 @@ public class PlayFragment extends BaseLazyFragment {
     private String webUrl;
     private String webUserAgent;
     private HashMap<String, String > webHeaderMap;
-	private String webPlayUrl;
+//	private String webPlayUrl;
 
     private void initParse(String flag, boolean useParse, String playUrl, final String url) {
         parseFlag = flag;
