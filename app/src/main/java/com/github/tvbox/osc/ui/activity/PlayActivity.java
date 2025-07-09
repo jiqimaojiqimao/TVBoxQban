@@ -403,7 +403,7 @@ public class PlayActivity extends BaseActivity {
                             mediaPlayer.seekTo(progress);
                             mediaPlayer.start();
                         }
-                    }, 800);
+                    }, 500);
                     dialog.dismiss();
                 } catch (Exception e) {
                     LOG.e("切换音轨出错");
@@ -472,7 +472,7 @@ public class PlayActivity extends BaseActivity {
                                 mediaPlayer.seekTo(progress);
                                 mediaPlayer.start();
                             }
-                        }, 800);
+                        }, 500);
                     }
 				   if (mediaPlayer instanceof EXOmPlayer) {
                         mController.mSubtitleView.destroy();
@@ -485,7 +485,7 @@ public class PlayActivity extends BaseActivity {
                                 mediaPlayer.seekTo(progress);
                                 mediaPlayer.start();
                             }
-                        }, 800);
+                        }, 500);
                     }
                     dialog.dismiss();
                 } catch (Exception e) {
@@ -907,9 +907,18 @@ public class PlayActivity extends BaseActivity {
             mVideoView.release();
             mVideoView = null;
         }
+        mController.stopOther();
+        String CachePath = FileUtils.getCachePath();     //xuameng 清空缓存
+        File CachePathDir = new File(CachePath); 
+        new Thread(() -> {
+        try {
+            if(CachePathDir.exists())FileUtils.cleanDirectory(CachePathDir);
+        } catch (Exception e) {
+              e.printStackTrace();
+        }
+        }).start();
         stopLoadWebView(true);
         stopParse();
-		mController.stopOther();
     }
 
     private VodInfo mVodInfo;
@@ -974,18 +983,33 @@ public class PlayActivity extends BaseActivity {
                 play(false);
                 autoRetryCount++;
             }else {
-				if (isJianpian){
-					Toast.makeText(mContext, "播放失败！重试一次！", Toast.LENGTH_SHORT).show();
-					autoRetryCount++;
-					play(false);
+                  if (isJianpian){
+                    String CachePath = FileUtils.getCachePath();     //xuameng 清空缓存
+                    File CachePathDir = new File(CachePath); 
+                    new Thread(() -> {
+                    try {
+                        if(CachePathDir.exists())FileUtils.cleanDirectory(CachePathDir);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    }).start();
+
+                    Toast.makeText(mContext, "播放失败！立即清空缓存！重试！", Toast.LENGTH_SHORT).show();
+                    autoRetryCount++;
+                    new Handler().postDelayed(new Runnable() {
+                    @Override
+                        public void run() {
+                           play(false);
+                        }
+                    }, 200);
 					return true;
 				}
                 //切换播放器不占用重试次数
                 if(mController.switchPlayer()){
-					autoRetryCount++;
-					play(false);
+                   autoRetryCount++;
+                   play(false);
                 }else {
-                    play(false);
+                   play(false);
                 }
             }
             return true;
@@ -1009,7 +1033,7 @@ public class PlayActivity extends BaseActivity {
 
     public void play(boolean reset) {
 		if(mVodInfo==null)return;
-		isJianpian = false;
+        isJianpian = false;
         VodInfo.VodSeries vs = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodInfo.playIndex));
         setTip("正在获取播放信息", true, false);
@@ -1018,7 +1042,7 @@ public class PlayActivity extends BaseActivity {
 
         stopParse();
         initParseLoadFound();
-		mController.stopOther();
+//xuameng某些设备有问题        mController.stopOther();
         if(mVideoView!= null) mVideoView.release();
         subtitleCacheKey = mVodInfo.sourceKey + "-" + mVodInfo.id + "-" + mVodInfo.playFlag + "-" + mVodInfo.playIndex+ "-" + vs.name + "-subt";
         progressKey = mVodInfo.sourceKey + mVodInfo.id + mVodInfo.playFlag + mVodInfo.playIndex + vs.name;       //xuameng
@@ -1033,10 +1057,10 @@ public class PlayActivity extends BaseActivity {
             mController.showParse(false);
             if(vs.url.startsWith("tvbox-xg:")){
                 playUrl(Jianpian.JPUrlDec(jp_url.substring(9)), null);
-				isJianpian = true;
+                isJianpian = true;
             }else {
                 playUrl(Jianpian.JPUrlDec(jp_url), null);
-				isJianpian = true;
+                isJianpian = true;
             }
             return;
         }
