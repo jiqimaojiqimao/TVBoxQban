@@ -419,11 +419,12 @@ public class IjkTrackInfo implements ITrackInfo {
             case MEDIA_TRACK_TYPE_AUDIO:
                 out.append(getLanguage());  //xuameng显示语言
                 out.append(", ");
-                out.append(getMCodecName()); //xuameng编码
-                out.append(", ");
                 out.append(mStreamMeta.getBitrateInline());   //xuameng音频比特率
                 out.append(", ");
                 out.append(mStreamMeta.getSampleRateInline());  //XUAMENG显示K赫兹
+                out.append("[");
+                out.append(getMCodecName()); //xuameng编码
+                out.append("]");
                 break;
             case MEDIA_TRACK_TYPE_TIMEDTEXT:
                 out.append(getLanguage());
