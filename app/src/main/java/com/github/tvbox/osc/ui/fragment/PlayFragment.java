@@ -948,16 +948,7 @@ public class PlayFragment extends BaseLazyFragment {
             mVideoView.release();
             mVideoView = null;
         }
-        mController.stopOther();
-        String CachePath = FileUtils.getCachePath();     //xuameng 清空缓存
-        File CachePathDir = new File(CachePath); 
-        new Thread(() -> {
-        try {
-            if(CachePathDir.exists())FileUtils.cleanDirectory(CachePathDir);
-        } catch (Exception e) {
-              e.printStackTrace();
-        }
-        }).start();
+        ClearOtherCache();
         stopLoadWebView(true);
         stopParse();
     }
@@ -1042,7 +1033,7 @@ public class PlayFragment extends BaseLazyFragment {
                         public void run() {
                            play(false);
                         }
-                    }, 200);
+                    }, 400);
 					return true;
 				}
                 //切换播放器不占用重试次数
@@ -1141,6 +1132,7 @@ public class PlayFragment extends BaseLazyFragment {
             mController.showParse(false);
             return;
         }
+        ClearOtherCache();
         sourceViewModel.getPlay(sourceKey, mVodInfo.playFlag, progressKey, vs.url, subtitleCacheKey);
     }
 
@@ -2038,4 +2030,16 @@ public class PlayFragment extends BaseLazyFragment {
         }
     }
 
+    public void ClearOtherCache() {    //xuameng清空荐片迅雷缓存
+		mController.stopOther();
+        String CachePath = FileUtils.getCachePath();     //xuameng 清空缓存
+        File CachePathDir = new File(CachePath); 
+        new Thread(() -> {
+        try {
+            if(CachePathDir.exists())FileUtils.cleanDirectory(CachePathDir);
+        } catch (Exception e) {
+              e.printStackTrace();
+        }
+        }).start();
+    }
 }
