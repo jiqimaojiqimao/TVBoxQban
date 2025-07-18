@@ -39,23 +39,43 @@
             android:id="@+id/tv_info_name1"
             android:paddingLeft="@dimen/vs_30"
             android:paddingTop="@dimen/vs_30"
-            android:layout_marginRight="@dimen/vs_340"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/vs_340"
             android:text="http://"
             android:singleLine="true"/>
-        <TextView
-            android:textSize="@dimen/ts_20"
-            android:textColor="@android:color/white"
-            android:ellipsize="end"
-            android:layout_gravity="left"
-            android:id="@+id/tv_videosize"
-            android:tag="vod_video_size"
-            android:paddingLeft="@dimen/vs_30"
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="[ 0 X 0 ]"
-            android:maxLines="1"/>
+            android:layout_marginBottom="@dimen/vs_0">
+            <TextView
+                android:textSize="@dimen/ts_20"
+                android:textColor="@android:color/white"
+                android:ellipsize="end"
+                android:layout_gravity="left"
+                android:id="@+id/tv_videosize"
+                android:tag="vod_video_size"
+                android:paddingLeft="@dimen/vs_30"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[ 0 X 0 ]"
+                android:maxLines="1"/>
+            <TextView
+                android:textSize="@dimen/ts_20"
+                android:textColor="@android:color/white"
+                android:ellipsize="end"
+                android:layout_gravity="left"
+                android:id="@+id/tv_play_load_net_speed_right_top"
+                android:paddingLeft="@dimen/vs_20"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="[ 0Kb/s ]"
+                android:singleLine="true"
+                android:layout_marginEnd="@dimen/vs_0"/>
+        </LinearLayout>
     </LinearLayout>
     <LinearLayout
         android:layout_gravity="right"
@@ -175,12 +195,12 @@
                 android:paddingStart="@dimen/vs_10"/>
         </LinearLayout>
         <HorizontalScrollView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:focusable="false"
             android:focusableInTouchMode="false"
-            android:scrollbars="none">
+            android:scrollbars="none"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="fill_parent"
@@ -305,6 +325,19 @@
                     android:layout_marginEnd="@dimen/vs_5"/>
                 <TextView
                     android:textSize="@dimen/ts_20"
+                    android:textColor="@android:color/white"
+                    android:id="@+id/play_render"
+                    android:background="@drawable/button_dialog_main_1"
+                    android:padding="@dimen/vs_10"
+                    android:focusable="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="@dimen/vs_5"
+                    android:text="渲染方式"
+                    android:singleLine="true"
+                    android:layout_marginEnd="@dimen/vs_5"/>
+                <TextView
+                    android:textSize="@dimen/ts_20"
                     android:textColor="@color/color_FFFFFF"
                     android:id="@+id/play_time_start_end_text"
                     android:background="@drawable/button_dialog_main_1"
@@ -395,22 +428,6 @@
                     android:layout_marginRight="@dimen/vs_5"
                     android:text="横竖屏"
                     android:layout_marginEnd="@dimen/vs_5"/>
-                <TextView
-                    android:textSize="@dimen/ts_20"
-                    android:textColor="@android:color/white"
-                    android:ellipsize="end"
-                    android:layout_gravity="right"
-                    android:id="@+id/tv_play_load_net_speed_right_top"
-                    android:background="@drawable/button_dialog_main_1"
-                    android:padding="@dimen/vs_10"
-                    android:paddingRight="@dimen/vs_10"
-                    android:focusable="false"
-                    android:focusableInTouchMode="false"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0Kb/s"
-                    android:singleLine="true"
-                    android:layout_marginEnd="@dimen/vs_0"/>
             </LinearLayout>
         </HorizontalScrollView>
         <LinearLayout
@@ -464,12 +481,12 @@
                 android:textColor="@android:color/white"
                 android:ellipsize="end"
                 android:layout_gravity="left"
-                android:layout_marginRight="@dimen/vs_340"
                 android:id="@+id/tv_info_name"
                 android:paddingLeft="@dimen/vs_15"
                 android:paddingTop="@dimen/vs_40"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="@dimen/vs_340"
                 android:text="http://"
                 android:singleLine="true"/>
         </LinearLayout>
