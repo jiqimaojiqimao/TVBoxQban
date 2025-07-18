@@ -22,11 +22,11 @@ public class LivePlayerManager {
 
     public void init(VideoView videoView) {
         try {
-			if (HawkConfig.intLIVEPLAYTYPE){
-				defaultPlayerConfig.put("pl", Hawk.get(HawkConfig.LIVE_PLAY_TYPE, 1));   //xuameng升级直播JSON中可以指定播放器类型
-			}else{
-				defaultPlayerConfig.put("pl", Hawk.get(HawkConfig.PLAY_TYPE, 0));  //xuameng升级直播JSON没有指定，默认跟随设置
-			}
+            if (HawkConfig.intLIVEPLAYTYPE){
+                defaultPlayerConfig.put("pl", Hawk.get(HawkConfig.LIVE_PLAY_TYPE, 1));   //xuameng升级直播JSON中可以指定播放器类型
+            }else{
+                defaultPlayerConfig.put("pl", Hawk.get(HawkConfig.PLAY_TYPE, 0));  //xuameng升级直播JSON没有指定，默认跟随设置
+            }
             defaultPlayerConfig.put("ijk", Hawk.get(HawkConfig.IJK_CODEC, "软解码"));
             defaultPlayerConfig.put("pr", Hawk.get(HawkConfig.PLAY_RENDER, 0));
             defaultPlayerConfig.put("sc", Hawk.get(HawkConfig.PLAY_SCALE, 0));
@@ -104,6 +104,15 @@ public class LivePlayerManager {
         return 0;
     }
 
+    public int getLivePlayrender() {   //xuameng 获取渲染方式
+        try {
+            return currentPlayerConfig.getInt("pr");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public void changeLivePlayerType(VideoView videoView, int playerType, String channelName) {
         JSONObject playerConfig = currentPlayerConfig;
         try {
@@ -147,6 +156,30 @@ public class LivePlayerManager {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        if (playerConfig.toString().equals(defaultPlayerConfig.toString()))
+            Hawk.delete(channelName);
+        else
+            Hawk.put(channelName, playerConfig);
+
+        currentPlayerConfig = playerConfig;
+    }
+
+    public void changeLivePlayerRender(VideoView videoView, int RenderType, String channelName) {  //xuameng 设置渲染方式
+        JSONObject playerConfig = currentPlayerConfig;
+        try {
+            switch (RenderType) {
+                case 0:
+                    playerConfig.put("pr", 0);
+                    break;
+                case 1:
+                    playerConfig.put("pr", 1);
+                    break;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        PlayerHelper.updateCfg(videoView, playerConfig);
+
         if (playerConfig.toString().equals(defaultPlayerConfig.toString()))
             Hawk.delete(channelName);
         else
