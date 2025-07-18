@@ -2515,6 +2515,10 @@ public class LivePlayActivity extends BaseActivity {
             case 2:
                 liveSettingItemAdapter.selectItem(livePlayerManager.getLivePlayerType(), true, true);
                 break;
+            case 6:
+                liveSettingItemAdapter.selectItem(livePlayerManager.getLivePlayrender(), true, true);  //xuameng 获取渲染方式
+                break;
+
         }
         int scrollToPosition = liveSettingItemAdapter.getSelectedItemIndex();
         if(scrollToPosition < 0) scrollToPosition = 0;
@@ -2613,6 +2617,7 @@ public class LivePlayActivity extends BaseActivity {
                 liveSettingItemAdapter.selectItem(position, select, false);
                 break;
 				case 5://多源切换   //xuameng新增
+				if(position == liveSettingItemAdapter.getSelectedItemIndex()) return;
                 //TODO
                 if (mVideoView != null) {
                     mVideoView.release();
@@ -2626,6 +2631,18 @@ public class LivePlayActivity extends BaseActivity {
                 ApiConfig.get().loadLiveApi(livesOBJ);
                 recreate();
                 return;
+            case 6: //xuameng渲染方式
+                if(position == liveSettingItemAdapter.getSelectedItemIndex()) return;
+			    if(mVideoView == null) return;
+                mVideoView.release();
+                livePlayerManager.changeLivePlayerRender(mVideoView, position, currentLiveChannelItem.getChannelName());    //xuameng 设置渲染方式
+                mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveWebHeader());
+                mVideoView.start();
+				liveSettingItemAdapter.selectItem(position, true, true);
+				if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
+					iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
+				}
+                break;
         }
         mHideSettingLayoutRunXu();
     }
