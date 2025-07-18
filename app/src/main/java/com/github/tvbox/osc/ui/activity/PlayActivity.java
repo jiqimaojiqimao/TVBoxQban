@@ -243,6 +243,18 @@ public class PlayActivity extends BaseActivity {
                 errorWithRetry("视频播放出错", false);
             }
 
+            public void hideTipXu() {        //xuameng隐藏错误信息
+               if (mPlayLoadTip.getVisibility() == View.VISIBLE){
+                   mPlayLoadTip.setVisibility(View.GONE);
+               }
+               if (mPlayLoading.getVisibility() == View.VISIBLE){
+                   mPlayLoading.setVisibility(View.GONE);
+               }
+               if (mPlayLoadErr.getVisibility() == View.VISIBLE){
+                   mPlayLoadErr.setVisibility(View.GONE);
+               }
+            }
+
             @Override
             public void selectSubtitle() {
                 try {
@@ -518,9 +530,7 @@ public class PlayActivity extends BaseActivity {
                 mPlayLoadTip.setText(msg);
                 mPlayLoadTip.setVisibility(View.VISIBLE);
                 mPlayLoading.setVisibility(loading ? View.VISIBLE : View.GONE);
-				if (!mVideoView.isPlaying()){       //xuameng修复播放成功也显示错误
-					mPlayLoadErr.setVisibility(err ? View.VISIBLE : View.GONE);
-				}
+                mPlayLoadErr.setVisibility(err ? View.VISIBLE : View.GONE);
             }
         });
     }
