@@ -801,7 +801,7 @@ public class ApiConfig {
 
     private final List<LiveSettingGroup> liveSettingGroupList = new ArrayList<>();
     private void initLiveSettings() {
-		ArrayList<String> groupNames = new ArrayList<>(Arrays.asList("线路选择", "画面比例", "播放解码", "超时换源", "偏好设置", "多源切换"));  //xuameng 换源
+		ArrayList<String> groupNames = new ArrayList<>(Arrays.asList("线路选择", "画面比例", "播放解码", "超时换源", "偏好设置", "多源切换", "渲染方式"));  //xuameng 换源
         ArrayList < ArrayList < String >> itemsArrayList = new ArrayList < > ();
         ArrayList < String > sourceItems = new ArrayList < > ();
         ArrayList < String > scaleItems = new ArrayList < > (Arrays.asList("默认比例", "16:9比例", "4:3 比例", "填充比例", "原始比例", "裁剪比例"));
@@ -809,6 +809,7 @@ public class ApiConfig {
         ArrayList < String > timeoutItems = new ArrayList < > (Arrays.asList("超时05秒", "超时10秒", "超时15秒", "超时20秒", "超时25秒", "超时30秒"));
         ArrayList < String > personalSettingItems = new ArrayList < > (Arrays.asList("显示时间", "显示网速", "换台反转", "跨选分类"));
         ArrayList<String> yumItems = new ArrayList<>();   //xuameng新增 换源
+		ArrayList < String > PlayrenderSettingItems = new ArrayList < > (Arrays.asList("Texture渲染", "Surface渲染"));   //xuameng渲染方式
 
         itemsArrayList.add(sourceItems);
         itemsArrayList.add(scaleItems);
@@ -816,6 +817,7 @@ public class ApiConfig {
         itemsArrayList.add(timeoutItems);
         itemsArrayList.add(personalSettingItems);
         itemsArrayList.add(yumItems);
+		itemsArrayList.add(PlayrenderSettingItems);   //xuameng渲染方式
 
         liveSettingGroupList.clear();
         for (int i = 0; i < groupNames.size(); i++) {
