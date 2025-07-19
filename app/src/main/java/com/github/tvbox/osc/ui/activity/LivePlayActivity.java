@@ -1051,6 +1051,26 @@ public class LivePlayActivity extends BaseActivity {
             xuexit(); //xuameng双击退出
         }
     }
+
+    private void ExitLiveOnSetting() { //xuameng设置中推出直播
+        mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);
+        mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBack);
+        mHandler.removeCallbacks(mUpdateNetSpeedRun);
+        mHandler.removeCallbacks(mUpdateNetSpeedRunXu);
+        mHandler.removeCallbacks(mUpdateVodProgressXu);
+        mHandler.removeCallbacks(myRunnableMusic);
+        mHandler.removeCallbacks(mUpdateVodImageXu);
+        mHandler.removeCallbacks(mUpdateTimeRun);
+        mHandler.removeCallbacks(mUpdateTimeRunXu);
+        iv_circle_bg_xu.setVisibility(View.GONE);  //xuameng音乐播放时图标
+        MxuamengMusic.setVisibility(View.GONE);  //xuameng播放音乐背景
+        if (mHandler != null) {
+			mHandler.removeCallbacksAndMessages(null);
+        }
+        OkGo.getInstance().cancelTag("xuameng");
+        super.onBackPressed();
+    }
+
     private final Runnable mPlaySelectedChannel = new Runnable() {
         @Override
         public void run() {
@@ -2642,6 +2662,14 @@ public class LivePlayActivity extends BaseActivity {
 				if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
 					iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
 				}
+                break;
+            case 7: //xuameng退出直播
+                mHideSettingLayoutRun();
+                if (mVideoView != null) {
+                    mVideoView.release();
+                    mVideoView=null;
+                }
+				ExitLiveOnSetting();
                 break;
         }
         mHideSettingLayoutRunXu();
