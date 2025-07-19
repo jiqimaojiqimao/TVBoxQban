@@ -64,6 +64,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
+import java.util.Calendar;   //xuameng 获取时间
+import java.util.Locale;  //xuameng 获取时间
 import xyz.doikki.videoplayer.player.VideoView;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 import static xyz.doikki.videoplayer.util.PlayerUtils.stringForTime;
@@ -249,6 +251,7 @@ public class VodController extends BaseController {
     TextView mPlayTitle;
     TextView mPlayTitle1;
     TextView mPlayLoadNetSpeedRightTop;
+	TextView mPlayTimeEnd;      //xuameng影片结束时间
     TextView mNextBtn;
     TextView mPreBtn;
     TextView mPlayerScaleBtn;
@@ -305,7 +308,22 @@ public class VodController extends BaseController {
             mPlayPauseTime.setText(timeFormat.format(date));
             String speed = PlayerHelper.getDisplaySpeed(mControlWrapper.getTcpSpeed());
             mPlayLoadNetSpeedRightTop.setText("[ " + speed + " ]");
-            mPlayLoadNetSpeed.setText(speed);         				
+            mPlayLoadNetSpeed.setText(speed); 
+			
+            long duration = mControlWrapper.getDuration();
+            if (isInPlaybackState() && duration >= 1000 && duration <= 180000000){
+                long position = mControlWrapper.getCurrentPosition();
+                if (position < 0) position = 0;   //xuameng系统播放器有时会有负进度的BUG
+                long TimeRemaining = mControlWrapper.getDuration() - position;
+                Calendar dateXu = Calendar.getInstance();
+                long t = dateXu.getTimeInMillis();
+                Date afterAdd = new Date(t + TimeRemaining);
+                SimpleDateFormat timeEnd = new SimpleDateFormat("HH:mm:ss", Locale.ENGLISH);
+                mPlayTimeEnd.setVisibility(VISIBLE);
+                mPlayTimeEnd.setText("影片剩余时间" + " " + PlayerUtils.stringForTime((int) TimeRemaining) + "  |  " + "影片结束时间" + " " + timeEnd.format(afterAdd));
+            }else{
+                mPlayTimeEnd.setVisibility(GONE);
+            }
             mHandler.postDelayed(this, 1000);
         }
     };
@@ -458,6 +476,7 @@ public class VodController extends BaseController {
         mPlayTitle = findViewById(R.id.tv_info_name);
         mPlayTitle1 = findViewById(R.id.tv_info_name1);
         mPlayLoadNetSpeedRightTop = findViewById(R.id.tv_play_load_net_speed_right_top);
+		mPlayTimeEnd = findViewById(R.id.play_time_end_xu);   //xuameng影片结束时间
         mSeekBar = findViewById(R.id.seekBar);
         mProgressRoot = findViewById(R.id.tv_progress_container);
         mProgressIcon = findViewById(R.id.tv_progress_icon);
