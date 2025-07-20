@@ -122,6 +122,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
     @Override
     protected void setProgress(int duration, int position) {
         super.setProgress(duration, position);
+        if (position < 0) position = 0;   //xuameng系统播放器有时会有负进度的BUG
         mPauseTime.setText(PlayerUtils.stringForTime(position) + " / " + PlayerUtils.stringForTime(duration));
     }
 
