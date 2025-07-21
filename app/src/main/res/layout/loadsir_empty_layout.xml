@@ -19,12 +19,12 @@
             android:gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/vs_20"
-            android:layout_marginBottom="@dimen/vs_20"
+            android:layout_marginTop="@dimen/vs_0"
+            android:layout_marginBottom="@dimen/vs_10"
+            android:text="没有找到数据"
             android:shadowColor="#ff000000"
             android:shadowDx="2.0"
             android:shadowDy="2.0"
-            android:shadowRadius="1.0"
-            android:text="没找到数据！"/>
+            android:shadowRadius="1.0"/>
     </LinearLayout>
 </FrameLayout>
