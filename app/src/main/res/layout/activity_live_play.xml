@@ -761,6 +761,7 @@
                 android:textColor="@color/color_90000000"
                 android:id="@+id/ll_right_top_huikan"
                 android:paddingRight="@dimen/vs_10"
+                android:visibility="gone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="@dimen/vs_5"
@@ -780,14 +781,24 @@
                 android:layout_marginLeft="@dimen/vs_0"
                 android:layout_marginRight="@dimen/vs_0"
                 android:layout_marginBottom="@dimen/vs_0">
-                <ImageView
+                <TextView
+                    android:textSize="@dimen/ts_20"
+                    android:textColor="@color/color_FFFFFF"
                     android:id="@+id/iv_playpause"
-                    android:background="@drawable/vod_pause"
-                    android:layout_width="@dimen/vs_35"
-                    android:layout_height="@dimen/vs_35"/>
+                    android:background="@drawable/button_dialog_main_1"
+                    android:paddingLeft="@dimen/vs_8"
+                    android:paddingRight="@dimen/vs_8"
+                    android:paddingTop="@dimen/vs_5"
+                    android:paddingBottom="@dimen/vs_5"
+                    android:focusable="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="暂停"
+                    android:singleLine="true"/>
                 <TextView
                     android:textColor="#ffffffff"
                     android:id="@+id/tv_currentpos"
+                    android:textSize="@dimen/ts_20"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="10.0mm"
@@ -812,6 +823,7 @@
                     android:paddingEnd="5.0mm"/>
                 <TextView
                     android:textColor="#ffffffff"
+                    android:textSize="@dimen/ts_20"
                     android:id="@+id/tv_duration"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
