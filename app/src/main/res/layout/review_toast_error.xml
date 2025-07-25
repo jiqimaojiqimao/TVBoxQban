@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:gravity="center"
+    android:layout_gravity="center"
+    android:orientation="vertical"
+    android:background="#00000000"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:id="@+id/toastImage"
+        android:layout_width="197.0mm"
+        android:layout_height="100.0mm"
+        android:src="@drawable/review"/>
+    <TextView
+        android:textSize="22.0mm"
+        android:textColor="#ffffffff"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:paddingTop="20.0mm"
+        android:id="@+id/toastText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="回看缓冲超时！已返回直播！"
+        android:shadowColor="#ff000000"
+        android:shadowDx="2.0"
+        android:shadowDy="2.0"
+        android:shadowRadius="1.0"/>
+</LinearLayout>
