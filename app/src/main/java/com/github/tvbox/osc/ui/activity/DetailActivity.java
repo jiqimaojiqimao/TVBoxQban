@@ -138,6 +138,7 @@ public class DetailActivity extends BaseActivity {
     public String vodId;
     public String sourceKey;
     public String firstsourceKey;
+	private SourceBean sourceBeanXu;  //xuameng判断sourceKey为空
     boolean seriesSelect = false;
     private View seriesFlagFocus = null;
     private boolean isReverse;
@@ -991,6 +992,12 @@ public class DetailActivity extends BaseActivity {
             vodId = vid;
             sourceKey = key;
             firstsourceKey = key;
+            sourceBeanXu = ApiConfig.get().getSource(sourceKey);  //xuameng判断sourceKey为空 远程推送BUG
+            if (sourceBeanXu == null){
+                Toast.makeText(DetailActivity.this, "推送结果：本地没有此数据源！请同步数据源！", Toast.LENGTH_LONG).show();
+                showEmpty();
+                return;
+            }
             showLoading();
             sourceViewModel.getDetail(sourceKey, vodId);
             boolean isVodCollect = RoomDataManger.isVodCollect(sourceKey, vodId);
@@ -1347,9 +1354,9 @@ public class DetailActivity extends BaseActivity {
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SUBTITLE_SIZE_CHANGE, subtitleTextSize));
     }
     private void setTvPlayUrl(String url){
-		if (url == null || url.isEmpty()) {
-			url = "聚汇影视提示您：播放地址为空！";
-		}	
-        setTextShow(tvPlayUrl, "播放地址：", url);
+      if (url == null || url.isEmpty()) {
+          url = "聚汇影视提示您：播放地址为空！";
+      }	
+      setTextShow(tvPlayUrl, "播放地址：", url);
     }
 }
