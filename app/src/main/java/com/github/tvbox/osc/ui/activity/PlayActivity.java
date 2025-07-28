@@ -370,7 +370,7 @@ public class PlayActivity extends BaseActivity {
         if (style == 0) {
             mController.mSubtitleView.setTextColor(getBaseContext().getResources().getColorStateList(R.color.color_FFFFFF));
         } else if (style == 1) {
-            mController.mSubtitleView.setTextColor(getBaseContext().getResources().getColorStateList(R.color.color_1890FF));
+            mController.mSubtitleView.setTextColor(getBaseContext().getResources().getColorStateList(R.color.color_02F8E1));
         }
     }
 
