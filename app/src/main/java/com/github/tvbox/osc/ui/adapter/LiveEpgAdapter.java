@@ -44,8 +44,8 @@ public class LiveEpgAdapter extends BaseQuickAdapter<Epginfo, BaseViewHolder> {
         AudioWaveView wqddg_AudioWaveView = holder.getView(R.id.wqddg_AudioWaveView);
         wqddg_AudioWaveView.setVisibility(View.GONE);
         if (value.index == selectedEpgIndex && value.index != focusedEpgIndex && (value.currentEpgDate.equals(shiyiDate) || value.currentEpgDate.equals(timeFormat.format(new Date())))) {
-            textview.setTextColor(mContext.getResources().getColor(R.color.color_1890FF));
-            timeview.setTextColor(mContext.getResources().getColor(R.color.color_1890FF));
+            textview.setTextColor(mContext.getResources().getColor(R.color.color_02F8E1));
+            timeview.setTextColor(mContext.getResources().getColor(R.color.color_02F8E1));
         }else {
             textview.setTextColor(Color.WHITE);
             timeview.setTextColor(Color.WHITE);
