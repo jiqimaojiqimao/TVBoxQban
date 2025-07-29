@@ -135,7 +135,7 @@ public class LivePlayActivity extends BaseActivity {
     private ArrayList < Integer > channelGroupPasswordConfirmed = new ArrayList < > ();
     private static LiveChannelItem channel_Name = null;
     private static LiveChannelItem channel_NameXu = null;
-    private static Hashtable hsEpg = new Hashtable();
+    private static Hashtable<String, ArrayList<Epginfo>> hsEpg = new Hashtable<>();
     private CountDownTimer countDownTimer;
     private View ll_right_top_loading; //xuameng左上图标
     private View view_line_XU;
@@ -421,235 +421,118 @@ public class LivePlayActivity extends BaseActivity {
     //获取EPG并存储 // 百川epg  DIYP epg   51zmt epg ------- 自建EPG格式输出格式请参考 51zmt
     private List < Epginfo > epgdata = new ArrayList < > ();
     private void showEpg(Date date, ArrayList < Epginfo > arrayList) {
-        String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
-        if(hsEpg.containsKey(savedEpgKey)) {    //xuameng如果已获取该EPG直接读取缓存
-           arrayList = (ArrayList) hsEpg.get(savedEpgKey);
-           if(arrayList != null && arrayList.size() > 0) {
-              epgdata = arrayList;
-              epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
-              epgListAdapter.setNewData(epgdata);
-              int i = -1;
-              int size = epgdata.size() - 1;
-              while(size >= 0) {
-                  if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
-                      break;
-                  }
-                  size--;
-              }
-              i = size;
-              if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
-                  epgListAdapter.notifyDataSetChanged();
-                  final int targetPos = i;  // 使用final保证线程安全
-                  mRightEpgList.removeCallbacks(null);
-                  mRightEpgList.setSelectedPosition(targetPos);
-                  epgListAdapter.setSelectedEpgIndex(targetPos);
-                  mRightEpgList.post(() -> {
-                      if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-                         mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                         //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-                      }
-                  }); 
-              }
-           } else { //xuameng无EPG时提示信息
-               Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
-               Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 0);
-               Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 0);
-               Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 0);
-               Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 0);
-               Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 0);
-               Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 0);
-               Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 0);
-               Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 0);
-               Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 0);
-               Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 0);
-               Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 0);
-               arrayList.add(epgbcinfo);
-               arrayList.add(epgbcinfo1);
-               arrayList.add(epgbcinfo2);
-               arrayList.add(epgbcinfo3);
-               arrayList.add(epgbcinfo4);
-               arrayList.add(epgbcinfo5);
-               arrayList.add(epgbcinfo6);
-               arrayList.add(epgbcinfo7);
-               arrayList.add(epgbcinfo8);
-               arrayList.add(epgbcinfo9);
-               arrayList.add(epgbcinfo10);
-               arrayList.add(epgbcinfo11);
-               epgdata = arrayList;
-               epgListAdapter.setNewData(epgdata);
-           }
-        }else{
-           if(arrayList != null && arrayList.size() > 0) {
-              epgdata = arrayList;
-              epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
-              epgListAdapter.setNewData(epgdata);
-              int i = -1;
-              int size = epgdata.size() - 1;
-              while(size >= 0) {
-                  if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
-                      break;
-                  }
-                  size--;
-              }
-              i = size;
-              if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
-                  epgListAdapter.notifyDataSetChanged();
-                  final int targetPos = i;  // 使用final保证线程安全
-                  mRightEpgList.removeCallbacks(null);
-                  mRightEpgList.setSelectedPosition(targetPos);
-                  epgListAdapter.setSelectedEpgIndex(targetPos);
-                  mRightEpgList.post(() -> {
-                      if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-                         mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                         //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-                      }
-                  }); 
-              }
-           } else { //xuameng无EPG时提示信息
-               Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
-               Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 0);
-               Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 0);
-               Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 0);
-               Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 0);
-               Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 0);
-               Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 0);
-               Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 0);
-               Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 0);
-               Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 0);
-               Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 0);
-               Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 0);
-               arrayList.add(epgbcinfo);
-               arrayList.add(epgbcinfo1);
-               arrayList.add(epgbcinfo2);
-               arrayList.add(epgbcinfo3);
-               arrayList.add(epgbcinfo4);
-               arrayList.add(epgbcinfo5);
-               arrayList.add(epgbcinfo6);
-               arrayList.add(epgbcinfo7);
-               arrayList.add(epgbcinfo8);
-               arrayList.add(epgbcinfo9);
-               arrayList.add(epgbcinfo10);
-               arrayList.add(epgbcinfo11);
-               epgdata = arrayList;
-               epgListAdapter.setNewData(epgdata);
-           }
+        if(arrayList != null && arrayList.size() > 0) {
+            epgdata = arrayList;
+            epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
+            epgListAdapter.setNewData(epgdata);
+            int i = -1;
+            int size = epgdata.size() - 1;
+            while(size >= 0) {
+                if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
+                    break;
+                }
+                size--;
+            }
+            i = size;
+            if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
+                epgListAdapter.notifyDataSetChanged();
+                final int targetPos = i; // 使用final保证线程安全
+                mRightEpgList.removeCallbacks(null);
+       //些方法有滚动效果会产生焦点乱跳         mRightEpgList.setSelectedPosition(targetPos);  
+                epgListAdapter.setSelectedEpgIndex(targetPos);
+                mRightEpgList.post(() -> {
+                    if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
+                        mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
+                        //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
+                    }
+                });
+            }
+        } else { //xuameng无EPG时提示信息
+            Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
+            Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 0);
+            Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 0);
+            Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 0);
+            Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 0);
+            Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 0);
+            Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 0);
+            Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 0);
+            Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 0);
+            Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 0);
+            Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 0);
+            Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 0);
+            arrayList.add(epgbcinfo);
+            arrayList.add(epgbcinfo1);
+            arrayList.add(epgbcinfo2);
+            arrayList.add(epgbcinfo3);
+            arrayList.add(epgbcinfo4);
+            arrayList.add(epgbcinfo5);
+            arrayList.add(epgbcinfo6);
+            arrayList.add(epgbcinfo7);
+            arrayList.add(epgbcinfo8);
+            arrayList.add(epgbcinfo9);
+            arrayList.add(epgbcinfo10);
+            arrayList.add(epgbcinfo11);
+            epgdata = arrayList;
+            epgListAdapter.setNewData(epgdata);
         }
     }
     private void showEpgxu(Date date, ArrayList < Epginfo > arrayList) {
-        String savedEpgKey = channel_NameXu.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
-        if(hsEpg.containsKey(savedEpgKey)) {
-           arrayList = (ArrayList) hsEpg.get(savedEpgKey);
-           if(arrayList != null && arrayList.size() > 0) {
-              epgdata = arrayList;
-              epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back());
-              epgListAdapter.setNewData(epgdata);
-              int i = -1;
-              int size = epgdata.size() - 1;
-              while(size >= 0) {
-                  if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
-                      break;
-                  }
-                  size--;
-              }
-              i = size;
-              if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
-                  epgListAdapter.notifyDataSetChanged();
-                  final int targetPos = i;  // 使用final保证线程安全
-                  mRightEpgList.removeCallbacks(null);
-                  mRightEpgList.setSelectedPosition(targetPos);
-                  epgListAdapter.setSelectedEpgIndex(targetPos);
-                  mRightEpgList.post(() -> {
-                      if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-                         mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                         //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-                      }
-                  }); 
-              }
-           } else { //xuameng无EPG时提示信息
-               Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
-               Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 0);
-               Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 0);
-               Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 0);
-               Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 0);
-               Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 0);
-               Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 0);
-               Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 0);
-               Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 0);
-               Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 0);
-               Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 0);
-               Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 0);
-               arrayList.add(epgbcinfo);
-               arrayList.add(epgbcinfo1);
-               arrayList.add(epgbcinfo2);
-               arrayList.add(epgbcinfo3);
-               arrayList.add(epgbcinfo4);
-               arrayList.add(epgbcinfo5);
-               arrayList.add(epgbcinfo6);
-               arrayList.add(epgbcinfo7);
-               arrayList.add(epgbcinfo8);
-               arrayList.add(epgbcinfo9);
-               arrayList.add(epgbcinfo10);
-               arrayList.add(epgbcinfo11);
-               epgdata = arrayList;
-               epgListAdapter.setNewData(epgdata);
-           }
-       }else{
-           if(arrayList != null && arrayList.size() > 0) {
-              epgdata = arrayList;
-              epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back());
-              epgListAdapter.setNewData(epgdata);
-              int i = -1;
-              int size = epgdata.size() - 1;
-              while(size >= 0) {
-                  if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
-                      break;
-                  }
-                  size--;
-              }
-              i = size;
-              if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
-                  epgListAdapter.notifyDataSetChanged();
-                  final int targetPos = i;  // 使用final保证线程安全
-                  mRightEpgList.removeCallbacks(null);
-                  mRightEpgList.setSelectedPosition(targetPos);
-                  epgListAdapter.setSelectedEpgIndex(targetPos);
-                  mRightEpgList.post(() -> {
-                      if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-                         mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                         //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-                      }
-                  }); 
-              }
-           } else { //xuameng无EPG时提示信息
-               Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
-               Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 0);
-               Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 0);
-               Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 0);
-               Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 0);
-               Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 0);
-               Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 0);
-               Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 0);
-               Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 0);
-               Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 0);
-               Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 0);
-               Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 0);
-               arrayList.add(epgbcinfo);
-               arrayList.add(epgbcinfo1);
-               arrayList.add(epgbcinfo2);
-               arrayList.add(epgbcinfo3);
-               arrayList.add(epgbcinfo4);
-               arrayList.add(epgbcinfo5);
-               arrayList.add(epgbcinfo6);
-               arrayList.add(epgbcinfo7);
-               arrayList.add(epgbcinfo8);
-               arrayList.add(epgbcinfo9);
-               arrayList.add(epgbcinfo10);
-               arrayList.add(epgbcinfo11);
-               epgdata = arrayList;
-               epgListAdapter.setNewData(epgdata);
-           }
-	   }
+        if(arrayList != null && arrayList.size() > 0) {
+            epgdata = arrayList;
+            epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back());
+            epgListAdapter.setNewData(epgdata);
+            int i = -1;
+            int size = epgdata.size() - 1;
+            while(size >= 0) {
+                if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
+                    break;
+                }
+                size--;
+            }
+            i = size;
+            if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
+                epgListAdapter.notifyDataSetChanged();
+                final int targetPos = i; // 使用final保证线程安全
+                mRightEpgList.removeCallbacks(null);
+             //些方法有滚动效果会产生焦点乱跳   mRightEpgList.setSelectedPosition(targetPos);
+                epgListAdapter.setSelectedEpgIndex(targetPos);
+                mRightEpgList.post(() -> {
+                    if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
+                        mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
+                        //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
+                    }
+                });
+            }
+        } else { //xuameng无EPG时提示信息
+            Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
+            Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 0);
+            Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 0);
+            Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 0);
+            Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 0);
+            Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 0);
+            Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 0);
+            Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 0);
+            Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 0);
+            Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 0);
+            Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 0);
+            Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 0);
+            arrayList.add(epgbcinfo);
+            arrayList.add(epgbcinfo1);
+            arrayList.add(epgbcinfo2);
+            arrayList.add(epgbcinfo3);
+            arrayList.add(epgbcinfo4);
+            arrayList.add(epgbcinfo5);
+            arrayList.add(epgbcinfo6);
+            arrayList.add(epgbcinfo7);
+            arrayList.add(epgbcinfo8);
+            arrayList.add(epgbcinfo9);
+            arrayList.add(epgbcinfo10);
+            arrayList.add(epgbcinfo11);
+            epgdata = arrayList;
+            epgListAdapter.setNewData(epgdata);
+        }
     }
+
     public void getEpg(Date date) {
         String channelName = channel_Name.getChannelName();
         SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -667,9 +550,14 @@ public class LivePlayActivity extends BaseActivity {
         if(epgInfo != null && !epgInfo[1].isEmpty()) {
             epgTagName = epgInfo[1];
         }
-        String finalChannelName = channelName;
         epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
         //epgListAdapter.updateData(date, new ArrayList<>());
+		String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
+        if(hsEpg.containsKey(savedEpgKey)) {
+           showEpg(date, hsEpg.get(savedEpgKey));
+           showBottomEpgXU(); //xuameng测试EPG刷新
+           return;
+        }
         String url;
         if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
             url = epgStringAddress.replace("{name}", URLEncoder.encode(epgTagName)).replace("{date}", timeFormat.format(date));
@@ -698,8 +586,7 @@ public class LivePlayActivity extends BaseActivity {
                 } catch (JSONException jSONException) {
                     jSONException.printStackTrace();
                 }
-                String savedEpgKey = channelName + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
-                if(!hsEpg.contains(savedEpgKey)) hsEpg.put(savedEpgKey, arrayList);
+                hsEpg.put(savedEpgKey, arrayList);
                 showBottomEpgXU(); //xuameng测试EPG刷新
                 showEpg(date, arrayList);
             }
@@ -714,9 +601,13 @@ public class LivePlayActivity extends BaseActivity {
         if(epgInfo != null && !epgInfo[1].isEmpty()) {
             epgTagName = epgInfo[1];
         }
-        String finalChannelName = channelName;
         epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back()); //xuameng重要EPG滚动菜单检测可不可以回看
         //epgListAdapter.updateData(date, new ArrayList<>());
+		String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
+        if(hsEpg.containsKey(savedEpgKey)) {
+           showEpgxu(date, hsEpg.get(savedEpgKey));
+           return;
+        }
         String url;
         if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
             url = epgStringAddress.replace("{name}", URLEncoder.encode(epgTagName)).replace("{date}", timeFormat.format(date));
@@ -744,8 +635,7 @@ public class LivePlayActivity extends BaseActivity {
                 } catch (JSONException jSONException) {
                     jSONException.printStackTrace();
                 }
-                String savedEpgKey = channelName + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
-                if(!hsEpg.contains(savedEpgKey)) hsEpg.put(savedEpgKey, arrayList);
+                hsEpg.put(savedEpgKey, arrayList);
                 showEpgxu(date, arrayList);  //xuameng先保存EPG再显示EPG
             }
         });
@@ -765,7 +655,7 @@ public class LivePlayActivity extends BaseActivity {
             ((TextView) findViewById(R.id.tv_current_program_name)).setText("");
             tip_epg2.setText("许大师开发制作，请勿商用以及播放违法内容！");
             ((TextView) findViewById(R.id.tv_next_program_name)).setText("");
-            String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
+            String savedEpgKey = channel_Name.getChannelName() + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
                 if(logoUrl == null || logoUrl.isEmpty()) {
@@ -826,7 +716,7 @@ public class LivePlayActivity extends BaseActivity {
         }
         if(isSHIYI) return;
         if(channel_Name.getChannelName() != null) {
-            String savedEpgKey = channel_Name.getChannelName() + "_" + liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex()).getDatePresented();
+            String savedEpgKey = channel_Name.getChannelName() + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
                 if(logoUrl == null || logoUrl.isEmpty()) {
@@ -893,14 +783,14 @@ public class LivePlayActivity extends BaseActivity {
         divEpg.setVisibility(View.VISIBLE);
         divLoadEpgleft.setVisibility(View.VISIBLE);
         divLoadEpg.setVisibility(View.GONE);
-        mRightEpgList.removeCallbacks(null);
-        mRightEpgList.post(() -> {
-           int SelectedIndexEpg = epgListAdapter.getSelectedIndex(); //xuameng当前选中的EPG
-           if (SelectedIndexEpg != -1){  //xuameng不等于-1代表已有选中的EPG，防空指针
-               mRightEpgList.scrollToPositionWithOffset(epgListAdapter.getSelectedIndex(), 0);
-		       epgListAdapter.getSelectedIndex(); //xuamengEPG打开菜单自动变颜色
-		   }
-        }); 
+        int SelectedIndexEpg = epgListAdapter.getSelectedIndex(); //xuameng当前选中的EPG
+        if (SelectedIndexEpg >= 0  && SelectedIndexEpg < epgListAdapter.getItemCount()){  //xuameng不等于-1代表已有选中的EPG，防空指针
+	        mRightEpgList.post(() -> {
+            mRightEpgList.removeCallbacks(null);
+            mRightEpgList.scrollToPositionWithOffset(SelectedIndexEpg, 0);
+            epgListAdapter.getSelectedIndex(); //xuamengEPG打开菜单自动变颜色
+            }); 
+        }
         mHideChannelListRunXu(); //xuameng BUG
     }
     //频道列表
@@ -1325,6 +1215,9 @@ public class LivePlayActivity extends BaseActivity {
         if(countDownTimer5 != null) {
             countDownTimer5.cancel();
         }
+        if(countDownTimer7 != null) {
+            countDownTimer7.cancel();
+        }
         countDownTimer5 = new CountDownTimer(5000, 1000) { //底部epg隐藏时间设定
             public void onTick(long j) {}
             public void onFinish() {
@@ -1336,6 +1229,8 @@ public class LivePlayActivity extends BaseActivity {
     private void mHideChannelListRun() { //xuameng左侧菜单隐藏
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) tvLeftChannelListLayout.getLayoutParams();
         isShowlist = false;
+        liveEpgDateAdapter.setSelectedIndex(1);   //xuameng频道EPG日期自动选今天
+        getEpg(new Date());
         if(tvLeftChannelListLayout.getVisibility() == View.VISIBLE) {
             tvLeftChannelListLayout.setVisibility(View.INVISIBLE);
         }
@@ -1367,13 +1262,12 @@ public class LivePlayActivity extends BaseActivity {
             liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
             isSHIYI = false;
             isBack = false;
+            getEpg(new Date());
             if(isVOD) {
                 if(backcontroller.getVisibility() == View.GONE) {
-                    showProgressBars(true);
+                   showProgressBars(true);
                 }
-            }
-            if(!isVOD) {
-                getEpg(new Date());
+            }else{
                 showBottomEpg();
             }
             return true;
@@ -1387,7 +1281,6 @@ public class LivePlayActivity extends BaseActivity {
             Hawk.put(HawkConfig.LIVE_CHANNEL, currentLiveChannelItem.getChannelName());
             HawkUtils.setLastLiveChannelGroup(liveChannelGroupList.get(currentChannelGroupIndex).getGroupName()); //xuameng记忆频道组
             livePlayerManager.getLiveChannelPlayer(mVideoView, currentLiveChannelItem.getChannelName());
-            liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
         }
         channel_Name = currentLiveChannelItem;
         isSHIYI = false;
@@ -1546,6 +1439,9 @@ public class LivePlayActivity extends BaseActivity {
         if(countDownTimer6 != null) {
             countDownTimer6.cancel();
         }
+        if(countDownTimer8 != null) {
+            countDownTimer8.cancel();
+        }
         countDownTimer6 = new CountDownTimer(5000, 1000) { //XUAMENG时间设定
             public void onTick(long j) {}
             public void onFinish() {
@@ -1642,8 +1538,6 @@ public class LivePlayActivity extends BaseActivity {
                     if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
                         iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
                     }
-                    liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
-                    getEpg(new Date());
                     showBottomEpg(); //xuameng显示EPG和上面菜单 
                     return;
                 }
@@ -1714,8 +1608,6 @@ public class LivePlayActivity extends BaseActivity {
                         iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
                     }
                     //   epgListAdapter.setShiyiSelection(-1, false, timeFormat.format(date));
-                    liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
-                    getEpg(new Date());
                     showBottomEpg(); //xuameng显示EPG和上面菜单 				
                     return;
                 }
@@ -2241,8 +2133,8 @@ public class LivePlayActivity extends BaseActivity {
     }
     private void clickLiveChannel(int position) {
         liveChannelItemAdapter.setSelectedChannelIndex(position);
-        playChannel(liveChannelGroupAdapter.getSelectedGroupIndex(), position, false);
         liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
+        playChannel(liveChannelGroupAdapter.getSelectedGroupIndex(), position, false);
         if(tvLeftChannelListLayout.getVisibility() == View.VISIBLE) {
             mHideChannelListRunXu(); //xuameng隐藏频道菜单
         }
