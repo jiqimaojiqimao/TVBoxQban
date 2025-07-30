@@ -123,22 +123,22 @@ public class LivePlayActivity extends BaseActivity {
     private LiveSettingItemAdapter liveSettingItemAdapter;
     private List < LiveSettingGroup > liveSettingGroupList = new ArrayList < > ();
     public static int currentChannelGroupIndex = 0;
-    public static int currentChannelGroupIndexXu = 0;
+    public static int currentChannelGroupIndexXu = 0;   //xuameng item显示EPG用
     private Handler mHandler = new Handler();
     private List < LiveChannelGroup > liveChannelGroupList = new ArrayList < > ();
     private int currentLiveChannelIndex = -1;
-    private int currentLiveChannelIndexXu = -1;
+    private int currentLiveChannelIndexXu = -1;  //xuameng item显示EPG用
     private int currentLiveChangeSourceTimes = 0;
     private LiveChannelItem currentLiveChannelItem = null;
-    private LiveChannelItem currentLiveChannelItemXu = null;
-    private LivePlayerManager livePlayerManager = new LivePlayerManager();
+    private LiveChannelItem currentLiveChannelItemXu = null;  //xuameng item显示EPG用
+    private LivePlayerManager livePlayerManager = new LivePlayerManager();   //xuameng切换播放器渲染等
     private ArrayList < Integer > channelGroupPasswordConfirmed = new ArrayList < > ();
     private static LiveChannelItem channel_Name = null;
-    private static LiveChannelItem channel_NameXu = null;
-    private static Hashtable<String, ArrayList<Epginfo>> hsEpg = new Hashtable<>();
+    private static LiveChannelItem channel_NameXu = null;   //xuameng item显示EPG用
+    private static Hashtable<String, ArrayList<Epginfo>> hsEpg = new Hashtable<>();   //xuameng EPG缓存
     private CountDownTimer countDownTimer;
     private View ll_right_top_loading; //xuameng左上图标
-    private View view_line_XU;
+    private View view_line_XU;  //xuameng 动画横线
     private View divLoadEpg;
     private View divLoadEpgleft;
     private LinearLayout divEpg;
@@ -195,19 +195,19 @@ public class LivePlayActivity extends BaseActivity {
     private static int shiyi_time_c; //时移时间差值
     public static String playUrl;
     private ImageView imgLiveIcon;
-    private ImageView imgLiveIconXu;
+    private ImageView imgLiveIconXu;   //XUAMENG 显示密码频道时用
     private FrameLayout liveIconNullBg;
     private TextView liveIconNullText;
     SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd");
     private View backcontroller;
-    private CountDownTimer countDownTimer6;
-    private CountDownTimer countDownTimer5;
-    private CountDownTimer countDownTimer7;
-    private CountDownTimer countDownTimer8;
-    private CountDownTimer countDownTimer10;
-    private CountDownTimer countDownTimer20;
-    private CountDownTimer countDownTimer21;
-    private CountDownTimer countDownTimer22;
+    private CountDownTimer countDownTimer6;  //xuameng显示设置菜单用
+    private CountDownTimer countDownTimer5;   //xuameng显示频道菜单用
+    private CountDownTimer countDownTimer7;  //xuameng显示频道菜单用
+    private CountDownTimer countDownTimer8;  //xuameng设置频道菜单用
+    private CountDownTimer countDownTimer10;  //xuameng显示频道菜单用
+    private CountDownTimer countDownTimer20; //xuameng显示频道菜单用
+    private CountDownTimer countDownTimer21;  //xuameng显示设置菜单用
+    private CountDownTimer countDownTimer22;  //xuameng显示设置菜单用
     private final int videoWidth = 1920;
     private final int videoHeight = 1080;
     private TextView tv_currentpos;
@@ -270,7 +270,7 @@ public class LivePlayActivity extends BaseActivity {
         animator1.setDuration(10000);
         animator1.setRepeatCount(-1);
         animator1.start();
-        ObjectAnimator animator2 = ObjectAnimator.ofFloat(iv_circle_bg_xu, "rotation", 360.0f);
+        ObjectAnimator animator2 = ObjectAnimator.ofFloat(iv_circle_bg_xu, "rotation", 360.0f);   //xuameng听歌时显示用
         animator2.setDuration(10000);
         animator2.setRepeatCount(-1);
         animator2.start();
@@ -282,7 +282,7 @@ public class LivePlayActivity extends BaseActivity {
         mRightEpgList = (TvRecyclerView) findViewById(R.id.lv_epg);
         //EPG频道名称
         imgLiveIcon = findViewById(R.id.img_live_icon);
-        imgLiveIconXu = findViewById(R.id.img_live_icon_xu);
+        imgLiveIconXu = findViewById(R.id.img_live_icon_xu);  //XUAMENG 显示密码频道时用
         liveIconNullBg = findViewById(R.id.live_icon_null_bg);
         liveIconNullText = findViewById(R.id.live_icon_null_text);
         imgLiveIcon.setVisibility(View.GONE);
@@ -296,7 +296,7 @@ public class LivePlayActivity extends BaseActivity {
         iv_playpause = (TextView) findViewById(R.id.iv_playpause);
         iv_play = findViewById(R.id.iv_play);
         if(show) {
-            backcontroller.setVisibility(View.VISIBLE);
+            backcontroller.setVisibility(View.VISIBLE);   //xuameng底部进度条
             showTimeXu(); //xuameng系统显示时间
             showNetSpeedXu(); //XUAMENG显示右下网速
             Mtv_left_top_xu.setVisibility(View.VISIBLE); //xuameng显示左上回看图标
@@ -307,7 +307,7 @@ public class LivePlayActivity extends BaseActivity {
             mHideSettingLayoutRun(); //xuameng显示EPG就隐藏左右菜单
             iv_playpause.requestFocus(); //xuameng回看菜单默认焦点为播放		
         } else {
-            backcontroller.setVisibility(View.GONE);
+            backcontroller.setVisibility(View.GONE);  //xuameng底部进度条
             Mtv_left_top_xu.setVisibility(View.GONE); //xuameng隐藏左上回看图标
             iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
             tvLeftChannelListLayout.setVisibility(View.INVISIBLE); //xuameng显示EPG就隐藏左右菜单
@@ -342,11 +342,11 @@ public class LivePlayActivity extends BaseActivity {
                 long duration = mVideoView.getDuration();
                 long newPosition = (duration * seekBar.getProgress()) / sBar.getMax(); //xuameng停止触碰获取进度条进度
                 mVideoView.seekTo((int) newPosition); //xuameng当前进度播放
-                isKUAIJIN = false;
+                isKUAIJIN = false;  //xuameng快进判断
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                isKUAIJIN = true;
+                isKUAIJIN = true;   //xuameng快进判断
             }
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromuser) {
@@ -421,117 +421,59 @@ public class LivePlayActivity extends BaseActivity {
     //获取EPG并存储 // 百川epg  DIYP epg   51zmt epg ------- 自建EPG格式输出格式请参考 51zmt
     private List < Epginfo > epgdata = new ArrayList < > ();
     private void showEpg(Date date, ArrayList < Epginfo > arrayList) {
-        if(arrayList != null && arrayList.size() > 0) {
-            epgdata = arrayList;
-            epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
-            epgListAdapter.setNewData(epgdata);
-            int i = -1;
-            int size = epgdata.size() - 1;
-            while(size >= 0) {
-                if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
-                    break;
-                }
-                size--;
+        epgdata = arrayList;
+        epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
+        epgListAdapter.setNewData(epgdata);
+        int i = -1;
+        int size = epgdata.size() - 1;
+        while(size >= 0) {
+            if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
+                break;
             }
-            i = size;
-            if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
-                epgListAdapter.notifyDataSetChanged();
-                final int targetPos = i; // 使用final保证线程安全
-                mRightEpgList.removeCallbacks(null);
+            size--;
+        }
+        i = size;
+        if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
+            epgListAdapter.notifyDataSetChanged();
+            final int targetPos = i; // 使用final保证线程安全
+            mRightEpgList.removeCallbacks(null);
        //些方法有滚动效果会产生焦点乱跳         mRightEpgList.setSelectedPosition(targetPos);  
-                epgListAdapter.setSelectedEpgIndex(targetPos);
-                mRightEpgList.post(() -> {
-                    if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-                        mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                        //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-                    }
-                });
+            epgListAdapter.setSelectedEpgIndex(targetPos);
+            if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
+               mRightEpgList.post(() -> {
+               mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
+                    //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
+               });
             }
-        } else { //xuameng无EPG时提示信息
-            Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
-            Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 0);
-            Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 0);
-            Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 0);
-            Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 0);
-            Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 0);
-            Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 0);
-            Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 0);
-            Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 0);
-            Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 0);
-            Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 0);
-            Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 0);
-            arrayList.add(epgbcinfo);
-            arrayList.add(epgbcinfo1);
-            arrayList.add(epgbcinfo2);
-            arrayList.add(epgbcinfo3);
-            arrayList.add(epgbcinfo4);
-            arrayList.add(epgbcinfo5);
-            arrayList.add(epgbcinfo6);
-            arrayList.add(epgbcinfo7);
-            arrayList.add(epgbcinfo8);
-            arrayList.add(epgbcinfo9);
-            arrayList.add(epgbcinfo10);
-            arrayList.add(epgbcinfo11);
-            epgdata = arrayList;
-            epgListAdapter.setNewData(epgdata);
         }
-    }
+    } 
     private void showEpgxu(Date date, ArrayList < Epginfo > arrayList) {
-        if(arrayList != null && arrayList.size() > 0) {
-            epgdata = arrayList;
-            epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back());
-            epgListAdapter.setNewData(epgdata);
-            int i = -1;
-            int size = epgdata.size() - 1;
-            while(size >= 0) {
-                if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
-                    break;
-                }
-                size--;
+        epgdata = arrayList;
+        epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back());
+        epgListAdapter.setNewData(epgdata);
+        int i = -1;
+        int size = epgdata.size() - 1;
+        while(size >= 0) {
+            if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
+                break;
             }
-            i = size;
-            if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
-                epgListAdapter.notifyDataSetChanged();
-                final int targetPos = i; // 使用final保证线程安全
-                mRightEpgList.removeCallbacks(null);
-             //些方法有滚动效果会产生焦点乱跳   mRightEpgList.setSelectedPosition(targetPos);
-                epgListAdapter.setSelectedEpgIndex(targetPos);
-                mRightEpgList.post(() -> {
-                    if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-                        mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                        //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-                    }
-                });
-            }
-        } else { //xuameng无EPG时提示信息
-            Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);
-            Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 0);
-            Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 0);
-            Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 0);
-            Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 0);
-            Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 0);
-            Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 0);
-            Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 0);
-            Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 0);
-            Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 0);
-            Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 0);
-            Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 0);
-            arrayList.add(epgbcinfo);
-            arrayList.add(epgbcinfo1);
-            arrayList.add(epgbcinfo2);
-            arrayList.add(epgbcinfo3);
-            arrayList.add(epgbcinfo4);
-            arrayList.add(epgbcinfo5);
-            arrayList.add(epgbcinfo6);
-            arrayList.add(epgbcinfo7);
-            arrayList.add(epgbcinfo8);
-            arrayList.add(epgbcinfo9);
-            arrayList.add(epgbcinfo10);
-            arrayList.add(epgbcinfo11);
-            epgdata = arrayList;
-            epgListAdapter.setNewData(epgdata);
+            size--;
         }
-    }
+        i = size;
+        if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
+            epgListAdapter.notifyDataSetChanged();
+            final int targetPos = i; // 使用final保证线程安全
+            mRightEpgList.removeCallbacks(null);
+             //些方法有滚动效果会产生焦点乱跳   mRightEpgList.setSelectedPosition(targetPos);
+            epgListAdapter.setSelectedEpgIndex(targetPos);
+            if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
+               mRightEpgList.post(() -> {
+               mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
+                    //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
+               });
+            }
+        }
+    } 
 
     public void getEpg(Date date) {
         String channelName = channel_Name.getChannelName();
@@ -547,13 +489,13 @@ public class LivePlayActivity extends BaseActivity {
             String logo = logoUrl.replace("{name}", channelName); //xuameng支持logourl
             updateChannelIcon(channelName, logo);
         }
-        if(epgInfo != null && !epgInfo[1].isEmpty()) {
+        if(epgInfo != null && !epgInfo[1].isEmpty()) {   //xuameng自定义EPG对应表
             epgTagName = epgInfo[1];
         }
         epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
         //epgListAdapter.updateData(date, new ArrayList<>());
 		String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
-        if(hsEpg.containsKey(savedEpgKey)) {
+        if(hsEpg.containsKey(savedEpgKey)) {     //xuameng如果有缓存EPG直接显示
            showEpg(date, hsEpg.get(savedEpgKey));
            showBottomEpgXU(); //xuameng测试EPG刷新
            return;
@@ -565,9 +507,37 @@ public class LivePlayActivity extends BaseActivity {
             url = epgStringAddress + "?ch=" + URLEncoder.encode(epgTagName) + "&date=" + timeFormat.format(date);
         }
         UrlHttpUtil.get(url, new CallBackUtil.CallBackString() {
-            public void onFailure(int i, String str) {
-                showEpg(date, new ArrayList());
-                //               showBottomEpg();        
+            public void onFailure(int i, String str) {    //xuameng如果EPG获取失败启动默认列表
+                ArrayList arrayList = new ArrayList();
+                Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);   //xuameng最后一项为pos id
+                Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 1);
+                Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 2);
+                Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 3);
+                Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 4);
+                Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 5);
+                Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 6);
+                Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 7);
+                Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 8);
+                Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 9);
+                Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 10);
+                Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 11);
+                arrayList.add(epgbcinfo);
+                arrayList.add(epgbcinfo1);
+                arrayList.add(epgbcinfo2);
+                arrayList.add(epgbcinfo3);
+                arrayList.add(epgbcinfo4);
+                arrayList.add(epgbcinfo5);
+                arrayList.add(epgbcinfo6);
+                arrayList.add(epgbcinfo7);
+                arrayList.add(epgbcinfo8);
+                arrayList.add(epgbcinfo9);
+                arrayList.add(epgbcinfo10);
+                arrayList.add(epgbcinfo11);
+                epgdata = arrayList;
+                epgListAdapter.setNewData(epgdata);
+                hsEpg.put(savedEpgKey, arrayList);   //xuameng默认列表存入缓存
+                showEpg(date, arrayList);
+                showBottomEpgXU(); //xuameng测试EPG刷新        
             }
             public void onResponse(String paramString) {
                 ArrayList arrayList = new ArrayList();
@@ -586,25 +556,57 @@ public class LivePlayActivity extends BaseActivity {
                 } catch (JSONException jSONException) {
                     jSONException.printStackTrace();
                 }
-                hsEpg.put(savedEpgKey, arrayList);
-                showBottomEpgXU(); //xuameng测试EPG刷新
-                showEpg(date, arrayList);
+                if(arrayList != null && arrayList.size() > 0){
+                   hsEpg.put(savedEpgKey, arrayList);  //xuameng默认列表存入缓存
+                   showEpg(date, arrayList);
+                   showBottomEpgXU(); //xuameng测试EPG刷新
+                }else{
+                   Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);   //xuameng最后一项为pos id
+                   Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 1);
+                   Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 2);
+                   Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 3);
+                   Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 4);
+                   Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 5);
+                   Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 6);
+                   Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 7);
+                   Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 8);
+                   Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 9);
+                   Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 10);
+                   Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 11);
+                   arrayList.add(epgbcinfo);
+                   arrayList.add(epgbcinfo1);
+                   arrayList.add(epgbcinfo2);
+                   arrayList.add(epgbcinfo3);
+                   arrayList.add(epgbcinfo4);
+                   arrayList.add(epgbcinfo5);
+                   arrayList.add(epgbcinfo6);
+                   arrayList.add(epgbcinfo7);
+                   arrayList.add(epgbcinfo8);
+                   arrayList.add(epgbcinfo9);
+                   arrayList.add(epgbcinfo10);
+                   arrayList.add(epgbcinfo11);
+                   epgdata = arrayList;
+                   epgListAdapter.setNewData(epgdata);
+                   hsEpg.put(savedEpgKey, arrayList);   //xuameng默认列表存入缓存
+                   showEpg(date, arrayList);
+                   showBottomEpgXU(); //xuameng测试EPG刷新
+                }
             }
         });
     }
     public void getEpgxu(Date date) {
-        String channelName = channel_NameXu.getChannelName();
+        String channelName = channel_NameXu.getChannelName();    //xuameng频道名称在移动item中选中
         SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd");
         timeFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
-        String[] epgInfo = EpgUtil.getEpgInfo(channelName);
+        String[] epgInfo = EpgUtil.getEpgInfo(channelName);    //xuameng自定义EPG对应表
         String epgTagName = channelName;
-        if(epgInfo != null && !epgInfo[1].isEmpty()) {
+        if(epgInfo != null && !epgInfo[1].isEmpty()) {  
             epgTagName = epgInfo[1];
         }
         epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back()); //xuameng重要EPG滚动菜单检测可不可以回看
         //epgListAdapter.updateData(date, new ArrayList<>());
 		String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
-        if(hsEpg.containsKey(savedEpgKey)) {
+        if(hsEpg.containsKey(savedEpgKey)) {   //xuameng如果有缓存EPG直接显示
            showEpgxu(date, hsEpg.get(savedEpgKey));
            return;
         }
@@ -616,7 +618,35 @@ public class LivePlayActivity extends BaseActivity {
         }
         UrlHttpUtil.get(url, new CallBackUtil.CallBackString() {
             public void onFailure(int i, String str) {
-                showEpgxu(date, new ArrayList());
+                ArrayList arrayList = new ArrayList();
+                Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);   //xuameng最后一项为pos id
+                Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 1);
+                Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 2);
+                Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 3);
+                Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 4);
+                Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 5);
+                Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 6);
+                Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 7);
+                Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 8);
+                Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 9);
+                Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 10);
+                Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 11);
+                arrayList.add(epgbcinfo);
+                arrayList.add(epgbcinfo1);
+                arrayList.add(epgbcinfo2);
+                arrayList.add(epgbcinfo3);
+                arrayList.add(epgbcinfo4);
+                arrayList.add(epgbcinfo5);
+                arrayList.add(epgbcinfo6);
+                arrayList.add(epgbcinfo7);
+                arrayList.add(epgbcinfo8);
+                arrayList.add(epgbcinfo9);
+                arrayList.add(epgbcinfo10);
+                arrayList.add(epgbcinfo11);
+                epgdata = arrayList;
+                epgListAdapter.setNewData(epgdata);
+                hsEpg.put(savedEpgKey, arrayList);  //xuameng默认列表存入缓存
+                showEpgxu(date, arrayList);   //xuameng先保存EPG再显示EPG
             }
             public void onResponse(String paramString) {
                 ArrayList arrayList = new ArrayList();
@@ -635,8 +665,39 @@ public class LivePlayActivity extends BaseActivity {
                 } catch (JSONException jSONException) {
                     jSONException.printStackTrace();
                 }
-                hsEpg.put(savedEpgKey, arrayList);
-                showEpgxu(date, arrayList);  //xuameng先保存EPG再显示EPG
+                if(arrayList != null && arrayList.size() > 0){
+                   hsEpg.put(savedEpgKey, arrayList);  //xuameng默认列表存入缓存
+                   showEpgxu(date, arrayList);
+                }else{
+                   Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);   //xuameng最后一项为pos id
+                   Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 1);
+                   Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 2);
+                   Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 3);
+                   Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 4);
+                   Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 5);
+                   Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 6);
+                   Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 7);
+                   Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 8);
+                   Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 9);
+                   Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 10);
+                   Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 11);
+                   arrayList.add(epgbcinfo);
+                   arrayList.add(epgbcinfo1);
+                   arrayList.add(epgbcinfo2);
+                   arrayList.add(epgbcinfo3);
+                   arrayList.add(epgbcinfo4);
+                   arrayList.add(epgbcinfo5);
+                   arrayList.add(epgbcinfo6);
+                   arrayList.add(epgbcinfo7);
+                   arrayList.add(epgbcinfo8);
+                   arrayList.add(epgbcinfo9);
+                   arrayList.add(epgbcinfo10);
+                   arrayList.add(epgbcinfo11);
+                   epgdata = arrayList;
+                   epgListAdapter.setNewData(epgdata);
+                   hsEpg.put(savedEpgKey, arrayList);   //xuameng默认列表存入缓存
+                   showEpgxu(date, arrayList);
+                }
             }
         });
     }
@@ -785,8 +846,8 @@ public class LivePlayActivity extends BaseActivity {
         divLoadEpg.setVisibility(View.GONE);
         int SelectedIndexEpg = epgListAdapter.getSelectedIndex(); //xuameng当前选中的EPG
         if (SelectedIndexEpg >= 0  && SelectedIndexEpg < epgListAdapter.getItemCount()){  //xuameng不等于-1代表已有选中的EPG，防空指针
-	        mRightEpgList.post(() -> {
             mRightEpgList.removeCallbacks(null);
+	        mRightEpgList.post(() -> {
             mRightEpgList.scrollToPositionWithOffset(SelectedIndexEpg, 0);
             epgListAdapter.getSelectedIndex(); //xuamengEPG打开菜单自动变颜色
             }); 
@@ -840,6 +901,7 @@ public class LivePlayActivity extends BaseActivity {
             liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
             mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBuffer);
             mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBack);
+            mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);
             playXuSource();
         } else {
             mExitTime = System.currentTimeMillis();
@@ -1483,6 +1545,7 @@ public class LivePlayActivity extends BaseActivity {
     //laodao 7天Epg数据绑定和展示
     private void initEpgListView() {
         mRightEpgList.setHasFixedSize(true);
+        mRightEpgList.setItemAnimator(null);   //xuameng禁用TVRecyclerView动画
         mRightEpgList.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
         epgListAdapter = new LiveEpgAdapter();
         mRightEpgList.setAdapter(epgListAdapter);
@@ -1662,6 +1725,7 @@ public class LivePlayActivity extends BaseActivity {
     //kens 7天回放数据绑定和展示
     private void initEpgDateView() {
         mEpgDateGridView.setHasFixedSize(true);
+        mEpgDateGridView.setItemAnimator(null);   //xuameng禁用TVRecyclerView动画
         mEpgDateGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
         liveEpgDateAdapter = new LiveEpgDateAdapter();
         Calendar calendar = Calendar.getInstance();
@@ -1860,6 +1924,7 @@ public class LivePlayActivity extends BaseActivity {
                     case VideoView.STATE_PLAYING:
                         currentLiveChangeSourceTimes = 0;
                         mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);
+                        mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBack);
                         mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBuffer);
                         isVideoplaying = true;
                         isBuffer = false;
@@ -2026,6 +2091,7 @@ public class LivePlayActivity extends BaseActivity {
     };
     private void initChannelGroupView() {
         mChannelGroupView.setHasFixedSize(true);
+        mChannelGroupView.setItemAnimator(null);   //xuameng禁用TVRecyclerView动画
         mChannelGroupView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
         liveChannelGroupAdapter = new LiveChannelGroupAdapter();
         mChannelGroupView.setAdapter(liveChannelGroupAdapter);
@@ -2080,6 +2146,7 @@ public class LivePlayActivity extends BaseActivity {
     }
     private void initLiveChannelView() {
         mLiveChannelView.setHasFixedSize(true);
+        mLiveChannelView.setItemAnimator(null);   //xuameng禁用TVRecyclerView动画
         mLiveChannelView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
         liveChannelItemAdapter = new LiveChannelItemAdapter();
         mLiveChannelView.setAdapter(liveChannelItemAdapter);
@@ -2141,6 +2208,7 @@ public class LivePlayActivity extends BaseActivity {
     }
     private void initSettingGroupView() {
         mSettingGroupView.setHasFixedSize(true);
+        mSettingGroupView.setItemAnimator(null);   //xuameng禁用TVRecyclerView动画
         mSettingGroupView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
         liveSettingGroupAdapter = new LiveSettingGroupAdapter();
         mSettingGroupView.setAdapter(liveSettingGroupAdapter);
@@ -2201,6 +2269,7 @@ public class LivePlayActivity extends BaseActivity {
     }
     private void initSettingItemView() {
         mSettingItemView.setHasFixedSize(true);
+        mSettingItemView.setItemAnimator(null);   //xuameng禁用TVRecyclerView动画
         mSettingItemView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
         liveSettingItemAdapter = new LiveSettingItemAdapter();
         mSettingItemView.setAdapter(liveSettingItemAdapter);
@@ -2307,6 +2376,9 @@ public class LivePlayActivity extends BaseActivity {
                 liveSettingItemAdapter.selectItem(position, true, true);
                 Hawk.put(HawkConfig.LIVE_GROUP_INDEX, position);
                 ApiConfig.get().loadLiveApi(livesOBJ);
+                mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);  //xuameng BUG
+                mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBack);  //xuameng BUG
+                mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBuffer);  //xuameng BUG
                 recreate();
                 return;
             case 6: //xuameng渲染方式
@@ -2611,7 +2683,7 @@ public class LivePlayActivity extends BaseActivity {
                         iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
                     }
                     iv_playpause.setText("暂停"); 
-                    if(!isKUAIJIN) {
+                    if(!isKUAIJIN) {   //xuameng快进判断
                         sBar.setProgress((int) mVideoView.getCurrentPosition());
                         int percent = mVideoView.getBufferedPercentage();
                         int totalBuffer = percent * duration2;
@@ -2632,7 +2704,7 @@ public class LivePlayActivity extends BaseActivity {
         @Override
         public void run() {
             if(backcontroller.getVisibility() == View.GONE) {
-                isSEEKBAR = false;
+                isSEEKBAR = false;  //xuameng 焦点进入SEEKBAR判断
             }
             if(mVideoView == null) return;
             if(mVideoView.isPlaying()) { //xuameng音乐播放时图标判断
@@ -2838,7 +2910,7 @@ public class LivePlayActivity extends BaseActivity {
         long diff = (eTime - sTime) / 1000;
         return diff;
     }
-    private String durationToString(int duration) {
+    private String durationToString(int duration) {   //xuameng时间转换
         String result = "";
         int dur = duration / 1000;
         int hour = dur / 3600;
@@ -2897,8 +2969,8 @@ public class LivePlayActivity extends BaseActivity {
                 }
             }, 200);
         } else {
-            backcontroller.setVisibility(View.GONE);
-            Mtv_left_top_xu.setVisibility(View.GONE);
+            backcontroller.setVisibility(View.GONE);   //xuameng显示回看下方菜单
+            Mtv_left_top_xu.setVisibility(View.GONE);  //xuameng显示回看上图标
             iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
             mHideChannelListRun(); //xuameng显示EPG就隐藏左右菜单
             mHideSettingLayoutRun(); //xuameng显示EPG就隐藏左右菜单
@@ -2930,7 +3002,7 @@ public class LivePlayActivity extends BaseActivity {
         sBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() { //xuameng升级手机进程条
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                isKUAIJIN = false;
+                isKUAIJIN = false;  //xuameng快进判断
                 if(mVideoView == null) return;
                 long duration = mVideoView.getDuration();
                 long newPosition = (duration * seekBar.getProgress()) / sBar.getMax(); //xuameng停止触碰获取进度条进度
@@ -2938,7 +3010,7 @@ public class LivePlayActivity extends BaseActivity {
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                isKUAIJIN = true;
+                isKUAIJIN = true;  //xuameng快进判断
             }
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromuser) {
@@ -3000,17 +3072,17 @@ public class LivePlayActivity extends BaseActivity {
         }
     }
     private boolean simSlideStart = false;
-    private int simSeekPosition = 0;
-    private long simSlideOffset = 0;
+    private int simSeekPosition = 0;   //XUAMENG调整播放进度
+    private long simSlideOffset = 0;   //xuameng快进步长
     public void tvSlideStop() {
         if(!simSlideStart || mVideoView == null) return;
-        if(isSEEKBAR) {
+        if(isSEEKBAR) {  //xuameng 焦点进入SEEKBAR判断
             mVideoView.seekTo(simSeekPosition);
         }
         //        if(!mVideoView.isPlaying())
         //xuameng快进暂停就暂停测试    mVideoView.start();  如果想暂停时快进自动播放取消注销
-        //        simSeekPosition = 0;    //XUAMENG重要
-        isKUAIJIN = false;
+        //        simSeekPosition = 0;    //XUAMENG重要重置进度
+        isKUAIJIN = false;  //xuameng快进判断
         simSlideStart = false;
         simSlideOffset = 0; //快进步数
         mSpeedTimeUp = 0; //xuameng按住按键开始计时
@@ -3019,7 +3091,7 @@ public class LivePlayActivity extends BaseActivity {
     public void tvSlideStart(int dir) {
         int duration = (int) mVideoView.getDuration();
         if(duration <= 0) return;
-        isSEEKBAR = true;
+        isSEEKBAR = true;   //xuameng 焦点进入SEEKBAR判断
         isKUAIJIN = true;
         if(!simSlideStart) {
             simSlideStart = true;
@@ -3048,10 +3120,8 @@ public class LivePlayActivity extends BaseActivity {
         sBar.setProgress(simSeekPosition);
         tv_currentpos.setText(durationToString(simSeekPosition));
     }
-    /**
-     * 当播放列表为空或加载失败时，设置一个默认的播放列表，保证播放界面不会崩溃
-     */
-    private void setDefaultLiveChannelList() {
+
+    private void setDefaultLiveChannelList() {   //xuameng 加载失败默认频道列表
         liveChannelGroupList.clear();
         // 创建默认直播分组
         LiveChannelGroup defaultGroup = new LiveChannelGroup();
