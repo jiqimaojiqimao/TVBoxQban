@@ -421,59 +421,63 @@ public class LivePlayActivity extends BaseActivity {
     //获取EPG并存储 // 百川epg  DIYP epg   51zmt epg ------- 自建EPG格式输出格式请参考 51zmt
     private List < Epginfo > epgdata = new ArrayList < > ();
     private void showEpg(Date date, ArrayList < Epginfo > arrayList) {
-        epgdata = arrayList;
-        epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
-        epgListAdapter.setNewData(epgdata);
-        int i = -1;
-        int size = epgdata.size() - 1;
-        while(size >= 0) {
-            if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
-                break;
+        if(arrayList != null && arrayList.size() > 0){
+            epgdata = arrayList;
+            epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
+            epgListAdapter.setNewData(epgdata);
+            int i = -1;
+            int size = epgdata.size() - 1;
+            while(size >= 0) {
+                if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
+                    break;
+                }
+                size--;
             }
-            size--;
-        }
-        i = size;
-        if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
-            epgListAdapter.notifyDataSetChanged();
-            final int targetPos = i; // 使用final保证线程安全
-            mRightEpgList.removeCallbacks(null);
-       //些方法有滚动效果会产生焦点乱跳         mRightEpgList.setSelectedPosition(targetPos);  
-            epgListAdapter.setSelectedEpgIndex(targetPos);
-            if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-               mRightEpgList.post(() -> {
-               mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                    //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-               });
+            i = size;
+            if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
+                epgListAdapter.notifyDataSetChanged();
+                final int targetPos = i; // 使用final保证线程安全
+                mRightEpgList.removeCallbacks(null);
+           //些方法有滚动效果会产生焦点乱跳         mRightEpgList.setSelectedPosition(targetPos);  
+                epgListAdapter.setSelectedEpgIndex(targetPos);
+                if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
+                   mRightEpgList.post(() -> {
+                   mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
+                        //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
+                   });
+                }
             }
-        }
-    } 
+        } 
+    }
     private void showEpgxu(Date date, ArrayList < Epginfo > arrayList) {
-        epgdata = arrayList;
-        epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back());
-        epgListAdapter.setNewData(epgdata);
-        int i = -1;
-        int size = epgdata.size() - 1;
-        while(size >= 0) {
-            if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
-                break;
+        if(arrayList != null && arrayList.size() > 0){
+            epgdata = arrayList;
+            epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back());
+            epgListAdapter.setNewData(epgdata);
+            int i = -1;
+            int size = epgdata.size() - 1;
+            while(size >= 0) {
+                if(new Date().compareTo(((Epginfo) epgdata.get(size)).startdateTime) >= 0) {
+                    break;
+                }
+                size--;
             }
-            size--;
-        }
-        i = size;
-        if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
-            epgListAdapter.notifyDataSetChanged();
-            final int targetPos = i; // 使用final保证线程安全
-            mRightEpgList.removeCallbacks(null);
-             //些方法有滚动效果会产生焦点乱跳   mRightEpgList.setSelectedPosition(targetPos);
-            epgListAdapter.setSelectedEpgIndex(targetPos);
-            if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-               mRightEpgList.post(() -> {
-               mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                    //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-               });
+            i = size;
+            if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
+                epgListAdapter.notifyDataSetChanged();
+                final int targetPos = i; // 使用final保证线程安全
+                mRightEpgList.removeCallbacks(null);
+                 //些方法有滚动效果会产生焦点乱跳   mRightEpgList.setSelectedPosition(targetPos);
+                epgListAdapter.setSelectedEpgIndex(targetPos);
+                if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
+                   mRightEpgList.post(() -> {
+                   mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
+                        //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
+                   });
+                }
             }
-        }
-    } 
+        } 
+    }
 
     public void getEpg(Date date) {
         String channelName = channel_Name.getChannelName();
@@ -495,10 +499,14 @@ public class LivePlayActivity extends BaseActivity {
         epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
         //epgListAdapter.updateData(date, new ArrayList<>());
 		String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
-        if(hsEpg.containsKey(savedEpgKey)) {     //xuameng如果有缓存EPG直接显示
-           showEpg(date, hsEpg.get(savedEpgKey));
-           showBottomEpgXU(); //xuameng测试EPG刷新
-           return;
+        if(hsEpg.containsKey(savedEpgKey)) {   //xuameng如果有缓存EPG
+           ArrayList<Epginfo> arrayListJudge = (ArrayList<Epginfo>) hsEpg.get(savedEpgKey);
+           String title = arrayListJudge.get(0).title;      //0中EPG第一行的名称
+           if (!title.contains("聚汇直播")) {   //xuameng再次判断如果缓存EPG中有聚汇直播字样说明是在线获取EPG失败则继续重试
+              showEpg(date, hsEpg.get(savedEpgKey));   //xuameng如果成功就直接显示缓存EPG   
+              showBottomEpgXU(); //xuameng测试EPG刷新 
+              return;
+           }
         }
         String url;
         if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
@@ -606,9 +614,13 @@ public class LivePlayActivity extends BaseActivity {
         epgListAdapter.CanBack(currentLiveChannelItemXu.getinclude_back()); //xuameng重要EPG滚动菜单检测可不可以回看
         //epgListAdapter.updateData(date, new ArrayList<>());
 		String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
-        if(hsEpg.containsKey(savedEpgKey)) {   //xuameng如果有缓存EPG直接显示
-           showEpgxu(date, hsEpg.get(savedEpgKey));
-           return;
+        if(hsEpg.containsKey(savedEpgKey)) {   //xuameng如果有缓存EPG
+           ArrayList<Epginfo> arrayListJudge = (ArrayList<Epginfo>) hsEpg.get(savedEpgKey);
+           String title = arrayListJudge.get(0).title;   //0中EPG第一行的名称
+           if (!title.contains("聚汇直播")) {   //xuameng再次判断如果缓存EPG中有聚汇直播字样说明是在线获取EPG失败则继续重试
+              showEpgxu(date, hsEpg.get(savedEpgKey));     //xuameng如果成功就直接显示缓存EPG   
+              return;
+           }
         }
         String url;
         if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
