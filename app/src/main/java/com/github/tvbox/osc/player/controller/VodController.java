@@ -1040,7 +1040,7 @@ public class VodController extends BaseController {
                 try {
                     int current = (int) mControlWrapper.getCurrentPosition();
                     int duration = (int) mControlWrapper.getDuration();
-                    if(current < duration / 2) return;
+                    if(current < duration / 2  || duration <= 1) return;     //xuameng 防止负数BUG
                     mPlayerConfig.put("et", (duration - current) / 1000);
                     updatePlayerCfgView();
                     listener.updatePlayerCfg();
@@ -1140,7 +1140,7 @@ public class VodController extends BaseController {
         mPlayrender.setNextFocusUpId(R.id.mxuplay);
     }
     private void hideLiveAboutBtn() {
-        if(mControlWrapper != null && mControlWrapper.getDuration() == 0) {
+        if(mControlWrapper != null && mControlWrapper.getDuration() <= 1) {   //XUAMENG <= 1是为了总进度判断不准确（系统播放器）跳过片头片尾就会显示出来
             mPlayerSpeedBtn.setVisibility(GONE);
             mPlayerTimeStartEndText.setVisibility(GONE);
             mPlayerTimeStartBtn.setVisibility(GONE);
@@ -1225,7 +1225,8 @@ public class VodController extends BaseController {
             mPlayerSpeedBtn.setText("x" + mPlayerConfig.getDouble("sp"));
             mPlayerTimeStartBtn.setText(PlayerUtils.stringForTime(mPlayerConfig.getInt("st") * 1000));
             mPlayerTimeSkipBtn.setText(PlayerUtils.stringForTime(mPlayerConfig.getInt("et") * 1000));
-            mAudioTrackBtn.setVisibility((playerType == 1 || playerType == 2) ? VISIBLE : GONE);
+  //          mAudioTrackBtn.setVisibility((playerType == 1 || playerType == 2) ? VISIBLE : GONE);     //xuameng不判断音轨了全部显示
+            mAudioTrackBtn.setVisibility(View.VISIBLE);
             int pr = mPlayerConfig.getInt("pr");
             mPlayrender.setText((pr == 0) ? "T渲染" : "S渲染"); //xuameng INT 渲染
         } catch (JSONException e) {
