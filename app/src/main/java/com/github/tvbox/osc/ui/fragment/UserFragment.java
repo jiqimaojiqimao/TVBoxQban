@@ -5,8 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.animation.BounceInterpolator;
 import android.widget.LinearLayout;
-import android.widget.Toast;
-
+import com.github.tvbox.osc.base.App;  //xuameng toast
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
@@ -68,8 +67,8 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
     public static HomeHotVodAdapter homeHotVodAdapter;
 	public static HomeHotVodAdapterXu homeHotVodAdapterxu;  //xuameng首页单行
     private List<Movie.Video> homeSourceRec;
-    public static TvRecyclerView tvHotList1;
-    public static TvRecyclerView tvHotList2;
+    public static TvRecyclerView tvHotList1;   
+    public static TvRecyclerView tvHotList2;   //xuameng首页单行
 
     public static UserFragment newInstance() {
         return new UserFragment();
@@ -101,7 +100,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         }
         super.onFragmentResume();
         if (Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
-            List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(30);
+            List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(100);    //xuameng首页历史条数
             List<Movie.Video> vodList = new ArrayList<>();
             for (VodInfo vodInfo : allVodRecord) {
                 Movie.Video vod = new Movie.Video();
@@ -167,7 +166,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                     homeHotVodAdapter.remove(position);
                     VodInfo vodInfo = RoomDataManger.getVodInfo(vod.sourceKey, vod.id);
                     RoomDataManger.deleteVodRecord(vod.sourceKey, vodInfo);
-                    Toast.makeText(mContext, "已删除当前记录", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(mContext, "已删除当前记录！");
                }  else if (vod.id != null && !vod.id.isEmpty()) {         //xuameng 修复首页聚汇推荐单击不能搜索的问题
                     Bundle bundle = new Bundle();
                     bundle.putString("id", vod.id);
@@ -197,8 +196,8 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             }
         });
 
-        homeHotVodAdapterxu = new HomeHotVodAdapterXu(style);
-        homeHotVodAdapterxu.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+        homeHotVodAdapterxu = new HomeHotVodAdapterXu(style); 
+        homeHotVodAdapterxu.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {   //xuameng首页单行
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                 if (ApiConfig.get().getSourceBeanList().isEmpty())
@@ -210,7 +209,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                     homeHotVodAdapterxu.remove(position);
                     VodInfo vodInfo = RoomDataManger.getVodInfo(vod.sourceKey, vod.id);
                     RoomDataManger.deleteVodRecord(vod.sourceKey, vodInfo);
-                    Toast.makeText(mContext, "已删除当前记录", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(mContext, "已删除当前记录！");
                }  else if (vod.id != null && !vod.id.isEmpty()) {         //xuameng 修复首页聚汇推荐单击不能搜索的问题
                     Bundle bundle = new Bundle();
                     bundle.putString("id", vod.id);
@@ -250,7 +249,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
 				bundle.putBoolean("useCache", true);
 				intent.putExtras(bundle);
 				startActivity(intent);
-				Toast.makeText(mContext, "重新加载主页数据！", Toast.LENGTH_SHORT).show(); 
+                App.showToastShort(mContext, "重新加载主页数据！");
 				return true;
             }
         });
@@ -354,11 +353,11 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
 
             }
         });
-        tvHotList2.setAdapter(homeHotVodAdapterxu);
+        tvHotList2.setAdapter(homeHotVodAdapterxu);   //xuameng首页单行
 
-			initHomeHotVodXu(homeHotVodAdapterxu);
+        initHomeHotVodXu(homeHotVodAdapterxu);   //xuameng首页单行
 
-			initHomeHotVod(homeHotVodAdapter);
+        initHomeHotVod(homeHotVodAdapter);
 		
     }
 
@@ -374,7 +373,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         setDouBanData(adapter);
     }
 
-    private void initHomeHotVodXu(HomeHotVodAdapterXu adapter) {
+    private void initHomeHotVodXu(HomeHotVodAdapterXu adapter) {  //xuameng首页单行
         if (Hawk.get(HawkConfig.HOME_REC, 0) == 1) {
             if (homeSourceRec != null) {
                 adapter.setNewData(homeSourceRec);
