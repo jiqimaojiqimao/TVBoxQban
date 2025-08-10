@@ -3,7 +3,6 @@ package com.github.tvbox.osc.player.controller;
 import android.content.Context;
 import android.view.MotionEvent;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.base.App;
@@ -92,3 +91,4 @@ public class LiveController extends BaseController {
         return false;
     }
 }
+
