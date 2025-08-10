@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
@@ -42,7 +43,6 @@ import java.util.Stack;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
@@ -294,7 +294,7 @@ public class GridFragment extends BaseLazyFragment {
                     if (maxPage>0 && page > maxPage) {
                         gridAdapter.loadMoreEnd();
                         gridAdapter.setEnableLoadMore(false);
-                        if(page>2)Toast.makeText(getContext(), "没有更多了！", Toast.LENGTH_SHORT).show();
+                        if(page>2)App.showToastShort(getContext(), "没有更多了！");
                     }else {
                         gridAdapter.loadMoreComplete();
                         gridAdapter.setEnableLoadMore(true);
@@ -303,7 +303,7 @@ public class GridFragment extends BaseLazyFragment {
                     if (page == 1) {
                         showEmpty();
                     } else if(page > 2){// 只有一页数据时不提示
-                        Toast.makeText(getContext(), "没有更多了！", Toast.LENGTH_SHORT).show();
+                        App.showToastShort(getContext(), "没有更多了！");
                     }
                     gridAdapter.loadMoreEnd();
                     gridAdapter.setEnableLoadMore(false);
