@@ -36,6 +36,11 @@ public class BaseDialog extends Dialog {
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
     }
 
+    @Override
+    public void dismiss() {
+        super.dismiss(); // XUAMENG必须调用父类方法
+    }
+
     private void hideSysBar() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             int uiOptions = getWindow().getDecorView().getSystemUiVisibility();
