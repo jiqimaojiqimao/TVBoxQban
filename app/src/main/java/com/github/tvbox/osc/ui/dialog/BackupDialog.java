@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -64,7 +63,7 @@ public class BackupDialog extends BaseDialog {
             @Override
             public void onClick(View v) {
                 if (XXPermissions.isGranted(getContext(), Permission.Group.STORAGE)) {
-                    Toast.makeText(getContext(), "已获得存储权限！", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(getContext(), "已获得存储权限！");
                 } else {
                     XXPermissions.with(getContext())
                             .permission(Permission.Group.STORAGE)
@@ -73,17 +72,17 @@ public class BackupDialog extends BaseDialog {
                                 public void onGranted(List<String> permissions, boolean all) {
                                     if (all) {
                                         adapter.setNewData(allBackup());
-                                        Toast.makeText(getContext(), "已获得存储权限！", Toast.LENGTH_SHORT).show();
+                                        App.showToastShort(getContext(), "已获得存储权限！");
                                     }
                                 }
 
                                 @Override
                                 public void onDenied(List<String> permissions, boolean never) {
                                     if (never) {
-                                        Toast.makeText(getContext(), "获取存储权限失败,请在系统设置中开启！", Toast.LENGTH_SHORT).show();
+                                        App.showToastShort(getContext(), "获取存储权限失败,请在系统设置中开启！");
                                         XXPermissions.startPermissionActivity(getContext(), permissions);     //xuameng  (Activity) BUG
                                     } else {
-                                        Toast.makeText(getContext(), "获取存储权限失败！", Toast.LENGTH_SHORT).show();
+                                        App.showToastShort(getContext(), "获取存储权限失败！");
                                     }
                                 }
                             });
@@ -144,13 +143,13 @@ public class BackupDialog extends BaseDialog {
                                 sharedPreferences.edit().putString(key, value).commit();
                             }
                         }
-                        Toast.makeText(getContext(), "数据恢复成功！退出设置页面将重启应用！", Toast.LENGTH_SHORT).show();
+                        App.showToastShort(getContext(), "数据恢复成功！退出设置页面将重启应用！");
 						HawkConfig.ISrestore = true;  //xuameng恢复成功,请重启应用
                     } else {
-                        Toast.makeText(getContext(), "Hawk恢复失败!", Toast.LENGTH_SHORT).show();
+                        App.showToastShort(getContext(), "Hawk恢复失败!");
                     }
                 } else {
-                    Toast.makeText(getContext(), "DB文件恢复失败!", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(getContext(), "DB文件恢复失败!");
                 }
             }
         } catch (Throwable e) {
@@ -181,17 +180,17 @@ public class BackupDialog extends BaseDialog {
                 }
                 if (!FileUtils.writeSimple(jsonObject.toString().getBytes("UTF-8"), new File(backup, "hawk"))) {
                     backup.delete();
-                    Toast.makeText(getContext(), "备份Hawk失败!", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(getContext(), "备份Hawk失败!");
                 } else {
-                    Toast.makeText(getContext(), "备份成功!", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(getContext(), "备份成功!");
                 }
             } else {
-                Toast.makeText(getContext(), "DB文件不存在!", Toast.LENGTH_SHORT).show();
+                App.showToastShort(getContext(), "DB文件不存在!");
                 backup.delete();
             }
         } catch (Throwable e) {
             e.printStackTrace();
-            Toast.makeText(getContext(), "备份失败!", Toast.LENGTH_SHORT).show();
+            App.showToastShort(getContext(), "备份失败!");
         }
     }
 
@@ -200,7 +199,7 @@ public class BackupDialog extends BaseDialog {
             String root = Environment.getExternalStorageDirectory().getAbsolutePath();
             File backup = new File(root + "/聚汇影视备份黑标/" + dir);
             FileUtils.recursiveDelete(backup);
-			Toast.makeText(getContext(), "此备份已删除！", Toast.LENGTH_SHORT).show(); 
+            App.showToastShort(getContext(), "此备份已删除！");
         } catch (Throwable e) {
             e.printStackTrace();
         }
