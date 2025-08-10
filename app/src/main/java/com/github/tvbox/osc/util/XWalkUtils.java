@@ -2,10 +2,9 @@ package com.github.tvbox.osc.util;
 
 import android.app.Activity;
 import android.content.Context;
-import android.widget.Toast;
 
 import org.xwalk.core.XWalkInitializer;
-
+import com.github.tvbox.osc.base.App;  //xuameng toast
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -191,9 +190,9 @@ public class XWalkUtils {
         Method method = cls.getMethod("extractResource", String.class, String.class);
         boolean obj = (boolean) method.invoke(null, apkPath(context), libExtractPath(context));
         if (obj) {
-            Toast.makeText(context, "解压XWalkView运行组件完成!", Toast.LENGTH_LONG).show();
+            App.showToastShort(context, "解压XWalkView运行组件完成！");
         } else {
-            Toast.makeText(context, "解压XWalkView运行组件失败!", Toast.LENGTH_LONG).show();
+            App.showToastShort(context, "解压XWalkView运行组件失败！");
         }
         return obj;
     }
