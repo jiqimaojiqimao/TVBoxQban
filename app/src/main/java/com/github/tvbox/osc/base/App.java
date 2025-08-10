@@ -21,6 +21,8 @@ import com.kingja.loadsir.core.LoadSir;
 import com.orhanobut.hawk.Hawk;
 import com.p2p.P2PClass;
 import java.io.File;   //xuameng清缓存
+import android.content.Context;   //xuameng  Toast
+import android.widget.Toast;  //xuameng  Toast
 
 import me.jessyan.autosize.AutoSizeConfig;
 import me.jessyan.autosize.unit.Subunits;
@@ -32,7 +34,7 @@ import me.jessyan.autosize.unit.Subunits;
  */
 public class App extends MultiDexApplication {
     private static App instance;
-
+    private static Toast mToast;   //xuameng  Toast
     private static P2PClass p;
     public static String burl;
     private static String dashData;
@@ -141,5 +143,30 @@ public class App extends MultiDexApplication {
     }
     public String getDashData() {
         return dashData;
+    }
+
+    public static void showToastShort(Context context, String msg) {  //xuameeng showtoast
+        if (mToast != null) {
+            mToast.setText(msg);
+        } else {
+            mToast = Toast.makeText(context, msg, Toast.LENGTH_SHORT);
+        }
+        mToast.show();
+    }
+
+    public static void showToastLong(Context context, String msg) {  //xuameeng showtoast
+        if (mToast != null) {
+            mToast.setText(msg);
+        } else {
+            mToast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
+        }
+        mToast.show();
+    }
+	
+    public static void HideToast() {   //xuameeng HideToast
+        if (mToast != null) {
+            mToast.cancel();
+            mToast = null;  // 释放引用避免内存泄漏
+        }
     }
 }
