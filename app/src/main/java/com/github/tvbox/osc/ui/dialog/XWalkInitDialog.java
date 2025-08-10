@@ -5,8 +5,7 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
-
+import com.github.tvbox.osc.base.App;  //xuameng toast
 import androidx.annotation.NonNull;
 
 import com.github.tvbox.osc.R;
@@ -67,7 +66,7 @@ public class XWalkInitDialog extends BaseDialog {
                             dismiss();
                         } catch (Throwable e) {
                             e.printStackTrace();
-                            Toast.makeText(context, e.getMessage(), Toast.LENGTH_LONG).show();
+                            App.showToastShort(context, e.getMessage());
                             setTextEnable(true);
                         }
                     }
@@ -75,7 +74,7 @@ public class XWalkInitDialog extends BaseDialog {
                     @Override
                     public void onError(Response<File> response) {
                         super.onError(response);
-                        Toast.makeText(context, response.getException().getMessage(), Toast.LENGTH_LONG).show();
+                        App.showToastShort(context, response.getException().getMessage());
                         setTextEnable(true);
                     }
 
