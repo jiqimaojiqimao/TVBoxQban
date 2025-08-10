@@ -23,10 +23,11 @@ import com.github.tvbox.osc.util.HawkConfig;
 import com.orhanobut.hawk.Hawk;
 import com.owen.tvrecyclerview.widget.TvRecyclerView;
 import com.owen.tvrecyclerview.widget.V7LinearLayoutManager;
-
+import com.github.tvbox.osc.base.App;  //xuameng showtoast
+import com.lzy.okgo.OkGo;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.File;
 
 /**
  * @author pj567
@@ -161,10 +162,10 @@ public class SettingActivity extends BaseActivity {
             mHandler.removeCallbacks(mDataRunnable);
             int keyCode = event.getKeyCode();
             switch (keyCode) {
-                case KeyEvent.KEYCODE_0:
+                case KeyEvent.KEYCODE_2:
                     mHandler.removeCallbacks(mDevModeRun);
-                    devMode += "0";
-                    mHandler.postDelayed(mDevModeRun, 200);
+                    devMode += "2";
+                    mHandler.postDelayed(mDevModeRun, 400);
                     if (devMode.length() >= 4) {
                         if (callback != null) {
                             callback.onChange();
@@ -173,44 +174,43 @@ public class SettingActivity extends BaseActivity {
                     break;
             }
         } else if (event.getAction() == KeyEvent.ACTION_UP) {
-            mHandler.postDelayed(mDataRunnable, 200);
+            mHandler.postDelayed(mDataRunnable, 400);
         }
         return super.dispatchKeyEvent(event);
     }
 
     @Override
     public void onBackPressed() {
-        if (currentApi.equals(Hawk.get(HawkConfig.API_URL, ""))) {  
-            if(dnsOpt != Hawk.get(HawkConfig.DOH_URL, 0)){
+		if (HawkConfig.isGetWp){ 
+            OkGo.getInstance().cancelTag("wallpaperDown");   //xuameng打断下载
+            File wp = new File(getFilesDir().getAbsolutePath() + "/wp");
+            if (wp.exists()){
+                wp.delete();
+            }
+            changeWallpaper(true);
+            HawkConfig.isGetWp = false; 
+            App.showToastShort(mContext, "壁纸更换已被打断！壁纸已重置！");
+			return;
+		}
+        if (currentApi.equals(Hawk.get(HawkConfig.API_URL, ""))) {   //xuameng 如何配置地址没变
+            if(dnsOpt != Hawk.get(HawkConfig.DOH_URL, 0)){     //xuameng DNS更改重启
                 AppManager.getInstance().finishAllActivity();
                 jumpActivity(HomeActivity.class, createBundle());
-            }
-			else if (!currentLiveApi.equals(Hawk.get(HawkConfig.LIVE_API_URL, ""))){    //xuameng修复直播API不刷新问题
+            }else if (!currentLiveApi.equals(Hawk.get(HawkConfig.LIVE_API_URL, ""))){    //xuameng修复直播API不刷新问题   重启
                 AppManager.getInstance().finishAllActivity();
                 jumpActivity(HomeActivity.class);
-			}
-			else if (HawkConfig.ISrestore){    
+            }else if (HawkConfig.ISrestore){     //xuameng 恢复重启
                 AppManager.getInstance().finishAllActivity();
                 jumpActivity(HomeActivity.class);
-			    HawkConfig.ISrestore = false;  //xuameng恢复成功,请重启应用
-			}
-			else if (HawkConfig.isGetWp){  //xuameng下载壁纸
-				File wp = new File(getFilesDir().getAbsolutePath() + "/wp");
-                if (wp.exists()){
-                    wp.delete();
-			    }
-			    changeWallpaper(true);
-                AppManager.getInstance().finishAllActivity();
-                jumpActivity(HomeActivity.class);
-			    HawkConfig.isGetWp = false;  //xuameng下载壁纸
-			}
-            else if ((homeSourceKey != null && !homeSourceKey.equals(Hawk.get(HawkConfig.HOME_API, "")))  || homeRec != Hawk.get(HawkConfig.HOME_REC, 0)) {
+                HawkConfig.ISrestore = false;  //xuameng恢复成功,请重启应用
+            }else if ((homeSourceKey != null && !homeSourceKey.equals(Hawk.get(HawkConfig.HOME_API, "")))  || homeRec != Hawk.get(HawkConfig.HOME_REC, 0)) { //xuameng 更改数据源或首页推荐
                 jumpActivity(HomeActivity.class, createBundle());
             }
         } else {
             AppManager.getInstance().finishAllActivity();
             jumpActivity(HomeActivity.class);
         }
+        App.HideToast();  //xuameng HideToast
         super.onBackPressed();
     }
 
