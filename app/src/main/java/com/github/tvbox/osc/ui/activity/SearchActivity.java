@@ -16,7 +16,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;   //xuameng搜索历史
 import android.widget.TextView;
-import android.widget.Toast;
+import com.github.tvbox.osc.base.App;
 
 import androidx.lifecycle.ViewModelProvider;
 
@@ -234,7 +234,7 @@ public class SearchActivity extends BaseActivity {
                         search(keyword);
                     }
                 } else {
-                    Toast.makeText(mContext, "输入内容不能为空！", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(mContext, "输入内容不能为空！");
                 }
             }
         });
@@ -318,7 +318,9 @@ public class SearchActivity extends BaseActivity {
 							}
                     }
                 } else if (pos == 0) {
-                    RemoteDialog remoteDialog = new RemoteDialog(mContext);
+                    if (remoteDialog == null) {
+                        remoteDialog = new RemoteDialog(mContext); // XUAMENG成员变量    解决远程搜索remoteDialog不关闭的问题
+                    }
                     remoteDialog.show();
                 }
             }
@@ -514,7 +516,7 @@ public class SearchActivity extends BaseActivity {
 
     private void search(String title) {
 		if (TextUtils.isEmpty(title)){
-			Toast.makeText(mContext, "输入内容不能为空！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "输入内容不能为空！");
 			return;
 		}
         cancel();   
@@ -565,7 +567,7 @@ public class SearchActivity extends BaseActivity {
             allRunCount.incrementAndGet();
         }
         if (siteKey.size() <= 0) {
-            Toast.makeText(mContext, "聚汇影视提示：请指定搜索源！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "聚汇影视提示：请指定搜索源！");
    //         showEmpty();  //xuameng
             return;
         }
@@ -650,6 +652,12 @@ public class SearchActivity extends BaseActivity {
             th.printStackTrace();
         }
         EventBus.getDefault().unregister(this);
+    }
+
+    @Override
+    public void onBackPressed() {
+        App.HideToast();  //xuameng HideToast
+        super.onBackPressed();
     }
 
     public void showHotSearchtext() {          //xuameng 热搜
