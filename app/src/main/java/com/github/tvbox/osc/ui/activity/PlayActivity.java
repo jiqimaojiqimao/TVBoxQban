@@ -31,7 +31,6 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.github.tvbox.osc.util.parser.SuperParse;
 
 import androidx.annotation.NonNull;
@@ -384,12 +383,12 @@ public class PlayActivity extends BaseActivity {
 			trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
 		}
         if (trackInfo == null) {
-            Toast.makeText(mContext, "没有音轨！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "没有音轨！");
             return;
         }
         List<TrackInfoBean> bean = trackInfo.getAudio();
         if (bean.size() < 1){
-			Toast.makeText(mContext, "没有内置音轨！", Toast.LENGTH_SHORT).show();
+			App.showToastShort(mContext, "没有内置音轨！");
 			return;
 		}
         SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(PlayActivity.this);
@@ -453,12 +452,12 @@ public class PlayActivity extends BaseActivity {
 			trackInfo = ((EXOmPlayer)mediaPlayer).getTrackInfo();
 		}
         if (trackInfo == null) {
-            Toast.makeText(mContext, "没有内置字幕！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "没有内置字幕！");
             return;
         }
         List<TrackInfoBean> bean = trackInfo.getSubtitle();
         if (bean.size() < 1) {
-			Toast.makeText(mContext, "没有内置字幕！", Toast.LENGTH_SHORT).show();
+			App.showToastShort(mContext, "没有内置字幕！");
 			return;
 		}
         SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(PlayActivity.this);
@@ -548,7 +547,7 @@ public class PlayActivity extends BaseActivity {
                 public void run() {
                     if (finish) {
 						setTip(err, false, true);
-                        Toast.makeText(mContext, err, Toast.LENGTH_SHORT).show();
+                        App.showToastShort(mContext, err);
                         finish();
                     } else {
                         setTip(err, false, true);
@@ -763,7 +762,7 @@ public class PlayActivity extends BaseActivity {
                         String playUrl = info.optString("playUrl", "");
                         String msg = info.optString("msg", "");
                         if(!msg.isEmpty()){
-                            Toast.makeText(PlayActivity.this, msg, Toast.LENGTH_SHORT).show();
+                            App.showToastShort(mContext, msg);
                         }
                         String flag = info.optString("flag");
                         String url = info.getString("url");
@@ -857,6 +856,7 @@ public class PlayActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
+        App.HideToast();
         if (mController.onBackPressed()) {
             return;
         }
@@ -937,9 +937,9 @@ public class PlayActivity extends BaseActivity {
         if (!hasNext) {
             if(isProgress && mVodInfo!= null){
                 mVodInfo.playIndex=0;
-                Toast.makeText(this, "已经是最后一集了！即将跳到第一集继续播放！", Toast.LENGTH_SHORT).show();
+                App.showToastShort(mContext, "已经是最后一集了！即将跳到第一集继续播放！");
             }else {
-                Toast.makeText(this, "已经是最后一集了！", Toast.LENGTH_SHORT).show();
+                App.showToastShort(mContext, "已经是最后一集了！");
                 return;
             }
         }else {
@@ -956,7 +956,7 @@ public class PlayActivity extends BaseActivity {
             hasPre = mVodInfo.playIndex - 1 >= 0;
         }
         if (!hasPre) {
-            Toast.makeText(this, "已经是第一集了！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "已经是第一集了！");
             return;
         }
         mVodInfo.playIndex--;
@@ -995,7 +995,7 @@ public class PlayActivity extends BaseActivity {
                     }
                     }).start();
 
-                    Toast.makeText(mContext, "播放失败！立即清空缓存！重试！", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(mContext, "播放失败！立即清空缓存！重试！");
                     autoRetryCount++;
                     new Handler().postDelayed(new Runnable() {
                     @Override
@@ -1119,7 +1119,7 @@ public class PlayActivity extends BaseActivity {
                 parseBean.setType(0);
                 parseBean.setUrl(playUrl);
 				mController.showParse(false);
-				Toast.makeText(mContext, "解析站点未配置，直接嗅探播放！", Toast.LENGTH_SHORT).show();
+				App.showToastShort(mContext, "解析站点未配置，直接嗅探播放！");
             }else{
 				mController.showParse(useParse);
 			}
@@ -1328,7 +1328,7 @@ public class PlayActivity extends BaseActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(mContext, "解析来自:" + rs.optString("jxFrom"), Toast.LENGTH_SHORT).show();
+                                    App.showToastShort(mContext, "解析来自:" + rs.optString("jxFrom"));
                                 }
                             });
                         }
@@ -1450,7 +1450,7 @@ public class PlayActivity extends BaseActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(mContext, "解析来自:" + rs.optString("jxFrom"), Toast.LENGTH_SHORT).show();
+                    App.showToastShort(mContext, "解析来自:" + rs.optString("jxFrom"));
                 }
             });
         }
@@ -1480,14 +1480,14 @@ public class PlayActivity extends BaseActivity {
 
                     @Override
                     public void fail() {
-                        Toast.makeText(mContext, "XWalkView不兼容，已替换为系统自带WebView", Toast.LENGTH_SHORT).show();
+                        App.showToastShort(mContext, "XWalkView不兼容，已替换为系统自带WebView");
                         initWebView(true);
                         loadUrl(url);
                     }
 
                     @Override
                     public void ignore() {
-                        Toast.makeText(mContext, "XWalkView运行组件未下载，已替换为系统自带WebView", Toast.LENGTH_SHORT).show();
+                        App.showToastShort(mContext, "XWalkView运行组件未下载，已替换为系统自带WebView");
                         initWebView(true);
                         loadUrl(url);
                     }
