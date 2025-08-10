@@ -15,7 +15,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.graphics.Color; //xuameng获取颜色值
 import android.widget.FrameLayout; //xuameng倍速播放
 import com.github.tvbox.osc.server.RemoteServer; //xuameng新增广告过滤
@@ -1082,7 +1081,7 @@ public class VodController extends BaseController {
                         hideBottom();
                     }
                     mSubtitleView.setVisibility(VISIBLE);
-                    Toast.makeText(getContext(), "字幕已开启！", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(getContext(), "字幕已开启！");
                 } else if(mSubtitleView.getVisibility() == View.VISIBLE) {
                     if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
                         hideBottom();
@@ -1091,7 +1090,7 @@ public class VodController extends BaseController {
                     //                  mSubtitleView.destroy();
                     //                  mSubtitleView.clearSubtitleCache();
                     //                  mSubtitleView.isInternal = false;
-                    Toast.makeText(getContext(), "字幕已关闭！", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(getContext(), "字幕已关闭！");
                 }
                 return true;
             }
@@ -1140,7 +1139,7 @@ public class VodController extends BaseController {
         mPlayrender.setNextFocusUpId(R.id.mxuplay);
     }
     private void hideLiveAboutBtn() {
-        if(mControlWrapper != null && mControlWrapper.getDuration() <= 1) {   //XUAMENG <= 1是为了总进度判断不准确（系统播放器）跳过片头片尾就会显示出来
+        if(mControlWrapper != null && mControlWrapper.getDuration() <= 1) {
             mPlayerSpeedBtn.setVisibility(GONE);
             mPlayerTimeStartEndText.setVisibility(GONE);
             mPlayerTimeStartBtn.setVisibility(GONE);
@@ -1974,10 +1973,10 @@ public class VodController extends BaseController {
             int playerType = mPlayerConfig.getInt("pl");
             int p_type = (playerType == 1) ? playerType + 1 : (playerType == 2) ? playerType - 1 : playerType;
             if(p_type != playerType) {
-                Toast.makeText(getContext(), "切换到" + (p_type == 1 ? "IJK" : "EXO") + "播放器重试！", Toast.LENGTH_SHORT).show();
                 mPlayerConfig.put("pl", p_type);
                 updatePlayerCfgView();
                 listener.updatePlayerCfg();
+                App.showToastShort(getContext(), "切换到" + (p_type == 1 ? "IJK" : "EXO") + "播放器重试！");
             } else {
                 return true;
             }
@@ -2060,7 +2059,7 @@ public class VodController extends BaseController {
             listener.startPlayUrl(url, headers);
         } else {
             listener.startPlayUrl(ControlManager.get().getAddress(true) + "proxyM3u8", headers);
-            Toast.makeText(getContext(), "聚汇影视已移除" + M3u8.currentAdCount + "条视频广告！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(getContext(), "聚汇影视已移除" + M3u8.currentAdCount + "条视频广告！");
         }
     }
     private void fetchAndProcessForwardUrl(final String forwardUrl, final HashMap < String, String > headers, HttpHeaders okGoHeaders, final String fallbackUrl) {
