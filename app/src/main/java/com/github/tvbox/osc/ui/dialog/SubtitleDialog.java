@@ -4,8 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
-
+import com.github.tvbox.osc.base.App;  //xuameng toast
 import androidx.annotation.NonNull;
 
 import com.github.tvbox.osc.R;
@@ -165,7 +164,7 @@ public class SubtitleDialog extends BaseDialog {
                 int style = 0;
                 dismiss();
                 mSubtitleViewListener.setTextStyle(style);
-                Toast.makeText(getContext(), "设置样式成功", Toast.LENGTH_SHORT).show();
+                App.showToastShort(getContext(), "设置样式成功");
             }
         });
 
@@ -175,7 +174,7 @@ public class SubtitleDialog extends BaseDialog {
                 int style = 1;
                 dismiss();
                 mSubtitleViewListener.setTextStyle(style);
-                Toast.makeText(getContext(), "设置样式成功", Toast.LENGTH_SHORT).show();
+                App.showToastShort(getContext(), "设置样式成功");
             }
         });
     }
