@@ -7,7 +7,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.text.TextWatcher;  //xuameng输入监听依赖
 import android.text.Editable;		//xuameng输入监听依赖
-import android.widget.Toast;
+import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import androidx.annotation.NonNull;
 
@@ -64,7 +64,7 @@ public class PushDialog extends BaseDialog {
 			  int index = text.lastIndexOf(".");
 			  etAddr.getEditableText().delete(index, index + 1);
 			  isPointAdded = false;
-			  Toast.makeText(PushDialog.this.getContext(), "聚汇影视提示：IP地址格式为222.222.222.222", Toast.LENGTH_SHORT).show();
+              App.showToastShort(PushDialog.this.getContext(), "聚汇影视提示：IP地址格式为222.222.222.222");
 			} else {				
 			  isPointAdded = true;				
 			}
@@ -98,11 +98,11 @@ public class PushDialog extends BaseDialog {
                 String addr = etAddr.getText().toString();
                 String port = etPort.getText().toString();
                 if (addr == null || addr.length() == 0) {
-                    Toast.makeText(PushDialog.this.getContext(), "请输入远端聚汇影视地址", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(PushDialog.this.getContext(), "请输入远端聚汇影视地址");
                     return;
                 }
                 if (port == null || port.length() == 0) {
-                    Toast.makeText(PushDialog.this.getContext(), "请输入远端聚汇影视端口", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(PushDialog.this.getContext(), "请输入远端聚汇影视端口");
                     return;
                 }
                 Hawk.put(HawkConfig.PUSH_TO_ADDR, addr);
@@ -117,7 +117,7 @@ public class PushDialog extends BaseDialog {
         findViewById(R.id.btnCancel).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(PushDialog.this.getContext(), "功能还没实现~", Toast.LENGTH_SHORT).show();
+                App.showToastShort(PushDialog.this.getContext(), "功能还没实现！");
             }
         });
     }
