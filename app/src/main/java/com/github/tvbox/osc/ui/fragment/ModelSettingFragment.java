@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -35,6 +34,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;  //xuameng优化首页
 import android.view.ViewGroup;   //xuameng优化首页数据源列表
 import me.jessyan.autosize.utils.AutoSizeUtils;  //xuameng优化首页数据源列表
 import com.github.tvbox.osc.util.DefaultConfig;  //xuameng长按许大师制作重启APP
+import com.github.tvbox.osc.base.App;  //xuameng showtoast
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.FileUtils;
 import com.github.tvbox.osc.util.HawkConfig;
@@ -156,7 +156,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 Hawk.put(HawkConfig.PARSE_WEBVIEW, useSystem);
                 tvParseWebView.setText(Hawk.get(HawkConfig.PARSE_WEBVIEW, true) ? "系统自带" : "XWalkView");
                 if (!useSystem) {
-                    Toast.makeText(mContext, "注意: XWalkView只适用于部分低Android版本，Android5.0以上推荐使用系统自带", Toast.LENGTH_LONG).show();
+                    App.showToastLong(getContext(), "注意: XWalkView只适用于部分低Android版本，Android5.0以上推荐使用系统自带");
                     XWalkInitDialog dialog = new XWalkInitDialog(mContext);
                     dialog.setOnListener(new XWalkInitDialog.OnListener() {
                         @Override
@@ -179,7 +179,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
             @Override
             public void onClick(View v) {
                 if (XXPermissions.isGranted(getContext(), Permission.Group.STORAGE)) {
-                    Toast.makeText(getContext(), "已获得存储权限！", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(getContext(), "已获得存储权限！");
                 } else {
                     XXPermissions.with(getContext())
                             .permission(Permission.Group.STORAGE)
@@ -187,17 +187,17 @@ public class ModelSettingFragment extends BaseLazyFragment {
                                 @Override
                                 public void onGranted(List<String> permissions, boolean all) {
                                     if (all) {
-                                        Toast.makeText(getContext(), "已获得存储权限！", Toast.LENGTH_SHORT).show();
+                                        App.showToastShort(getContext(), "已获得存储权限！");
                                     }
                                 }
 
                                 @Override
                                 public void onDenied(List<String> permissions, boolean never) {
                                     if (never) {
-                                        Toast.makeText(getContext(), "获取存储权限失败,请在系统设置中开启！", Toast.LENGTH_SHORT).show();
+                                        App.showToastShort(getContext(), "获取存储权限失败,请在系统设置中开启！");
                                         XXPermissions.startPermissionActivity(getContext(), permissions);      //xuameng Activity去掉
                                     } else {
-                                        Toast.makeText(getContext(), "获取存储权限失败！", Toast.LENGTH_SHORT).show();
+                                        App.showToastShort(getContext(), "获取存储权限失败！");
                                     }
                                 }
                             });
@@ -207,23 +207,34 @@ public class ModelSettingFragment extends BaseLazyFragment {
         findViewById(R.id.llWp).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FastClickCheckUtil.check(v);
+                FastClickCheckUtil.check(v);  //xuameng 2秒
                 if (!ApiConfig.get().wallpaper.isEmpty()){
-				HawkConfig.isGetWp = true;  //xuameng下载壁纸
-	            Toast.makeText(mContext, "壁纸更换中！", Toast.LENGTH_SHORT).show();   //xuameng
-                    OkGo.<File>get(ApiConfig.get().wallpaper).tag("xuameng").execute(new FileCallback(requireActivity().getFilesDir().getAbsolutePath(), "wp") {  //xuameng增加tag以便打断下载
+				    HawkConfig.isGetWp = true;  //xuameng下载壁纸
+                    App.showToastShort(getContext(), "壁纸更换中！");
+                    OkGo.<File>get(ApiConfig.get().wallpaper).tag("wallpaperDown").execute(new FileCallback(requireActivity().getFilesDir().getAbsolutePath(), "wp") {  //xuameng增加tag以便打断下载
                         @Override
                         public void onSuccess(Response<File> response) {
-							if (HawkConfig.isGetWp){
-							   ((BaseActivity) requireActivity()).changeWallpaper(true);
-							   HawkConfig.isGetWp = false;  //xuameng下载壁纸
+                            if (HawkConfig.isGetWp){
+                                String mimeType = response.headers().get("Content-Type");
+                                if (mimeType != null && mimeType.startsWith("image/")) {   // 确认是图片文件
+							       ((BaseActivity) requireActivity()).changeWallpaper(true);      
+                                   HawkConfig.isGetWp = false;  //xuameng下载壁纸 
+                                   App.showToastShort(getContext(), "壁纸更换成功！");
+                                }else{
+                                   File wp = new File(requireActivity().getFilesDir().getAbsolutePath() + "/wp");
+                                   if (wp.exists()) wp.delete();
+                                   ((BaseActivity) requireActivity()).changeWallpaper(true);
+                                   HawkConfig.isGetWp = false;  //xuameng下载壁纸
+                                   App.showToastShort(getContext(), "壁纸文件类型错误！已重置壁纸！");
+                                }
 							}
                         }
 
                         @Override
                         public void onError(Response<File> response) {
-                            super.onError(response);
 							HawkConfig.isGetWp = false;  //xuameng下载壁纸
+                            App.showToastShort(getContext(), "壁纸更换失败！");
+                            super.onError(response);
                         }
 
                         @Override
@@ -232,7 +243,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                         }
                     });
 				}else{
-					Toast.makeText(mContext, "壁纸站点未配置！", Toast.LENGTH_SHORT).show();   //xuameng
+                    App.showToastShort(getContext(), "壁纸站点未配置！");
 				}
             }
         });
@@ -241,10 +252,9 @@ public class ModelSettingFragment extends BaseLazyFragment {
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
                 File wp = new File(requireActivity().getFilesDir().getAbsolutePath() + "/wp");
-                if (wp.exists())
-                    wp.delete();
+                if (wp.exists()) wp.delete();
                 ((BaseActivity) requireActivity()).changeWallpaper(true);
-				Toast.makeText(mContext, "壁纸已重置！", Toast.LENGTH_LONG).show();
+                App.showToastShort(getContext(), "壁纸已重置！");
             }
         });
 
@@ -296,7 +306,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 }, sites, select);
                 mSiteSwitchDialog.show();
             }else {
-				Toast.makeText(mContext, "主页暂无数据！联系许大师吧！", Toast.LENGTH_LONG).show();
+                App.showToastLong(getContext(), "主页暂无数据！联系许大师吧！");
 				}
             }
         });
@@ -779,7 +789,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 e.printStackTrace();
             }
         }).start();
-        Toast.makeText(getContext(), "缓存已清空！", Toast.LENGTH_LONG).show();
+        App.showToastShort(getContext(), "缓存已清空！");
         return;
     }
 
@@ -790,9 +800,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
 
     @Override
     public void onDestroyView() {
-		if (HawkConfig.isGetWp){
-			OkGo.getInstance().cancelTag("xuameng");   //xuameng打断下载
-		}
+        OkGo.getInstance().cancelTag("wallpaperDown");   //xuameng打断下载
         super.onDestroyView();
         SettingActivity.callback = null;
     }
