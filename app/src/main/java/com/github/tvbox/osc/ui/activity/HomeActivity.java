@@ -27,6 +27,7 @@ import java.util.Objects;   //xuameng主页默认焦点
 import com.github.tvbox.osc.util.FastClickCheckUtil;   //xuameng cache
 import com.github.tvbox.osc.util.MD5;  //xuameng cache
 import android.widget.Toast;
+import com.github.tvbox.osc.base.App;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -257,7 +258,7 @@ public class HomeActivity extends BaseActivity {
 						e.printStackTrace();
 					}
 				}).start();
-					Toast.makeText(HomeActivity.this, "清空缓存成功！", Toast.LENGTH_SHORT).show(); 
+                    App.showToastShort(HomeActivity.this, "清空缓存成功！");
                 }else {
                     jumpActivity(SettingActivity.class);		//xuameng加载慢跳转设置
                 }
@@ -273,7 +274,7 @@ public class HomeActivity extends BaseActivity {
                     bundle.putBoolean("useCache", true);
                     intent.putExtras(bundle);
                     HomeActivity.this.startActivity(intent);
-					Toast.makeText(HomeActivity.this, "重新加载主页数据！", Toast.LENGTH_SHORT).show();   
+                    App.showToastShort(HomeActivity.this, "重新加载主页数据！");
                 }else {
                     jumpActivity(SettingActivity.class);   //xuameng加载慢跳转设置
                 }
@@ -357,9 +358,9 @@ public class HomeActivity extends BaseActivity {
                                    }
 									if (!ApiConfig.get().JvhuiWarning.isEmpty()){
 										String JvhuiWarning = ApiConfig.get().JvhuiWarning;
-										Toast.makeText(HomeActivity.this, (JvhuiWarning), Toast.LENGTH_LONG).show();
+                                        App.showToastShort(HomeActivity.this, (JvhuiWarning));
 									}else{
-										Toast.makeText(HomeActivity.this, "聚汇影视提示：jar加载成功！", Toast.LENGTH_SHORT).show();
+                                        App.showToastShort(HomeActivity.this, "聚汇影视提示：jar加载成功！");
 									}
                                 }
 
@@ -373,7 +374,7 @@ public class HomeActivity extends BaseActivity {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
+                                App.showToastShort(HomeActivity.this, msg);
                             }
                         });
                     }
@@ -385,7 +386,7 @@ public class HomeActivity extends BaseActivity {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(HomeActivity.this, "聚汇影视提示：jar加载失败！", Toast.LENGTH_SHORT).show();
+                                App.showToastShort(HomeActivity.this, "聚汇影视提示：jar加载失败！");
                                 initData();
                             }
                         });
@@ -402,7 +403,7 @@ public class HomeActivity extends BaseActivity {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
+                        App.showToastShort(HomeActivity.this, msg);
                     }
                 });
             }
@@ -569,6 +570,7 @@ public class HomeActivity extends BaseActivity {
     }
 
 	 public void showExitXu(){
+        App.HideToast();
         LayoutInflater inflater = getLayoutInflater();
         View customToastView = inflater.inflate(R.layout.exit_toast, null);
         ImageView imageView = customToastView.findViewById(R.id.toastImage);
@@ -582,6 +584,7 @@ public class HomeActivity extends BaseActivity {
     private void exit() {
         if (System.currentTimeMillis() - mExitTime < 2000) {
             //这一段借鉴来自 q群老哥 IDCardWeb
+            App.HideToast();
 			AppManager.getInstance().finishAllActivity();
             EventBus.getDefault().unregister(this);
 		//	AppManager.getInstance().appExit(0);
@@ -789,7 +792,7 @@ public class HomeActivity extends BaseActivity {
         }, sites, select);
         mSiteSwitchDialog.show();
     }else {
-			Toast.makeText(HomeActivity.this, "主页暂无数据！联系许大师吧！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(HomeActivity.this, "主页暂无数据！联系许大师吧！");
 		}
     }
     private void refreshEmpty(){
@@ -797,6 +800,6 @@ public class HomeActivity extends BaseActivity {
         showSuccess();
         sortAdapter.setNewData(DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), new ArrayList<>(), true));
         initViewPager(null);
-		Toast.makeText(HomeActivity.this, "聚汇影视提示：已打断当前源加载！", Toast.LENGTH_SHORT).show();
+        App.showToastShort(HomeActivity.this, "聚汇影视提示：已打断当前源加载！");
     }
 }
