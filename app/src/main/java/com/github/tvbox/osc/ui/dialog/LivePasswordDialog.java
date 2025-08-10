@@ -7,13 +7,10 @@ import android.os.Looper;
 import android.os.Message;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;      //xuameng密码不能为空
-
 import androidx.annotation.NonNull;
-
 import com.github.tvbox.osc.R;
-
 import org.jetbrains.annotations.NotNull;
+import com.github.tvbox.osc.base.App;  //xuameng toast
 
 
 
@@ -39,7 +36,7 @@ public class LivePasswordDialog extends BaseDialog {
                     listener.onChange(password);
                     dismiss();
                 }else {          //xuameng密码不能为空
-                Toast.makeText(getContext(), "输入内容不能为空", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(getContext(), "输入内容不能为空！");
                }
             }
         });
@@ -50,6 +47,7 @@ public class LivePasswordDialog extends BaseDialog {
         super.onBackPressed();
         listener.onCancel();
         dismiss();
+		App.HideToast();  //xuameng HideToast
     }
 
     public void setOnListener(OnListener listener) {
