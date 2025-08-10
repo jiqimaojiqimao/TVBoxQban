@@ -31,7 +31,6 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.github.tvbox.osc.util.parser.SuperParse;
 
 import androidx.annotation.NonNull;
@@ -396,12 +395,12 @@ public class PlayFragment extends BaseLazyFragment {
             trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
         }
         if (trackInfo == null) {
-            Toast.makeText(mContext, "没有音轨！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "没有音轨！");
             return;
         }
         List<TrackInfoBean> bean = trackInfo.getAudio();
         if (bean.size() < 1){
-			Toast.makeText(mContext, "没有内置音轨！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "没有内置音轨！");
 			return;
 		}
         SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(getActivity());
@@ -466,12 +465,12 @@ public class PlayFragment extends BaseLazyFragment {
             trackInfo = ((IjkMediaPlayer)mediaPlayer).getTrackInfo();
         }
         if (trackInfo == null) {
-            Toast.makeText(mContext, "没有内置字幕！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "没有内置字幕！");
             return;
         }
         List<TrackInfoBean> bean = trackInfo.getSubtitle();
         if (bean.size() < 1) {
-			Toast.makeText(mContext, "没有内置字幕！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "没有内置字幕！");
 			return;
 		}
         SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(mActivity);
@@ -563,7 +562,7 @@ public class PlayFragment extends BaseLazyFragment {
                 public void run() {
                     if (finish) {
 						setTip(err, false, true);
-                        Toast.makeText(mContext, err, Toast.LENGTH_SHORT).show();
+                        App.showToastShort(mContext, err);
                     } else {
                         setTip(err, false, true);
                     }
@@ -781,7 +780,7 @@ public class PlayFragment extends BaseLazyFragment {
                         String playUrl = info.optString("playUrl", "");
                         String msg = info.optString("msg", "");
                         if(!msg.isEmpty()){
-                            Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
+                            App.showToastShort(mContext, msg);
                         }
                         String flag = info.optString("flag");
                         String url = info.getString("url");
@@ -881,6 +880,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     public boolean onBackPressed() {
+        App.HideToast();
         int requestedOrientation = requireActivity().getRequestedOrientation();
         if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT) {
             requireActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
@@ -977,9 +977,9 @@ public class PlayFragment extends BaseLazyFragment {
         if (!hasNext) {
             if(isProgress && mVodInfo!= null){
                 mVodInfo.playIndex=0;
-                Toast.makeText(requireContext(), "已经是最后一集了！即将跳到第一集继续播放！", Toast.LENGTH_SHORT).show();
+                App.showToastShort(mContext, "已经是最后一集了！即将跳到第一集继续播放！");
             }else {
-                Toast.makeText(requireContext(), "已经是最后一集了！", Toast.LENGTH_SHORT).show();
+                App.showToastShort(mContext, "已经是最后一集了！");
                 return;
             }
         }else {
@@ -996,7 +996,7 @@ public class PlayFragment extends BaseLazyFragment {
             hasPre = mVodInfo.playIndex - 1 >= 0;
         }
         if (!hasPre) {
-			Toast.makeText(requireContext(), "已经是第一集了！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(mContext, "已经是第一集了！");
             return;
         }
         mVodInfo.playIndex--;
@@ -1034,8 +1034,7 @@ public class PlayFragment extends BaseLazyFragment {
                         e.printStackTrace();
                     }
                     }).start();
-
-                    Toast.makeText(mContext, "播放失败！立即清空缓存！重试！", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(mContext, "播放失败！立即清空缓存！重试！");
                     autoRetryCount++;
                     new Handler().postDelayed(new Runnable() {
                     @Override
@@ -1173,7 +1172,7 @@ public class PlayFragment extends BaseLazyFragment {
                 parseBean.setType(0);
                 parseBean.setUrl(playUrl);
 				mController.showParse(false);
-				Toast.makeText(mContext, "解析站点未配置，直接嗅探播放！", Toast.LENGTH_SHORT).show();
+                App.showToastShort(mContext, "解析站点未配置，直接嗅探播放！");
             }else{
 				mController.showParse(useParse);
 			}
@@ -1385,7 +1384,7 @@ public class PlayFragment extends BaseLazyFragment {
                             requireActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(mContext, "解析来自:" + rs.optString("jxFrom"), Toast.LENGTH_SHORT).show();
+                                    App.showToastShort(mContext, "解析来自:" + rs.optString("jxFrom"));
                                 }
                             });
                         }
@@ -1518,7 +1517,7 @@ public class PlayFragment extends BaseLazyFragment {
             requireActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(mContext, "解析来自:" + rs.optString("jxFrom"), Toast.LENGTH_SHORT).show();
+					App.showToastShort(mContext, "解析来自:" + rs.optString("jxFrom"));
                 }
             });
         }
@@ -1545,14 +1544,14 @@ public class PlayFragment extends BaseLazyFragment {
 
                    @Override
                    public void fail() {
-                       Toast.makeText(mContext, "XWalkView不兼容，已替换为系统自带WebView", Toast.LENGTH_SHORT).show();
+                       App.showToastShort(mContext, "XWalkView不兼容，已替换为系统自带WebView");
                        initWebView(true);
                        loadUrl(url);
                    }
 
                     @Override
                     public void ignore() {
-                       Toast.makeText(mContext, "XWalkView运行组件未下载，已替换为系统自带WebView", Toast.LENGTH_SHORT).show();
+                       App.showToastShort(mContext, "XWalkView运行组件未下载，已替换为系统自带WebView");
                        initWebView(true);
                        loadUrl(url);
                 }
