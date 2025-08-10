@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
+import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -58,7 +58,7 @@ public class SearchRemoteTvDialog extends BaseDialog{
             if (ModelSettingFragment.loadingSearchRemoteTvDialog != null) {
                 ModelSettingFragment.loadingSearchRemoteTvDialog.showEmpty();
             }
-            Toast.makeText(getContext(), "未找到附近聚汇影视", Toast.LENGTH_SHORT).show();
+            App.showToastShort(getContext(), "未找到附近聚汇影视！");
             return;
         }
         if (ModelSettingFragment.loadingSearchRemoteTvDialog != null) {
@@ -75,7 +75,7 @@ public class SearchRemoteTvDialog extends BaseDialog{
             @Override
             public void click(String value, int pos) {
                 RemoteTVBox.setAvalible(value);
-                Toast.makeText(getContext(), "设置成功", Toast.LENGTH_SHORT).show();
+                App.showToastShort(getContext(), "设置成功！");
             }
 
             @Override
