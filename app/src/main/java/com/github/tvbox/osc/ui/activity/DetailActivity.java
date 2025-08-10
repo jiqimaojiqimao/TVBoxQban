@@ -16,7 +16,6 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.content.ClipboardManager;
 import android.content.ClipData;
 
@@ -368,7 +367,7 @@ public class DetailActivity extends BaseActivity {
 			//	mGridView.requestFocus();  //xuameng如果不满足滚动条件直接获得焦点
 			    mGridView.setSelection(vodInfo.playIndex);
 			}
-			Toast.makeText(DetailActivity.this, "滚动到当前播放剧集！", Toast.LENGTH_SHORT).show();
+            App.showToastShort(DetailActivity.this, "滚动到当前播放剧集！");
 			return true;
             }
         });
@@ -435,11 +434,11 @@ public class DetailActivity extends BaseActivity {
                 String text = tvCollect.getText().toString();
                 if ("☆收藏".equals(text)) {
                     RoomDataManger.insertVodCollect(sourceKey, vodInfo);
-                    Toast.makeText(DetailActivity.this, "已加入收藏夹", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(DetailActivity.this, "已加入收藏夹");
                     tvCollect.setText("★收藏");
                 } else {
                     RoomDataManger.deleteVodCollect(sourceKey, vodInfo);
-                    Toast.makeText(DetailActivity.this, "已移除收藏夹", Toast.LENGTH_SHORT).show();
+                    App.showToastShort(DetailActivity.this, "已移除收藏夹");
                     tvCollect.setText("☆收藏");
                 }
             }
@@ -464,7 +463,7 @@ public class DetailActivity extends BaseActivity {
                 ClipboardManager cm = (ClipboardManager)getSystemService(mContext.CLIPBOARD_SERVICE);
                 //设置内容到剪切板
                 cm.setPrimaryClip(ClipData.newPlainText(null, tvPlayUrl.getText().toString().replace("播放地址：","")));
-                Toast.makeText(DetailActivity.this, "播放地址已复制！", Toast.LENGTH_SHORT).show();
+                App.showToastShort(DetailActivity.this, "播放地址已复制！");
             }
         });
 
@@ -507,7 +506,7 @@ public class DetailActivity extends BaseActivity {
                         String cpContent = removeHtmlTag(mVideo.des);
                         ClipData clipData = ClipData.newPlainText(null, cpContent);
                         clipprofile.setPrimaryClip(clipData);
-                        Toast.makeText(DetailActivity.this, "简介内容已复制：" + cpContent, Toast.LENGTH_SHORT).show();
+                        App.showToastShort(DetailActivity.this, "简介内容已复制：" + cpContent);
                     }
                 });
                 return true;
@@ -834,7 +833,7 @@ public class DetailActivity extends BaseActivity {
                 if (absXml != null && absXml.movie != null && absXml.movie.videoList != null && absXml.movie.videoList.size() > 0) {
                     showSuccess();
                     if(!TextUtils.isEmpty(absXml.msg) && !absXml.msg.equals("数据列表")){
-                        Toast.makeText(DetailActivity.this, absXml.msg, Toast.LENGTH_SHORT).show();
+						App.showToastShort(DetailActivity.this, absXml.msg);
                         showEmpty();
                         return;
                     }
@@ -994,7 +993,7 @@ public class DetailActivity extends BaseActivity {
             firstsourceKey = key;
             sourceBeanXu = ApiConfig.get().getSource(sourceKey);  //xuameng判断sourceKey为空 远程推送BUG
             if (sourceBeanXu == null){
-                Toast.makeText(DetailActivity.this, "推送结果：本地没有此数据源！请同步数据源！", Toast.LENGTH_LONG).show();
+                App.showToastShort(DetailActivity.this, "推送结果：本地没有此数据源！请同步数据源！");
                 showEmpty();
                 return;
             }
@@ -1076,7 +1075,7 @@ public class DetailActivity extends BaseActivity {
                                 if (response.body() != null) {
                                     return response.body().string();
                                 } else {
-                                    Toast.makeText(DetailActivity.this, "推送失败，地址可能填写错误！", Toast.LENGTH_SHORT).show();
+                                    App.showToastShort(DetailActivity.this, "推送失败，地址可能填写错误！");
                                     throw new IllegalStateException("网络请求错误");
                                 }
                             }
@@ -1085,15 +1084,15 @@ public class DetailActivity extends BaseActivity {
                             public void onSuccess(Response<String> response) {
                                 String r = response.body();
                                 if ("mirrored".equals(r))
-                                    Toast.makeText(DetailActivity.this, "推送成功！", Toast.LENGTH_SHORT).show();
+                                    App.showToastShort(DetailActivity.this, "推送成功！");
                                 else
-                                    Toast.makeText(DetailActivity.this, "推送失败，远端聚汇影视版本不支持！", Toast.LENGTH_SHORT).show();
+                                    App.showToastShort(DetailActivity.this, "推送失败，远端聚汇影视版本不支持！");
                             }
 
                             @Override
                             public void onError(Response<String> response) {
                                 super.onError(response);
-                                Toast.makeText(DetailActivity.this, "推送失败，地址可能填写错误！", Toast.LENGTH_SHORT).show();
+                                App.showToastShort(DetailActivity.this, "推送失败，地址可能填写错误！");
                             }
                         });
             }
@@ -1281,6 +1280,7 @@ public class DetailActivity extends BaseActivity {
             playFragment.mVideoView.release();
         }
 		HawkConfig.intVod = false;  //xuameng判断进入播放
+        App.HideToast();
         super.onBackPressed();
     }
 
