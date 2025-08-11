@@ -901,6 +901,10 @@ public class LivePlayActivity extends BaseActivity {
                countDownTimer.cancel();
                countDownTimer = null;
             }
+           if(mVideoView != null) {
+               mVideoView.release();
+               mVideoView = null;
+           }
             App.HideToast();  //xuameng HideToast
             cancelxToast();
             super.onBackPressed();
@@ -964,6 +968,10 @@ public class LivePlayActivity extends BaseActivity {
         if(countDownTimer != null) {
            countDownTimer.cancel();
            countDownTimer = null;
+        }
+        if(mVideoView != null) {
+            mVideoView.release();
+            mVideoView = null;
         }
         App.HideToast();  //xuameng HideToast
         cancelxToast();
