@@ -23,6 +23,7 @@ import android.graphics.Color;                          //xuameng获取颜色值
 import android.util.TypedValue;              //xuameng TypedValue依赖
 import android.view.LayoutInflater;			//xuameng LayoutInflater依赖
 import androidx.recyclerview.widget.RecyclerView;  //xuameng主页默认焦点
+import com.lzy.okgo.OkGo;   //xuameng 打断加载用
 import java.util.Objects;   //xuameng主页默认焦点
 import com.github.tvbox.osc.util.FastClickCheckUtil;   //xuameng cache
 import com.github.tvbox.osc.util.MD5;  //xuameng cache
@@ -97,7 +98,7 @@ public class HomeActivity extends BaseActivity {
     private boolean sortChange = false;
     private int currentSelected = 0;
     private int sortFocused = 0;
-	private int PositionXu = 0;
+	private int PositionXu = 0;  //xuameng 分类筛选BUG修复变色问题
     public View sortFocusView = null;
     private final Handler mHandler = new Handler();
     private long mExitTime = 0;
@@ -274,6 +275,7 @@ public class HomeActivity extends BaseActivity {
                     bundle.putBoolean("useCache", true);
                     intent.putExtras(bundle);
                     HomeActivity.this.startActivity(intent);
+                    App.HideToast();
                     App.showToastShort(HomeActivity.this, "重新加载主页数据！");
                 }else {
                     jumpActivity(SettingActivity.class);   //xuameng加载慢跳转设置
@@ -521,8 +523,8 @@ public class HomeActivity extends BaseActivity {
 	@SuppressLint("NotifyDataSetChanged")
     @Override
     public void onBackPressed() {
-        if(isLoading() && dataInitOk){
-            refreshEmpty();
+        if(isLoading()){
+            refreshEmpty();     //xuameng打断加载优化
             return;
         }
 
@@ -622,7 +624,7 @@ public class HomeActivity extends BaseActivity {
                 HomeActivity.this.startActivity(newIntent);
             }
         } else if (event.type == RefreshEvent.TYPE_FILTER_CHANGE) {
-            if (currentView != null && PositionXu !=0) {
+            if (currentView != null && PositionXu !=0) {   //xuameng 分类筛选BUG修复变色问题
                 MovieSort.SortData sortData = sortAdapter.getItem(PositionXu);
                 if (!sortData.filters.isEmpty()) {
                     showFilterIcon(sortData.filterSelectCount());
@@ -792,10 +794,13 @@ public class HomeActivity extends BaseActivity {
         }, sites, select);
         mSiteSwitchDialog.show();
     }else {
-            App.showToastShort(HomeActivity.this, "主页暂无数据！联系许大师吧！");
+            App.showToastLong(HomeActivity.this, "主页暂无数据！联系许大师吧！");
 		}
     }
-    private void refreshEmpty(){
+    private void refreshEmpty(){   //xuameng打断加载优化
+        OkGo.getInstance().cancelTag("loadjar");    //xuameng打断加载
+        jarInitOk = true;
+        dataInitOk = true;
         skipNextUpdate=true;
         showSuccess();
         sortAdapter.setNewData(DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), new ArrayList<>(), true));
