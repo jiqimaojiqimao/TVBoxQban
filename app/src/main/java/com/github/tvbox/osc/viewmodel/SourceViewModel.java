@@ -127,8 +127,11 @@ public class SourceViewModel extends ViewModel {
             sortResult.postValue(null);
             return;
         }
-
-        final int type = sourceBean.getType();
+int typexu = sourceBean.getType();
+	if (type == 8){
+		type == 1
+	}
+        final int type = typexu;
         if (type == 3) {
             Runnable waitResponse = new Runnable() {
                 @Override
@@ -288,9 +291,7 @@ public class SourceViewModel extends ViewModel {
                                 sortResult.postValue(null);
                             }
                         });
-            }else if (type == 8) {
-                 sortResult.postValue(null);
-			}else {
+            }else {
                 try {
                     Map<String, String> params = new HashMap<>();
                     params.put("filter","true");
