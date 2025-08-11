@@ -249,6 +249,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
 				bundle.putBoolean("useCache", true);
 				intent.putExtras(bundle);
 				startActivity(intent);
+                App.HideToast();
                 App.showToastShort(mContext, "重新加载主页数据！");
 				return true;
             }
