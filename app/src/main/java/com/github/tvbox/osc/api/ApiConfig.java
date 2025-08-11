@@ -342,6 +342,7 @@ public class ApiConfig {
         OkGo.<File>get(jarUrl)
                 .headers("User-Agent", userAgent)
                 .headers("Accept", requestAccept)
+                .tag("loadjar")           //xuameng打断加载
                 .execute(new AbsCallback<File>() {
 
                     @Override
@@ -919,7 +920,7 @@ public class ApiConfig {
                         url ="http://127.0.0.1:9978/proxy?do=live&type=txt&ext="+url;
                     }
                     LOG.i("echo-live-proxy-url:"+url);
-                }else {
+                }else {    //xuameng增加类型兼容性
                     url = livesOBJ.has("url")?livesOBJ.get("url").getAsString():"";
                     if(url.isEmpty())url=livesOBJ.has("api")?livesOBJ.get("api").getAsString():"";
                     if(!url.startsWith("http://127.0.0.1")){
