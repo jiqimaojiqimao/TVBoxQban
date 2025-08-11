@@ -128,8 +128,8 @@ public class SourceViewModel extends ViewModel {
             return;
         }
 int typexu = sourceBean.getType();
-	if (type == 8){
-		type == 1
+	if (typexu == 8){
+		typexu = 1;
 	}
         final int type = typexu;
         if (type == 3) {
