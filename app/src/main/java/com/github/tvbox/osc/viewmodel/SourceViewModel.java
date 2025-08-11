@@ -127,12 +127,8 @@ public class SourceViewModel extends ViewModel {
             sortResult.postValue(null);
             return;
         }
-        int typexu = sourceBean.getType();
-        if (typexu == 8) {
-            typexu = 1;  
-        }
-        final int type = typexu;
 
+        final int type = sourceBean.getType();
         if (type == 3) {
             Runnable waitResponse = new Runnable() {
                 @Override
@@ -333,11 +329,7 @@ public class SourceViewModel extends ViewModel {
     public void getList(MovieSort.SortData sortData, int page) {
         LOG.i("echo-getList:");
         SourceBean homeSourceBean = ApiConfig.get().getHomeSourceBean();
-        int typexu = homeSourceBean.getType();
-        if (typexu == 8) {
-            typexu = 1;  
-        }
-        int type = typexu;
+        int type = homeSourceBean.getType();
         if (type == 3) {
             spThreadPool.execute(new Runnable() {
                 @Override
@@ -443,11 +435,7 @@ public class SourceViewModel extends ViewModel {
     }
 //    homeVideoContent
     void getHomeRecList(SourceBean sourceBean, ArrayList<String> ids, HomeRecCallback callback) {
-        int typexu = sourceBean.getType();
-        if (typexu == 8) {
-            typexu = 1;  
-        }
-        int type = typexu;
+        int type = sourceBean.getType();
         if (type == 3) {
             Runnable waitResponse = new Runnable() {
                 @Override
@@ -550,11 +538,7 @@ public class SourceViewModel extends ViewModel {
         String id = urlid;
     
         SourceBean sourceBean = ApiConfig.get().getSource(sourceKey);
-        int typexu = sourceBean.getType();
-        if (typexu == 8) {
-            typexu = 1;  
-        }
-        int type = typexu;
+        int type = sourceBean.getType();
         if (type == 3) {
             spThreadPool.execute(new Runnable() {
                 @Override
@@ -634,11 +618,7 @@ public class SourceViewModel extends ViewModel {
     // searchContent
     public void getSearch(String sourceKey, String wd) {
         SourceBean sourceBean = ApiConfig.get().getSource(sourceKey);
-        int typexu = sourceBean.getType();
-        if (typexu == 8) {
-            typexu = 1;  
-        }
-        int type = typexu;
+        int type = sourceBean.getType();
         if (type == 3) {
             try {
                 Spider sp = ApiConfig.get().getCSP(sourceBean);
@@ -732,11 +712,7 @@ public class SourceViewModel extends ViewModel {
     // searchContent
     public void getQuickSearch(String sourceKey, String wd) {
         SourceBean sourceBean = ApiConfig.get().getSource(sourceKey);
-        int typexu = sourceBean.getType();
-        if (typexu == 8) {
-            typexu = 1;  
-        }
-        int type = typexu;
+        int type = sourceBean.getType();
         if (type == 3) {
             try {
                 Spider sp = ApiConfig.get().getCSP(sourceBean);
@@ -817,11 +793,7 @@ public class SourceViewModel extends ViewModel {
     // playerContent
     public void getPlay(String sourceKey, String playFlag, String progressKey, String url, String subtitleKey) {
         SourceBean sourceBean = ApiConfig.get().getSource(sourceKey);
-        int typexu = sourceBean.getType();
-        if (typexu == 8) {
-            typexu = 1;  
-        }
-        int type = typexu;
+        int type = sourceBean.getType();
         if (type == 3) {
             spThreadPool.execute(new Runnable() {
                 @Override
