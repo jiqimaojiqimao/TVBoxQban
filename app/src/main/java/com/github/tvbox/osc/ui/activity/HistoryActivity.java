@@ -168,6 +168,12 @@ public class HistoryActivity extends BaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if(mGridView != null) mGridView.requestFocus();      //xuameng 默认焦点丢失问题
+    }
+
+    @Override
     public void onBackPressed() {
         if (delMode) {
             toggleDelMode();
