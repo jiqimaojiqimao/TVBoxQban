@@ -275,7 +275,6 @@ public class HomeActivity extends BaseActivity {
                     bundle.putBoolean("useCache", true);
                     intent.putExtras(bundle);
                     HomeActivity.this.startActivity(intent);
-                    App.HideToast();
                     App.showToastShort(HomeActivity.this, "重新加载主页数据！");
                 }else {
                     jumpActivity(SettingActivity.class);   //xuameng加载慢跳转设置
