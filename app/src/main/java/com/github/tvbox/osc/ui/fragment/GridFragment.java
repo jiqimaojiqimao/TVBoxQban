@@ -91,9 +91,7 @@ public class GridFragment extends BaseLazyFragment {
 
     @Override
     protected void init() {
-		if (sortData.filterSelect != null || sortData.filterSelect.size() > 0){
-			sortData.filterSelect.clear();    //xuameng换源，刷新页面过滤BUG
-		}
+        clearFilterSelect();     //xuameng换源，刷新页面过滤BUG
         initView();
         initViewModel();
         initData();
@@ -415,5 +413,14 @@ public class GridFragment extends BaseLazyFragment {
     public void forceRefresh() {
         page = 1;
         initData();
+    }
+
+    private void clearFilterSelect() {     //xuameng换源，刷新页面过滤BUG
+        if (sortData == null) return;
+        synchronized(sortData) {
+            if (sortData.filterSelect != null) {
+                sortData.filterSelect.clear(); 
+            }
+        }
     }
 }
