@@ -881,8 +881,8 @@ public class VodController extends BaseController {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                //      mPlayerBtn.requestFocus();
-                //      mPlayerBtn.requestFocusFromTouch();
+                //xuameng不用选中焦点       mPlayerBtn.requestFocus();
+                //xuameng不用选中焦点       mPlayerBtn.requestFocusFromTouch();
             }
         });
         mPlayerBtn.setOnLongClickListener(new OnLongClickListener() {
@@ -923,8 +923,8 @@ public class VodController extends BaseController {
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
-                            mPlayerBtn.requestFocus();
-                            mPlayerBtn.requestFocusFromTouch();
+                     //xuameng不用选中焦点       mPlayerBtn.requestFocus();
+                      //xuameng不用选中焦点      mPlayerBtn.requestFocusFromTouch();
                         }
                         @Override
                         public String getDisplay(Integer val) {
