@@ -443,7 +443,8 @@ public class ApiConfig {
             sb.setKey(siteKey);
             sb.setName(obj.has("name")?obj.get("name").getAsString().trim():siteKey);
             sb.setType(obj.get("type").getAsInt());
-            sb.setApi(obj.get("api").getAsString().trim());
+     //xuameng api必填没有默认值       sb.setApi(obj.get("api").getAsString().trim());   
+            sb.setApi(DefaultConfig.safeJsonString(obj, "api", "xuameng"));    //xuameng api选填默认值 xuameng 
             sb.setSearchable(DefaultConfig.safeJsonInt(obj, "searchable", 1));
             sb.setQuickSearch(DefaultConfig.safeJsonInt(obj, "quickSearch", 1));
 			sb.setFilterable(DefaultConfig.safeJsonInt(obj, "filterable", 1));
