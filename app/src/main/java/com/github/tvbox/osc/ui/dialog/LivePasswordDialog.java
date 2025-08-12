@@ -47,7 +47,7 @@ public class LivePasswordDialog extends BaseDialog {
         super.onBackPressed();
         listener.onCancel();
         dismiss();
-		App.HideToast();  //xuameng HideToast
+        App.HideToast();  //xuameng HideToast
     }
 
     public void setOnListener(OnListener listener) {
