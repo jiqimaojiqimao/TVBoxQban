@@ -147,19 +147,19 @@ public class App extends MultiDexApplication {
 
     public static void showToastShort(Context context, String msg) {  //xuameeng showtoast
         if (mToast != null) {
-            mToast.setText(msg);
-        } else {
-            mToast = Toast.makeText(context, msg, Toast.LENGTH_SHORT);
-        }
+            mToast.cancel();
+            mToast = null;  // 释放引用避免内存泄漏
+        } 
+        mToast = Toast.makeText(context, msg, Toast.LENGTH_SHORT);
         mToast.show();
     }
 
     public static void showToastLong(Context context, String msg) {  //xuameeng showtoast
         if (mToast != null) {
-            mToast.setText(msg);
-        } else {
-            mToast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
-        }
+            mToast.cancel();
+            mToast = null;  // 释放引用避免内存泄漏
+        } 
+        mToast = Toast.makeText(context, msg, Toast.LENGTH_LONG);
         mToast.show();
     }
 	
