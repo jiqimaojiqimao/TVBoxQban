@@ -1,8 +1,5 @@
-plugins {
-    id 'com.android.application'
-    id 'kotlin-android'
-    id 'kotlin-kapt'
-}
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     compileSdkVersion 33
@@ -53,6 +50,12 @@ android {
     lintOptions {
         checkReleaseBuilds false
         abortOnError false
+    }
+    dexOptions {
+        javaMaxHeapSize "4g"
+        additionalParameters += '--multi-dex'
+        additionalParameters += '--set-max-idx-number=48000'
+        additionalParameters += '--minimal-main-dex'
     }
 }
 
@@ -123,3 +126,7 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
 }
+
+
+
+
