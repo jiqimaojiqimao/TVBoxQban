@@ -91,7 +91,9 @@ public class GridFragment extends BaseLazyFragment {
 
     @Override
     protected void init() {
-        clearFilterSelect();     //xuameng换源，刷新页面过滤BUG
+		if (sortData.filterSelect != null || sortData.filterSelect.size() > 0){
+			sortData.filterSelect.clear();    //xuameng换源，刷新页面过滤BUG
+		}
         initView();
         initViewModel();
         initData();
@@ -355,6 +357,16 @@ public class GridFragment extends BaseLazyFragment {
             gridFilterDialog.show();
     }
 
+    private View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {
+        @Override
+        public void onFocusChange(View v, boolean hasFocus) {
+            if (hasFocus)
+                v.animate().scaleX(1.05f).scaleY(1.05f).setDuration(300).setInterpolator(new BounceInterpolator()).start();
+            else
+                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(300).setInterpolator(new BounceInterpolator()).start();
+        }
+    };
+
     public void setFilterDialogData() {
         Context context = getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
@@ -413,14 +425,5 @@ public class GridFragment extends BaseLazyFragment {
     public void forceRefresh() {
         page = 1;
         initData();
-    }
-
-    private void clearFilterSelect() {     //xuameng换源，刷新页面过滤BUG
-        if (sortData == null) return;
-        synchronized(sortData) {
-            if (sortData.filterSelect != null) {
-                sortData.filterSelect.clear(); 
-            }
-        }
     }
 }
