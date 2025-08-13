@@ -586,13 +586,15 @@ public class HomeActivity extends BaseActivity {
         if (System.currentTimeMillis() - mExitTime < 2000) {
             //这一段借鉴来自 q群老哥 IDCardWeb
             App.HideToast();
-			AppManager.getInstance().finishAllActivity();
+            // 1. 清除所有Activity（增强版）
+            AppManager.getInstance().finishAllActivity();
+            // 2. 注销事件总线
             EventBus.getDefault().unregister(this);
-		//	AppManager.getInstance().appExit(0);
+            // 3. 停止服务（需确保stopServer()内部释放了所有资源）
             ControlManager.get().stopServer();
-            finish();
-			android.os.Process.killProcess(android.os.Process.myPid());
-            System.exit(0);
+            // 4. 强制终止进程（组合方案）
+            android.os.Process.killProcess(android.os.Process.myPid());
+            System.exit(10);  // 非0状态码
         } else {
             mExitTime = System.currentTimeMillis();
             showExitXu();        
