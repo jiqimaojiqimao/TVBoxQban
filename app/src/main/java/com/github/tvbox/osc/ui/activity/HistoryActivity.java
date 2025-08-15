@@ -180,7 +180,13 @@ public class HistoryActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(mGridView != null) mGridView.requestFocus();      //xuameng 默认焦点丢失问题
+        if(mGridView != null){
+           mGridView.postDelayed(() -> {
+               mGridView.setSelection(0);  // 选择第一项
+               mGridView.requestFocus();
+               mGridView.requestFocusFromTouch();
+           }, 200); // 延迟200ms确保渲染完成  默认焦点丢失问题
+        }
     }
 
     @Override
