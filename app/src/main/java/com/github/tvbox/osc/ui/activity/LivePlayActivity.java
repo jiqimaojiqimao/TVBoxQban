@@ -2222,6 +2222,7 @@ public class LivePlayActivity extends BaseActivity {
             }
             @Override
             public void onItemClick(TvRecyclerView parent, View itemView, int position) { //选中播放就隐藏左侧频道菜单
+                isTouch = false;
                 clickLiveChannel(position);
                 mHideChannelListRun(); //xuameng隐藏左侧频道菜单
             }
