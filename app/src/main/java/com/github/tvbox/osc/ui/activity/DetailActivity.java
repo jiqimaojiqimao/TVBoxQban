@@ -157,10 +157,11 @@ public class DetailActivity extends BaseActivity {
     @Override
     protected void init() {
         EventBus.getDefault().register(this);
+		HawkConfig.intVod = true;  //xuameng判断进入播放
+        HawkConfig.saveHistory = false;  //xuameng判断存储历史记录
         initView();
         initViewModel();
         initData();
-		HawkConfig.intVod = true;  //xuameng判断进入播放
     }
 
     private void initView() {
@@ -1215,6 +1216,7 @@ public class DetailActivity extends BaseActivity {
             vodInfo.playNote = "";
         }
         RoomDataManger.insertVodRecord(sourceKey, vodInfo);
+        HawkConfig.saveHistory = true;  //xuameng判断存储历史记录
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_HISTORY_REFRESH));
     }
 
