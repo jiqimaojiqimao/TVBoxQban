@@ -181,11 +181,18 @@ public class HistoryActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         if(mGridView != null){
-           mGridView.postDelayed(() -> {
-               mGridView.setSelection(0);  // 选择第一项
-               mGridView.requestFocus();
-               mGridView.requestFocusFromTouch();
-           }, 200); // 延迟200ms确保渲染完成  默认焦点丢失问题
+            if (HawkConfig.saveHistory){    // xuameng延迟200ms确保渲染完成  默认焦点丢失问题
+                mGridView.postDelayed(() -> {
+                    mGridView.setSelection(0);  // xuameng保存历史记录后选择第一项
+                    mGridView.requestFocus();
+                    mGridView.requestFocusFromTouch();
+                }, 200); 
+            }else{
+                mGridView.postDelayed(() -> {   // xuameng没有成功保存历史记录的刚才选那个现在选那个
+                    mGridView.requestFocus();
+                    mGridView.requestFocusFromTouch();
+                }, 200); 
+            }
         }
     }
 
