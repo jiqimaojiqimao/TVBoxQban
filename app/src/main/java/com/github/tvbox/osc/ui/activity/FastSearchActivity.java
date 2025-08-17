@@ -46,6 +46,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.ArrayBlockingQueue;   //xuameng 线程池
 import java.util.concurrent.ThreadPoolExecutor;  //xuameng 线程池
 import java.util.concurrent.TimeUnit;   //xuameng 线程池
+import java.util.concurrent.ThreadFactory;   //xuameng 线程池
+import java.util.concurrent.LinkedBlockingQueue;   //xuameng 线程池
 
 /**
  * @author pj567
@@ -118,14 +120,22 @@ public class FastSearchActivity extends BaseActivity {
         super.onResume();
         if (pauseRunnable != null && pauseRunnable.size() > 0) {
             searchExecutorService = new ThreadPoolExecutor(
-                Runtime.getRuntime().availableProcessors() + 1, // xuameng动态核心线程数
-                (Runtime.getRuntime().availableProcessors() + 1) * 2,  // xuameng最大线程数
-                10L, 
-                TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(1000), // xuameng任务队列容量
-                new ThreadPoolExecutor.CallerRunsPolicy() // xuameng降级策略
+            Runtime.getRuntime().availableProcessors(), // 核心线程数=CPU核数
+            Runtime.getRuntime().availableProcessors() * 2, // 最大线程数
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000),  // 队列容量调整为1000
+                new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        // 关键优化：设置256KB栈大小
+                        Thread t = new Thread(null, r, "search-pool", 256 * 1024);
+                        t.setPriority(Thread.NORM_PRIORITY - 1);
+                        return t;
+                    }
+                },
+                new ThreadPoolExecutor.DiscardOldestPolicy()  // 超限直接丢弃
             );
-            ((ThreadPoolExecutor)searchExecutorService).prestartAllCoreThreads();  // xuameng预热线程
+         
             allRunCount.set(pauseRunnable.size());
             for (Runnable runnable : pauseRunnable) {
                 searchExecutorService.execute(runnable);
@@ -384,8 +394,10 @@ public class FastSearchActivity extends BaseActivity {
 
     private ExecutorService searchExecutorService = null;   //xuameng全局声明
     private AtomicInteger allRunCount = new AtomicInteger(0);
+    private volatile boolean isActivityDestroyed = false; //xuameng 退出就不统计搜索成功了
 
     private void searchResult() {
+        // 原有清理逻辑保持不变
         try {
             if (searchExecutorService != null) {
                 searchExecutorService.shutdownNow();
@@ -399,28 +411,40 @@ public class FastSearchActivity extends BaseActivity {
             searchAdapterFilter.setNewData(new ArrayList<>());
             allRunCount.set(0);
         }
-        searchExecutorService = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors() + 1, // xuameng动态核心线程数
-            (Runtime.getRuntime().availableProcessors() + 1) * 2,  // xuameng最大线程数, 
-            10L, 
-            TimeUnit.SECONDS,
-            new ArrayBlockingQueue<>(1000), // xuameng任务队列容量
-			new ThreadPoolExecutor.CallerRunsPolicy() // xuameng降级策略
 
+        // 优化线程池配置（核心修改点）
+        searchExecutorService = new ThreadPoolExecutor(
+        Runtime.getRuntime().availableProcessors(), // 核心线程数=CPU核数
+        Runtime.getRuntime().availableProcessors() * 2, // 最大线程数
+            30L, TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(1000),  // 队列容量调整为1000
+            new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                    // 关键优化：设置256KB栈大小
+                    Thread t = new Thread(null, r, "search-pool", 256 * 1024);
+                    t.setPriority(Thread.NORM_PRIORITY - 1);
+                    return t;
+                }
+            },
+            new ThreadPoolExecutor.DiscardOldestPolicy()  // 超限直接丢弃
         );
-        ((ThreadPoolExecutor)searchExecutorService).prestartAllCoreThreads();  // xuameng预热线程
+        // 原有数据准备逻辑（完全保留）
         List<SourceBean> searchRequestList = new ArrayList<>();
         searchRequestList.addAll(ApiConfig.get().getSourceBeanList());
         SourceBean home = ApiConfig.get().getHomeSourceBean();
         searchRequestList.remove(home);
         searchRequestList.add(0, home);
-
-
         ArrayList<String> siteKey = new ArrayList<>();
         ArrayList<String> hots = new ArrayList<>();
-
         spListAdapter.setNewData(hots);
         spListAdapter.addData("全部");
+        // 创建计数器（新增）
+        final AtomicInteger completedCount = new AtomicInteger(0);
+        final int totalTasks = searchRequestList.stream().filter(bean -> 
+            bean.isSearchable() && 
+            (mCheckSources == null || mCheckSources.containsKey(bean.getKey()))
+        ).mapToInt(b -> 1).sum();
         for (SourceBean bean : searchRequestList) {
             if (!bean.isSearchable()) {
                 continue;
@@ -432,20 +456,25 @@ public class FastSearchActivity extends BaseActivity {
             this.spNames.put(bean.getName(), bean.getKey());
             allRunCount.incrementAndGet();
         }
-		if (siteKey.size() <= 0) {
+        if (siteKey.size() <= 0) {
             App.showToastShort(FastSearchActivity.this, "聚汇影视提示：请指定搜索源！");
-			return;
-		}    //xuameng修复不选择搜索源还进行搜索，还显示搜索动画完 
-
+            return;
+        }
         showLoading();
+        // 执行搜索任务（添加完成回调）
         for (String key : siteKey) {
-            searchExecutorService.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
+            searchExecutorService.execute(() -> {
+                try {
+                    if (!isActivityDestroyed) { //xuameng 退出就不统计搜索成功了
                         sourceViewModel.getSearch(key, searchTitle);
-                    } catch (Exception e) {
-
+                    }
+                } finally {
+                    // 任务完成计数（新增）
+                    if (!isActivityDestroyed && completedCount.incrementAndGet() == totalTasks) { //xuameng 退出就不统计搜索成功了
+                        runOnUiThread(() -> {
+                            App.showToastLong(FastSearchActivity.this, 
+                                "所有搜索任务已完成！共处理" + totalTasks + "个搜索源！");
+                        });
                     }
                 }
             });
@@ -531,6 +560,7 @@ public class FastSearchActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        isActivityDestroyed = true; //xuameng 退出就不统计搜索成功了
         cancel();
         try {
             if (searchExecutorService != null) {
@@ -546,7 +576,17 @@ public class FastSearchActivity extends BaseActivity {
 
     @Override
     public void onBackPressed() {
+        isActivityDestroyed = true; //xuameng 退出就不统计搜索成功了
         App.HideToast();  //xuameng HideToast
+        try {
+            if (searchExecutorService != null) {
+                searchExecutorService.shutdownNow();
+                searchExecutorService = null;
+                JsLoader.stopAll();
+            }
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
         super.onBackPressed();
     }
 }
