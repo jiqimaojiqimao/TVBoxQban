@@ -48,6 +48,7 @@ import java.util.concurrent.ThreadPoolExecutor;  //xuameng 线程池
 import java.util.concurrent.TimeUnit;   //xuameng 线程池
 import java.util.concurrent.ThreadFactory;   //xuameng 线程池
 import java.util.concurrent.LinkedBlockingQueue;   //xuameng 线程池
+import java.util.Locale;   //xuameng 统计进度用
 
 /**
  * @author pj567
@@ -441,10 +442,10 @@ public class FastSearchActivity extends BaseActivity {
         spListAdapter.addData("全部");
         // 创建计数器（新增）
         final AtomicInteger completedCount = new AtomicInteger(0);
-        final int totalTasks = searchRequestList.stream().filter(bean -> 
-            bean.isSearchable() && 
-            (mCheckSources == null || mCheckSources.containsKey(bean.getKey()))
-        ).mapToInt(b -> 1).sum();
+        final int totalTasks = (int) searchRequestList.stream()
+            .filter(bean -> bean.isSearchable() && 
+                   (mCheckSources == null || mCheckSources.containsKey(bean.getKey())))
+            .count();
         for (SourceBean bean : searchRequestList) {
             if (!bean.isSearchable()) {
                 continue;
@@ -465,21 +466,35 @@ public class FastSearchActivity extends BaseActivity {
         for (String key : siteKey) {
             searchExecutorService.execute(() -> {
                 try {
-                    if (!isActivityDestroyed) { //xuameng 退出就不统计搜索成功了
+                    if (!isActivityDestroyed) { //xuameng 退出就不搜索了
                         sourceViewModel.getSearch(key, searchTitle);
                     }
                 } finally {
-                    // 任务完成计数（新增）
-                    if (!isActivityDestroyed && completedCount.incrementAndGet() == totalTasks) { //xuameng 退出就不统计搜索成功了
-                        runOnUiThread(() -> {
-                            App.showToastLong(FastSearchActivity.this, 
-                                "所有搜索任务已完成！共处理" + totalTasks + "个搜索源！");
-                        });
+                    // 实时进度更新（每完成10%或最后一项）
+                    int current = completedCount.incrementAndGet();
+                    if (!isActivityDestroyed && 
+                       (current % Math.max(1, totalTasks/10) == 0 || current == totalTasks)) {
+                        runOnUiThread(() -> updateProgress(current, totalTasks));
                     }
                 }
             });
         }
     }
+
+    private void updateProgress(int current, int total) {   // xuameng任务完成计数（新增）
+        String message = (current == total) 
+            ? String.format(Locale.getDefault(), 
+                "所有任务已完成！共处理%d个搜索源 (100%%)", total)
+            : String.format(Locale.getDefault(), 
+                "搜索进度: %d/%d (%.1f%%)", current, total, current * 100f / total);
+        // 根据完成状态选择Toast时长
+        if (current == total) {
+            App.showToastLong(FastSearchActivity.this, message);
+        } else {
+            App.showToastShort(FastSearchActivity.this, message);
+        }
+    }
+
 
     // 向过滤栏添加有结果的spname
     private String addWordAdapterIfNeed(String key) {
@@ -577,6 +592,7 @@ public class FastSearchActivity extends BaseActivity {
     @Override
     public void onBackPressed() {
         isActivityDestroyed = true; //xuameng 退出就不统计搜索成功了
+        cancel();
         App.HideToast();  //xuameng HideToast
         try {
             if (searchExecutorService != null) {
