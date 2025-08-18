@@ -45,6 +45,7 @@ android {
     }
 
     compileOptions {
+        coreLibraryDesugaringEnabled true   //xuameng 启用Java 8脱糖
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -63,7 +64,7 @@ repositories {
 
 dependencies {
     api fileTree(dir: "libs", include: ["*.jar"])
-    
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  //xuameng 启用Java 8脱糖
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
     implementation 'com.google.zxing:core:3.3.0'
@@ -122,7 +123,5 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
 }
-
-
 
 
