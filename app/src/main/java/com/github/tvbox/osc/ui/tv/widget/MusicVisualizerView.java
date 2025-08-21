@@ -26,10 +26,11 @@ public class MusicVisualizerView extends View {
     
     private static final int[][] COLOR_SCHEMES = {
         {Color.parseColor("#DBDB70"), Color.parseColor("#FF8A00"), Color.parseColor("#FF0000")}, // 黄-橙-红
-        {Color.parseColor("#70DBDB"), Color.parseColor("#6884E0"), Color.parseColor("#425F9F")}, // 浅蓝-蓝-深蓝
-        {Color.parseColor("#DB8BDB"), Color.parseColor("#DB70DB"), Color.parseColor("#821870")}  // 浅紫-紫-深紫
+        {Color.parseColor("#FF5733"), Color.parseColor("#33FF57"), Color.parseColor("#3357FF")}, // 橙红-亮绿-亮蓝
+        {Color.parseColor("#FFD700"), Color.parseColor("#FF00FF"), Color.parseColor("#00CED1")}  // 金色-品红-深绿松石
+
     };
-    private static final long COLOR_CYCLE_DURATION = 5 * 60 * 1000; // 5分钟
+    private static final long COLOR_CYCLE_DURATION = 0.2L * 60 * 1000; // 5分钟
     private int currentSchemeIndex = 0;
     private long lastSwitchTime = 0;
 
