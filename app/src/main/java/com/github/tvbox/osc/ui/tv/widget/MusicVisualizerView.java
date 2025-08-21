@@ -33,7 +33,8 @@ public class MusicVisualizerView extends View {
         {Color.parseColor("#FF00FF"), Color.parseColor("#00FFFF"), Color.parseColor("#FFFF00")},  // 品红-青柠-亮黄
         {Color.parseColor("#9400D3"), Color.parseColor("#00FA9A"), Color.parseColor("#FF6347")}  // 紫罗兰-春绿-番茄红
     };
-    private static final long COLOR_CYCLE_DURATION = 2 * 60 * 1000; // 2分钟
+  //  private static final long COLOR_CYCLE_DURATION = 2 * 60 * 1000; // 2分钟
+  private static final long COLOR_CYCLE_DURATION = (long)(0.1 * 60 * 1000); // 正确写法
     private int currentSchemeIndex = 0;
     private long lastSwitchTime = 0;
 
