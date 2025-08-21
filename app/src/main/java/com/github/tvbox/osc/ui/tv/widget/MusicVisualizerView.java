@@ -24,14 +24,22 @@ public class MusicVisualizerView extends View {
     private static final int BAR_COUNT = 22;
     private static final int ANIMATION_DURATION = 200;
     
-    private static final int[][] COLOR_SCHEMES = {
-        {Color.parseColor("#DBDB70"), Color.parseColor("#FF8A00"), Color.parseColor("#FF0000")}, // 黄-橙-红
-        {Color.parseColor("#FF5733"), Color.parseColor("#33FF57"), Color.parseColor("#3357FF")}, // 浅蓝-蓝-深蓝
-        {Color.parseColor("#FF4500"), Color.parseColor("#32CD32"), Color.parseColor("#FFD700")}, // 浅蓝-蓝-深蓝
-        {Color.parseColor("#FFD700"), Color.parseColor("#FF00FF"), Color.parseColor("#00CED1")}  // 浅紫-紫-深紫
-    };
-  //  private static final long COLOR_CYCLE_DURATION = 2 * 60 * 1000; // 5分钟
-	private static final long COLOR_CYCLE_DURATION = (long)(0.2 * 60 * 1000); // 正确写法
+private static final int[][] COLOR_SCHEMES = {
+    // 暖色系
+    {Color.parseColor("#FFD700"), Color.parseColor("#FFA500"), Color.parseColor("#FF4500")}, // 金-橙-深橙
+    {Color.parseColor("#FF6347"), Color.parseColor("#DC143C"), Color.parseColor("#8B0000")}, // 番茄红-深红-暗红
+    
+    // 冷色系
+    {Color.parseColor("#00CED1"), Color.parseColor("#00FA9A"), Color.parseColor("#00FF7F")}, // 深绿松石-春绿-深青柠
+    {Color.parseColor("#9400D3"), Color.parseColor("#483D8B"), Color.parseColor("#1E90FF")}, // 紫罗兰-深紫-道奇蓝
+    
+    // 中性色系
+    {Color.parseColor("#808080"), Color.parseColor("#C0C0C0"), Color.parseColor("#FFFFFF")}, // 灰-亮灰-白
+    {Color.parseColor("#2F4F4F"), Color.parseColor("#556B2F"), Color.parseColor("#8B4513")}  // 暗灰-暗绿-深棕
+};
+
+private static final long COLOR_CYCLE_DURATION = (long)(0.2 * 60 * 1000); // 正确写法
+  //  private static final long COLOR_CYCLE_DURATION = 5 * 60 * 1000; // 5分钟
     private int currentSchemeIndex = 0;
     private long lastSwitchTime = 0;
 
