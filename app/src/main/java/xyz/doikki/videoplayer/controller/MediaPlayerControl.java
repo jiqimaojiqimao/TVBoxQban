@@ -18,6 +18,8 @@ public interface MediaPlayerControl {
 
     int getBufferedPercentage();
 
+    int getAudioSessionId();   //XUAMENG 获取音频ID
+
     void startFullScreen();
 
     void stopFullScreen();
