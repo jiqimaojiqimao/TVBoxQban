@@ -73,6 +73,12 @@ import com.squareup.picasso.MemoryPolicy; //xuameng播放音频切换图片
 import com.squareup.picasso.NetworkPolicy; //xuameng播放音频切换图片
 import android.graphics.Bitmap; //xuameng播放音频切换图片
 import com.github.tvbox.osc.api.ApiConfig; //xuameng播放音频切换图片
+import com.github.tvbox.osc.ui.tv.widget.MusicVisualizerView;  //xuameng音乐播放动画
+import android.media.audiofx.Visualizer;  //xuameng音乐播放动画
+import android.util.Log; //xuameng音乐播放动画
+import android.os.Looper; //xuameng音乐播放动画
+
+
 import android.os.Build;
 import android.webkit.WebView;
 import com.github.tvbox.osc.bean.SourceBean;
@@ -287,6 +293,10 @@ public class VodController extends BaseController {
     private boolean isVideoPlay = false; //xuameng判断视频开始播放
     private boolean isLongClick = false; //xuameng判断长按
     private boolean mSeekBarhasFocus = false; //xuameng seekbar是否拥有焦点
+    private Visualizer mVisualizer;  //xuameng音乐播放动画
+    private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
+    private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
+	private static final String TAG = "VodController";  //xuameng音乐播放动画
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 50000; //闲置多少毫秒秒关闭底栏  默认100秒
@@ -361,7 +371,13 @@ public class VodController extends BaseController {
                     if(MxuamengMusic.getVisibility() == View.VISIBLE) { //xuameng播放音乐背景
                         MxuamengMusic.setVisibility(GONE);
                     }
+                    if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                        customVisualizer.setVisibility(GONE);
+                    }
                 } else {
+                    if(customVisualizer.getVisibility() == View.GONE && isVideoplaying) { //xuameng播放音乐柱状图
+                       customVisualizer.setVisibility(VISIBLE);
+                    }
                     if(MxuamengMusic.getVisibility() == View.GONE && isVideoplaying) { //xuameng播放音乐背景
                         MxuamengMusic.setVisibility(VISIBLE);
                     }
@@ -471,7 +487,8 @@ public class VodController extends BaseController {
         iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
         MxuamengMusic = (ImageView) findViewById(R.id.xuamengMusic); //xuameng播放音乐背景
         play_speed_3 = findViewById(R.id.play_speed_3_container); //xuameng倍速播放
-        XuLoading = findViewWithTag("vod_control_loading"); //xuameng  loading
+        XuLoading = findViewWithTag("vod_control_loading"); //xuameng  loading 
+        customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
         tv_slide_progress_text = findViewById(R.id.tv_slide_progress_text);
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
@@ -1468,6 +1485,10 @@ public class VodController extends BaseController {
                 if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐播放时图标
                     iv_circle_bg.setVisibility(GONE);
                 }
+                if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                    customVisualizer.setVisibility(GONE);
+                }
+				releaseVisualizer();  //xuameng播放音乐背景
                 isVideoplaying = false;
                 isVideoPlay = false;
                 break;
@@ -1523,6 +1544,12 @@ public class VodController extends BaseController {
                 String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
                 mVideoSize.setText("[ " + width + " X " + height + " ]");
                 isVideoPlay = false;
+                if(width.length() <= 1 && height.length() <= 1 ) {
+                   int newSessionId = mControlWrapper.getAudioSessionId();   //xuameng音乐播放动画
+                   if(newSessionId != audioSessionId) { // 避免重复初始化
+                      initVisualizer();  //xuameng音乐播放动画
+                   }
+				}
                 break;
             case VideoView.STATE_BUFFERED:
                 mPlayLoadNetSpeed.setVisibility(GONE);
@@ -1536,26 +1563,6 @@ public class VodController extends BaseController {
                 simSeekPosition = 0; //XUAMENG重要,换视频时重新记录进度
                 isVideoplaying = false;
                 isVideoPlay = false;
-                mxuPlay.setText("准备");
-                if(!isPlaying && mTvPausexu.getVisibility() == View.VISIBLE) {
-                    ObjectAnimator animator32 = ObjectAnimator.ofFloat(mTvPausexu, "translationX", -0, 700); //xuameng动画暂停菜单开始
-                    animator32.setDuration(300); //xuameng动画暂停菜单
-                    animator32.addListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-                            super.onAnimationStart(animation);
-                            MxuamengView.setVisibility(VISIBLE); //xuameng动画开始防点击
-                            isPlaying = true; //xuameng动画开启
-                        }
-                        public void onAnimationEnd(Animator animation) {
-                            super.onAnimationEnd(animation);
-                            MxuamengView.setVisibility(GONE); //xuameng动画结束可点击
-                            mTvPausexu.setVisibility(GONE); //xuameng动画暂停菜单隐藏 
-                            isPlaying = false; //xuameng动画开启
-                        }
-                    });
-                    animator32.start(); //xuameng动画暂停菜单结束
-                }
             case VideoView.STATE_BUFFERING:
                 //  if(mProgressRoot.getVisibility()==GONE)mPlayLoadNetSpeed.setVisibility(VISIBLE);
                 mPlayLoadNetSpeed.setVisibility(VISIBLE);
@@ -1920,6 +1927,7 @@ public class VodController extends BaseController {
         if(super.onBackPressed()) { //xuameng返回退出
             iv_circle_bg.setVisibility(GONE); //xuameng音乐播放时图标
             MxuamengMusic.setVisibility(GONE); //xuameng播放音乐背景
+            customVisualizer.setVisibility(GONE);  //xuameng播放音乐柱状图
             return true;
         }
         if(isBottomVisible() && (System.currentTimeMillis() - DOUBLE_CLICK_TIME > 300)) { //xuameng按返回键退出
@@ -1946,6 +1954,7 @@ public class VodController extends BaseController {
         if(mHandler != null) {
             mHandler.removeCallbacksAndMessages(null);
         }
+        releaseVisualizer();  //xuameng音乐播放动画
     }
     //尝试去bom
     public String getWebPlayUrlIfNeeded(String webPlayUrl) {
@@ -2144,10 +2153,85 @@ public class VodController extends BaseController {
             }
         }
     }
-    public void stopOther() //xuameng停止磁力下载
-    {
+    public void stopOther(){ //xuameng停止磁力下载
         Thunder.stop(false); //停止磁力下载
         Jianpian.finish(); //停止p2p下载
         App.getInstance().setDashData(null);
+    }
+
+    private void initVisualizer() {   //xuameng播放音乐柱状图
+        releaseVisualizer();  // 确保先释放已有实例
+        // 基础检查
+        if (getContext() == null) {
+            Log.w(TAG, "Context is null");
+            return;
+        }
+        int sessionId = mControlWrapper != null ? mControlWrapper.getAudioSessionId() : 0;
+        if (sessionId <= 0) {
+            Log.w(TAG, "Invalid audio session ID");
+            return;
+        }
+        try {
+        // 统一创建Visualizer实例（仅一次）
+            mVisualizer = new Visualizer(sessionId);
+            // 智能采样率设置
+            int targetRate = Visualizer.getMaxCaptureRate() / 2;
+            // 设置数据捕获监听器
+            mVisualizer.setDataCaptureListener(
+                new Visualizer.OnDataCaptureListener() {
+                    @Override
+                    public void onWaveFormDataCapture(Visualizer viz, byte[] bytes, int rate) {
+                    // 可选波形数据捕获
+                    }
+                    @Override
+                    public void onFftDataCapture(Visualizer visualizer, byte[] fftData, int samplingRate) {
+                        if (fftData == null || customVisualizer == null) return;
+                        Runnable updateTask = () -> {
+                            try {
+                                if (customVisualizer != null) {
+                                    customVisualizer.updateVisualizer(fftData);
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Visualizer update error", e);
+                            }
+                        };
+                        if (Looper.myLooper() == Looper.getMainLooper()) {
+                            updateTask.run();
+                        } else {
+                            new Handler(Looper.getMainLooper()).post(updateTask);
+                        }
+                    }
+                },
+                targetRate,
+                false,  // 不捕获波形数据
+                true    // 捕获FFT数据
+            );
+            mVisualizer.setEnabled(true);
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Visualizer state error", e);
+            releaseVisualizer();
+        } catch (UnsupportedOperationException e) {
+            Log.e(TAG, "Device doesn't support Visualizer", e);
+            releaseVisualizer();
+        } catch (Exception e) {
+            Log.e(TAG, "Visualizer init failed", e);
+            releaseVisualizer();
+        }
+    }
+
+    private synchronized void releaseVisualizer() {   //xuameng播放音乐柱状图
+        try {
+            if (mVisualizer != null) {
+                mVisualizer.setEnabled(false);
+                mVisualizer.release();
+                mVisualizer = null;
+                Log.d(TAG, "Visualizer released successfully");
+            }
+            if (customVisualizer != null) {
+                customVisualizer.release();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error releasing visualizer", e);
+        }
     }
 }
