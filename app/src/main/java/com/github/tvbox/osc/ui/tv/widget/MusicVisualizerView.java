@@ -16,21 +16,19 @@ import android.animation.ValueAnimator;
  * 1. 振幅越大颜色越红（黄色->橙黄->红渐变）
  * 2. 保持原有动画平滑性
  * 3. 完全兼容原有接口
-   4. 新增：三组颜色方案
-   5. 新增：按时间切换颜色方案
  */
 public class MusicVisualizerView extends View {
     private static final int MAX_AMPLITUDE = 10000;
     private static final int BAR_COUNT = 22;
     private static final int ANIMATION_DURATION = 200;
     
+    // 新增：三组颜色方案
     private static final int[][] COLOR_SCHEMES = {
         {Color.parseColor("#DBDB70"), Color.parseColor("#FF8A00"), Color.parseColor("#FF0000")}, // 黄-橙-红
-        {Color.parseColor("#FF5733"), Color.parseColor("#33FF57"), Color.parseColor("#3357FF")}, // 浅蓝-蓝-深蓝
-        {Color.parseColor("#9400D3"), Color.parseColor("#00FA9A"), Color.parseColor("#FF6347")}  // 浅紫-紫-深紫
+        {Color.parseColor("#70DBDB"), Color.parseColor("#6884E0"), Color.parseColor("#425F9F")}, // 浅蓝-蓝-深蓝
+        {Color.parseColor("#FF00FF"), Color.parseColor("#DB70DB"), Color.parseColor("#821870")}  // 浅紫-紫-深紫
     };
-    //private static final long COLOR_CYCLE_DURATION = 5 * 60 * 1000; // 5分钟
-	private static final long COLOR_CYCLE_DURATION = (long)(0.2 * 60 * 1000); // 正确写法
+    private static final long COLOR_CYCLE_DURATION = 1 * 60 * 1000; // 5分钟
     private int currentSchemeIndex = 0;
     private long lastSwitchTime = 0;
 
