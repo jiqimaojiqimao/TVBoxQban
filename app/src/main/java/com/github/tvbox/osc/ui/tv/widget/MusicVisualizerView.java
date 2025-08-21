@@ -28,7 +28,7 @@ public class MusicVisualizerView extends View {
         {Color.parseColor("#70DBDB"), Color.parseColor("#6884E0"), Color.parseColor("#425F9F")}, // 浅蓝-蓝-深蓝
         {Color.parseColor("#FF00FF"), Color.parseColor("#DB70DB"), Color.parseColor("#821870")}  // 浅紫-紫-深紫
     };
-    private static final long COLOR_CYCLE_DURATION = 0.2 * 60 * 1000; // 10分钟
+    private static final long COLOR_CYCLE_DURATION = 5 * 60 * 1000; // 5分钟
     private int currentSchemeIndex = 0;
     private long lastSwitchTime = 0;
 
@@ -165,7 +165,6 @@ public class MusicVisualizerView extends View {
         int blue = (int)(Color.blue(startColor) + (Color.blue(endColor) - Color.blue(startColor)) * ratio);
         return Color.argb(alpha, red, green, blue);
     }
-}
 
     public void reset() {
         for (int i = 0; i < BAR_COUNT; i++) {
