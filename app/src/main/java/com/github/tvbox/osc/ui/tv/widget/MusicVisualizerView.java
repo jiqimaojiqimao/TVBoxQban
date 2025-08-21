@@ -24,15 +24,16 @@ public class MusicVisualizerView extends View {
     private static final int BAR_COUNT = 22;
     private static final int ANIMATION_DURATION = 200;
     
-    private static final int[][] COLOR_SCHEMES = {
+	private static final int[][] COLOR_SCHEMES = {
         {Color.parseColor("#DBDB70"), Color.parseColor("#FF8A00"), Color.parseColor("#FF0000")}, // 黄-橙-红
         {Color.parseColor("#FF5733"), Color.parseColor("#33FF57"), Color.parseColor("#3357FF")}, // 橙红-亮绿-亮蓝
         {Color.parseColor("#FFD700"), Color.parseColor("#FF00FF"), Color.parseColor("#00CED1")},  // 金色-品红-深绿松石
         {Color.parseColor("#FF4500"), Color.parseColor("#32CD32"), Color.parseColor("#FFD700")}, // 橙红-酸橙绿-金色
         {Color.parseColor("#FF0000"), Color.parseColor("#00FF00"), Color.parseColor("#0000FF")}, // 纯红-纯绿-纯蓝
         {Color.parseColor("#FF00FF"), Color.parseColor("#00FFFF"), Color.parseColor("#FFFF00")},  // 品红-青柠-亮黄
-        {Color.parseColor("#9400D3"), Color.parseColor("#00FA9A"), Color.parseColor("#FF6347")}  // 紫罗兰-春绿-番茄红
+        {Color.parseColor("#9400D3"), Color.parseColor("#00FA9A"), Color.parseColor("#FF6347")}   // 紫罗兰-春绿-番茄红
     };
+
   //  private static final long COLOR_CYCLE_DURATION = 2 * 60 * 1000; // 2分钟
   private static final long COLOR_CYCLE_DURATION = (long)(0.1 * 60 * 1000); // 正确写法
     private int currentSchemeIndex = 0;
