@@ -56,6 +56,11 @@ public class ControlWrapper implements MediaPlayerControl, IVideoController {
     }
 
     @Override
+    public int getAudioSessionId() {       //XUAMENG 获取音频ID
+        return mPlayerControl.getAudioSessionId();
+    }
+
+    @Override
     public void startFullScreen() {
         mPlayerControl.startFullScreen();
     }
