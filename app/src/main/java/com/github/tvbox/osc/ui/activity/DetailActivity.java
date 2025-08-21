@@ -137,7 +137,6 @@ public class DetailActivity extends BaseActivity {
     public String vodId;
     public String sourceKey;
     public String firstsourceKey;
-	private SourceBean sourceBeanXu;  //xuameng判断sourceKey为空
     boolean seriesSelect = false;
     private View seriesFlagFocus = null;
     private boolean isReverse;
@@ -992,12 +991,6 @@ public class DetailActivity extends BaseActivity {
             vodId = vid;
             sourceKey = key;
             firstsourceKey = key;
-            sourceBeanXu = ApiConfig.get().getSource(sourceKey);  //xuameng判断sourceKey为空 远程推送BUG
-            if (sourceBeanXu == null){
-                App.showToastShort(DetailActivity.this, "推送结果：本地没有此数据源！请同步数据源！");
-                showEmpty();
-                return;
-            }
             showLoading();
             sourceViewModel.getDetail(sourceKey, vodId);
             boolean isVodCollect = RoomDataManger.isVodCollect(sourceKey, vodId);
