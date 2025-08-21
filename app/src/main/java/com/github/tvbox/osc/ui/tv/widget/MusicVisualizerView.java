@@ -25,10 +25,10 @@ public class MusicVisualizerView extends View {
     // 新增：三组颜色方案
     private static final int[][] COLOR_SCHEMES = {
         {Color.parseColor("#DBDB70"), Color.parseColor("#FF8A00"), Color.parseColor("#FF0000")}, // 黄-橙-红
-        {Color.parseColor("#70DBDB"), Color.parseColor("#6884E0"), Color.parseColor("#425F9F")}, // 浅蓝-蓝-深蓝
-        {Color.parseColor("#FF00FF"), Color.parseColor("#DB70DB"), Color.parseColor("#821870")}  // 浅紫-紫-深紫
+        {Color.parseColor("#70DBDB"), Color.parseColor("#00FF8A"), Color.parseColor("#00FFFF")}, // 青-绿-青蓝
+        {Color.parseColor("#DB70DB"), Color.parseColor("#FF00FF"), Color.parseColor("#FF00FF")}  // 紫-品红-品红
     };
-    private static final long COLOR_CYCLE_DURATION = 1 * 60 * 1000; // 5分钟
+    private static final long COLOR_CYCLE_DURATION = 1 * 60 * 1000; // 10分钟
     private int currentSchemeIndex = 0;
     private long lastSwitchTime = 0;
 
@@ -165,6 +165,7 @@ public class MusicVisualizerView extends View {
         int blue = (int)(Color.blue(startColor) + (Color.blue(endColor) - Color.blue(startColor)) * ratio);
         return Color.argb(alpha, red, green, blue);
     }
+}
 
     public void reset() {
         for (int i = 0; i < BAR_COUNT; i++) {
