@@ -177,6 +177,11 @@ public class IjkPlayer extends AbstractPlayer implements IMediaPlayer.OnErrorLis
     }
 
     @Override
+    public int getAudioSessionId() {       //XUAMENG 获取音频ID
+        return mMediaPlayer.getAudioSessionId();
+    }
+
+    @Override
     public void setSurface(Surface surface) {
         mMediaPlayer.setSurface(surface);
     }
