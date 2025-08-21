@@ -185,6 +185,11 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     }
 
     @Override
+    public int getAudioSessionId() {       //XUAMENG 获取音频ID
+        return mMediaPlayer.getAudioSessionId();
+    }
+
+    @Override
     public int getBufferedPercentage() {
         return mMediaPlayer == null ? 0 : mMediaPlayer.getBufferedPercentage();
     }
