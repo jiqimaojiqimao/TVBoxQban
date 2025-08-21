@@ -526,6 +526,14 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
     }
 
     /**
+     * XUAMENG 获取音频ID
+     */
+    @Override
+    public int getAudioSessionId() {       //XUAMENG 获取音频ID
+        return mMediaPlayer != null ? mMediaPlayer.getAudioSessionId() : 0;
+    }
+
+    /**
      * 设置静音
      */
     @Override
