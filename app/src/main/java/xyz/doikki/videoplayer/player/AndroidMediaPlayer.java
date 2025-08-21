@@ -165,6 +165,11 @@ public class AndroidMediaPlayer extends AbstractPlayer implements MediaPlayer.On
     }
 
     @Override
+    public int getAudioSessionId() {       //XUAMENG 获取音频ID
+        return mMediaPlayer.getAudioSessionId();
+    }
+
+    @Override
     public void setSurface(Surface surface) {
         try {
             mMediaPlayer.setSurface(surface);
