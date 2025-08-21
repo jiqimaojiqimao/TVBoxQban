@@ -151,6 +151,11 @@ public abstract class AbstractPlayer {
     public abstract long getTcpSpeed();
 
     /**
+     * XUAMENG 获取音频ID
+     */
+    public abstract int getAudioSessionId();
+
+    /**
      * 绑定VideoView
      */
     public void setPlayerEventListener(PlayerEventListener playerEventListener) {
