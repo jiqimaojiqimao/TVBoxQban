@@ -13,21 +13,37 @@ import android.animation.ValueAnimator;
 /** xuameng
  * 音乐可视化视图组件（带振幅颜色渐变）
  * 新增特性：
- * 1. 振幅越大颜色越红（黄色->橙黄->红渐变）
+ * 1. 颜色随振幅大小变化
  * 2. 保持原有动画平滑性
  * 3. 完全兼容原有接口
+ * 4. 振幅随音量大小变化
+ * 5. 三种颜色随机变化
  */
 public class MusicVisualizerView extends View {
-    // 常量定义
-    private static final int MAX_AMPLITUDE = 10000;
+    private static final int MAX_AMPLITUDE = 6222;
     private static final int BAR_COUNT = 22;
     private static final int ANIMATION_DURATION = 200;
     
-    private static final int[] COLOR_SPECTRUM = {
-        Color.parseColor("#DBDB70"), // 黄色
-        Color.parseColor("#FF8A00"), // 橙黄
-        Color.parseColor("#FF0000")  // 橙红
-    };
+    // 改为非静态变量实现动态刷新
+    private int[][] colorSchemes = new int[3][3];
+
+    // 新增颜色方案刷新方法
+    private void refreshColorSchemes() {
+        for (int i = 0; i < 3; i++) {
+            float baseHue = (float) (Math.random() * 360);
+            colorSchemes[i] = new int[]{
+                Color.HSVToColor(new float[]{baseHue, 1f, 1f}),
+                Color.HSVToColor(new float[]{(baseHue + 120) % 360, 1f, 1f}),
+                Color.HSVToColor(new float[]{(baseHue + 240) % 360, 1f, 1f})
+            };
+        }
+        postInvalidate(); // 新增：立即刷新视图
+    }
+
+   // private static final long COLOR_CYCLE_DURATION = 10 * 60 * 1000; // 10分钟
+    private static final long COLOR_CYCLE_DURATION = (long)(0.1 * 60 * 1000); // 6秒切换
+    private int currentSchemeIndex = 0;
+    private long lastSwitchTime = 0;
 
     // 绘图工具
     private final Paint mBarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -55,11 +71,14 @@ public class MusicVisualizerView extends View {
 
     private void init() {
         mBarPaint.setStyle(Paint.Style.FILL);
+        refreshColorSchemes();  // 新增：初始化时预加载颜色方案
     }
 
-    public void updateVisualizer(byte[] fft) {
+    public void updateVisualizer(byte[] fft, float volumeLevel) {
         if (fft == null || fft.length < BAR_COUNT * 2 + 2) return;
-
+        if (volumeLevel == 0f || volumeLevel == 0.0f || volumeLevel == 0.00f) {
+            reset();   //xuameng处理静音状态重置音柱
+        }
         // 修改采样策略：前1/3柱子重点采样低频，后2/3均匀采样中高频
         for (int i = 0; i < BAR_COUNT; i++) {
             int barIndex;
@@ -75,31 +94,25 @@ public class MusicVisualizerView extends View {
                 byte rfk = fft[barIndex];
                 byte ifk = fft[barIndex + 1];
                 float magnitude = (rfk * rfk + ifk * ifk);
-        
                 // xuameng改进的频率加权策略（三段式加权）
                 float weight;
                 if (i < BAR_COUNT / 4) {
-                    // 超低频段(0-200Hz)衰减40%
-                    weight = 0.6f;
+                    weight = 1.0f;      //xuameng 超低频段(0-200Hz)增益
                 } else if (i < BAR_COUNT / 2) {
-                    // 中低频段(200-800Hz)基准值
-                    weight = 1.8f;
+                    weight = 2.0f;  //xuameng 中低频段(200-800Hz)基准值增益
                 } else {
-                    // 高频段(800Hz+)指数增强
-                    float freqFactor = (float) Math.pow(1.5, (i - BAR_COUNT / 2) / 2.0);
-                    weight = 3.0f * freqFactor;
+                    float freqFactor = (float) Math.pow(1.5, (i - BAR_COUNT / 2) / 2.0);   //xuameng 高频段(800Hz+)指数增强
+                    weight = 3.5f * freqFactor;
                 }
-            
                 mTargetHeights[i] = Math.min(
-                    (magnitude * getHeight() * weight) / MAX_AMPLITUDE,
+                    (magnitude * getHeight() * weight * volumeLevel) / MAX_AMPLITUDE,    //xuameng判断音量大小
                     getHeight() * 0.95f
                 );
                 mAmplitudeLevels[i] = Math.min(magnitude / MAX_AMPLITUDE, 1.0f);
             }
         }
         startAnimation();
-    }
-
+    }		
 
     private void startAnimation() {
         if (mAnimator != null) {
@@ -119,9 +132,12 @@ public class MusicVisualizerView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (mBarHeights == null) return;
+
+        // 检查是否需要切换颜色方案
+        checkColorCycleSwitch();
 
         final int width = getWidth();
         final int height = getHeight();
@@ -134,26 +150,36 @@ public class MusicVisualizerView extends View {
             float right = left + barUnitWidth;
             float barHeight = Math.min(mBarHeights[i], height * 0.9f);
             float top = height - barHeight;
-            
-            // 根据振幅强度计算颜色
-            int color = getDynamicColor(mAmplitudeLevels[i]);
+        
+            // 根据当前颜色方案和振幅强度计算颜色
+            int color = getDynamicColor(mAmplitudeLevels[i],colorSchemes[currentSchemeIndex]); 
             mBarPaint.setColor(color);
-            
             canvas.drawRect(left, top, right, height, mBarPaint);
+        }
+    }
+
+    // 修改调用方式
+    private void checkColorCycleSwitch() {
+        long now = System.currentTimeMillis();
+        if (now - lastSwitchTime > COLOR_CYCLE_DURATION) {
+            currentSchemeIndex = (currentSchemeIndex + 1) % colorSchemes.length;
+            lastSwitchTime = now;
+            // 优化刷新逻辑（不再需要currentSchemeIndex检查）
+            refreshColorSchemes();
         }
     }
 
     /**
      * 根据振幅强度计算渐变颜色
      */
-    private int getDynamicColor(float amplitude) {
+    private int getDynamicColor(float amplitude, int[] currentScheme) {
+        amplitude = Math.max(0.0f, Math.min(1.0f, amplitude));  // 确保振幅在有效范围内
         if (amplitude < 0.3f) {
-            return interpolateColor(amplitude / 0.3f, COLOR_SPECTRUM[0], COLOR_SPECTRUM[1]);
+            return interpolateColor(amplitude / 0.3f, currentScheme[0], currentScheme[1]);
         } else {
-            return interpolateColor((amplitude - 0.3f) / 0.7f, COLOR_SPECTRUM[1], COLOR_SPECTRUM[2]);
+            return interpolateColor((amplitude - 0.3f) / 0.7f, currentScheme[1], currentScheme[2]);
         }
     }
-
     /**
      * 颜色插值计算
      */
@@ -180,14 +206,5 @@ public class MusicVisualizerView extends View {
             mAnimator.removeAllUpdateListeners();
         }
         reset();
-    }
-
-    public void onRawDataReceived(byte[] rawData) {
-        if (rawData == null) return;
-        
-        byte[] simulatedFFT = new byte[66];
-        System.arraycopy(rawData, 0, simulatedFFT, 2, 
-            Math.min(rawData.length, simulatedFFT.length - 2));
-        updateVisualizer(simulatedFFT);
     }
 }
