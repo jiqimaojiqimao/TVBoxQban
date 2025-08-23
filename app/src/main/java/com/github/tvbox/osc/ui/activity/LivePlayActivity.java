@@ -45,6 +45,7 @@ import com.github.tvbox.osc.ui.tv.widget.MusicVisualizerView;  //xuameng音乐�
 import android.media.audiofx.Visualizer;  //xuameng音乐播放动画
 import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
+import android.media.AudioManager;  //xuameng音乐播放动画
 import java.util.Objects;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
@@ -3303,10 +3304,12 @@ public class LivePlayActivity extends BaseActivity {
                     @Override
                     public void onFftDataCapture(Visualizer visualizer, byte[] fftData, int samplingRate) {
                         if (fftData == null || customVisualizer == null) return;
+                         // 1. 计算当前音量级别（0-1范围）
+                        float volumeLevel = calculateVolumeLevel(LivePlayActivity.this);
                         Runnable updateTask = () -> {
                             try {
                                 if (customVisualizer != null) {
-                                    customVisualizer.updateVisualizer(fftData);
+                                    customVisualizer.updateVisualizer(fftData, volumeLevel);
                                 }
                             } catch (Exception e) {
                                 Log.e(TAG, "Visualizer update error", e);
@@ -3350,5 +3353,17 @@ public class LivePlayActivity extends BaseActivity {
         } catch (Exception e) {
             Log.e(TAG, "Error releasing visualizer", e);
         }
+    }
+
+    public static float calculateVolumeLevel(Context context) {  //系统音量监控
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        
+        // 计算0-1范围的百分比
+        float volumePercent = (float) currentVolume / maxVolume;
+        
+        // 保留一位小数
+        return (float) Math.round(volumePercent * 100) / 100.0f;
     }
 }
