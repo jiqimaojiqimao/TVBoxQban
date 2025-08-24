@@ -1527,7 +1527,7 @@ public class VodController extends BaseController {
                             isShowPreview = false;
                         }
                     }
-                }, 800);
+                }, 300);
                 break;
             case VideoView.STATE_PAUSED:
                 isVideoPlay = false;
@@ -2295,10 +2295,10 @@ public class VodController extends BaseController {
         ViewGroup.LayoutParams params = view.getLayoutParams();
         if (currentState) {
             params.width = (int)Math.round(view.getWidth() * 0.6);
-            params.height = (int)Math.round(view.getWidth() * 0.6);
+            params.height = (int)Math.round(view.getHeight() * 0.6);
         } else {
             params.width = (int)Math.round(view.getWidth() / 0.6);
-            params.height = (int)Math.round(view.getWidth() / 0.6);
+            params.height = (int)Math.round(view.getHeight() / 0.6);
         }
         view.setLayoutParams(params);
         return !currentState;
