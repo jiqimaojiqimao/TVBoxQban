@@ -55,6 +55,7 @@ import com.github.tvbox.osc.util.SubtitleHelper;
 import com.github.tvbox.osc.ui.dialog.DescDialog;     //xuameng 内容简介
 import com.github.tvbox.osc.ui.dialog.PushDialog;    //xuameng远程推送
 import com.github.tvbox.osc.player.controller.VodController;  //xuameng更改图标尺寸
+import com.github.tvbox.osc.ui.tv.widget.MusicVisualizerView;  //xuameng音乐播放动画
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -129,6 +130,8 @@ public class DetailActivity extends BaseActivity {
     private TvRecyclerView mSeriesGroupView;      //xuameng多集组
 	private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
 	private boolean isCirclebg = true; //音乐图标
+    private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
+    private ImageView iv_circle_bg; //xuameng音乐播放时图标
     private LinearLayout mEmptyPlayList;
     private SourceViewModel sourceViewModel;
     private Movie.Video mVideo;
