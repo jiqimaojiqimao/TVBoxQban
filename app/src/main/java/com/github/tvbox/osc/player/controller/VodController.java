@@ -2268,11 +2268,11 @@ public class VodController extends BaseController {
     public static boolean toggleViewSize(View view, boolean currentState) {
         ViewGroup.LayoutParams params = view.getLayoutParams();
         if (currentState) {
-            params.width = view.getWidth() * 0.6;
-            params.height = view.getHeight() * 0.6;
+            params.width = (int)Math.round(view.getWidth() * 0.6);
+            params.height = (int)Math.round(view.getWidth() * 0.6);
         } else {
-            params.width = view.getWidth() / 0.6;
-            params.height = view.getHeight() / 0.6;
+            params.width = (int)Math.round(view.getWidth() / 0.6);
+            params.height = (int)Math.round(view.getWidth() / 0.6);
         }
         view.setLayoutParams(params);
         return !currentState;
