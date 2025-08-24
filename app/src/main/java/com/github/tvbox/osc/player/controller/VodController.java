@@ -246,6 +246,7 @@ public class VodController extends BaseController {
     TextView mProgressText;
     ImageView mProgressIcon;
     ImageView mLockView;
+    ImageView icon_play; 
     LinearLayout mBottomRoot;
     LinearLayout mTopRoot1;
     LinearLayout mTopRoot2;
