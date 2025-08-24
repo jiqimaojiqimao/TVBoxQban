@@ -54,8 +54,6 @@ import com.github.tvbox.osc.util.SearchHelper;
 import com.github.tvbox.osc.util.SubtitleHelper;
 import com.github.tvbox.osc.ui.dialog.DescDialog;     //xuameng 内容简介
 import com.github.tvbox.osc.ui.dialog.PushDialog;    //xuameng远程推送
-import com.github.tvbox.osc.player.controller.VodController;  //xuameng更改图标尺寸
-import com.github.tvbox.osc.ui.tv.widget.MusicVisualizerView;  //xuameng音乐播放动画
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -128,8 +126,6 @@ public class DetailActivity extends BaseActivity {
     private TvRecyclerView mGridViewFlag;    //选源
     private TvRecyclerView mGridView;            //选集
     private TvRecyclerView mSeriesGroupView;      //xuameng多集组
-	private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
-	private boolean isCirclebg = true; //音乐图标
     private LinearLayout mEmptyPlayList;
     private SourceViewModel sourceViewModel;
     private Movie.Video mVideo;
@@ -954,14 +950,6 @@ public class DetailActivity extends BaseActivity {
                             llPlayerFragmentContainer.setVisibility(View.VISIBLE);
                             llPlayerFragmentContainerBlock.setVisibility(View.VISIBLE);
                             toggleSubtitleTextSize();
-
-           setContentView(R.layout.player_vod_control_view);
-           MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
-           ImageView iv_circle_bg; //xuameng音乐播放时图标
-           customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
-           iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
-           isOriginalSize = VodController.toggleViewSize(customVisualizer, isOriginalSize); //xuameng音乐图标
-           isCirclebg = VodController.toggleViewSize(iv_circle_bg, isCirclebg);  //xuameng音乐图标
                         }
                         // startQuickSearch();
                     } else {
@@ -1351,15 +1339,6 @@ public class DetailActivity extends BaseActivity {
 		tvPush.setFocusable(!fullWindows);    //xuameng 远程推送
 		llPlayerFragmentContainerBlock.setFocusable(!fullWindows);
         toggleSubtitleTextSize();
-        if (fullWindows) {
-            setContentView(R.layout.player_vod_control_view);
-            MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
-            ImageView iv_circle_bg; //xuameng音乐播放时图标
-            customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
-            iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
-            isOriginalSize = VodController.toggleViewSize(customVisualizer, isOriginalSize); //xuameng音乐图标
-            isCirclebg = VodController.toggleViewSize(iv_circle_bg, isCirclebg);  //xuameng音乐图标
-        }
     }
 
     void toggleSubtitleTextSize() {
