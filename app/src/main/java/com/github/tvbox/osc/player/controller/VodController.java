@@ -82,6 +82,7 @@ import android.view.ViewGroup;  //xuameng音乐播放动画
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import com.github.tvbox.osc.event.RefreshEvent;
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -2283,13 +2284,15 @@ public class VodController extends BaseController {
         return !currentState;
     }  
 
-	    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onToggleEvent(ToggleEvent event) {
+@Subscribe(threadMode = ThreadMode.MAIN)
+public void onRefreshEvent(RefreshEvent event) {
+    if (event.type == RefreshEvent.TYPE_IMAGE_SIZE) {
                        if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                    isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
                 }
                 if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
                    isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
                 }
-    }
+   }
+}
 }
