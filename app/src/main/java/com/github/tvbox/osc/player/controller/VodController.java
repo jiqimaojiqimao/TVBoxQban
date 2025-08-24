@@ -246,7 +246,8 @@ public class VodController extends BaseController {
     TextView mProgressText;
     ImageView mProgressIcon;
     ImageView mLockView;
-    ImageView icon_play; 
+    ImageView icon_play; //xuameng暂停图标
+    TextView mPauseTimeXu; //xuameng暂停文字
     LinearLayout mBottomRoot;
     LinearLayout mTopRoot1;
     LinearLayout mTopRoot2;
@@ -504,7 +505,7 @@ public class VodController extends BaseController {
         XuLoading = findViewWithTag("vod_control_loading"); //xuameng  loading 
         customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
         icon_play = (ImageView) findViewById(R.id.icon_play); //xuameng音乐播放时图标
-        mPauseTimeXu = findViewWithTag("vod_control_pause_t"); //xuameng音乐播放时图标
+        mPauseTimeXu = findViewById(tv_pause_progress_text); //xuameng音乐播放时图标
         tv_slide_progress_text = findViewById(R.id.tv_slide_progress_text);
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
@@ -1519,7 +1520,7 @@ public class VodController extends BaseController {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        if (showPreview && isShowPreview) {
+                        if (showPreview && isShowPreview && !HawkConfig.isFullWindows) {
                             if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                                 isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
                             }
