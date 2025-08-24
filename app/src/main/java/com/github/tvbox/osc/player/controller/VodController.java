@@ -79,10 +79,10 @@ import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
 import android.media.AudioManager;  //xuameng音乐播放动画
 import android.view.ViewGroup;  //xuameng音乐播放动画
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-import com.github.tvbox.osc.event.RefreshEvent;
+import org.greenrobot.eventbus.EventBus;  //xuameng 图像缩放
+import org.greenrobot.eventbus.Subscribe;  //xuameng 图像缩放
+import org.greenrobot.eventbus.ThreadMode;  //xuameng 图像缩放
+import com.github.tvbox.osc.event.RefreshEvent;  //xuameng 图像缩放
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -460,7 +460,7 @@ public class VodController extends BaseController {
     @Override
     protected void initView() {
         super.initView();
-		EventBus.getDefault().register(this);
+		EventBus.getDefault().register(this);   //xuameng 图像缩放
         mCurrentTime = findViewById(R.id.curr_time);
         mTotalTime = findViewById(R.id.total_time);
         mPlayTitle = findViewById(R.id.tv_info_name);
@@ -1975,7 +1975,7 @@ public class VodController extends BaseController {
             mHandler.removeCallbacksAndMessages(null);
         }
         releaseVisualizer();  //xuameng音乐播放动画
-		EventBus.getDefault().unregister(this);
+		EventBus.getDefault().unregister(this);  //xuameng 图像缩放
     }
     //尝试去bom
     public String getWebPlayUrlIfNeeded(String webPlayUrl) {
@@ -2284,15 +2284,15 @@ public class VodController extends BaseController {
         return !currentState;
     }  
 
-@Subscribe(threadMode = ThreadMode.MAIN)
-public void onRefreshEvent(RefreshEvent event) {
-    if (event.type == RefreshEvent.TYPE_IMAGE_SIZE) {
-                       if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
-                   isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
-                }
-                if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
-                   isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
-                }
-   }
-}
+    @Subscribe(threadMode = ThreadMode.MAIN)      //xuameng 图像缩放
+    public void onRefreshEvent(RefreshEvent event) {
+        if (event.type == RefreshEvent.TYPE_IMAGE_SIZE) {
+            if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
+            }
+            if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+               isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+            }
+        }
+    }
 }
