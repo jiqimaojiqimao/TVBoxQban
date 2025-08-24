@@ -22,8 +22,8 @@
         android:scaleType="fitXY"/>
     <com.github.tvbox.osc.ui.tv.widget.MusicVisualizerView
         android:id="@+id/visualizer_view"
-        android:layout_width="400mm"
-        android:layout_height="150mm"
+        android:layout_width="400dp"
+        android:layout_height="150dp"
         android:layout_gravity="bottom|center_horizontal"
         android:visibility="gone"
         android:layout_margin="16dp"
@@ -547,6 +547,7 @@
         <ImageView
             android:layout_gravity="center|left"
             android:focusable="false"
+            android:id="@+id/icon_play"
             android:focusableInTouchMode="false"
             android:layout_width="@dimen/vs_35"
             android:layout_height="@dimen/vs_35"
