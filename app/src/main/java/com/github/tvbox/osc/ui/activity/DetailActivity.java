@@ -1339,6 +1339,10 @@ public class DetailActivity extends BaseActivity {
 		tvPush.setFocusable(!fullWindows);    //xuameng 远程推送
 		llPlayerFragmentContainerBlock.setFocusable(!fullWindows);
         toggleSubtitleTextSize();
+
+if (fullWindows) {
+EventBus.getDefault().post(new ToggleEvent(targetView, currentState));
+}
     }
 
     void toggleSubtitleTextSize() {
