@@ -307,6 +307,7 @@ public class VodController extends BaseController {
     private static final String TAG = "VodController";  //xuameng音乐播放动画
     private boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // xuamengtrue 开启 false 关闭
     private boolean isTvPausexu = true; //xuameng暂停图标
+    private boolean isShowPreview = true;
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 50000; //闲置多少毫秒秒关闭底栏  默认100秒
@@ -1514,7 +1515,6 @@ public class VodController extends BaseController {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        boolean isShowPreview = true;
                         if (showPreview && !HawkConfig.isFullWindows && isShowPreview) {
                             if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                                 isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
