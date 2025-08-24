@@ -1340,9 +1340,9 @@ public class DetailActivity extends BaseActivity {
 		llPlayerFragmentContainerBlock.setFocusable(!fullWindows);
         toggleSubtitleTextSize();
 
-if (fullWindows) {
-EventBus.getDefault().post(new ToggleEvent(targetView, currentState));
-}
+        if (fullWindows) {   //xuameng 图像缩放
+            EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_IMAGE_SIZE));
+        }
     }
 
     void toggleSubtitleTextSize() {
