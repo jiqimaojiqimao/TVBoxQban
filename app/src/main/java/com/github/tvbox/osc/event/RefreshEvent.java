@@ -21,6 +21,7 @@ public class RefreshEvent {
     public static final int TYPE_SETTING_SEARCH_TV = 11;
     public static final int TYPE_SUBTITLE_SIZE_CHANGE = 12;
     public static final int TYPE_FILTER_CHANGE = 13;
+    public static final int TYPE_IMAGE_SIZE = 22;  //xuameng 图像缩放
     public int type;
     public Object obj;
 
