@@ -547,7 +547,6 @@
         <ImageView
             android:layout_gravity="center|left"
             android:focusable="false"
-            android:id="@+id/icon_play"
             android:focusableInTouchMode="false"
             android:layout_width="@dimen/vs_35"
             android:layout_height="@dimen/vs_35"
@@ -563,8 +562,8 @@
             android:paddingLeft="@dimen/vs_10"
             android:focusable="false"
             android:focusableInTouchMode="false"
-            android:layout_width="195mm"
-            android:layout_height="@dimen/vs_35"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginRight="@dimen/vs_20"
             android:singleLine="true"
             android:marqueeRepeatLimit="marquee_forever"/>
