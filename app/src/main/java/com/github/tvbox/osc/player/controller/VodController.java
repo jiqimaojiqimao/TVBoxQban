@@ -2359,12 +2359,6 @@ public static boolean toggleViewSize(View view, boolean currentState) {
             if (child instanceof TextView) {
                 ((TextView)child).setMarqueeRepeatLimit(-1); // 无限滚动
             }
-   // 处理自定义属性（如有）
-    if(view instanceof MusicVisualizerView) {
-        // 调整柱状图相关参数
-        customVisualizer.setBarWidth(visualizer.getBarWidth() * scale);
-        customVisualizer.setBarGap(visualizer.getBarGap() * scale);
-    }
             
             // 递归处理子视图
             toggleViewSize(child, currentState);
@@ -2374,9 +2368,6 @@ public static boolean toggleViewSize(View view, boolean currentState) {
     return !currentState;
 }
 
-
-    return !currentState;
-}
 
 
 
