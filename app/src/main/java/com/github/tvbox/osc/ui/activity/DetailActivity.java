@@ -1342,6 +1342,9 @@ public class DetailActivity extends BaseActivity {
 
         if (fullWindows) {   //xuameng 图像缩放
             EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_IMAGE_SIZE));
+            HawkConfig.isFullWindows = true;  //xuameng是否全屏
+        }else{
+            HawkConfig.isFullWindows = false;  //xuameng是否全屏
         }
     }
 
