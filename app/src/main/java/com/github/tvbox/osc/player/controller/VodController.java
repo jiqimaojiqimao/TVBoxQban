@@ -78,12 +78,6 @@ import android.media.audiofx.Visualizer;  //xuameng音乐播放动画
 import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
 import android.media.AudioManager;  //xuameng音乐播放动画
-import android.view.ViewGroup;  //xuameng音乐播放动画
-import org.greenrobot.eventbus.EventBus;  //xuameng 图像缩放
-import org.greenrobot.eventbus.Subscribe;  //xuameng 图像缩放
-import org.greenrobot.eventbus.ThreadMode;  //xuameng 图像缩放
-import com.github.tvbox.osc.event.RefreshEvent;  //xuameng 图像缩放
-import android.util.TypedValue; //xuameng 图像缩放
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -302,11 +296,7 @@ public class VodController extends BaseController {
     private Visualizer mVisualizer;  //xuameng音乐播放动画
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
-    private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
-    private boolean isCirclebg = true; //xuameng音乐图标
-    private static final String TAG = "VodController";  //xuameng音乐播放动画
-    private boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // xuamengtrue 开启 false 关闭
-    private boolean isShowPreview = true;  //xuameng判断是否首次进入页面处没处理缩放
+	private static final String TAG = "VodController";  //xuameng音乐播放动画
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 50000; //闲置多少毫秒秒关闭底栏  默认100秒
@@ -463,7 +453,6 @@ public class VodController extends BaseController {
     @Override
     protected void initView() {
         super.initView();
-		EventBus.getDefault().register(this);   //xuameng 图像缩放
         mCurrentTime = findViewById(R.id.curr_time);
         mTotalTime = findViewById(R.id.total_time);
         mPlayTitle = findViewById(R.id.tv_info_name);
@@ -1511,20 +1500,6 @@ public class VodController extends BaseController {
                 isVideoplaying = true;
                 isVideoPlay = true;
                 //playIngXu();	
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (showPreview && !HawkConfig.isFullWindows && isShowPreview) {
-                            if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
-                                isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
-                            }
-                            if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
-                                isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
-                            }
-                            isShowPreview = false;
-                        }
-                    }
-                }, 130);
                 break;
             case VideoView.STATE_PAUSED:
                 isVideoPlay = false;
@@ -1946,13 +1921,6 @@ public class VodController extends BaseController {
                 backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
                 mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
                 mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
-                isShowPreview = false;
-                if(customVisualizer.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng播放音乐柱状图
-                   isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
-                }
-                if(iv_circle_bg.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
-                   isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
-                }
             }
             return false;
         }
@@ -1974,13 +1942,6 @@ public class VodController extends BaseController {
         backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
         mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
         mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
-        isShowPreview = false;
-        if(customVisualizer.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng播放音乐柱状图
-           isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
-        }
-        if(iv_circle_bg.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
-           isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
-        }
         return false;
     }
     @Override
@@ -1994,7 +1955,6 @@ public class VodController extends BaseController {
             mHandler.removeCallbacksAndMessages(null);
         }
         releaseVisualizer();  //xuameng音乐播放动画
-		EventBus.getDefault().unregister(this);  //xuameng 图像缩放
     }
     //尝试去bom
     public String getWebPlayUrlIfNeeded(String webPlayUrl) {
@@ -2288,30 +2248,5 @@ public class VodController extends BaseController {
         
         // 保留一位小数
         return (float) Math.round(volumePercent * 100) / 100.0f;
-    }
-
-    public static boolean toggleViewSize(View view, boolean currentState) {   //xuameng 音乐图标缩放
-        ViewGroup.LayoutParams params = view.getLayoutParams();
-        if (currentState) {
-            params.width = (int)Math.round(view.getWidth() * 0.6);
-            params.height = (int)Math.round(view.getHeight() * 0.6);
-        } else {
-            params.width = (int)Math.round(view.getWidth() / 0.6);
-            params.height = (int)Math.round(view.getHeight() / 0.6);
-        }
-        view.setLayoutParams(params);
-        return !currentState;
-    } 
-
-    @Subscribe(threadMode = ThreadMode.MAIN)      //xuameng 图像缩放
-    public void onRefreshEvent(RefreshEvent event) {
-        if (event.type == RefreshEvent.TYPE_IMAGE_SIZE) {
-            if(customVisualizer.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng播放音乐柱状图
-                isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
-            }
-            if(iv_circle_bg.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
-               isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
-            }
-        }
     }
 }
