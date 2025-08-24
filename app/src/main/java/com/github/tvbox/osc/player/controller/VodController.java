@@ -247,8 +247,6 @@ public class VodController extends BaseController {
     TextView mProgressText;
     ImageView mProgressIcon;
     ImageView mLockView;
-    ImageView icon_play; //xuameng暂停图标
-    TextView mPauseTimeXu; //xuameng暂停文字
     LinearLayout mBottomRoot;
     LinearLayout mTopRoot1;
     LinearLayout mTopRoot2;
@@ -306,11 +304,9 @@ public class VodController extends BaseController {
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
     private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
     private boolean isCirclebg = true; //xuameng音乐图标
-    private boolean isIcon_play = true; //xuameng暂停图标
-    private boolean isTvPausexu = true; //xuameng暂停图标
     private static final String TAG = "VodController";  //xuameng音乐播放动画
     private boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // xuamengtrue 开启 false 关闭
-    private boolean isPauseTime = true; //xuameng暂停图标
+    private boolean isTvPausexu = true; //xuameng暂停图标
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 50000; //闲置多少毫秒秒关闭底栏  默认100秒
@@ -504,8 +500,6 @@ public class VodController extends BaseController {
         play_speed_3 = findViewById(R.id.play_speed_3_container); //xuameng倍速播放
         XuLoading = findViewWithTag("vod_control_loading"); //xuameng  loading 
         customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
-        icon_play = (ImageView) findViewById(R.id.icon_play); //xuameng音乐播放时图标
-        mPauseTimeXu = findViewById(R.id.tv_pause_progress_text); //xuameng音乐播放时图标
         tv_slide_progress_text = findViewById(R.id.tv_slide_progress_text);
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
@@ -1962,12 +1956,6 @@ public class VodController extends BaseController {
                 if(mTvPausexu.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
                    isTvPausexu = toggleViewSize(mTvPausexu, isTvPausexu);
                 }
-                if(icon_play.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
-                   isIcon_play = toggleViewSize(icon_play, isIcon_play);
-                }
-                if(mPauseTimeXu.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
-                   isPauseTime = toggleViewSize(mPauseTimeXu, isPauseTime);
-                }
             }
             return false;
         }
@@ -1997,12 +1985,6 @@ public class VodController extends BaseController {
         }
         if(mTvPausexu.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
            isTvPausexu = toggleViewSize(mTvPausexu, isTvPausexu);
-        }
-        if(icon_play.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
-           isIcon_play = toggleViewSize(icon_play, isIcon_play);
-        }
-        if(mPauseTimeXu.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
-           isPauseTime = toggleViewSize(mPauseTimeXu, isPauseTime);
         }
         return false;
     }
@@ -2380,14 +2362,8 @@ public static boolean toggleViewSize(View view, boolean currentState) {
             if(iv_circle_bg.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
                isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
             }
-            if(icon_play.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
-               isIcon_play = toggleViewSize(icon_play, isIcon_play);
-            }
             if(mTvPausexu.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
                isTvPausexu = toggleViewSize(mTvPausexu, isTvPausexu);
-            }
-            if(mPauseTimeXu.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng音乐图标
-               isPauseTime = toggleViewSize(mPauseTimeXu, isPauseTime);
             }
         }
     }
