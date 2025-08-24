@@ -2342,9 +2342,8 @@ public static boolean toggleViewSize(View view, boolean currentState) {
     }
 
     // 处理MarqueeTextView特殊缩放
-    if (view instanceof MarqueeTextView) {
-        MarqueeTextView marqueeTextView = (MarqueeTextView) view;
-        marqueeTextView.setMarqueeRepeatLimit(MarqueeTextView.INFINITE);
+    if (view instanceof TextView) {
+        ((TextView)view).setMarqueeRepeatLimit(-1); // 无限滚动
     }
 
     return !currentState;
