@@ -401,16 +401,6 @@ public class VodController extends BaseController {
                             iv_circle_bg.setVisibility(VISIBLE);
                         }
                     }
-					if (showPreview && !isShowPreview) {
-                        if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
-                        isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
-                        }
-                        if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
-                           isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
-                        }
-						isShowPreview = true;
-                    }
-					                        isShowPreview = false;
                 }
             } else {
                 iv_circle_bg.setVisibility(GONE);
@@ -1523,6 +1513,20 @@ public class VodController extends BaseController {
                 isVideoplaying = true;
                 isVideoPlay = true;
                 //playIngXu();	
+new Handler().postDelayed(new Runnable() {
+    @Override
+    public void run() {
+        if (showPreview && isShowPreview) {
+            if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
+            }
+            if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+                isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+            }
+            isShowPreview = false;
+        }
+    }
+}, 300);
                 break;
             case VideoView.STATE_PAUSED:
                 isVideoPlay = false;
