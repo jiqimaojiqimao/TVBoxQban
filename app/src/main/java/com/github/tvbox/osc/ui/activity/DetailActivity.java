@@ -950,7 +950,6 @@ public class DetailActivity extends BaseActivity {
                             llPlayerFragmentContainer.setVisibility(View.VISIBLE);
                             llPlayerFragmentContainerBlock.setVisibility(View.VISIBLE);
                             toggleSubtitleTextSize();
-                            EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_IMAGE_SIZE));  //xuameng 图像缩放
                         }
                         // startQuickSearch();
                     } else {
