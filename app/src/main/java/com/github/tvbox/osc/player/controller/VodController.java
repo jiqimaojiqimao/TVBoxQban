@@ -2287,8 +2287,12 @@ public class VodController extends BaseController {
     @Subscribe(threadMode = ThreadMode.MAIN)      //xuameng 图像缩放
     public void onRefreshEvent(RefreshEvent event) {
         if (event.type == RefreshEvent.TYPE_IMAGE_SIZE) {
-           isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
-           isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+            if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
+            }
+            if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+               isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+            }
         }
     }
 }
