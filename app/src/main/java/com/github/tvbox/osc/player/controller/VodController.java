@@ -78,6 +78,7 @@ import android.media.audiofx.Visualizer;  //xuameng音乐播放动画
 import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
 import android.media.AudioManager;  //xuameng音乐播放动画
+import android.view.ViewGroup;  //xuameng音乐播放动画
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -296,6 +297,8 @@ public class VodController extends BaseController {
     private Visualizer mVisualizer;  //xuameng音乐播放动画
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
+	private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
+	private boolean isCirclebg = true; //音乐图标
 	private static final String TAG = "VodController";  //xuameng音乐播放动画
     Handler myHandle;
     Runnable myRunnable;
@@ -1921,6 +1924,12 @@ public class VodController extends BaseController {
                 backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
                 mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
                 mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
+                if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                   isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
+                }
+                if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+                   isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+                }
             }
             return false;
         }
@@ -1942,6 +1951,12 @@ public class VodController extends BaseController {
         backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
         mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
         mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
+        if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+           isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
+        }
+        if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+           isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+        }
         return false;
     }
     @Override
@@ -2249,4 +2264,17 @@ public class VodController extends BaseController {
         // 保留一位小数
         return (float) Math.round(volumePercent * 100) / 100.0f;
     }
+
+    public static boolean toggleViewSize(View view, boolean currentState) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        if (currentState) {
+            params.width = view.getWidth() / 3;
+            params.height = view.getHeight() / 3;
+        } else {
+            params.width = view.getWidth() * 3;
+            params.height = view.getHeight() * 3;
+        }
+        view.setLayoutParams(params);
+        return !currentState;
+    }  
 }
