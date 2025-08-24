@@ -25,7 +25,7 @@
         android:layout_width="400mm"
         android:layout_height="150mm"
         android:layout_gravity="bottom|center_horizontal"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_margin="16dp"
         android:background="@android:color/transparent"/>
     <LinearLayout
@@ -668,7 +668,7 @@
         android:id="@+id/iv_circle_bg"
         android:tag="music_iv_circle_bg"
         android:padding="@dimen/vs_10"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_width="@dimen/vs_80"
         android:layout_height="@dimen/vs_80"
         android:src="@drawable/app_icon"/>
