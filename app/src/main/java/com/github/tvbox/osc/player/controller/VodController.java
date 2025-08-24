@@ -306,7 +306,7 @@ public class VodController extends BaseController {
     private boolean isCirclebg = true; //xuameng音乐图标
     private static final String TAG = "VodController";  //xuameng音乐播放动画
     private boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // xuamengtrue 开启 false 关闭
-    private boolean isShowPreview = true;
+    private boolean isShowPreview = true;  //xuameng判断是否首次进入页面处没处理缩放
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 50000; //闲置多少毫秒秒关闭底栏  默认100秒
@@ -1946,6 +1946,7 @@ public class VodController extends BaseController {
                 backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
                 mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
                 mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
+                isShowPreview = false;
                 if(customVisualizer.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng播放音乐柱状图
                    isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
                 }
@@ -1973,6 +1974,7 @@ public class VodController extends BaseController {
         backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
         mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
         mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
+        isShowPreview = false;
         if(customVisualizer.getVisibility() == View.VISIBLE && showPreview && isInPlaybackState()) { //xuameng播放音乐柱状图
            isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
         }
