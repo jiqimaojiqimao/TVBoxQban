@@ -407,7 +407,7 @@ public class VodController extends BaseController {
             } else {
                 iv_circle_bg.setVisibility(GONE);
             } //xuameng音乐播放时图标判断完
-            mHandler.postDelayed(this, 1000);
+            mHandler.postDelayed(this, 100);
         }
     };
     private Runnable myRunnableMusic = new Runnable() { //xuameng播放音频切换图片
@@ -1519,7 +1519,7 @@ public class VodController extends BaseController {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        if (showPreview && !HawkConfig.isFullWindows) {
+                        if (showPreview && HawkConfig.isFullWindows) {
                             if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                                 isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
                             }
@@ -2310,18 +2310,52 @@ public class VodController extends BaseController {
         return (float) Math.round(volumePercent * 100) / 100.0f;
     }
 
-    public static boolean toggleViewSize(View view, boolean currentState) {
-        ViewGroup.LayoutParams params = view.getLayoutParams();
-        if (currentState) {
-            params.width = (int)Math.round(view.getWidth() * 0.6);
-            params.height = (int)Math.round(view.getHeight() * 0.6);
-        } else {
-            params.width = (int)Math.round(view.getWidth() / 0.6);
-            params.height = (int)Math.round(view.getHeight() / 0.6);
-        }
-        view.setLayoutParams(params);
-        return !currentState;
-    }  
+public static boolean toggleViewSize(View view, boolean currentState) {
+    ViewGroup.LayoutParams params = view.getLayoutParams();
+    float scale = currentState ? 0.6f : 1.0f / 0.6f;
+
+    // 统一处理宽高缩放
+    if (params.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
+        params.width = (int) (params.width * scale);
+    }
+    if (params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+        params.height = (int) (params.height * scale);
+    }
+    view.setLayoutParams(params);
+
+    // 文本缩放（类型安全处理）
+    if (view instanceof TextView) {
+        TextView textView = (TextView) view;
+        float textSize = textView.getTextSize();
+        // 先转换为像素单位进行计算
+        float pxTextSize = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_PX, 
+            textSize, 
+            textView.getContext().getResources().getDisplayMetrics()
+        );
+        // 计算缩放后的像素值
+        float scaledPxSize = pxTextSize * scale;
+        // 再转换回毫米单位
+        float mmTextSize = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_MM, 
+            scaledPxSize, 
+            textView.getContext().getResources().getDisplayMetrics()
+        );
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_MM, mmTextSize);
+    }
+
+    // 可选：处理padding/margin缩放
+    view.setPadding(
+        (int) (view.getPaddingLeft() * scale),
+        (int) (view.getPaddingTop() * scale),
+        (int) (view.getPaddingRight() * scale),
+        (int) (view.getPaddingBottom() * scale)
+    );
+    
+    return !currentState;
+}
+
+
 
     @Subscribe(threadMode = ThreadMode.MAIN)      //xuameng 图像缩放
     public void onRefreshEvent(RefreshEvent event) {
