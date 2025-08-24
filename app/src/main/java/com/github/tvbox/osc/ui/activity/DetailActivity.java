@@ -221,7 +221,7 @@ public class DetailActivity extends BaseActivity {
             getSupportFragmentManager().beginTransaction().add(R.id.previewPlayer, playFragment).commit();
             getSupportFragmentManager().beginTransaction().show(playFragment).commitAllowingStateLoss();
             tvPlay.setText("全屏");
-        } 
+        }
 
         mSeriesGroupView = findViewById(R.id.mSeriesGroupView);
         mSeriesGroupView.setHasFixedSize(true);
@@ -1339,13 +1339,6 @@ public class DetailActivity extends BaseActivity {
 		tvPush.setFocusable(!fullWindows);    //xuameng 远程推送
 		llPlayerFragmentContainerBlock.setFocusable(!fullWindows);
         toggleSubtitleTextSize();
-
-        if (fullWindows) {   //xuameng 图像缩放
-            EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_IMAGE_SIZE));
-            HawkConfig.isFullWindows = true;  //xuameng是否全屏
-        }else{
-            HawkConfig.isFullWindows = false;  //xuameng是否全屏
-        }
     }
 
     void toggleSubtitleTextSize() {
