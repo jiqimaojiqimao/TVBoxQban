@@ -83,6 +83,7 @@ import org.greenrobot.eventbus.EventBus;  //xuameng 图像缩放
 import org.greenrobot.eventbus.Subscribe;  //xuameng 图像缩放
 import org.greenrobot.eventbus.ThreadMode;  //xuameng 图像缩放
 import com.github.tvbox.osc.event.RefreshEvent;  //xuameng 图像缩放
+import android.util.TypedValue; //xuameng 图像缩放
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -2344,16 +2345,26 @@ public static boolean toggleViewSize(View view, boolean currentState) {
         textView.setTextSize(TypedValue.COMPLEX_UNIT_MM, mmTextSize);
     }
 
-    // 可选：处理padding/margin缩放
+    // 处理padding缩放
     view.setPadding(
         (int) (view.getPaddingLeft() * scale),
         (int) (view.getPaddingTop() * scale),
         (int) (view.getPaddingRight() * scale),
         (int) (view.getPaddingBottom() * scale)
     );
+
+    // 处理margin缩放（新增）
+    ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) params;
+    marginParams.setMargins(
+        (int) (marginParams.leftMargin * scale),
+        (int) (marginParams.topMargin * scale),
+        (int) (marginParams.rightMargin * scale),
+        (int) (marginParams.bottomMargin * scale)
+    );
     
     return !currentState;
 }
+
 
 
 
