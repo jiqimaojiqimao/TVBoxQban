@@ -304,6 +304,8 @@ public class VodController extends BaseController {
 	private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
 	private boolean isCirclebg = true; //音乐图标
 	private static final String TAG = "VodController";  //xuameng音乐播放动画
+	private boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // true 开启 false 关闭
+	private boolean isShowPreview = true;
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 50000; //闲置多少毫秒秒关闭底栏  默认100秒
@@ -396,6 +398,15 @@ public class VodController extends BaseController {
                         if(isVideoplaying) {
                             iv_circle_bg.setVisibility(VISIBLE);
                         }
+                    }
+					if (showPreview && isShowPreview) {
+                        if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                        isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
+                        }
+                        if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+                           isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+                        }
+                        isShowPreview = false;
                     }
                 }
             } else {
