@@ -1150,7 +1150,6 @@ public class PlayFragment extends BaseLazyFragment {
         }
         ClearOtherCache();
         sourceViewModel.getPlay(sourceKey, mVodInfo.playFlag, progressKey, vs.url, subtitleCacheKey);
-        EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_IMAGE_SIZE));  //xuameng 图像缩放
     }
 
     private String playSubtitle;
