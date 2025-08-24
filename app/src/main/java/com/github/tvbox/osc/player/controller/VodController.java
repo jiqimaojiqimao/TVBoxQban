@@ -1958,6 +1958,9 @@ public class VodController extends BaseController {
                 if(mTvPausexu.getVisibility() == View.VISIBLE) { //xuameng音乐图标
                    isTvPausexu = toggleViewSize(mTvPausexu, isTvPausexu);
                 }
+                if(icon_play.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+                   isIcon_play = toggleViewSize(icon_play, isIcon_play);
+                }
             }
             return false;
         }
@@ -1987,6 +1990,9 @@ public class VodController extends BaseController {
         }
         if(mTvPausexu.getVisibility() == View.VISIBLE) { //xuameng音乐图标
            isTvPausexu = toggleViewSize(mTvPausexu, isTvPausexu);
+        }
+        if(icon_play.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+           isIcon_play = toggleViewSize(icon_play, isIcon_play);
         }
         return false;
     }
