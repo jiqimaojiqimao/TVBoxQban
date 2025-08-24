@@ -79,6 +79,9 @@ import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
 import android.media.AudioManager;  //xuameng音乐播放动画
 import android.view.ViewGroup;  //xuameng音乐播放动画
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -456,6 +459,7 @@ public class VodController extends BaseController {
     @Override
     protected void initView() {
         super.initView();
+		EventBus.getDefault().register(this);
         mCurrentTime = findViewById(R.id.curr_time);
         mTotalTime = findViewById(R.id.total_time);
         mPlayTitle = findViewById(R.id.tv_info_name);
@@ -1970,6 +1974,7 @@ public class VodController extends BaseController {
             mHandler.removeCallbacksAndMessages(null);
         }
         releaseVisualizer();  //xuameng音乐播放动画
+		EventBus.getDefault().unregister(this);
     }
     //尝试去bom
     public String getWebPlayUrlIfNeeded(String webPlayUrl) {
@@ -2277,4 +2282,14 @@ public class VodController extends BaseController {
         view.setLayoutParams(params);
         return !currentState;
     }  
+
+	    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onToggleEvent(ToggleEvent event) {
+                       if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                   isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
+                }
+                if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+                   isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+                }
+    }
 }
