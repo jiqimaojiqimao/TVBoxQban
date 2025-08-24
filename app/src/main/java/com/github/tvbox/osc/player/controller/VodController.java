@@ -2296,26 +2296,17 @@ public class VodController extends BaseController {
     }
 
 public static boolean toggleViewSize(View view, boolean currentState) {
-    ViewGroup.LayoutParams params = view.getLayoutParams();
     float scale = currentState ? 0.6f : 1.0f / 0.6f;
 
-    // 处理固定尺寸视图
-    if (params.width != ViewGroup.LayoutParams.WRAP_CONTENT && 
-        params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
-        // 先转换为WRAP_CONTENT再缩放
-        params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-        view.setLayoutParams(params);
-        
-        // 获取原始尺寸
-        int originalWidth = view.getWidth();
-        int originalHeight = view.getHeight();
-        
-        // 重新设置缩放后尺寸
-        params.width = (int) (originalWidth * scale);
-        params.height = (int) (originalHeight * scale);
-        view.setLayoutParams(params);
+    // 处理父容器缩放
+    ViewGroup.LayoutParams parentParams = ((ViewGroup)view).getLayoutParams();
+    if (parentParams.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
+        parentParams.width = (int) (parentParams.width * scale);
     }
+    if (parentParams.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+        parentParams.height = (int) (parentParams.height * scale);
+    }
+    ((ViewGroup)view).setLayoutParams(parentParams);
 
     // 处理padding缩放
     view.setPadding(
@@ -2326,7 +2317,7 @@ public static boolean toggleViewSize(View view, boolean currentState) {
     );
 
     // 处理margin缩放
-    ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) params;
+    ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) parentParams;
     marginParams.setMargins(
         (int) (marginParams.leftMargin * scale),
         (int) (marginParams.topMargin * scale),
@@ -2334,20 +2325,16 @@ public static boolean toggleViewSize(View view, boolean currentState) {
         (int) (marginParams.bottomMargin * scale)
     );
 
-    // 处理文本缩放
-    if (view instanceof TextView) {
-        TextView textView = (TextView) view;
-        float originalTextSize = textView.getTextSize();
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, originalTextSize * scale);
-    }
-
-    // 处理MarqueeTextView特殊缩放
-    if (view instanceof TextView) {
-        ((TextView)view).setMarqueeRepeatLimit(-1); // 无限滚动
+    // 递归处理所有子视图
+    ViewGroup viewGroup = (ViewGroup) view;
+    for (int i = 0; i < viewGroup.getChildCount(); i++) {
+        View child = viewGroup.getChildAt(i);
+        toggleViewSize(child, currentState);
     }
 
     return !currentState;
 }
+
 
 
 
