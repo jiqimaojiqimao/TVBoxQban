@@ -303,6 +303,7 @@ public class VodController extends BaseController {
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
 	private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
 	private boolean isCirclebg = true; //音乐图标
+	private boolean isIcon_play = true; //暂停图标
 	private static final String TAG = "VodController";  //xuameng音乐播放动画
 	private boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // true 开启 false 关闭
 	private boolean isShowPreview = true;
@@ -399,20 +400,21 @@ public class VodController extends BaseController {
                             iv_circle_bg.setVisibility(VISIBLE);
                         }
                     }
-					if (showPreview && isShowPreview) {
+					if (showPreview && !isShowPreview) {
                         if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                         isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
                         }
                         if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
                            isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
                         }
-                        isShowPreview = false;
+						isShowPreview = true;
                     }
+					                        isShowPreview = false;
                 }
             } else {
                 iv_circle_bg.setVisibility(GONE);
             } //xuameng音乐播放时图标判断完
-            mHandler.postDelayed(this, 100);
+            mHandler.postDelayed(this, 1000);
         }
     };
     private Runnable myRunnableMusic = new Runnable() { //xuameng播放音频切换图片
@@ -508,6 +510,7 @@ public class VodController extends BaseController {
         play_speed_3 = findViewById(R.id.play_speed_3_container); //xuameng倍速播放
         XuLoading = findViewWithTag("vod_control_loading"); //xuameng  loading 
         customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
+        icon_play = (ImageView) findViewById(R.id.icon_play); //xuameng音乐播放时图标
         tv_slide_progress_text = findViewById(R.id.tv_slide_progress_text);
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
@@ -2303,6 +2306,9 @@ public class VodController extends BaseController {
             }
             if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
                isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+            }
+            if(icon_play.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+               isIcon_play = toggleViewSize(icon_play, isIcon_play);
             }
         }
     }
