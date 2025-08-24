@@ -1514,15 +1514,13 @@ public class VodController extends BaseController {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        boolean isShowPreview = true;
-                        if (showPreview && !HawkConfig.isFullWindows && isShowPreview) {
+                        if (showPreview && !HawkConfig.isFullWindows) {
                             if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                                 isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
                             }
                             if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
                                 isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
                             }
-                            isShowPreview = false;
                         }
                     }
                 }, 130);
@@ -2299,14 +2297,23 @@ public static boolean toggleViewSize(View view, boolean currentState) {
     ViewGroup.LayoutParams params = view.getLayoutParams();
     float scale = currentState ? 0.6f : 1.0f / 0.6f;
 
-    // 统一处理宽高缩放
-    if (params.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
-        params.width = (int) (params.width * scale);
-    }
-    if (params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
-        params.height = (int) (params.height * scale);
-    }
-    view.setLayoutParams(params);
+    // 处理固定尺寸视图
+    if (params.width != ViewGroup.LayoutParams.WRAP_CONTENT && 
+        params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+        // 先转换为WRAP_CONTENT再缩放
+        params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        view.setLayoutParams(params);
+        
+        // 获取原始尺寸
+        int originalWidth = view.getWidth();
+        int originalHeight = view.getHeight();
+        
+        // 重新设置缩放后尺寸
+        params.width = (int) (originalWidth * scale);
+        params.height = (int) (originalHeight * scale);
+        view.setLayoutParams(params);
+ 
 
     // 处理padding缩放
     view.setPadding(
@@ -2324,30 +2331,23 @@ public static boolean toggleViewSize(View view, boolean currentState) {
         (int) (marginParams.rightMargin * scale),
         (int) (marginParams.bottomMargin * scale)
     );
-    
-    // 文本缩放（最后处理）
+
+    // 处理文本缩放
     if (view instanceof TextView) {
         TextView textView = (TextView) view;
-        float textSize = textView.getTextSize();
-        // 先转换为像素单位进行计算
-        float pxTextSize = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_PX, 
-            textSize, 
-            textView.getContext().getResources().getDisplayMetrics()
-        );
-        // 计算缩放后的像素值
-        float scaledPxSize = pxTextSize * scale;
-        // 再转换回毫米单位
-        float mmTextSize = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_MM, 
-            scaledPxSize, 
-            textView.getContext().getResources().getDisplayMetrics()
-        );
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_MM, mmTextSize);
+        float originalTextSize = textView.getTextSize();
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, originalTextSize * scale);
+    }
+
+    // 处理MarqueeTextView特殊缩放
+    if (view instanceof MarqueeTextView) {
+        MarqueeTextView marqueeTextView = (MarqueeTextView) view;
+        marqueeTextView.setMarqueeRepeatLimit(MarqueeTextView.INFINITE);
     }
 
     return !currentState;
 }
+
 
 
 
