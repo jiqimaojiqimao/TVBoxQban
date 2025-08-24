@@ -305,6 +305,7 @@ public class VodController extends BaseController {
 	private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
 	private boolean isCirclebg = true; //音乐图标
 	private boolean isIcon_play = true; //暂停图标
+	private boolean isTvPausexu = true; //暂停图标
 	private static final String TAG = "VodController";  //xuameng音乐播放动画
 	private boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // true 开启 false 关闭
 	private boolean isShowPreview = true;
@@ -1513,20 +1514,20 @@ public class VodController extends BaseController {
                 isVideoplaying = true;
                 isVideoPlay = true;
                 //playIngXu();	
-new Handler().postDelayed(new Runnable() {
-    @Override
-    public void run() {
-        if (showPreview && isShowPreview) {
-            if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
-                isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
-            }
-            if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
-                isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
-            }
-            isShowPreview = false;
-        }
-    }
-}, 300);
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (showPreview && isShowPreview) {
+                            if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                                isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
+                            }
+                            if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+                                isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
+                            }
+                            isShowPreview = false;
+                        }
+                    }
+                }, 800);
                 break;
             case VideoView.STATE_PAUSED:
                 isVideoPlay = false;
@@ -1946,7 +1947,7 @@ new Handler().postDelayed(new Runnable() {
                 mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面时间
                 mPlayTitle.setVisibility(GONE); //xuameng隐藏上面视频名称
                 backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
-                mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
+             //   mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
                 mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
                 if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                    isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
@@ -1973,7 +1974,7 @@ new Handler().postDelayed(new Runnable() {
         mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面时间
         mPlayTitle.setVisibility(GONE); //xuameng隐藏上面视频名称
         backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
-        mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
+     //   mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
         mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
         if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
            isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
@@ -2314,6 +2315,9 @@ new Handler().postDelayed(new Runnable() {
             }
             if(icon_play.getVisibility() == View.VISIBLE) { //xuameng音乐图标
                isIcon_play = toggleViewSize(icon_play, isIcon_play);
+            }
+            if(mTvPausexu.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+               isTvPausexu = toggleViewSize(mTvPausexu, isTvPausexu);
             }
         }
     }
