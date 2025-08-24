@@ -225,6 +225,9 @@ public class DetailActivity extends BaseActivity {
             getSupportFragmentManager().beginTransaction().show(playFragment).commitAllowingStateLoss();
             tvPlay.setText("全屏");
 
+setContentView(R.layout.player_vod_control_view);
+		customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
+		iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
            isOriginalSize = VodController.toggleViewSize(customVisualizer, isOriginalSize); //xuameng音乐图标
            isCirclebg = VodController.toggleViewSize(iv_circle_bg, isCirclebg);  //xuameng音乐图标
         }
@@ -1351,6 +1354,9 @@ public class DetailActivity extends BaseActivity {
         int subtitleTextSize  = SubtitleHelper.getTextSize(this);
         if (!fullWindows) {
             subtitleTextSize *= 0.6;
+			setContentView(R.layout.player_vod_control_view);
+		customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
+		iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
             isOriginalSize = VodController.toggleViewSize(customVisualizer, isOriginalSize);  //xuameng音乐图标
             isCirclebg = VodController.toggleViewSize(iv_circle_bg, isCirclebg);  //xuameng音乐图标
         }
