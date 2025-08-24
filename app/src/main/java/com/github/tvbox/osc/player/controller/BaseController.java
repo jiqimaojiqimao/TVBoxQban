@@ -103,7 +103,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private TextView mSlideInfo;
     private ProgressBar mLoading;
     private ViewGroup mPauseRoot;
-    public TextView mPauseTime;  //xuameng音乐播放暂停时间改为public
+    private TextView mPauseTime;
 	private ImageView music_iv_circle_bg;  //xuameng音乐播放时图标
 
     @Override
