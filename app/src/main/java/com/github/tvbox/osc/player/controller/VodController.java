@@ -1520,16 +1520,18 @@ public class VodController extends BaseController {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        if (showPreview && HawkConfig.isFullWindows) {
+                        boolean isShowPreview = true;
+                        if (showPreview && !HawkConfig.isFullWindows && isShowPreview) {
                             if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                                 isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
                             }
                             if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
                                 isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
                             }
+                            isShowPreview = false;
                         }
                     }
-                }, 200);
+                }, 130);
                 break;
             case VideoView.STATE_PAUSED:
                 isVideoPlay = false;
@@ -2324,7 +2326,24 @@ public static boolean toggleViewSize(View view, boolean currentState) {
     }
     view.setLayoutParams(params);
 
-    // 文本缩放（类型安全处理）
+    // 处理padding缩放
+    view.setPadding(
+        (int) (view.getPaddingLeft() * scale),
+        (int) (view.getPaddingTop() * scale),
+        (int) (view.getPaddingRight() * scale),
+        (int) (view.getPaddingBottom() * scale)
+    );
+
+    // 处理margin缩放
+    ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) params;
+    marginParams.setMargins(
+        (int) (marginParams.leftMargin * scale),
+        (int) (marginParams.topMargin * scale),
+        (int) (marginParams.rightMargin * scale),
+        (int) (marginParams.bottomMargin * scale)
+    );
+    
+    // 文本缩放（最后处理）
     if (view instanceof TextView) {
         TextView textView = (TextView) view;
         float textSize = textView.getTextSize();
@@ -2345,25 +2364,9 @@ public static boolean toggleViewSize(View view, boolean currentState) {
         textView.setTextSize(TypedValue.COMPLEX_UNIT_MM, mmTextSize);
     }
 
-    // 处理padding缩放
-    view.setPadding(
-        (int) (view.getPaddingLeft() * scale),
-        (int) (view.getPaddingTop() * scale),
-        (int) (view.getPaddingRight() * scale),
-        (int) (view.getPaddingBottom() * scale)
-    );
-
-    // 处理margin缩放（新增）
-    ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) params;
-    marginParams.setMargins(
-        (int) (marginParams.leftMargin * scale),
-        (int) (marginParams.topMargin * scale),
-        (int) (marginParams.rightMargin * scale),
-        (int) (marginParams.bottomMargin * scale)
-    );
-    
     return !currentState;
 }
+
 
 
 
