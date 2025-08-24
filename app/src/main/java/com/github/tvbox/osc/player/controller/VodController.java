@@ -2298,15 +2298,23 @@ public class VodController extends BaseController {
 public static boolean toggleViewSize(View view, boolean currentState) {
     float scale = currentState ? 0.6f : 1.0f / 0.6f;
 
-    // 处理父容器缩放
-    ViewGroup.LayoutParams parentParams = ((ViewGroup)view).getLayoutParams();
-    if (parentParams.width != ViewGroup.LayoutParams.WRAP_CONTENT) {
-        parentParams.width = (int) (parentParams.width * scale);
+    // 处理基础尺寸缩放
+    ViewGroup.LayoutParams params = view.getLayoutParams();
+    if (params.width != ViewGroup.LayoutParams.WRAP_CONTENT || 
+        params.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
+        params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        view.setLayoutParams(params);
+        
+        // 获取原始尺寸
+        int originalWidth = view.getWidth();
+        int originalHeight = view.getHeight();
+        
+        // 重新设置缩放后尺寸
+        params.width = (int) (originalWidth * scale);
+        params.height = (int) (originalHeight * scale);
+        view.setLayoutParams(params);
     }
-    if (parentParams.height != ViewGroup.LayoutParams.WRAP_CONTENT) {
-        parentParams.height = (int) (parentParams.height * scale);
-    }
-    ((ViewGroup)view).setLayoutParams(parentParams);
 
     // 处理padding缩放
     view.setPadding(
@@ -2317,20 +2325,55 @@ public static boolean toggleViewSize(View view, boolean currentState) {
     );
 
     // 处理margin缩放
-    ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) parentParams;
-    marginParams.setMargins(
-        (int) (marginParams.leftMargin * scale),
-        (int) (marginParams.topMargin * scale),
-        (int) (marginParams.rightMargin * scale),
-        (int) (marginParams.bottomMargin * scale)
-    );
-
-    // 递归处理所有子视图
-    ViewGroup viewGroup = (ViewGroup) view;
-    for (int i = 0; i < viewGroup.getChildCount(); i++) {
-        View child = viewGroup.getChildAt(i);
-        toggleViewSize(child, currentState);
+    if (view instanceof ViewGroup) {
+        ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) params;
+        marginParams.setMargins(
+            (int) (marginParams.leftMargin * scale),
+            (int) (marginParams.topMargin * scale),
+            (int) (marginParams.rightMargin * scale),
+            (int) (marginParams.bottomMargin * scale)
+        );
     }
+
+    // 处理子视图缩放
+    if (view instanceof ViewGroup) {
+        ViewGroup viewGroup = (ViewGroup) view;
+        for (int i = 0; i < viewGroup.getChildCount(); i++) {
+            View child = viewGroup.getChildAt(i);
+            
+            // 处理ImageView缩放
+            if (child instanceof ImageView) {
+                ImageView imageView = (ImageView) child;
+                imageView.setScaleX(scale);
+                imageView.setScaleY(scale);
+            }
+            
+            // 处理TextView缩放
+            if (child instanceof TextView) {
+                TextView textView = (TextView) child;
+                float originalTextSize = textView.getTextSize();
+                textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, originalTextSize * scale);
+            }
+            
+            // 处理MarqueeTextView特殊缩放
+            if (child instanceof TextView) {
+                ((TextView)child).setMarqueeRepeatLimit(-1); // 无限滚动
+            }
+   // 处理自定义属性（如有）
+    if(view instanceof MusicVisualizerView) {
+        // 调整柱状图相关参数
+        customVisualizer.setBarWidth(visualizer.getBarWidth() * scale);
+        customVisualizer.setBarGap(visualizer.getBarGap() * scale);
+    }
+            
+            // 递归处理子视图
+            toggleViewSize(child, currentState);
+        }
+    }
+
+    return !currentState;
+}
+
 
     return !currentState;
 }
