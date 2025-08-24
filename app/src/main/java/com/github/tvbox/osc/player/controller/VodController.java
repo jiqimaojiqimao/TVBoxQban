@@ -1514,13 +1514,15 @@ public class VodController extends BaseController {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        if (showPreview && !HawkConfig.isFullWindows) {
+                        boolean isShowPreview = true;
+                        if (showPreview && !HawkConfig.isFullWindows && isShowPreview) {
                             if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                                 isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
                             }
                             if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
                                 isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
                             }
+                            isShowPreview = false;
                         }
                     }
                 }, 130);
@@ -2313,7 +2315,7 @@ public static boolean toggleViewSize(View view, boolean currentState) {
         params.width = (int) (originalWidth * scale);
         params.height = (int) (originalHeight * scale);
         view.setLayoutParams(params);
- 
+    }
 
     // 处理padding缩放
     view.setPadding(
