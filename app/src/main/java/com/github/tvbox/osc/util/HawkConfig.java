@@ -59,7 +59,6 @@ public class HawkConfig {
 	public static boolean ISrestore = false;  //xuameng判断是否进行恢复操作
 	public static boolean isGetWp = false;  //xuameng下载壁纸
     public static boolean saveHistory = false;  //xuameng 存储历史记录
-    public static boolean isFullWindows = false;  //xuameng 是否全屏
 
     public static boolean hotVodDelete;
 }
