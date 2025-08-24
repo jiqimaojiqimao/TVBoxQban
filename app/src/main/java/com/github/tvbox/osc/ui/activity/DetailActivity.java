@@ -130,8 +130,6 @@ public class DetailActivity extends BaseActivity {
     private TvRecyclerView mSeriesGroupView;      //xuameng多集组
 	private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
 	private boolean isCirclebg = true; //音乐图标
-    private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
-    private ImageView iv_circle_bg; //xuameng音乐播放时图标
     private LinearLayout mEmptyPlayList;
     private SourceViewModel sourceViewModel;
     private Movie.Video mVideo;
@@ -228,9 +226,11 @@ public class DetailActivity extends BaseActivity {
             getSupportFragmentManager().beginTransaction().show(playFragment).commitAllowingStateLoss();
             tvPlay.setText("全屏");
 
-setContentView(R.layout.player_vod_control_view);
-		customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
-		iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
+           setContentView(R.layout.player_vod_control_view);
+           MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
+           ImageView iv_circle_bg; //xuameng音乐播放时图标
+           customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
+           iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
            isOriginalSize = VodController.toggleViewSize(customVisualizer, isOriginalSize); //xuameng音乐图标
            isCirclebg = VodController.toggleViewSize(iv_circle_bg, isCirclebg);  //xuameng音乐图标
         }
@@ -1351,17 +1351,21 @@ setContentView(R.layout.player_vod_control_view);
 		tvPush.setFocusable(!fullWindows);    //xuameng 远程推送
 		llPlayerFragmentContainerBlock.setFocusable(!fullWindows);
         toggleSubtitleTextSize();
+        if (fullWindows) {
+            setContentView(R.layout.player_vod_control_view);
+            MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
+            ImageView iv_circle_bg; //xuameng音乐播放时图标
+            customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
+            iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
+            isOriginalSize = VodController.toggleViewSize(customVisualizer, isOriginalSize); //xuameng音乐图标
+            isCirclebg = VodController.toggleViewSize(iv_circle_bg, isCirclebg);  //xuameng音乐图标
+        }
     }
 
     void toggleSubtitleTextSize() {
         int subtitleTextSize  = SubtitleHelper.getTextSize(this);
         if (!fullWindows) {
             subtitleTextSize *= 0.6;
-			setContentView(R.layout.player_vod_control_view);
-		customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
-		iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
-            isOriginalSize = VodController.toggleViewSize(customVisualizer, isOriginalSize);  //xuameng音乐图标
-            isCirclebg = VodController.toggleViewSize(iv_circle_bg, isCirclebg);  //xuameng音乐图标
         }
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SUBTITLE_SIZE_CHANGE, subtitleTextSize));
     }
