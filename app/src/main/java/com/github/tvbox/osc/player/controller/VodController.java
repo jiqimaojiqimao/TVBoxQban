@@ -302,13 +302,14 @@ public class VodController extends BaseController {
     private Visualizer mVisualizer;  //xuameng音乐播放动画
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
-	private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
-	private boolean isCirclebg = true; //音乐图标
-	private boolean isIcon_play = true; //暂停图标
-	private boolean isTvPausexu = true; //暂停图标
-	private static final String TAG = "VodController";  //xuameng音乐播放动画
-	private boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // true 开启 false 关闭
-	private boolean isShowPreview = true;
+    private boolean isOriginalSize = true;   //xuameng播放音乐柱状图
+    private boolean isCirclebg = true; //xuameng音乐图标
+    private boolean isIcon_play = true; //xuameng暂停图标
+    private boolean isTvPausexu = true; //xuameng暂停图标
+    private static final String TAG = "VodController";  //xuameng音乐播放动画
+    private boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true); // xuamengtrue 开启 false 关闭
+    private boolean isShowPreview = true;  //xuameng小窗口
+    private boolean isPauseTime = true; //xuameng暂停图标
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 50000; //闲置多少毫秒秒关闭底栏  默认100秒
@@ -503,6 +504,7 @@ public class VodController extends BaseController {
         XuLoading = findViewWithTag("vod_control_loading"); //xuameng  loading 
         customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
         icon_play = (ImageView) findViewById(R.id.icon_play); //xuameng音乐播放时图标
+        mPauseTime = findViewWithTag("vod_control_pause_t"); //xuameng音乐播放时图标
         tv_slide_progress_text = findViewById(R.id.tv_slide_progress_text);
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
@@ -1527,7 +1529,7 @@ public class VodController extends BaseController {
                             isShowPreview = false;
                         }
                     }
-                }, 300);
+                }, 200);
                 break;
             case VideoView.STATE_PAUSED:
                 isVideoPlay = false;
@@ -1949,17 +1951,20 @@ public class VodController extends BaseController {
                 backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
              //   mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
                 mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
-                if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                if(customVisualizer.getVisibility() == View.VISIBLE && showPreview) { //xuameng播放音乐柱状图
                    isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
                 }
-                if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+                if(iv_circle_bg.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
                    isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
                 }
-                if(mTvPausexu.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+                if(mTvPausexu.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
                    isTvPausexu = toggleViewSize(mTvPausexu, isTvPausexu);
                 }
-                if(icon_play.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+                if(icon_play.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
                    isIcon_play = toggleViewSize(icon_play, isIcon_play);
+                }
+                if(mPauseTime.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
+                   isPauseTime = toggleViewSize(mPauseTime, isPauseTime);
                 }
             }
             return false;
@@ -1982,17 +1987,20 @@ public class VodController extends BaseController {
         backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
      //   mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
         mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
-        if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+        if(customVisualizer.getVisibility() == View.VISIBLE && showPreview) { //xuameng播放音乐柱状图
            isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
         }
-        if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+        if(iv_circle_bg.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
            isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
         }
-        if(mTvPausexu.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+        if(mTvPausexu.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
            isTvPausexu = toggleViewSize(mTvPausexu, isTvPausexu);
         }
-        if(icon_play.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+        if(icon_play.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
            isIcon_play = toggleViewSize(icon_play, isIcon_play);
+        }
+        if(mPauseTime.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
+           isPauseTime = toggleViewSize(mPauseTime, isPauseTime);
         }
         return false;
     }
@@ -2319,17 +2327,20 @@ public class VodController extends BaseController {
     @Subscribe(threadMode = ThreadMode.MAIN)      //xuameng 图像缩放
     public void onRefreshEvent(RefreshEvent event) {
         if (event.type == RefreshEvent.TYPE_IMAGE_SIZE) {
-            if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+            if(customVisualizer.getVisibility() == View.VISIBLE && showPreview) { //xuameng播放音乐柱状图
                 isOriginalSize = toggleViewSize(customVisualizer, isOriginalSize);
             }
-            if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+            if(iv_circle_bg.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
                isCirclebg = toggleViewSize(iv_circle_bg, isCirclebg);
             }
-            if(icon_play.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+            if(icon_play.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
                isIcon_play = toggleViewSize(icon_play, isIcon_play);
             }
-            if(mTvPausexu.getVisibility() == View.VISIBLE) { //xuameng音乐图标
+            if(mTvPausexu.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
                isTvPausexu = toggleViewSize(mTvPausexu, isTvPausexu);
+            }
+            if(mPauseTime.getVisibility() == View.VISIBLE && showPreview) { //xuameng音乐图标
+               isPauseTime = toggleViewSize(mPauseTime, isPauseTime);
             }
         }
     }
