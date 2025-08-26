@@ -63,8 +63,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
    // 创建FFmpegAudioRenderer实例
     FFmpegAudioRenderer audioRenderer = new FFmpegAudioRenderer(
-        new MediaCodecSelector.Default(),
-        DefaultRenderersFactory.DEFAULT_ALLOWED_VIDEO_JOINING_TIME_MS
     );
 
   //      mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
