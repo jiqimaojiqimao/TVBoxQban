@@ -77,6 +77,8 @@ public class ModelSettingFragment extends BaseLazyFragment {
     private TextView tvHomeApi;
 	private TextView tvHomeDefaultShow;       //xuameng直接进入直播
 	private TextView tvm3u8AdText;  //xuameng去广告
+    private TextView tvShowMusicZb;  //xuameng 直播动画
+    private TextView tvShowMusicDb;  //xuameng 点播动画
     private TextView tvDns;
     private TextView tvHomeRec;
     private TextView tvHistoryNum;
@@ -105,6 +107,10 @@ public class ModelSettingFragment extends BaseLazyFragment {
     protected void init() {
         tvFastSearchText = findViewById(R.id.showFastSearchText);
         tvm3u8AdText = findViewById(R.id.m3u8AdText);    //xuameng去广告
+        tvShowMusicZb = findViewById(R.id.zbmusictext);    //xuameng直播动画
+        tvShowMusicDb = findViewById(R.id.dbmusictext);    //xuameng点播动画
+        tvShowMusicZb.setText(Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false) ? "已开启" : "已关闭"); //xuameng去广告
+        tvShowMusicDb.setText(Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false) ? "已开启" : "已关闭");
         tvm3u8AdText.setText(Hawk.get(HawkConfig.M3U8_PURIFY, false) ? "已开启" : "已关闭"); //xuameng去广告
         tvFastSearchText.setText(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) ? "已开启" : "已关闭");
         tvRecStyleText = findViewById(R.id.showRecStyleText);
@@ -693,6 +699,24 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 boolean is_purify=Hawk.get(HawkConfig.M3U8_PURIFY, false);
                 Hawk.put(HawkConfig.M3U8_PURIFY, !is_purify);
                 tvm3u8AdText.setText(!is_purify ? "已开启" : "已关闭");
+            }
+        });
+        findViewById(R.id.llMusicdb).setOnClickListener(new View.OnClickListener() {   //xuameng点播动画
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                boolean musicdb=Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false);
+                Hawk.put(HawkConfig.VOD_MUSIC_ANIMATION, !musicdb);
+                tvShowMusicDb.setText(!musicdb ? "已开启" : "已关闭");
+            }
+        });
+        findViewById(R.id.llMusiczb).setOnClickListener(new View.OnClickListener() {   //xuameng点播动画
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                boolean is_musiczb=Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false);
+                Hawk.put(HawkConfig.LIVE_MUSIC_ANIMATION, !is_musiczb);
+                tvShowMusicZb.setText(!is_musiczb ? "已开启" : "已关闭");
             }
         });
         findViewById(R.id.llHomeRecStyle).setOnClickListener(new View.OnClickListener() {
