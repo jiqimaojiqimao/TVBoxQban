@@ -24,7 +24,6 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
 import xyz.doikki.videoplayer.exo.PgsRenderersFactory;
 
-import com.google.android.exoplayer2.ext.ffmpeg.FfmpegAudioRenderer;
 
 
 import java.util.Map;
@@ -61,14 +60,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (mRenderersFactory == null) {
 			mRenderersFactory = new PgsRenderersFactory(mAppContext);
         }
-   // 创建FFmpegAudioRenderer实例
-    FFmpegAudioRenderer audioRenderer = new FFmpegAudioRenderer(
-    );
 
   //      mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
 		    // 将FFmpeg渲染器添加到渲染器工厂
-    mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-        .addExtensionRenderer(audioRenderer, DefaultRenderersFactory.TYPE_AUDIO, 0);
+    mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
 
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
