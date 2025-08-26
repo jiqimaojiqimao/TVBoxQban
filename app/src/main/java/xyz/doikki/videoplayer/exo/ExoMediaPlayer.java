@@ -24,9 +24,9 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
 import com.google.android.exoplayer2.ext.ffmpeg.FfmpegAudioRenderer;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.extractor.ExtractorsFactory
+import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
-import com.google.android.exoplayer2.video.MediaCodecSelector
+import com.google.android.exoplayer2.video.MediaCodecSelector;
 
 
 import java.util.Map;
@@ -70,8 +70,9 @@ RenderersFactory mRenderersFactory = (handler, videoListener, audioListener,
 };
 
 DefaultExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
-    .setConstantBitrateSeekingEnabled(true)
     .setFfmpegExtractorEnabled(true);
+DefaultMediaSourceFactory mediaSourceFactory = new DefaultMediaSourceFactory(
+    mAppContext, extractorsFactory);
 
 
     @Override
