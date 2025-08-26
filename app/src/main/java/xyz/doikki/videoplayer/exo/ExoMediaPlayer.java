@@ -22,9 +22,6 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
-import xyz.doikki.videoplayer.exo.PgsRenderersFactory;
-
-
 
 import java.util.Map;
 
@@ -58,29 +55,20 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     @Override
     public void initPlayer() {
         if (mRenderersFactory == null) {
-			mRenderersFactory = new PgsRenderersFactory(mAppContext);
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
         }
-
-  //      mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
-		    // 将FFmpeg渲染器添加到渲染器工厂
-    mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
-
+        mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
-
-
-
         if (mLoadControl == null) {
             mLoadControl = new DefaultLoadControl();
         }
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
-    mMediaPlayer = new ExoPlayer.Builder(mAppContext)
-        .setRenderersFactory(mRenderersFactory)
-        .setTrackSelector(mTrackSelector)
-        .setLoadControl(mLoadControl)
-        .build();
-
+        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+                .setLoadControl(mLoadControl)
+                .setRenderersFactory(mRenderersFactory)
+                .setTrackSelector(mTrackSelector).build();
 
         setOptions();
         mMediaPlayer.addListener(this);
