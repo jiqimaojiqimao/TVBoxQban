@@ -215,6 +215,7 @@ public class LivePlayActivity extends BaseActivity {
     private CountDownTimer countDownTimer22;  //xuameng显示设置菜单用
     private Visualizer mVisualizer;  //xuameng音乐播放动画
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
+    private boolean musicAnimation = false;     ////xuameng 音柱动画 加载设置
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
 	private static final String TAG = "LivePlayActivity";  //xuameng音乐播放动画
     private final int videoWidth = 1920;
@@ -1935,12 +1936,15 @@ public class LivePlayActivity extends BaseActivity {
                         String width = Integer.toString(mVideoView.getVideoSize()[0]);
                         String height = Integer.toString(mVideoView.getVideoSize()[1]);
                         tv_size.setText("[" + width + " X " + height + "]");
-                        if(width.length() <= 1 && height.length() <= 1 ) {
-                           int newSessionId = mVideoView.getAudioSessionId();   //xuameng音乐播放动画
-                           if(newSessionId != audioSessionId) { // 避免重复初始化
-                              initVisualizer();  //xuameng音乐播放动画
-                           }
-				        }
+
+                        musicAnimation = livePlayerManager.getLivePlaymusic();
+                        if (musicAnimation){
+                            int newSessionId = mVideoView.getAudioSessionId();   //xuameng音乐播放动画
+                            if(newSessionId != audioSessionId) { // 避免重复初始化
+                               initVisualizer();  //xuameng音乐播放动画
+                            }
+                        }
+
                         int duration1 = (int) mVideoView.getDuration();
                         if(isBack) {
                             sBar = (SeekBar) findViewById(R.id.pb_progressbar); //xuameng回看进度条
@@ -2324,6 +2328,14 @@ public class LivePlayActivity extends BaseActivity {
             case 6:
                 liveSettingItemAdapter.selectItem(livePlayerManager.getLivePlayrender(), true, true); //xuameng 获取渲染方式
                 break;
+            case 7:
+                musicAnimation = livePlayerManager.getLivePlaymusic();
+                if (musicAnimation){
+                    liveSettingItemAdapter.selectItem(0, true, true);  //xuameng 音柱动画开
+                }else{
+                    liveSettingItemAdapter.selectItem(1, true, true);  //xuameng 音柱动画关
+                }
+                break;
         }
         int scrollToPosition = liveSettingItemAdapter.getSelectedItemIndex();
         if(scrollToPosition < 0) scrollToPosition = 0;
@@ -2456,7 +2468,18 @@ public class LivePlayActivity extends BaseActivity {
                     iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
                 }
                 break;
-            case 7: //xuameng退出直播
+            case 7: //xuameng音柱动画 点击
+                if(position == liveSettingItemAdapter.getSelectedItemIndex()) return;
+                if(mVideoView == null) return;
+                livePlayerManager.changeLivePlayerMusic(mVideoView, position, currentLiveChannelItem.getChannelName()); 
+                if (position == 0){
+                    initVisualizer();  //xuameng音乐播放动画
+                }else{
+                    releaseVisualizer();  //xuameng音乐播放动画
+                }
+                liveSettingItemAdapter.selectItem(position, true, true);
+                break;
+            case 8: //xuameng退出直播
                 mHideSettingLayoutRun();
                 ExitLiveOnSetting();
                 break;
@@ -2777,6 +2800,16 @@ public class LivePlayActivity extends BaseActivity {
                 String width = Integer.toString(mVideoView.getVideoSize()[0]);
                 String height = Integer.toString(mVideoView.getVideoSize()[1]);
                 //	tv_size.setText("[" + width + " X " + height +"]");
+                musicAnimation = livePlayerManager.getLivePlaymusic();
+                if (musicAnimation){
+                    if(customVisualizer.getVisibility() == View.GONE) { //xuameng播放音乐柱状图
+                        customVisualizer.setVisibility(View.VISIBLE);
+                    }
+                }else{
+                    if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                        customVisualizer.setVisibility(View.GONE);
+                    }
+                }
                 if(width.length() > 1 && height.length() > 1) { //XUAMENG分辨率
                     if(iv_circle_bg_xu.getVisibility() == View.VISIBLE) { //xuameng音乐播放时图标
                         iv_circle_bg_xu.setVisibility(View.GONE);
@@ -2784,15 +2817,9 @@ public class LivePlayActivity extends BaseActivity {
                     if(MxuamengMusic.getVisibility() == View.VISIBLE) { //xuameng播放音乐背景
                         MxuamengMusic.setVisibility(View.GONE);
                     }
-                    if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
-                        customVisualizer.setVisibility(View.GONE);
-                    }
                 } else {
                     if(MxuamengMusic.getVisibility() == View.GONE) { //xuameng播放音乐背景
                         MxuamengMusic.setVisibility(View.VISIBLE);
-                    }
-                    if(customVisualizer.getVisibility() == View.GONE) { //xuameng播放音乐柱状图
-                       customVisualizer.setVisibility(View.VISIBLE);
                     }
                     if(isBuffer || isShowlist || HawkConfig.MSLIDEINFO) { //xuameng缓冲时，显示左菜单时，显示亮度音量时
                         if(iv_circle_bg_xu.getVisibility() == View.VISIBLE) { //xuameng音乐播放时图标
@@ -3349,6 +3376,9 @@ public class LivePlayActivity extends BaseActivity {
             }
             if (customVisualizer != null) {
                 customVisualizer.release();
+            }
+            if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                customVisualizer.setVisibility(View.GONE);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error releasing visualizer", e);
