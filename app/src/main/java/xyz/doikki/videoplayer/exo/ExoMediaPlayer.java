@@ -23,8 +23,8 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
 import xyz.doikki.videoplayer.exo.PgsRenderersFactory;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
+
+import com.google.android.exoplayer2.ext.ffmpeg.FfmpegAudioRenderer;
 
 
 import java.util.Map;
@@ -59,16 +59,23 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     @Override
     public void initPlayer() {
         if (mRenderersFactory == null) {
-
 			mRenderersFactory = new PgsRenderersFactory(mAppContext);
         }
-        mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
+   // 创建FFmpegAudioRenderer实例
+    FFmpegAudioRenderer audioRenderer = new FFmpegAudioRenderer(
+        new MediaCodecSelector.Default(),
+        DefaultRenderersFactory.DEFAULT_ALLOWED_VIDEO_JOINING_TIME_MS
+    );
+
+  //      mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
+		    // 将FFmpeg渲染器添加到渲染器工厂
+    mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+        .addExtensionRenderer(audioRenderer, DefaultRenderersFactory.TYPE_AUDIO, 0);
+
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
 
-		DefaultExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
-        .setFfmpegExtractorEnabled(true);
 
 
         if (mLoadControl == null) {
@@ -77,10 +84,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
     mMediaPlayer = new ExoPlayer.Builder(mAppContext)
         .setRenderersFactory(mRenderersFactory)
-        .setMediaSourceFactory(new DefaultMediaSourceFactory(mAppContext, extractorsFactory))
         .setTrackSelector(mTrackSelector)
         .setLoadControl(mLoadControl)
         .build();
+
 
         setOptions();
         mMediaPlayer.addListener(this);
