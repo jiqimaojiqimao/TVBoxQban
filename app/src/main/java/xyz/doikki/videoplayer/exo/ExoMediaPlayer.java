@@ -26,6 +26,9 @@ import com.google.android.exoplayer2.ext.ffmpeg.FfmpegAudioRenderer;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
+import com.google.android.exoplayer2.Renderer;
+
 
 
 import java.util.Map;
@@ -45,7 +48,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private boolean mIsPreparing;
 
     private LoadControl mLoadControl;
-    private DefaultRenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
 
     private int errorCode = -100;
@@ -65,10 +67,6 @@ DefaultRenderersFactory mRenderersFactory = (handler, videoListener, audioListen
     };
 };
 
-DefaultExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
-    .setFfmpegExtractorEnabled(true);
-DefaultMediaSourceFactory mediaSourceFactory = new DefaultMediaSourceFactory(
-    mAppContext, extractorsFactory);
 
 
     @Override
@@ -86,7 +84,6 @@ DefaultMediaSourceFactory mediaSourceFactory = new DefaultMediaSourceFactory(
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
-			.setMediaSourceFactory(mediaSourceFactory)
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
 
