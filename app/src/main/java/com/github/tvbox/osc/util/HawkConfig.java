@@ -51,6 +51,8 @@ public class HawkConfig {
 	public static final String M3U8_PURIFY = "m3u8_purify";  //xuameng广告过滤
 	public static final String LIVE_API_HISTORY = "live_api_history";   //xuameng直播历史列表
 	public static final String LIVE_WEB_HEADER = "live_web_header";    //xuameng直播定义UA
+    public static final String LIVE_MUSIC_ANIMATION = "live_music_animation";  //xuameng直播音乐动画
+    public static final String VOD_MUSIC_ANIMATION = "vod_music_animation";  //xuameng点播音乐动画
 
 	public static boolean MSLIDEINFO = false;  //xuameng调节亮度声音
 	public static boolean intLIVEPLAYTYPE = false;  //xuameng是否有直播默认播放器
