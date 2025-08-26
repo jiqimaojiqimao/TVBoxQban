@@ -30,6 +30,7 @@ public class LivePlayerManager {
             defaultPlayerConfig.put("ijk", Hawk.get(HawkConfig.IJK_CODEC, "软解码"));
             defaultPlayerConfig.put("pr", Hawk.get(HawkConfig.PLAY_RENDER, 0));
             defaultPlayerConfig.put("sc", Hawk.get(HawkConfig.PLAY_SCALE, 0));
+            defaultPlayerConfig.put("music", Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false));   //xuameng音乐播放动画设置
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -105,12 +106,23 @@ public class LivePlayerManager {
     }
 
     public int getLivePlayrender() {   //xuameng 获取渲染方式
+        int pr = Hawk.get(HawkConfig.PLAY_RENDER, 0);
         try {
             return currentPlayerConfig.getInt("pr");
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return 0;
+        return pr;
+    }
+
+    public boolean getLivePlaymusic() {   //xuameng 获取柱状图设置
+        boolean musicType = Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false);
+        try {
+            return currentPlayerConfig.getBoolean("music");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return musicType;
     }
 
     public void changeLivePlayerType(VideoView videoView, int playerType, String channelName) {
@@ -169,10 +181,34 @@ public class LivePlayerManager {
         try {
             switch (RenderType) {
                 case 0:
-                    playerConfig.put("pr", 0);
+                    playerConfig.put("pr", 0);   //xuameng Texture
                     break;
                 case 1:
-                    playerConfig.put("pr", 1);
+                    playerConfig.put("pr", 1);  //xuameng surface
+                    break;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        PlayerHelper.updateCfg(videoView, playerConfig);
+
+        if (playerConfig.toString().equals(defaultPlayerConfig.toString()))
+            Hawk.delete(channelName);
+        else
+            Hawk.put(channelName, playerConfig);
+
+        currentPlayerConfig = playerConfig;
+    }
+
+    public void changeLivePlayerMusic(VideoView videoView, int MusicType, String channelName) {  //xuameng 柱状图
+        JSONObject playerConfig = currentPlayerConfig;
+        try {
+            switch (MusicType) {
+                case 0:
+                    playerConfig.put("music", true);  //xuameng 柱状图打开
+                    break;
+                case 1:
+                    playerConfig.put("music", false);  //xuameng 柱状图关闭
                     break;
             }
         } catch (JSONException e) {
