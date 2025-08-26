@@ -261,7 +261,8 @@ public class VodController extends BaseController {
     TextView mPlayerRetry;
     TextView mPlayrefresh;
     TextView mxuPlay; //xuameng 底部播放ID
-    TextView mPlayrender;
+    TextView mPlayrender;  //xuameng渲染方式
+    TextView mPlayanimation; //xuameng音柱动画
     private ImageView iv_circle_bg; //xuameng音乐播放时图标
     private FrameLayout play_speed_3; //xuameng倍速播放
     private TextView tv_slide_progress_text;
@@ -296,6 +297,7 @@ public class VodController extends BaseController {
     private Visualizer mVisualizer;  //xuameng音乐播放动画
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
+    private boolean musicAnimation = false;     ////xuameng 音柱动画 加载设置
 	private static final String TAG = "VodController";  //xuameng音乐播放动画
     Handler myHandle;
     Runnable myRunnable;
@@ -364,6 +366,20 @@ public class VodController extends BaseController {
                     mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面视频名称
                     mPlayTitle.setVisibility(GONE); //xuameng隐藏上面时间
                 }
+                try {
+                    musicAnimation = mPlayerConfig.getBoolean("music");  //xuameng音乐播放动画获取设置
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                if (musicAnimation){
+                    if(customVisualizer.getVisibility() == View.GONE) { //xuameng播放音乐柱状图
+                        customVisualizer.setVisibility(VISIBLE);
+                    }
+                }else{
+                    if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                        customVisualizer.setVisibility(GONE);
+                    }
+                }
                 if(width.length() > 1 && height.length() > 1) {
                     if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐播放时图标
                         iv_circle_bg.setVisibility(GONE);
@@ -371,13 +387,7 @@ public class VodController extends BaseController {
                     if(MxuamengMusic.getVisibility() == View.VISIBLE) { //xuameng播放音乐背景
                         MxuamengMusic.setVisibility(GONE);
                     }
-                    if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
-                        customVisualizer.setVisibility(GONE);
-                    }
                 } else {
-                    if(customVisualizer.getVisibility() == View.GONE && isVideoplaying) { //xuameng播放音乐柱状图
-                       customVisualizer.setVisibility(VISIBLE);
-                    }
                     if(MxuamengMusic.getVisibility() == View.GONE && isVideoplaying) { //xuameng播放音乐背景
                         MxuamengMusic.setVisibility(VISIBLE);
                     }
@@ -498,7 +508,8 @@ public class VodController extends BaseController {
         mLandscapePortraitBtn = findViewById(R.id.landscape_portrait);
         backBtn = findViewById(R.id.tv_back);
         mxuPlay = findViewById(R.id.mxuplay); //xuameng  低菜单播放
-        mPlayrender = findViewById(R.id.play_render);
+        mPlayrender = findViewById(R.id.play_render);   //xuameng渲染方式
+        mPlayanimation = findViewById(R.id.play_animation);  //xuameng音柱动画
         //xuameng音乐播放时图标
         ObjectAnimator animator20 = ObjectAnimator.ofFloat(iv_circle_bg, "rotation", 360.0f);
         animator20.setDuration(10000);
@@ -774,7 +785,7 @@ public class VodController extends BaseController {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    mPlayrender.setText("S渲染");
+                    updatePlayerCfgView();
                     listener.updatePlayerCfg();
                     listener.replay(false);
                 } else {
@@ -783,12 +794,52 @@ public class VodController extends BaseController {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
-                    mPlayrender.setText("T渲染");
+                    updatePlayerCfgView();
                     listener.updatePlayerCfg();
                     listener.replay(false);
                 }
             }
         });
+
+        mPlayanimation.setOnClickListener(new OnClickListener() { //xuameng音柱动画
+            @Override
+            public void onClick(View view) {
+                FastClickCheckUtil.check(view);
+                if((System.currentTimeMillis() - DOUBLE_CLICK_TIME_2) < 300 || isAnimation || isDisplay) { //xuameng 防播放打断动画
+                    return;
+                }
+                if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
+                    hideBottomXu();
+                }
+                DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();
+
+                try {
+					musicAnimation = mPlayerConfig.getBoolean("music");   //xuameng音乐播放动画获取设置
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                if(musicAnimation) {
+                    try {
+                        mPlayerConfig.put("music", false);  //xuameng音乐播放动画关闭
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    updatePlayerCfgView();
+                    listener.updatePlayerCfg();
+                    releaseVisualizer();  //xuameng音乐播放动画
+                } else {
+                    try {
+                        mPlayerConfig.put("music", true);   //xuameng音乐播放动画开启
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    updatePlayerCfgView();
+                    listener.updatePlayerCfg();
+                    initVisualizer();  //xuameng音乐播放动画
+                }
+            }
+        });
+
         mxuPlay.setOnFocusChangeListener(new View.OnFocusChangeListener() { //XUAMENG播放键预选取消SEEKBAR进度
             @Override //xuameng进入SEEKBAR
             public void onFocusChange(View v, boolean hasFocus) {
@@ -1232,7 +1283,9 @@ public class VodController extends BaseController {
     }
     void updatePlayerCfgView() {
         try {
+			musicAnimation = mPlayerConfig.getBoolean("music");   //xuameng音乐播放动画设置
             int playerType = mPlayerConfig.getInt("pl");
+            int pr = mPlayerConfig.getInt("pr");
             mPlayerBtn.setText(PlayerHelper.getPlayerName(playerType));
             mPlayerScaleBtn.setText(PlayerHelper.getScaleName(mPlayerConfig.getInt("sc")));
             mPlayerIJKBtn.setText(mPlayerConfig.getString("ijk"));
@@ -1243,8 +1296,8 @@ public class VodController extends BaseController {
             mPlayerTimeSkipBtn.setText(PlayerUtils.stringForTime(mPlayerConfig.getInt("et") * 1000));
   //          mAudioTrackBtn.setVisibility((playerType == 1 || playerType == 2) ? VISIBLE : GONE);     //xuameng不判断音轨了全部显示
             mAudioTrackBtn.setVisibility(View.VISIBLE);
-            int pr = mPlayerConfig.getInt("pr");
-            mPlayrender.setText((pr == 0) ? "T渲染" : "S渲染"); //xuameng INT 渲染
+            mPlayrender.setText((pr == 0) ? "T渲染" : "S渲染"); //xuameng 渲染
+            mPlayanimation.setText(musicAnimation ? "音柱已开" : "音柱已关");  //xuameng音乐播放动画获取状态
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -1544,12 +1597,17 @@ public class VodController extends BaseController {
                 String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
                 mVideoSize.setText("[ " + width + " X " + height + " ]");
                 isVideoPlay = false;
-                if(width.length() <= 1 && height.length() <= 1 ) {
-                   int newSessionId = mControlWrapper.getAudioSessionId();   //xuameng音乐播放动画
-                   if(newSessionId != audioSessionId) { // 避免重复初始化
-                      initVisualizer();  //xuameng音乐播放动画
-                   }
-				}
+                try {
+					musicAnimation = mPlayerConfig.getBoolean("music");  //xuameng音乐播放动画获取设置
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                if (musicAnimation){
+                    int newSessionId = mControlWrapper.getAudioSessionId();   //xuameng音乐播放动画
+                    if(newSessionId != audioSessionId) { // 避免重复初始化
+                       initVisualizer();  //xuameng音乐播放动画
+                    }
+                }
                 break;
             case VideoView.STATE_BUFFERED:
                 mPlayLoadNetSpeed.setVisibility(GONE);
@@ -2174,7 +2232,6 @@ public class VodController extends BaseController {
         try {
         // 统一创建Visualizer实例（仅一次）
             mVisualizer = new Visualizer(sessionId);
-            mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]); // 使用最大采样窗口
             // 智能采样率设置
             int targetRate = Visualizer.getMaxCaptureRate() / 2;
             // 设置数据捕获监听器
@@ -2232,6 +2289,9 @@ public class VodController extends BaseController {
             }
             if (customVisualizer != null) {
                 customVisualizer.release();
+            }
+            if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
+                customVisualizer.setVisibility(View.GONE);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error releasing visualizer", e);
