@@ -36,7 +36,7 @@ public class SurfaceRenderView extends SurfaceView implements IRenderView, Surfa
         mMeasureHelper = new MeasureHelper();
         SurfaceHolder surfaceHolder = getHolder();
         surfaceHolder.addCallback(this);
-        surfaceHolder.setFormat(PixelFormat.RGBA_8888);
+        surfaceHolder.setFormat(PixelFormat.RGBX_8888);   //xuameng 不透明
     }
 
     @Override
