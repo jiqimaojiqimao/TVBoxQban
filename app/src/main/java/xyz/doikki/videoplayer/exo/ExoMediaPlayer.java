@@ -26,7 +26,6 @@ import com.google.android.exoplayer2.ext.ffmpeg.FfmpegAudioRenderer;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
-import com.google.android.exoplayer2.video.MediaCodecSelector;
 
 
 import java.util.Map;
@@ -58,14 +57,11 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mMediaSourceHelper = ExoMediaSourceHelper.getInstance(context);
     }
 
-RenderersFactory mRenderersFactory = (handler, videoListener, audioListener, 
+DefaultRenderersFactory mRenderersFactory = (handler, videoListener, audioListener, 
     textOutput, metadataOutput) -> {
     return new Renderer[] {
-        new MediaCodecVideoRenderer(context, 
-            MediaCodecSelector.DEFAULT, handler, videoListener),
-        new FfmpegAudioRenderer(handler, audioListener, 
-            new AudioProcessor[0]),
-        new TextRenderer(textOutput, handler.getLooper())
+        new FfmpegAudioRenderer(handler, audioListener
+       )
     };
 };
 
