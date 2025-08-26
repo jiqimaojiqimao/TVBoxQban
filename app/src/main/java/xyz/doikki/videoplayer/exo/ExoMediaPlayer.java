@@ -22,13 +22,9 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
-import com.google.android.exoplayer2.ext.ffmpeg.FfmpegAudioRenderer;
+import xyz.doikki.videoplayer.exo.PgsRenderersFactory;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.extractor.ExtractorsFactory;
-import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
-import com.google.android.exoplayer2.Renderer;
-
 
 
 import java.util.Map;
@@ -48,6 +44,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private boolean mIsPreparing;
 
     private LoadControl mLoadControl;
+    private DefaultRenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
 
     private int errorCode = -100;
@@ -59,33 +56,31 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mMediaSourceHelper = ExoMediaSourceHelper.getInstance(context);
     }
 
-DefaultRenderersFactory mRenderersFactory = (handler, videoListener, audioListener, 
-    textOutput, metadataOutput) -> {
-    return new Renderer[] {
-        new FfmpegAudioRenderer(handler, audioListener
-       )
-    };
-};
-
-
-
     @Override
     public void initPlayer() {
         if (mRenderersFactory == null) {
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
+
+			mRenderersFactory = new PgsRenderersFactory(mAppContext);
         }
         mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
+
+		DefaultExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
+        .setFfmpegExtractorEnabled(true);
+
+
         if (mLoadControl == null) {
             mLoadControl = new DefaultLoadControl();
         }
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
-        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
-                .setLoadControl(mLoadControl)
-                .setRenderersFactory(mRenderersFactory)
-                .setTrackSelector(mTrackSelector).build();
+    mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+        .setRenderersFactory(mRenderersFactory)
+        .setMediaSourceFactory(new DefaultMediaSourceFactory(mAppContext, extractorsFactory))
+        .setTrackSelector(mTrackSelector)
+        .setLoadControl(mLoadControl)
+        .build();
 
         setOptions();
         mMediaPlayer.addListener(this);
