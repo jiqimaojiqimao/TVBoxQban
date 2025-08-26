@@ -358,6 +358,19 @@
                     android:layout_marginEnd="@dimen/vs_5"/>
                 <TextView
                     android:textSize="@dimen/ts_20"
+                    android:textColor="@android:color/white"
+                    android:id="@+id/play_animation"
+                    android:background="@drawable/button_dialog_main_1"
+                    android:padding="@dimen/vs_10"
+                    android:focusable="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="@dimen/vs_5"
+                    android:text="音柱动画"
+                    android:singleLine="true"
+                    android:layout_marginEnd="@dimen/vs_5"/>
+                <TextView
+                    android:textSize="@dimen/ts_20"
                     android:textColor="@color/color_FFFFFF"
                     android:id="@+id/play_time_start_end_text"
                     android:background="@drawable/button_dialog_main_1"
