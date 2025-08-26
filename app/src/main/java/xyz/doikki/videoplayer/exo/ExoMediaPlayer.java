@@ -22,6 +22,12 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
+import com.google.android.exoplayer2.ext.ffmpeg.FfmpegAudioRenderer;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
+import com.google.android.exoplayer2.extractor.ExtractorsFactory
+import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
+import com.google.android.exoplayer2.video.MediaCodecSelector
+
 
 import java.util.Map;
 
@@ -52,6 +58,22 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mMediaSourceHelper = ExoMediaSourceHelper.getInstance(context);
     }
 
+RenderersFactory mRenderersFactory = (handler, videoListener, audioListener, 
+    textOutput, metadataOutput) -> {
+    return new Renderer[] {
+        new MediaCodecVideoRenderer(context, 
+            MediaCodecSelector.DEFAULT, handler, videoListener),
+        new FfmpegAudioRenderer(handler, audioListener, 
+            new AudioProcessor[0]),
+        new TextRenderer(textOutput, handler.getLooper())
+    };
+};
+
+DefaultExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
+    .setConstantBitrateSeekingEnabled(true)
+    .setFfmpegExtractorEnabled(true);
+
+
     @Override
     public void initPlayer() {
         if (mRenderersFactory == null) {
@@ -67,6 +89,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
+			.setMediaSourceFactory(mediaSourceFactory)
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
 
