@@ -122,6 +122,6 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
-    api "com.google.android.exoplayer:extension-ffmpeg:$exoplayerVersion"
 }
+
 
