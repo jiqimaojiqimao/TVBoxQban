@@ -79,7 +79,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             public void onPlayerError(PlaybackException error) {
                 // 当遇到解码错误时自动切换到软件解码
                 if (error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
-                    App.showToastShort(getContext(), "解码错误！切换应解！");
+                    App.showToastShort(mAppContext, "解码错误！切换软解！");
                     mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
                     isHardwareDecoding = false;
                 }
