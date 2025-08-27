@@ -131,7 +131,6 @@ public class LivePlayerManager {
         return musicType;
     }
 
-
     public void changeLivePlayerType(VideoView videoView, int playerType, String channelName) {
         JSONObject playerConfig = currentPlayerConfig;
         try {
