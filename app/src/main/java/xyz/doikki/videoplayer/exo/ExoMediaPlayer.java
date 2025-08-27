@@ -67,6 +67,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (mLoadControl == null) {
             mLoadControl = new DefaultLoadControl();
         }
+
+
+
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
@@ -74,17 +77,22 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 .setTrackSelector(mTrackSelector).build();
 
         // 添加错误监听器
-        mMediaPlayer.addListener(new Player.Listener() {
-            @Override
-            public void onPlayerError(PlaybackException error) {
-                // 当遇到解码错误时自动切换到软件解码
-                if (error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
-                    App.showToastShort(mAppContext, "解码错误！切换软解！");
-                    mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
-                    isHardwareDecoding = false;
-                }
-            }
-        });
+mMediaPlayer.addListener(new Player.Listener() {
+    @Override
+    public void onPlayerError(PlaybackException error) {
+        if (error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
+            App.showToastShort(mAppContext, "解码错误！切换软解！");
+            mRenderersFactory.setExtensionRendererMode(
+                DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
+            isHardwareDecoding = false;
+            
+            // 重新准备播放器
+            mMediaPlayer.prepare();
+            mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition());
+        }
+    }
+});
+
         
         setOptions();
     }
