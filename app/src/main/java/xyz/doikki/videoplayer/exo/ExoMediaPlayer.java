@@ -22,6 +22,7 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
+import com.github.tvbox.osc.base.App; 
 
 import java.util.Map;
 
@@ -47,6 +48,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private String path;
     private Map<String, String> headers;
 
+    private boolean isHardwareDecoding = true;
+
     public ExoMediaPlayer(Context context) {
         mAppContext = context.getApplicationContext();
         mMediaSourceHelper = ExoMediaSourceHelper.getInstance(context);
@@ -70,8 +73,26 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
 
+        // 添加错误监听器
+        mMediaPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onPlayerError(PlaybackException error) {
+                // 当遇到解码错误时自动切换到软件解码
+                if (error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
+                    App.showToastShort(getContext(), "解码错误！切换应解！");
+                    mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
+                    isHardwareDecoding = false;
+                }
+            }
+        });
+        
         setOptions();
-        mMediaPlayer.addListener(this);
+    }
+
+    public boolean isHardwareDecoding() {
+        return isHardwareDecoding;
+    }
+
     }
 
     public DefaultTrackSelector getTrackSelector() {
