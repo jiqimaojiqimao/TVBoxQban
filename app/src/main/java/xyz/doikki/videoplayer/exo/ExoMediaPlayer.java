@@ -22,7 +22,6 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
-import com.github.tvbox.osc.base.App; 
 
 import java.util.Map;
 
@@ -47,8 +46,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private int errorCode = -100;
     private String path;
     private Map<String, String> headers;
-
-    private boolean isHardwareDecoding = true;
 
     public ExoMediaPlayer(Context context) {
         mAppContext = context.getApplicationContext();
@@ -284,9 +281,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
     }
 
-public void onPlayerError(@NonNull PlaybackException error) {
-    errorCode = error.errorCode;
-    Log.e("ExoPlayer", "Playback error: " + errorCode + ", " + error.toString());
+    @Override
+    public void onPlayerError(@NonNull PlaybackException error) {
+        errorCode = error.errorCode;
+        Log.e("tag--", "" + error.errorCode);
         if (path != null) {
             setDataSource(path, headers);
             path = null;
@@ -297,45 +295,7 @@ public void onPlayerError(@NonNull PlaybackException error) {
                 mPlayerEventListener.onError();
             }
         }
-    handlePlaybackError(error);
-}
-
-private void handlePlaybackError(PlaybackException error) {
-    if (error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
-        // 处理硬解码失败
-        switchToSoftwareDecoding();
-    } else if (error.errorCode == 1003 || error.errorCode == 1004) {
-        // 处理不支持的视频格式
-        handleUnsupportedFormat(error);
-    } else {
-        // 其他错误
-        App.showToastShort(mAppContext, "其它错误 ");
     }
-}
-
-private void handleUnsupportedFormat(PlaybackException error) {
-    // 尝试转码或提示用户
-    App.showToastShort(mAppContext, "不支持的视频或音频格式: ");
-    
-    // 尝试使用通用解码器
-    mRenderersFactory.setExtensionRendererMode(
-        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
-    
-            prepareAsync();
-            start();
-			seekTo(getCurrentPosition());
-}
-
-// 在关键位置添加结构化日志
-private void switchToSoftwareDecoding() {
-    App.showToastShort(mAppContext, "软解 ");
-    mRenderersFactory.setExtensionRendererMode(
-        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
-
-            prepareAsync();
-            start();
-			seekTo(getCurrentPosition());
-}
 
     @Override
     public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
