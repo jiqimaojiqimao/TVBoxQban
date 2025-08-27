@@ -89,11 +89,13 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         setOptions();
     }
 
+
+
     public boolean isHardwareDecoding() {
         return isHardwareDecoding;
     }
 
-    }
+   
 
     public DefaultTrackSelector getTrackSelector() {
         return mTrackSelector;
