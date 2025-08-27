@@ -60,7 +60,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (mRenderersFactory == null) {
             mRenderersFactory = new DefaultRenderersFactory(mAppContext);
         }
-   //     mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
+        mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
@@ -87,8 +87,8 @@ mMediaPlayer.addListener(new Player.Listener() {
             isHardwareDecoding = false;
             
             // 重新准备播放器
-            mMediaPlayer.prepare();
-            mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition());
+            prepareAsync();
+            seekTo(getCurrentPosition());
         }
     }
 });
