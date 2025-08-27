@@ -304,7 +304,7 @@ private void handlePlaybackError(PlaybackException error) {
     if (error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
         // 处理硬解码失败
         switchToSoftwareDecoding();
-    } else if (error.errorCode == 1003) {
+    } else if (error.errorCode == 1003 || error.errorCode == 1004) {
         // 处理不支持的视频格式
         handleUnsupportedFormat(error);
     } else {
@@ -315,7 +315,7 @@ private void handlePlaybackError(PlaybackException error) {
 
 private void handleUnsupportedFormat(PlaybackException error) {
     // 尝试转码或提示用户
-    App.showToastShort(mAppContext, "不支持的视频格式: ");
+    App.showToastShort(mAppContext, "不支持的视频或音频格式: ");
     
     // 尝试使用通用解码器
     mRenderersFactory.setExtensionRendererMode(
@@ -323,6 +323,7 @@ private void handleUnsupportedFormat(PlaybackException error) {
     
             prepareAsync();
             start();
+			seekTo(getCurrentPosition());
 }
 
 // 在关键位置添加结构化日志
@@ -333,6 +334,7 @@ private void switchToSoftwareDecoding() {
 
             prepareAsync();
             start();
+			seekTo(getCurrentPosition());
 }
 
     @Override
