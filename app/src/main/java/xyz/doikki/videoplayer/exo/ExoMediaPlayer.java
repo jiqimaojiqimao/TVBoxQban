@@ -22,6 +22,7 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
+import com.github.tvbox.osc.base.App; 
 
 import java.util.Map;
 
@@ -46,6 +47,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private int errorCode = -100;
     private String path;
     private Map<String, String> headers;
+
+    private boolean isHardwareDecoding = true;
 
     public ExoMediaPlayer(Context context) {
         mAppContext = context.getApplicationContext();
@@ -281,22 +284,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
     }
 
-    @Override
-    public void onPlayerError(@NonNull PlaybackException error) {
-        errorCode = error.errorCode;
-        Log.e("tag--", "" + error.errorCode);
-        if (path != null) {
-            setDataSource(path, headers);
-            path = null;
-            prepareAsync();
-            start();
-        } else {
-            if (mPlayerEventListener != null) {
-                mPlayerEventListener.onError();
-            }
-        }
-    }
-
 public void onPlayerError(@NonNull PlaybackException error) {
     errorCode = error.errorCode;
     Log.e("ExoPlayer", "Playback error: " + errorCode + ", " + error.toString());
@@ -347,9 +334,6 @@ private void switchToSoftwareDecoding() {
             prepareAsync();
             start();
 }
-
-
-
 
     @Override
     public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
