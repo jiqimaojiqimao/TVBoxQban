@@ -67,43 +67,15 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (mLoadControl == null) {
             mLoadControl = new DefaultLoadControl();
         }
-
-
-
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
 
-        // 添加错误监听器
-mMediaPlayer.addListener(new Player.Listener() {
-    @Override
-    public void onPlayerError(PlaybackException error) {
-        if (error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
-            App.showToastShort(mAppContext, "解码错误！切换软解！");
-            mRenderersFactory.setExtensionRendererMode(
-                DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
-            isHardwareDecoding = false;
-            
-            // 重新准备播放器
-            prepareAsync();
-            seekTo(getCurrentPosition());
-        }
-    }
-});
-
-        
         setOptions();
+        mMediaPlayer.addListener(this);
     }
-
-
-
-    public boolean isHardwareDecoding() {
-        return isHardwareDecoding;
-    }
-
-   
 
     public DefaultTrackSelector getTrackSelector() {
         return mTrackSelector;
@@ -316,6 +288,17 @@ mMediaPlayer.addListener(new Player.Listener() {
     public void onPlayerError(@NonNull PlaybackException error) {
         errorCode = error.errorCode;
         Log.e("tag--", "" + error.errorCode);
+        if (errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
+            App.showToastShort(mAppContext, "解码错误！切换软解！");
+            mRenderersFactory.setExtensionRendererMode(
+                DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
+            isHardwareDecoding = false;
+            
+            // 重新准备播放器
+            prepareAsync();
+			start();
+            seekTo(getCurrentPosition());
+        }
         if (path != null) {
             setDataSource(path, headers);
             path = null;
