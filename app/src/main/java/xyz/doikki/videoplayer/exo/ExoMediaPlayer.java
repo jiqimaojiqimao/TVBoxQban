@@ -304,7 +304,7 @@ private void handlePlaybackError(PlaybackException error) {
     if (error.errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED) {
         // 处理硬解码失败
         switchToSoftwareDecoding();
-    } else if (error.errorCode == PlaybackException.ERROR_CODE_UNSUPPORTED_VIDEO_FORMAT) {
+    } else if (error.errorCode == error.errorCode == 1003) {
         // 处理不支持的视频格式
         handleUnsupportedFormat(error);
     } else {
