@@ -59,10 +59,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (mRenderersFactory == null) {
             mRenderersFactory = new DefaultRenderersFactory(mAppContext);
         }
-        boolean exodecode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
-        if (exodecode){
-            mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG软解
-        }
+        boolean exodecode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);  //XUAMENG默认硬解
+    //    if (exodecode){
+     //       mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG软解
+      //  }
 
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
