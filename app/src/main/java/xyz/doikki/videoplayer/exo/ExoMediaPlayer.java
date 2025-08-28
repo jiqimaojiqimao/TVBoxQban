@@ -22,8 +22,6 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
-import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
-import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 
 import java.util.Map;
 
@@ -43,7 +41,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     private LoadControl mLoadControl;
     private DefaultRenderersFactory mRenderersFactory;
-	private DefaultRenderersFactory mRenderersFactoryXu;
     private DefaultTrackSelector mTrackSelector;
 
     private int errorCode = -100;
@@ -60,13 +57,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (mRenderersFactory == null) {
             mRenderersFactory = new DefaultRenderersFactory(mAppContext);
         }
-        boolean exodecode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);  //XUAMENG默认硬解
-        if (exodecode){
-            mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG软解
-        }else{
-            mRenderersFactoryXu = new DefaultRenderersFactory(mAppContext);
-		}
-
+        mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
@@ -76,7 +67,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
-                .setRenderersFactory(exodecode ? mRenderersFactory : mRenderersFactoryXu)
+                .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
 
         setOptions();
