@@ -21,10 +21,7 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.video.VideoSize;
-import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
-import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 
 import java.util.Map;
 
@@ -34,7 +31,7 @@ import xyz.doikki.videoplayer.util.PlayerUtils;
 public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     protected Context mAppContext;
-    protected SimpleExoPlayer mMediaPlayer;
+    protected ExoPlayer mMediaPlayer;
     protected MediaSource mMediaSource;
     protected ExoMediaSourceHelper mMediaSourceHelper;
     protected ExoTrackNameProvider trackNameProvider;
@@ -60,7 +57,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (mRenderersFactory == null) {
             mRenderersFactory = new DefaultRenderersFactory(mAppContext);
         }
-
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
@@ -68,18 +64,11 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             mLoadControl = new DefaultLoadControl();
         }
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
+        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+                .setLoadControl(mLoadControl)
+                .setRenderersFactory(mRenderersFactory)
+                .setTrackSelector(mTrackSelector).build();
 
-mMediaPlayer = new SimpleExoPlayer.Builder(mAppContext)
-    .setTrackSelector(mTrackSelector)
-    .setLoadControl(mLoadControl)
-    .build();
-
-        boolean exodecode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);  //XUAMENG默认硬解
-// 播放前设置
-if (exodecode) {
-    ((ExoPlayer) mMediaPlayer).setRendererFactory(mRenderersFactory.setExtensionRendererMode(
-        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER));
-}
         setOptions();
         mMediaPlayer.addListener(this);
     }
