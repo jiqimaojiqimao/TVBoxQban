@@ -67,6 +67,8 @@ public void initPlayer() {
         mLoadControl = new DefaultLoadControl();
     }
 
+mRenderersFactory.setExtensionRendererMode(
+    ExtensionRendererMode.ENABLED_HARDWARE);
     // 必须显式设置所有核心组件
     mMediaPlayer = new ExoPlayer.Builder(mAppContext)
             .setRenderersFactory(mRenderersFactory)  // 关键渲染器工厂
