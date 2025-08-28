@@ -11,7 +11,6 @@ import androidx.annotation.NonNull;
 
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackException;
@@ -44,6 +43,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     private LoadControl mLoadControl;
     private DefaultRenderersFactory mRenderersFactory;
+	private DefaultRenderersFactory mRenderersFactoryXu;
     private DefaultTrackSelector mTrackSelector;
 
     private int errorCode = -100;
@@ -64,7 +64,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (exodecode){
             mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG软解
         }else{
-            mRenderersFactory = new RenderersFactory(mAppContext);
+            mRenderersFactoryXu = new DefaultRenderersFactory(context);
 		}
 
         if (mTrackSelector == null) {
@@ -76,7 +76,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
-                .setRenderersFactory(mRenderersFactory)
+                .setRenderersFactory(exodecode ? mRenderersFactory : mRenderersFactoryXu)
                 .setTrackSelector(mTrackSelector).build();
 
         setOptions();
