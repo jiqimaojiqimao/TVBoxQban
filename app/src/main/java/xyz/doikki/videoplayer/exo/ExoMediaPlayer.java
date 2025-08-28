@@ -56,10 +56,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     @Override
     public void initPlayer() {
         if (mRenderersFactory == null) {
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext, DefaultRenderersFactory.FORCE_HARDWARE);
         }
     //    mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先\
-		mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.ExtensionRendererMode.ENABLED_HARDWARE);
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
