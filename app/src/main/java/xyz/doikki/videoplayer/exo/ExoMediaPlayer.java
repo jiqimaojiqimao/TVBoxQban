@@ -22,8 +22,6 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
-import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 
 import java.util.Map;
 
@@ -57,27 +55,20 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     @Override
     public void initPlayer() {
         if (mRenderersFactory == null) {
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)  //xuameng扩展优先
-            .setEnableDecoderFallback(true);  //xuameng 不行回退
-            .setMediaCodecSelector(MediaCodecSelector.DEFAULT);
-
-        }     
-    
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
+        }
+        mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
         if (mLoadControl == null) {
             mLoadControl = new DefaultLoadControl();
         }
-
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+                .setLoadControl(mLoadControl)
                 .setRenderersFactory(mRenderersFactory)
-                .setTrackSelector(mTrackSelector)
-                .setLoadControl(mLoadControl) 
-                .setMediaSourceFactory(new DefaultMediaSourceFactory(mAppContext))
-                .build();
+                .setTrackSelector(mTrackSelector).build();
 
         setOptions();
         mMediaPlayer.addListener(this);
