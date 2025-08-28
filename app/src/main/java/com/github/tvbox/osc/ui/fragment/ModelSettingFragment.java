@@ -113,7 +113,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
         tvExodecode = findViewById(R.id.tvexodecode);   //xuameng Exo解码方式
         tvShowMusicZb.setText(Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false) ? "已开启" : "已关闭"); //xuameng去广告
         tvShowMusicDb.setText(Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false) ? "已开启" : "已关闭");
-        tvExodecode.setText(Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false) ? "硬解码" : "软解码");
+        tvExodecode.setText(Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false) ? "软解码" : "硬解码");
         tvm3u8AdText.setText(Hawk.get(HawkConfig.M3U8_PURIFY, false) ? "已开启" : "已关闭"); //xuameng去广告
         tvFastSearchText.setText(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) ? "已开启" : "已关闭");
         tvRecStyleText = findViewById(R.id.showRecStyleText);
@@ -728,7 +728,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 FastClickCheckUtil.check(v);
                 boolean exodecode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
                 Hawk.put(HawkConfig.EXO_PLAYER_DECODE, !exodecode);
-                tvExodecode.setText(!exodecode ? "硬解码" : "软解码");
+                tvExodecode.setText(!exodecode ? "软解码" : "硬解码");
             }
         });
         findViewById(R.id.llHomeRecStyle).setOnClickListener(new View.OnClickListener() {
