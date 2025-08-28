@@ -78,7 +78,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 mRenderersFactory,  // 使用已配置的实例
                 mTrackSelector == null ? mTrackSelector = new DefaultTrackSelector(mAppContext) : mTrackSelector,
                 new DefaultMediaSourceFactory(mAppContext),
-                mLoadControl == null ? mLoadControl = new DefaultLoadControl() : mLoadControl
+                mLoadControl == null ? mLoadControl = new DefaultLoadControl() : mLoadControl)
                 .build();
 
 
