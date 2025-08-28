@@ -53,6 +53,7 @@ public class HawkConfig {
 	public static final String LIVE_WEB_HEADER = "live_web_header";    //xuameng直播定义UA
     public static final String LIVE_MUSIC_ANIMATION = "live_music_animation";  //xuameng直播音乐动画
     public static final String VOD_MUSIC_ANIMATION = "vod_music_animation";  //xuameng点播音乐动画
+    public static final String EXO_PLAYER_DECODE = "exo_player_decode";  //xuameng exo解码方式
 
 	public static boolean MSLIDEINFO = false;  //xuameng调节亮度声音
 	public static boolean intLIVEPLAYTYPE = false;  //xuameng是否有直播默认播放器
