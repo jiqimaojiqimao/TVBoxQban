@@ -75,10 +75,9 @@ mMediaPlayer = new SimpleExoPlayer.Builder(mAppContext)
     .build();
 
         boolean exodecode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);  //XUAMENG默认硬解
-// 直接设置渲染器
-mMediaPlayer.setRendererFactory(mRenderersFactory);
+// 播放前设置
 if (exodecode) {
-    mMediaPlayer.setRendererFactory(mRenderersFactory.setExtensionRendererMode(
+    ((ExoPlayer) mMediaPlayer).setRendererFactory(mRenderersFactory.setExtensionRendererMode(
         DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER));
 }
         setOptions();
