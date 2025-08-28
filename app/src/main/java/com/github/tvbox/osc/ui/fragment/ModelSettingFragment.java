@@ -79,6 +79,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
 	private TextView tvm3u8AdText;  //xuameng去广告
     private TextView tvShowMusicZb;  //xuameng 直播动画
     private TextView tvShowMusicDb;  //xuameng 点播动画
+    private TextView tvExodecode;  //xuameng Exo解码方式
     private TextView tvDns;
     private TextView tvHomeRec;
     private TextView tvHistoryNum;
@@ -109,8 +110,10 @@ public class ModelSettingFragment extends BaseLazyFragment {
         tvm3u8AdText = findViewById(R.id.m3u8AdText);    //xuameng去广告
         tvShowMusicZb = findViewById(R.id.zbmusictext);    //xuameng直播动画
         tvShowMusicDb = findViewById(R.id.dbmusictext);    //xuameng点播动画
+        tvExodecode = findViewById(R.id.tvexodecode);   //xuameng Exo解码方式
         tvShowMusicZb.setText(Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false) ? "已开启" : "已关闭"); //xuameng去广告
         tvShowMusicDb.setText(Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false) ? "已开启" : "已关闭");
+        tvExodecode.setText(Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false) ? "硬解码" : "软解码");
         tvm3u8AdText.setText(Hawk.get(HawkConfig.M3U8_PURIFY, false) ? "已开启" : "已关闭"); //xuameng去广告
         tvFastSearchText.setText(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) ? "已开启" : "已关闭");
         tvRecStyleText = findViewById(R.id.showRecStyleText);
@@ -717,6 +720,15 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 boolean is_musiczb=Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false);
                 Hawk.put(HawkConfig.LIVE_MUSIC_ANIMATION, !is_musiczb);
                 tvShowMusicZb.setText(!is_musiczb ? "已开启" : "已关闭");
+            }
+        });
+        findViewById(R.id.llExodecode).setOnClickListener(new View.OnClickListener() {   //xuameng EXO解码
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                boolean exodecode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
+                Hawk.put(HawkConfig.EXO_PLAYER_DECODE, !exodecode);
+                tvExodecode.setText(!exodecode ? "硬解码" : "软解码");
             }
         });
         findViewById(R.id.llHomeRecStyle).setOnClickListener(new View.OnClickListener() {
