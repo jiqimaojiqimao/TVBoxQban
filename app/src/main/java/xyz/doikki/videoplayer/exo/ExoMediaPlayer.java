@@ -53,41 +53,31 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mMediaSourceHelper = ExoMediaSourceHelper.getInstance(context);
     }
 
-// 修复后的初始化逻辑
-@Override
-public void initPlayer() {
-    // 确保基础组件初始化
-    if (mRenderersFactory == null) {
-        mRenderersFactory = new DefaultRenderersFactory(mAppContext);
-    }
-    if (mTrackSelector == null) {
-        mTrackSelector = new DefaultTrackSelector(mAppContext);
-    }
-    if (mLoadControl == null) {
-        mLoadControl = new DefaultLoadControl();
-    }
+    @Override
+    public void initPlayer() {
+        if (mRenderersFactory == null) {
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
+        }
+    //    mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先\
+		mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.ExtensionRendererMode.ENABLED_HARDWARE);
+        if (mTrackSelector == null) {
+            mTrackSelector = new DefaultTrackSelector(mAppContext);
+        }
+        if (mLoadControl == null) {
+            mLoadControl = new DefaultLoadControl();
+        }
 
-mRenderersFactory.setExtensionRendererMode(
-    ExtensionRendererMode.ENABLED_HARDWARE);
-    // 必须显式设置所有核心组件
-    mMediaPlayer = new ExoPlayer.Builder(mAppContext)
-            .setRenderersFactory(mRenderersFactory)  // 关键渲染器工厂
-            .setTrackSelector(mTrackSelector)        // 轨道选择器
-            .setLoadControl(mLoadControl)            // 缓冲控制器
-            .setMediaSourceFactory(new DefaultMediaSourceFactory(mAppContext)) // 媒体源工厂
-            .build();
+		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
+        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+                .setRenderersFactory(mRenderersFactory)
+                .setTrackSelector(mTrackSelector)
+                .setLoadControl(mLoadControl) 
+                .setMediaSourceFactory(new DefaultMediaSourceFactory(mAppContext))
+                .build();
 
-    // 补充配置
-    mTrackSelector.setParameters(mTrackSelector.getParameters()
-            .buildUpon()
-            .setPreferredTextLanguage("zh")
-            .setPreferredAudioLanguage("zh")
-            .setTunnelingEnabled(true));
-    
-    mMediaPlayer.addListener(this);
-    setOptions();
-}
-
+        setOptions();
+        mMediaPlayer.addListener(this);
+    }
 
     public DefaultTrackSelector getTrackSelector() {
         return mTrackSelector;
