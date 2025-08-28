@@ -53,30 +53,39 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mMediaSourceHelper = ExoMediaSourceHelper.getInstance(context);
     }
 
-    @Override
-    public void initPlayer() {
-        if (mRenderersFactory == null) {
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
-        }
-        if (mTrackSelector == null) {
-            mTrackSelector = new DefaultTrackSelector(mAppContext);
-        }
-        if (mLoadControl == null) {
-            mLoadControl = new DefaultLoadControl();
-        }
-
-		DefaultMediaSourceFactory mediaSourceFactory = new DefaultMediaSourceFactory(mAppContext);
-
-		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
-        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
-                .setLoadControl(mLoadControl)
-                .setRenderersFactory(mRenderersFactory)
-			.setMediaSourceFactory(mediaSourceFactory)  // 关键集成点
-                .setTrackSelector(mTrackSelector).build();
-
-        setOptions();
-        mMediaPlayer.addListener(this);
+// 修复后的初始化逻辑
+@Override
+public void initPlayer() {
+    // 确保基础组件初始化
+    if (mRenderersFactory == null) {
+        mRenderersFactory = new DefaultRenderersFactory(mAppContext);
     }
+    if (mTrackSelector == null) {
+        mTrackSelector = new DefaultTrackSelector(mAppContext);
+    }
+    if (mLoadControl == null) {
+        mLoadControl = new DefaultLoadControl();
+    }
+
+    // 必须显式设置所有核心组件
+    mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+            .setRenderersFactory(mRenderersFactory)  // 关键渲染器工厂
+            .setTrackSelector(mTrackSelector)        // 轨道选择器
+            .setLoadControl(mLoadControl)            // 缓冲控制器
+            .setMediaSourceFactory(new DefaultMediaSourceFactory(mAppContext)) // 媒体源工厂
+            .build();
+
+    // 补充配置
+    mTrackSelector.setParameters(mTrackSelector.getParameters()
+            .buildUpon()
+            .setPreferredTextLanguage("zh")
+            .setPreferredAudioLanguage("zh")
+            .setTunnelingEnabled(true));
+    
+    mMediaPlayer.addListener(this);
+    setOptions();
+}
+
 
     public DefaultTrackSelector getTrackSelector() {
         return mTrackSelector;
