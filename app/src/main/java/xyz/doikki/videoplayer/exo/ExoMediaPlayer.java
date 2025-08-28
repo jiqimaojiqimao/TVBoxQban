@@ -23,6 +23,7 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
+import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 
 import java.util.Map;
 
@@ -56,13 +57,13 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     @Override
     public void initPlayer() {
         if (mRenderersFactory == null) {
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
-        }
-    //    mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
-	// 修改后（正确代码）
-mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-    .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-    .setEnableDecoderFallback(true);
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)  //xuameng扩展优先
+            .setEnableDecoderFallback(true);  //xuameng 不行回退
+            .setMediaCodecSelector(MediaCodecSelector.DEFAULT);
+
+        }     
+    
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
