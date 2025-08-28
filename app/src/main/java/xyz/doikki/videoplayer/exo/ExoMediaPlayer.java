@@ -22,6 +22,7 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.video.VideoSize;
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
 
 import java.util.Map;
 
@@ -64,10 +65,14 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (mLoadControl == null) {
             mLoadControl = new DefaultLoadControl();
         }
+
+		DefaultMediaSourceFactory mediaSourceFactory = new DefaultMediaSourceFactory(mAppContext);
+
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
                 .setRenderersFactory(mRenderersFactory)
+			.setMediaSourceFactory(mediaSourceFactory)  // 关键集成点
                 .setTrackSelector(mTrackSelector).build();
 
         setOptions();
