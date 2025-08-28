@@ -62,9 +62,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
         boolean exodecode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);  //XUAMENG默认硬解
         if (exodecode){
-            mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG软解
+            mRenderersFactory.setExtensionRendererMode(new DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG软解
         }else{
-            mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
+            mRenderersFactory.setExtensionRendererMode(new DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF);
 		}
 
         if (mTrackSelector == null) {
