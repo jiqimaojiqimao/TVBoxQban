@@ -82,7 +82,7 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext);
                 mTrackSelector,
                 new DefaultMediaSourceFactory(mAppContext),
                 mLoadControl,
-                DefaultBandwidthMeter.getSingletonInstance(mAppContext)
+                DefaultBandwidthMeter.getSingletonInstance(mAppContext))
                 .build();
         setOptions();
 
