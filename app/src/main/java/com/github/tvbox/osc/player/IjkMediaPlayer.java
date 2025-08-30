@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.HashMap;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
+import java.util.List;  //默认选中文音轨
 
 import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.misc.ITrackInfo;
@@ -244,16 +245,40 @@ public class IjkMediaPlayer extends IjkPlayer {
         mMediaPlayer.setOnTimedTextListener(listener);
     }
 
-    //xuameng默认选中第一个音轨 一般第一个音轨是国语 && 加载上一次选中的
-    public void loadDefaultTrack(TrackInfo trackInfo,String playKey) {
-        if(trackInfo!=null && trackInfo.getAudio().size()>1){
-            Integer trackIndex = memory.ijkLoad(playKey);
-            if (trackIndex == -1) {
-                int firsIndex=trackInfo.getAudio().get(0).trackId;
-                setTrack(firsIndex);
-                return;
-            };
-            setTrack(trackIndex);
+    //xuameng有上次选中的加载上次选中的，没有选中默认选中文音轨，没有中文音轨，默认第一条音轨
+    public void loadDefaultTrack(TrackInfo trackInfo, String playKey) {
+    // 基础参数校验
+        if (trackInfo == null || trackInfo.getAudio().isEmpty()) {
+            return;
         }
+        // 1. 优先加载上次选中的
+        Integer trackIndex = memory.ijkLoad(playKey);
+        if (trackIndex != -1) {
+            setTrack(trackIndex);
+            return;
+        }
+        // 2. 智能中文音轨检测
+        List<TrackInfoBean> audioTracks = trackInfo.getAudio();
+        for (TrackInfoBean track : audioTracks) {
+            if (isChineseTrack(track, trackInfo)) {
+                setTrack(track.trackId);
+                memory.save(playKey, track.trackId);   //xuameng保存选择
+                return;
+            }
+        }
+        // 3. 默认选择第一条
+        setTrack(audioTracks.get(0).trackId);
+    }
+
+    private boolean isChineseTrack(TrackInfoBean track, TrackInfo trackInfo) {   //xuameng 音轨语言名称匹配
+        // 基础语言匹配
+        String language = track.language != null ? track.language.toLowerCase() : "";
+        String name = track.name != null ? track.name.toLowerCase() : "";
+        // 名称关键词匹配（中文常见标识）
+        if (name.contains("中文") || name.contains("国语") || name.contains("简体")) {
+        return true;
+        }
+        // 语言代码扩展（多语言标准支持）
+        return language.matches("zh|chi|zho|cn|chinese|中文|国语|简体|国配");
     }
 }
