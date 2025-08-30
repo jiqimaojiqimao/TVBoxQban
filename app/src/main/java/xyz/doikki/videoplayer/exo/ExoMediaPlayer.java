@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+import com.google.android.exoplayer2.Tracks;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
@@ -57,25 +58,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
         // xuameng渲染器配置
           if (mRenderersFactory == null) {
-            boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
-            int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
-
-            // ExoPlayer2 解码模式选择逻辑
-            int rendererMode;
-            if (exoSelect > 0) {
-                // 选择器优先
-                rendererMode = (exoSelect == 1) 
-                    ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF    // 硬解
-                    : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
-            } else {
-                // 使用exoDecode配置
-                rendererMode = exoDecode 
-                    ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
-                    : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
-            }
-    
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-                .setExtensionRendererMode(rendererMode);
+mRenderersFactory = new DefaultRenderersFactory(mAppContext);
         }
 
         // xuameng轨道选择器配置
@@ -99,8 +82,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 mTrackSelector,
                 new DefaultMediaSourceFactory(mAppContext),
                 mLoadControl,
-                DefaultBandwidthMeter.getSingletonInstance(mAppContext),
-                new AnalyticsCollector(Clock.DEFAULT))
+                DefaultBandwidthMeter.getSingletonInstance(mAppContext)
                 .build();
         setOptions();
 
@@ -110,11 +92,11 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     public DefaultTrackSelector getTrackSelector() {
         return mTrackSelector;
     }
+
     @Override
-    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-        Player.Listener.super.onTracksChanged(trackGroups, trackSelections);
-        trackNameProvider = new ExoTrackNameProvider(mAppContext.getResources());
-        mTrackSelections = trackSelections;
+    public void onTracksChanged(Tracks tracks) {
+        if (trackNameProvider == null)
+            trackNameProvider = new ExoTrackNameProvider(mAppContext.getResources());
     }
 
     @Override
