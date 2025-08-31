@@ -258,6 +258,7 @@ public class VodController extends BaseController {
     public TextView mPlayerSpeedBtn;
     TextView mPlayerBtn;
     TextView mPlayerIJKBtn;
+    TextView mPlayerEXOBtn;  //exo解码
     TextView mPlayerRetry;
     TextView mPlayrefresh;
     TextView mxuPlay; //xuameng 底部播放ID
@@ -486,6 +487,7 @@ public class VodController extends BaseController {
         mPlayerSpeedBtn = findViewById(R.id.play_speed);
         mPlayerBtn = findViewById(R.id.play_player);
         mPlayerIJKBtn = findViewById(R.id.play_ijk);
+        mPlayerEXOBtn = findViewById(R.id.play_exo);  //exo解码
         mPlayerTimeStartEndText = findViewById(R.id.play_time_start_end_text);
         mPlayerTimeStartBtn = findViewById(R.id.play_time_start);
         mPlayerTimeSkipBtn = findViewById(R.id.play_time_end);
@@ -773,7 +775,7 @@ public class VodController extends BaseController {
                     hideBottomXu();
                 }
                 DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();
-                int pr = Hawk.get(HawkConfig.PLAY_RENDER, 0);
+                int pr = Hawk.get(HawkConfig.PLAY_RENDER, 0);      //xuameng pr 0 text渲染 1 sur渲染
                 try {
                     pr = mPlayerConfig.getInt("pr");
                 } catch (JSONException e) {
@@ -837,6 +839,61 @@ public class VodController extends BaseController {
                     listener.updatePlayerCfg();
                     initVisualizer();  //xuameng音乐播放动画
                 }
+            }
+        });
+
+        mPlayerEXOBtn.setOnClickListener(new OnClickListener() { //xuameng EXO解码
+            @Override
+            public void onClick(View view) {
+                FastClickCheckUtil.check(view);
+                if((System.currentTimeMillis() - DOUBLE_CLICK_TIME_2) < 300 || isAnimation || isDisplay) { //xuameng 防播放打断动画
+                    return;
+                }
+                if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
+                    hideBottomXu();
+                }
+                DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();
+                boolean exocode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);  //xuameng exo解码默认设置
+                int exoselect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);  //xuameng exo解码动态选择
+                try {
+                    exoselect = mPlayerConfig.getInt("exocode");    //xuameng exo解码动态选择 0默认设置 1硬解 2软解
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                if(exoselect == 0) {
+                    if (!exocode){
+                        try {
+                            mPlayerConfig.put("exocode", 2); 
+                            Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 2);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }else{
+                        try {
+                            mPlayerConfig.put("exocode", 1);
+                            Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 1);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }else if(exoselect == 1) {
+                    try {
+                        mPlayerConfig.put("exocode", 2);
+                        Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 2);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }else if(exoselect == 2) {
+                    try {
+                        mPlayerConfig.put("exocode", 1);
+                        Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 1);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+                updatePlayerCfgView();
+                listener.updatePlayerCfg();
+                listener.replay(false);
             }
         });
 
@@ -1284,8 +1341,10 @@ public class VodController extends BaseController {
     void updatePlayerCfgView() {
         try {
 			musicAnimation = mPlayerConfig.getBoolean("music");   //xuameng音乐播放动画设置
-            int playerType = mPlayerConfig.getInt("pl");
-            int pr = mPlayerConfig.getInt("pr");
+            boolean exoCode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false); //xuameng EXO默认设置解码
+			int exoSelect = mPlayerConfig.getInt("exocode");  //xuameng exo解码动态选择
+            int playerType = mPlayerConfig.getInt("pl");   //xuameng播放器选择
+            int pr = mPlayerConfig.getInt("pr");  //xuameng渲染选择
             mPlayerBtn.setText(PlayerHelper.getPlayerName(playerType));
             mPlayerScaleBtn.setText(PlayerHelper.getScaleName(mPlayerConfig.getInt("sc")));
             mPlayerIJKBtn.setText(mPlayerConfig.getString("ijk"));
@@ -1298,6 +1357,18 @@ public class VodController extends BaseController {
             mAudioTrackBtn.setVisibility(View.VISIBLE);
             mPlayrender.setText((pr == 0) ? "T渲染" : "S渲染"); //xuameng 渲染
             mPlayanimation.setText(musicAnimation ? "音柱已开" : "音柱已关");  //xuameng音乐播放动画获取状态
+            if (exoSelect > 0){
+                mPlayerEXOBtn.setText(exoSelect == 1 ? "硬解码" : "软解码");  //xuameng EXO解码 
+                // xuameng EXO 动态选择解码 存储选择状态
+                if (exoSelect == 1) {
+                    Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 1);  // 硬解码标记存储
+                } else {
+                    Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 2);  // 软解码标记存储
+                }
+            }else {
+                mPlayerEXOBtn.setText(exoCode ? "软解码" : "硬解码");  //xuameng EXO解码
+            }
+            mPlayerEXOBtn.setVisibility(playerType == 2 ? VISIBLE : GONE);  //xuameng EXO解码
         } catch (JSONException e) {
             e.printStackTrace();
         }
