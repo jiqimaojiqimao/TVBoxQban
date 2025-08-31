@@ -60,44 +60,6 @@
             <LinearLayout
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:id="@+id/llHomeApi"
-                android:background="@drawable/shape_setting_model_focus"
-                android:paddingLeft="@dimen/vs_20"
-                android:paddingRight="@dimen/vs_20"
-                android:focusable="true"
-                android:layout_width="fill_parent"
-                android:layout_height="@dimen/vs_60"
-                android:layout_marginBottom="@dimen/vs_10">
-                <TextView
-                    android:textSize="@dimen/ts_24"
-                    android:textColor="@android:color/white"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="首页数据"/>
-                <Space
-                    android:layout_width="0.0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.0"/>
-                <TextView
-                    android:textSize="@dimen/ts_24"
-                    android:textColor="@android:color/white"
-                    android:ellipsize="end"
-                    android:id="@+id/tvHomeApi"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:maxEms="22"
-                    android:singleLine="true"/>
-                <TextView
-                    android:textSize="@dimen/ts_30"
-                    android:textColor="@android:color/white"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="@dimen/vs_10"
-                    android:text=">"/>
-            </LinearLayout>
-            <LinearLayout
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
                 android:id="@+id/llApi"
                 android:background="@drawable/shape_setting_model_focus"
                 android:paddingLeft="@dimen/vs_20"
@@ -132,6 +94,90 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/vs_10"
                     android:text=">"/>
+            </LinearLayout>
+            <LinearLayout
+                android:orientation="horizontal"
+                android:focusable="false"
+                android:layout_width="fill_parent"
+                android:layout_height="@dimen/vs_60"
+                android:layout_marginBottom="@dimen/vs_10">
+                <LinearLayout
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:id="@+id/llHomeApi"
+                    android:background="@drawable/shape_setting_model_focus"
+                    android:paddingLeft="@dimen/vs_20"
+                    android:paddingRight="@dimen/vs_20"
+                    android:focusable="true"
+                    android:layout_width="@dimen/vs_0"
+                    android:layout_height="fill_parent"
+                    android:layout_marginRight="@dimen/vs_5"
+                    android:layout_weight="1.0">
+                    <TextView
+                        android:textSize="@dimen/ts_24"
+                        android:textColor="@android:color/white"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="首页数据"/>
+                    <Space
+                        android:layout_width="0.0dip"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.0"/>
+                    <TextView
+                        android:textSize="@dimen/ts_24"
+                        android:textColor="@android:color/white"
+                        android:id="@+id/tvHomeApi"
+                        android:maxEms="13"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                    <TextView
+                        android:textSize="@dimen/ts_30"
+                        android:textColor="@android:color/white"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/vs_10"
+                        android:text=">"/>
+                </LinearLayout>
+                <LinearLayout
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:id="@+id/llHomeRecStyle"
+                    android:background="@drawable/shape_setting_model_focus"
+                    android:paddingLeft="@dimen/vs_20"
+                    android:paddingRight="@dimen/vs_20"
+                    android:focusable="true"
+                    android:layout_width="@dimen/vs_0"
+                    android:layout_height="fill_parent"
+                    android:layout_marginLeft="@dimen/vs_5"
+                    android:layout_weight="1.0"
+                    android:layout_marginStart="@dimen/vs_5">
+                    <TextView
+                        android:textSize="@dimen/ts_24"
+                        android:textColor="@android:color/white"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="首页多行"/>
+                    <Space
+                        android:layout_width="0.0dip"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1.0"/>
+                    <TextView
+                        android:textSize="@dimen/ts_24"
+                        android:textColor="@android:color/white"
+                        android:id="@+id/showRecStyleText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                    <TextView
+                        android:textSize="@dimen/ts_30"
+                        android:textColor="@android:color/white"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/vs_10"
+                        android:text=">"
+                        android:layout_marginStart="@dimen/vs_10"/>
+                </LinearLayout>
             </LinearLayout>
             <LinearLayout
                 android:orientation="horizontal"
@@ -316,42 +362,6 @@
                     <LinearLayout
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:id="@+id/llHomeRecStyle"
-                        android:background="@drawable/shape_setting_model_focus"
-                        android:paddingLeft="@dimen/vs_20"
-                        android:paddingRight="@dimen/vs_20"
-                        android:focusable="true"
-                        android:layout_width="@dimen/vs_0"
-                        android:layout_height="fill_parent"
-                        android:layout_marginRight="@dimen/vs_5"
-                        android:layout_weight="1.0">
-                        <TextView
-                            android:textSize="@dimen/ts_24"
-                            android:textColor="@android:color/white"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="首页多行"/>
-                        <Space
-                            android:layout_width="0.0dip"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1.0"/>
-                        <TextView
-                            android:textSize="@dimen/ts_24"
-                            android:textColor="@android:color/white"
-                            android:id="@+id/showRecStyleText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
-                        <TextView
-                            android:textSize="@dimen/ts_30"
-                            android:textColor="@android:color/white"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="@dimen/vs_10"
-                            android:text=">"/>
-                    </LinearLayout>
-                    <LinearLayout
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
                         android:id="@+id/llPlay"
                         android:background="@drawable/shape_setting_model_focus"
                         android:paddingLeft="@dimen/vs_20"
@@ -359,7 +369,7 @@
                         android:focusable="true"
                         android:layout_width="@dimen/vs_0"
                         android:layout_height="fill_parent"
-                        android:layout_marginLeft="@dimen/vs_5"
+                        android:layout_marginRight="@dimen/vs_5"
                         android:layout_weight="1.0">
                         <TextView
                             android:textSize="@dimen/ts_24"
@@ -375,11 +385,49 @@
                         <TextView
                             android:textSize="@dimen/ts_24"
                             android:textColor="@android:color/white"
-                            android:ellipsize="end"
                             android:id="@+id/tvPlay"
+                            android:ellipsize="end"
+                            android:singleLine="true"
+                            android:maxEms="4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:textSize="@dimen/ts_30"
+                            android:textColor="@android:color/white"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:maxEms="4"
+                            android:layout_marginLeft="@dimen/vs_10"
+                            android:text=">"/>
+                    </LinearLayout>
+                    <LinearLayout
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:id="@+id/llExodecode"
+                        android:background="@drawable/shape_setting_model_focus"
+                        android:paddingLeft="@dimen/vs_20"
+                        android:paddingRight="@dimen/vs_20"
+                        android:focusable="true"
+                        android:layout_width="@dimen/vs_0"
+                        android:layout_height="fill_parent"
+                        android:layout_marginLeft="@dimen/vs_5"
+                        android:layout_weight="1.0">
+                        <TextView
+                            android:textSize="@dimen/ts_24"
+                            android:textColor="@android:color/white"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="EXO解码"/>
+                        <Space
+                            android:layout_width="0.0dip"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1.0"/>
+                        <TextView
+                            android:textSize="@dimen/ts_24"
+                            android:textColor="@android:color/white"
+                            android:ellipsize="end"
+                            android:id="@+id/tvexodecode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
                             android:singleLine="true"/>
                         <TextView
                             android:textSize="@dimen/ts_30"
