@@ -35,6 +35,7 @@ import android.view.ViewGroup;   //xuameng优化首页数据源列表
 import me.jessyan.autosize.utils.AutoSizeUtils;  //xuameng优化首页数据源列表
 import com.github.tvbox.osc.util.DefaultConfig;  //xuameng长按许大师制作重启APP
 import com.github.tvbox.osc.base.App;  //xuameng showtoast
+import android.util.Pair;  //xuameng exo解码用
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.FileUtils;
 import com.github.tvbox.osc.util.HawkConfig;
@@ -79,6 +80,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
 	private TextView tvm3u8AdText;  //xuameng去广告
     private TextView tvShowMusicZb;  //xuameng 直播动画
     private TextView tvShowMusicDb;  //xuameng 点播动画
+    private TextView tvExodecode;  //xuameng Exo解码方式
     private TextView tvDns;
     private TextView tvHomeRec;
     private TextView tvHistoryNum;
@@ -109,8 +111,10 @@ public class ModelSettingFragment extends BaseLazyFragment {
         tvm3u8AdText = findViewById(R.id.m3u8AdText);    //xuameng去广告
         tvShowMusicZb = findViewById(R.id.zbmusictext);    //xuameng直播动画
         tvShowMusicDb = findViewById(R.id.dbmusictext);    //xuameng点播动画
+        tvExodecode = findViewById(R.id.tvexodecode);   //xuameng Exo解码方式
         tvShowMusicZb.setText(Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false) ? "已开启" : "已关闭"); //xuameng去广告
         tvShowMusicDb.setText(Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false) ? "已开启" : "已关闭");
+        tvExodecode.setText(Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false) ? "软解码" : "硬解码");
         tvm3u8AdText.setText(Hawk.get(HawkConfig.M3U8_PURIFY, false) ? "已开启" : "已关闭"); //xuameng去广告
         tvFastSearchText.setText(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) ? "已开启" : "已关闭");
         tvRecStyleText = findViewById(R.id.showRecStyleText);
@@ -717,6 +721,50 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 boolean is_musiczb=Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false);
                 Hawk.put(HawkConfig.LIVE_MUSIC_ANIMATION, !is_musiczb);
                 tvShowMusicZb.setText(!is_musiczb ? "已开启" : "已关闭");
+            }
+        });
+        findViewById(R.id.llExodecode).setOnClickListener(new View.OnClickListener() {  //xuamengEXO解码
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                // xuameng获取解码模式选项（模拟数据源）
+                List<Pair<String, Boolean>> decodeModes = new ArrayList<>();
+                decodeModes.add(new Pair<>("硬解码", false));
+                decodeModes.add(new Pair<>("软解码", true));
+                // xuameng当前选中项
+                int defaultPos = 0;
+                for (int i = 0; i < decodeModes.size(); i++) {
+                    if (Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false) == decodeModes.get(i).second) {
+                        defaultPos = i;
+                        break;
+                    }
+                }
+                // xuameng创建选择对话框
+                SelectDialog<Pair<String, Boolean>> dialog = new SelectDialog<>(mActivity);
+                dialog.setTip("请选择EXO解码");
+                dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<Pair<String, Boolean>>() {
+                    @Override
+                    public void click(Pair<String, Boolean> value, int pos) {
+                        tvExodecode.setText(value.first);
+                        Hawk.put(HawkConfig.EXO_PLAYER_DECODE, value.second);
+                    }
+
+                    @Override
+                    public String getDisplay(Pair<String, Boolean> val) {
+                        return val.first;
+                    }
+                }, new DiffUtil.ItemCallback<Pair<String, Boolean>>() {
+                    @Override
+                    public boolean areItemsTheSame(@NonNull Pair<String, Boolean> oldItem, @NonNull Pair<String, Boolean> newItem) {
+                        return oldItem == newItem;
+                    }
+
+                    @Override
+                    public boolean areContentsTheSame(@NonNull Pair<String, Boolean> oldItem, @NonNull Pair<String, Boolean> newItem) {
+                        return oldItem.first.equals(newItem.first);
+                    }
+                }, decodeModes, defaultPos);
+                dialog.show();
             }
         });
         findViewById(R.id.llHomeRecStyle).setOnClickListener(new View.OnClickListener() {
