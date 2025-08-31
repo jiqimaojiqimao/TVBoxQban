@@ -54,17 +54,47 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void initPlayer() {
-        if (mRenderersFactory == null) {
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
+        // xuameng释放旧实例
+        if (mMediaPlayer != null) {
+            mMediaPlayer.release();
+            mMediaPlayer.removeListener(this);
         }
-        mRenderersFactory.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);       //XUAMENG扩展优先
+        // xuameng渲染器配置
+          if (mRenderersFactory == null) {
+            boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
+            int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
+
+            // ExoPlayer2 解码模式选择逻辑
+            int rendererMode;
+            if (exoSelect > 0) {
+                // 选择器优先
+                rendererMode = (exoSelect == 1) 
+                    ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF    // 硬解
+                    : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
+            } else {
+                // 使用exoDecode配置
+                rendererMode = exoDecode 
+                    ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
+                    : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
+            }
+    
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+                .setExtensionRendererMode(rendererMode);
+        }
+         // xuameng轨道选择器配置
         if (mTrackSelector == null) {
             mTrackSelector = new DefaultTrackSelector(mAppContext);
         }
+        //xuameng加载策略控制
         if (mLoadControl == null) {
             mLoadControl = new DefaultLoadControl();
         }
-		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon().setPreferredTextLanguage("zh").setPreferredAudioLanguage("zh").setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
+
+		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
+            .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
+            .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
+            .setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
+
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
                 .setRenderersFactory(mRenderersFactory)
