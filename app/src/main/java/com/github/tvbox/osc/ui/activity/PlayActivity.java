@@ -391,30 +391,35 @@ public class PlayActivity extends BaseActivity {
 			App.showToastShort(mContext, "没有内置音轨！");
 			return;
 		}
+
+        final int selectedId = trackInfo.getAudioSelected(false);
         SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(PlayActivity.this);
         dialog.setTip("切换音轨");
         dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<TrackInfoBean>() {
             @Override
             public void click(TrackInfoBean value, int pos) {
+                if (selectedId == 99999) { // xuameng99999表示未选中
+                    App.showToastShort(mContext, "切换音轨失败！请切换解码方式或刷新重试！");
+                    return;
+                }
                 try {
                     for (TrackInfoBean audio : bean) {
                         audio.selected = audio.trackId == value.trackId;
                     }
-                    mediaPlayer.pause();
-					long progress = mediaPlayer.getCurrentPosition() - 3000L;//XUAMENG保存当前进度，//XUAMENG保存当前进度，回退3秒
+                    long progress = mediaPlayer.getCurrentPosition() - 3000L;//XUAMENG保存当前进度，//XUAMENG保存当前进度，回退3秒
                     if (mediaPlayer instanceof IjkMediaPlayer) {
-						((IjkMediaPlayer)mediaPlayer).setTrack(value.trackId,progressKey);
+                        ((IjkMediaPlayer)mediaPlayer).setTrack(value.trackId,progressKey);
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mediaPlayer.seekTo(progress);
+                            }
+                        }, 300);
                     }
-					if (mediaPlayer instanceof EXOmPlayer) {
-						((EXOmPlayer) mediaPlayer).selectExoTrackAudio(value,progressKey);
-					}
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            mediaPlayer.seekTo(progress);
-                            mediaPlayer.start();
-                        }
-                    }, 500);
+                    if (mediaPlayer instanceof EXOmPlayer) {
+                        ((EXOmPlayer) mediaPlayer).selectExoTrackAudio(value,progressKey);
+                        play(false);   //xuameng EXO偶尔切换出错
+                    }
                     dialog.dismiss();
                 } catch (Exception e) {
                     LOG.e("切换音轨出错");
@@ -470,7 +475,6 @@ public class PlayActivity extends BaseActivity {
                     for (TrackInfoBean subtitle : bean) {
                         subtitle.selected = subtitle.trackId == value.trackId;
                     }
-                    mediaPlayer.pause();
                     long progress = mediaPlayer.getCurrentPosition() - 3000L;//XUAMENG保存当前进度，//XUAMENG保存当前进度，回退3秒
                     if (mediaPlayer instanceof IjkMediaPlayer) {
                         mController.mSubtitleView.destroy();
@@ -481,9 +485,8 @@ public class PlayActivity extends BaseActivity {
                             @Override
                             public void run() {
                                 mediaPlayer.seekTo(progress);
-                                mediaPlayer.start();
                             }
-                        }, 500);
+                        }, 300);
                     }
 				   if (mediaPlayer instanceof EXOmPlayer) {
                         mController.mSubtitleView.destroy();
@@ -494,9 +497,8 @@ public class PlayActivity extends BaseActivity {
                             @Override
                             public void run() {
                                 mediaPlayer.seekTo(progress);
-                                mediaPlayer.start();
                             }
-                        }, 500);
+                        }, 300);
                     }
                     dialog.dismiss();
                 } catch (Exception e) {
@@ -835,6 +837,9 @@ public class PlayActivity extends BaseActivity {
             }
             if (!mVodPlayerCfg.has("music")) {    //xuameng音频柱状图
                 mVodPlayerCfg.put("music", Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false));
+            }
+            if (!mVodPlayerCfg.has("exocode")) {    //xuameng exo解码
+                mVodPlayerCfg.put("exocode", 0);  //xuameng默认选择，大于0为选择
             }
             if (!mVodPlayerCfg.has("ijk")) {
                 mVodPlayerCfg.put("ijk", Hawk.get(HawkConfig.IJK_CODEC, ""));
