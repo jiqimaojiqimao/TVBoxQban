@@ -317,9 +317,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     public void onPlayerError(@NonNull PlaybackException error) {
         errorCode = error.errorCode;
         Log.e("tag--", "" + error.errorCode);
-        HawkConfig.selectTrackExo = true;  //xuameng 音轨出错
         if (path != null) {
-			initPlayer();
             setDataSource(path, headers);
             path = null;
             prepareAsync();
