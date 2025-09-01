@@ -421,22 +421,16 @@ public class PlayFragment extends BaseLazyFragment {
                     long progress = mediaPlayer.getCurrentPosition() - 3000L;//XUAMENG保存当前进度，//XUAMENG保存当前进度，回退3秒
                     if (mediaPlayer instanceof IjkMediaPlayer) {
                         ((IjkMediaPlayer)mediaPlayer).setTrack(value.trackId,progressKey);
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mediaPlayer.seekTo(progress);
-                            }
-                        }, 300);
                     }
                     if (mediaPlayer instanceof EXOmPlayer) {
                         ((EXOmPlayer) mediaPlayer).selectExoTrackAudio(value,progressKey);
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mediaPlayer.seekTo(progress);
-                            }
-                        }, 300);
                     }
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mediaPlayer.seekTo(progress);
+                        }
+                    }, 300);
                     dialog.dismiss();
                 } catch (Exception e) {
                     LOG.e("切换音轨出错");
@@ -674,13 +668,16 @@ public class PlayFragment extends BaseLazyFragment {
         }
 
      if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
-		    ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨
             trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
                 mController.mSubtitleView.hasInternal = true;
             }else{
 				mController.mSubtitleView.hasInternal = false;  //xuameng修复切换播放器内置字幕不刷新
 			}
+            final int selectedId = trackInfo.getAudioSelected(false);
+            if (selectedId != 99999) { // xuameng99999表示未选中
+		        ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨
+            }
             ((EXOmPlayer) (mVideoView.getMediaPlayer())).setOnTimedTextListener(new Player.Listener() {
                 @Override
                 public void onCues(@NonNull List<Cue> cues) {
