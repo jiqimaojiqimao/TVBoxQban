@@ -17,8 +17,6 @@ import tv.danmaku.ijk.media.player.misc.ITrackInfo;
 import tv.danmaku.ijk.media.player.misc.IjkTrackInfo;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.player.VideoViewManager;
-import com.github.tvbox.osc.util.HawkConfig;  //xuameng 判断错误用
-import com.orhanobut.hawk.Hawk; //xuameng 判断错误用
 
 public class IjkPlayer extends AbstractPlayer implements IMediaPlayer.OnErrorListener,
         IMediaPlayer.OnCompletionListener, IMediaPlayer.OnInfoListener,
@@ -221,7 +219,6 @@ public class IjkPlayer extends AbstractPlayer implements IMediaPlayer.OnErrorLis
     @Override
     public boolean onError(IMediaPlayer mp, int what, int extra) {
         mPlayerEventListener.onError();
-        HawkConfig.selectTrackIjk = true;  //xuameng 音轨出错
         return true;
     }
 
