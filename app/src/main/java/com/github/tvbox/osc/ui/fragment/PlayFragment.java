@@ -656,7 +656,7 @@ public class PlayFragment extends BaseLazyFragment {
             if (selectedIdIjk != 99999 && !HawkConfig.selectTrackIjk) { // xuameng99999表示未选中
                ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).loadDefaultTrack(trackInfo,progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
-            HawkConfig.selectTrack = false;   //xuameng重置音轨出错判断
+            HawkConfig.selectTrackIjk = false;   //xuameng重置音轨出错判断
             ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setOnTimedTextListener(new IMediaPlayer.OnTimedTextListener() {
                 @Override
                 public void onTimedText(IMediaPlayer mp, IjkTimedText text) {
@@ -681,7 +681,7 @@ public class PlayFragment extends BaseLazyFragment {
             if (selectedIdExo != 99999 && !HawkConfig.selectTrackExo) { // xuameng99999表示未选中
 		        ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
-            HawkConfig.selectTrack = false;   //xuameng重置音轨出错判断
+            HawkConfig.selectTrackExo = false;   //xuameng重置音轨出错判断
             ((EXOmPlayer) (mVideoView.getMediaPlayer())).setOnTimedTextListener(new Player.Listener() {
                 @Override
                 public void onCues(@NonNull List<Cue> cues) {
