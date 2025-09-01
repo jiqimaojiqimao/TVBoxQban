@@ -63,8 +63,6 @@ public class HawkConfig {
 	public static boolean ISrestore = false;  //xuameng判断是否进行恢复操作
 	public static boolean isGetWp = false;  //xuameng下载壁纸
     public static boolean saveHistory = false;  //xuameng 存储历史记录
-    public static boolean selectTrackExo = false;  //xuameng 判断音轨是否播放失败Exo 
-    public static boolean selectTrackIjk = false;  //xuameng 判断音轨是否播放失败Ijk
 
     public static boolean hotVodDelete;
 }
