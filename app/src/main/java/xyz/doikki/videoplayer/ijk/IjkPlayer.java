@@ -221,7 +221,7 @@ public class IjkPlayer extends AbstractPlayer implements IMediaPlayer.OnErrorLis
     @Override
     public boolean onError(IMediaPlayer mp, int what, int extra) {
         mPlayerEventListener.onError();
-        HawkConfig.selectTrack = true;  //xuameng 音轨出错
+        HawkConfig.selectTrackIjk = true;  //xuameng 音轨出错
         return true;
     }
 
