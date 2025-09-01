@@ -404,7 +404,7 @@ public class PlayFragment extends BaseLazyFragment {
 			return;
 		}
 
-        final int selectedId = trackInfo.getAudioSelected(false);
+        final int selectedId = trackInfo.getAudioSelected(false);   //xuameng判断音轨选择
         SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(getActivity());
         dialog.setTip("切换音轨");
         dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<TrackInfoBean>() {
@@ -652,8 +652,10 @@ public class PlayFragment extends BaseLazyFragment {
             }else{
 				mController.mSubtitleView.hasInternal = false;   //xuameng修复切换播放器内置字幕不刷新
 			}
-            //xuameng默认选中第一个音轨 一般第一个音轨是国语 && 加载上一次选中的
-            ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).loadDefaultTrack(trackInfo,progressKey);
+            final int selectedIdIjk = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
+            if (selectedIdIjk != 99999) { // xuameng99999表示未选中
+               ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).loadDefaultTrack(trackInfo,progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
+            }
             ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setOnTimedTextListener(new IMediaPlayer.OnTimedTextListener() {
                 @Override
                 public void onTimedText(IMediaPlayer mp, IjkTimedText text) {
@@ -674,9 +676,9 @@ public class PlayFragment extends BaseLazyFragment {
             }else{
 				mController.mSubtitleView.hasInternal = false;  //xuameng修复切换播放器内置字幕不刷新
 			}
-            final int selectedId = trackInfo.getAudioSelected(false);
-            if (selectedId != 99999) { // xuameng99999表示未选中
-		        ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨
+            final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
+            if (selectedIdExo != 99999) { // xuameng99999表示未选中
+		        ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
             ((EXOmPlayer) (mVideoView.getMediaPlayer())).setOnTimedTextListener(new Player.Listener() {
                 @Override
