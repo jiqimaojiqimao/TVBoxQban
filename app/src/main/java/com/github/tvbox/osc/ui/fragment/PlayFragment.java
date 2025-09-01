@@ -430,7 +430,12 @@ public class PlayFragment extends BaseLazyFragment {
                     }
                     if (mediaPlayer instanceof EXOmPlayer) {
                         ((EXOmPlayer) mediaPlayer).selectExoTrackAudio(value,progressKey);
-                        play(false);   //xuameng EXO偶尔切换出错
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mediaPlayer.seekTo(progress);
+                            }
+                        }, 300);
                     }
                     dialog.dismiss();
                 } catch (Exception e) {
