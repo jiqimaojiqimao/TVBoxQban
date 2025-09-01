@@ -653,7 +653,7 @@ public class PlayFragment extends BaseLazyFragment {
 				mController.mSubtitleView.hasInternal = false;   //xuameng修复切换播放器内置字幕不刷新
 			}
             final int selectedIdIjk = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
-            if (selectedIdIjk != 99999 && !HawkConfig.selectTrack) { // xuameng99999表示未选中
+            if (selectedIdIjk != 99999 && !HawkConfig.selectTrackIjk) { // xuameng99999表示未选中
                ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).loadDefaultTrack(trackInfo,progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
             HawkConfig.selectTrack = false;   //xuameng重置音轨出错判断
@@ -678,7 +678,7 @@ public class PlayFragment extends BaseLazyFragment {
 				mController.mSubtitleView.hasInternal = false;  //xuameng修复切换播放器内置字幕不刷新
 			}
             final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
-            if (selectedIdExo != 99999 && !HawkConfig.selectTrack) { // xuameng99999表示未选中
+            if (selectedIdExo != 99999 && !HawkConfig.selectTrackExo) { // xuameng99999表示未选中
 		        ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
             HawkConfig.selectTrack = false;   //xuameng重置音轨出错判断
