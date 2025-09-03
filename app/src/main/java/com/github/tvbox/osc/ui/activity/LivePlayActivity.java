@@ -3393,7 +3393,7 @@ public class LivePlayActivity extends BaseActivity {
         // 计算0-1范围的百分比
         float volumePercent = (float) currentVolume / maxVolume;
         
-        // 保留一位小数
+        // 保留两位小数
         return (float) Math.round(volumePercent * 100) / 100.0f;
     }
 }
