@@ -47,4 +47,18 @@ public class AudioTrackMemory {
         playKey=playKey + "_ijk";
         return prefs.getInt(playKey + KEY_TRACK_SUFFIX, -1);
     }
+
+    // XUAMENG EXO新增删除方法
+    public void deleteExoTrack(String playKey) {
+        playKey = playKey + "_exo";
+        prefs.edit()
+            .remove(playKey + KEY_GROUP_SUFFIX)
+            .remove(playKey + KEY_TRACK_SUFFIX)
+            .apply();
+    }
+    // XUAMENG IJK新增删除方法
+    public void deleteIjkTrack(String playKey) {
+        playKey = playKey + "_ijk";
+        prefs.edit().remove(playKey + KEY_TRACK_SUFFIX).apply();
+    }
 }
