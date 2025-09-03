@@ -17,6 +17,9 @@ import tv.danmaku.ijk.media.player.misc.ITrackInfo;
 import tv.danmaku.ijk.media.player.misc.IjkTrackInfo;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.player.VideoViewManager;
+import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
+import com.orhanobut.hawk.Hawk; //xuameng EXO解码
+import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 
 public class IjkPlayer extends AbstractPlayer implements IMediaPlayer.OnErrorListener,
         IMediaPlayer.OnCompletionListener, IMediaPlayer.OnInfoListener,
@@ -26,6 +29,7 @@ public class IjkPlayer extends AbstractPlayer implements IMediaPlayer.OnErrorLis
     protected IjkMediaPlayer mMediaPlayer;
     private int mBufferedPercent;
     private final Context mAppContext;
+    private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 
     public IjkPlayer(Context context) {
         mAppContext = context;
@@ -219,6 +223,8 @@ public class IjkPlayer extends AbstractPlayer implements IMediaPlayer.OnErrorLis
     @Override
     public boolean onError(IMediaPlayer mp, int what, int extra) {
         mPlayerEventListener.onError();
+        String progressKey = Hawk.get(HawkConfig.IJK_PROGRESS_KEY, "");
+        memory.getInstance(mAppContext).deleteIjkTrack(progressKey);   //xuameng删除记忆音轨
         return true;
     }
 
