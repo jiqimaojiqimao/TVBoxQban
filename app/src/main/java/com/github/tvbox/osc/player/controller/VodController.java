@@ -298,7 +298,8 @@ public class VodController extends BaseController {
     private Visualizer mVisualizer;  //xuameng音乐播放动画
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
-    private boolean musicAnimation = false;     ////xuameng 音柱动画 加载设置
+    private boolean musicAnimation = Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false);     //xuameng 音柱动画 加载设置
+	
 	private static final String TAG = "VodController";  //xuameng音乐播放动画
     Handler myHandle;
     Runnable myRunnable;
@@ -417,7 +418,7 @@ public class VodController extends BaseController {
                     Picasso.get().load(Url)
                         //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
                         .noPlaceholder() //不使用站位图，效果不好
-                        //				.resize(1920,1080)
+                        				.resize(1920,1080)
                         //				.centerCrop()
                         //				.error(R.drawable.xumusic)
                         .config(Bitmap.Config.RGB_565).memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE).networkPolicy(NetworkPolicy.NO_CACHE).into(MxuamengMusic); // xuameng内容空显示banner
@@ -814,7 +815,6 @@ public class VodController extends BaseController {
                     hideBottomXu();
                 }
                 DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();
-
                 try {
 					musicAnimation = mPlayerConfig.getBoolean("music");   //xuameng音乐播放动画获取设置
                 } catch (JSONException e) {
@@ -1342,7 +1342,8 @@ public class VodController extends BaseController {
         try {
 			musicAnimation = mPlayerConfig.getBoolean("music");   //xuameng音乐播放动画设置
             boolean exoCode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false); //xuameng EXO默认设置解码
-			int exoSelect = mPlayerConfig.getInt("exocode");  //xuameng exo解码动态选择
+            int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);  //xuameng exo解码动态选择
+            exoSelect = mPlayerConfig.getInt("exocode");  //xuameng exo解码动态选择
             int playerType = mPlayerConfig.getInt("pl");   //xuameng播放器选择
             int pr = mPlayerConfig.getInt("pr");  //xuameng渲染选择
             mPlayerBtn.setText(PlayerHelper.getPlayerName(playerType));
@@ -1397,10 +1398,18 @@ public class VodController extends BaseController {
         void selectAudioTrack();
         void hideTipXu(); //xuameng隐藏错误信息
         void startPlayUrl(String url, HashMap < String, String > headers); //xuameng广告过滤
+        void setAllowSwitchPlayer(boolean isAllow);   //xuameng切换播放器
     }
     public void setListener(VodControlListener listener) {
         this.listener = listener;
     }
+
+    public void updatePlayerCfg() {    //xuameng新增变更更新方法
+        if (listener != null) {
+            listener.updatePlayerCfg();
+        }
+    }
+
     private VodControlListener listener;
     private boolean skipEnd = true;
     @Override
@@ -2377,7 +2386,7 @@ public class VodController extends BaseController {
         // 计算0-1范围的百分比
         float volumePercent = (float) currentVolume / maxVolume;
         
-        // 保留一位小数
+        // 保留两位小数
         return (float) Math.round(volumePercent * 100) / 100.0f;
     }
 }
