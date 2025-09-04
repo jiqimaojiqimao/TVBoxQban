@@ -99,7 +99,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 Context mAppContext,
                 DefaultRenderersFactory mRenderersFactory,  // xuameng使用已配置的实例
                 DefaultTrackSelector mTrackSelector,
-                DefaultLoadControl mLoadControl)
+                DefaultLoadControl mLoadControl))
                 .build();
 
         setOptions();
