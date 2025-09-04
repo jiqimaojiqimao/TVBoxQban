@@ -96,10 +96,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             .setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
 
             mMediaPlayer = new SimpleExoPlayer.Builder(
-                Context mAppContext,
-                DefaultRenderersFactory mRenderersFactory,  // xuameng使用已配置的实例
-                DefaultTrackSelector mTrackSelector,
-                DefaultLoadControl mLoadControl))
+                mAppContext,
+                mRenderersFactory,  // xuameng使用已配置的实例
+                mTrackSelector,
+                mLoadControl)
                 .build();
 
         setOptions();
