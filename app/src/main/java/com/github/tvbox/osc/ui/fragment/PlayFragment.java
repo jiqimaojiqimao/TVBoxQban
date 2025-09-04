@@ -1159,7 +1159,7 @@ public class PlayFragment extends BaseLazyFragment {
            if(mController.switchPlayer()){
                autoRetryCount++;
            }else {
-               autoRetryCount = 2;
+               autoRetryCount++;
            }
            mRetryCountExo = 0;  //xuameng播放出错计数器重置
            mRetryCountIjk = 0;	
