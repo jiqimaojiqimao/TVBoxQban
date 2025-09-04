@@ -15,6 +15,7 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Tracks;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -94,7 +95,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
             .setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
 
-        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+        mMediaPlayer = new SimpleExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
