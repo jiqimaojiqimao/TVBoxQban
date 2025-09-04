@@ -1164,7 +1164,6 @@ public class PlayActivity extends BaseActivity {
         }
         stopParse();
         initParseLoadFound();
-        allowSwitchPlayer = true;
 //xuameng某些设备有问题        mController.stopOther();
         if(mVideoView!= null) mVideoView.release();
         subtitleCacheKey = mVodInfo.sourceKey + "-" + mVodInfo.id + "-" + mVodInfo.playFlag + "-" + mVodInfo.playIndex+ "-" + vs.name + "-subt";
