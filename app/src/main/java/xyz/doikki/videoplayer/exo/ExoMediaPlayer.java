@@ -88,17 +88,14 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mTrackSelector = new DefaultTrackSelector(mAppContext);
 
         //xuameng加载策略控制
-        mLoadControl = new DefaultLoadControl();
+        mMediaPlayer.mLoadControl = new DefaultLoadControl();
 
-		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
+		mMediaPlayer.mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
             .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
             .setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
 
-        mMediaPlayer = new SimpleExoPlayer.Builder(mAppContext)
-                .setLoadControl(mLoadControl)
-                .setRenderersFactory(mRenderersFactory)
-                .setTrackSelector(mTrackSelector).build();
+
 
         setOptions();
         mMediaPlayer.addListener(this);
