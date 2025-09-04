@@ -116,7 +116,7 @@ dependencies {
     implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     implementation 'com.blankj:utilcodex:1.31.0'
     //xuameng exo
-    def exoplayerVersion = "2.18.7"
+    def exoplayerVersion = "2.19.1"
     api "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
     api "com.google.android.exoplayer:exoplayer-dash:$exoplayerVersion"
     api "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
