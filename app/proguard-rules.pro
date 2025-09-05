@@ -25,7 +25,7 @@
 -repackageclasses androidx.base
 
 # 把混淆类中的方法名也混淆了
--useuniqueclassmembernames
+#R8冲突xuameng  -useuniqueclassmembernames
 #############################################
 #
 # Android开发中一些需要保留的公共部分
@@ -59,7 +59,14 @@
 -keep interface androidx.** { *; }
 #-keep public class * extends androidx.**
 
+#r8 xuameng 保留META-INF/services声明
+-keep class META-INF.services.org.xmlpull.v1.XmlPullParserFactory
+-keep class **.META-INF.services.org.xmlpull.v1.XmlPullParserFactory
+
 -keep class org.xmlpull.v1.** {*;}
+#r8 xuameng新增
+-keep class org.xmlpull.mxp1.** { *; }
+-keep class org.xmlpull.mxp1_serializer.** { *; }
 #r8 xuameng忽略kxml2解析器库的缺失警告
 -dontwarn org.kxml2.io.KXmlParser
 -dontwarn org.xmlpull.mxp1.MXParser
