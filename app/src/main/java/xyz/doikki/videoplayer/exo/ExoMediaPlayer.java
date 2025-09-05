@@ -90,7 +90,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         //xuameng加载策略控制
         mLoadControl = new DefaultLoadControl();
-		mMediaSourceFactory = new DefaultMediaSourceFactory(mAppContext),
+		mMediaSourceFactory = new DefaultMediaSourceFactory(mAppContext);
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
