@@ -63,6 +63,8 @@
 #r8 xuameng忽略kxml2解析器库的缺失警告
 -dontwarn org.kxml2.io.KXmlParser
 -dontwarn org.xmlpull.mxp1.MXParser
+-dontwarn com.ctc.wstx.stax.WstxInputFactory
+-dontwarn com.ctc.wstx.stax.WstxOutputFactory
 
 # 保留R下面的资源
 -keep class **.R$* {*;}
