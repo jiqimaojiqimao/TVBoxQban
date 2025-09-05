@@ -14,7 +14,6 @@ import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Tracks;
@@ -47,7 +46,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private LoadControl mLoadControl;
     private DefaultRenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
-    private DefaultMediaSourceFactory mMediaSourceFactory;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 
     private int errorCode = -100;
@@ -90,7 +88,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         //xuameng加载策略控制
         mLoadControl = new DefaultLoadControl();
-		mMediaSourceFactory = new DefaultMediaSourceFactory(mAppContext);
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
@@ -100,7 +97,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
                 .setRenderersFactory(mRenderersFactory)
-			    .setMediaSourceFactory(mMediaSourceFactory) 
                 .setTrackSelector(mTrackSelector).build();
 
         setOptions();
