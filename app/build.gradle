@@ -11,7 +11,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
-        versionName '2025905-2222'
+        versionName '2025903-2222'
         multiDexEnabled true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -70,6 +70,11 @@ repositories {
     flatDir {
         dirs 'libs'
     }
+}
+
+configurations {
+    all*.exclude group: 'xmlpull', module: 'xmlpull'
+    all*.exclude group: 'xpp3', module: 'xpp3'
 }
 
 dependencies {
@@ -133,4 +138,3 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
 }
-
