@@ -11,7 +11,7 @@
 -verbose
 -printmapping proguardMapping.txt
 -optimizations !code/simplification/cast,!field/*,!class/merging/*
--keepattributes *Annotation*,Signature,InnerClasses
+-keepattributes *Annotation*,InnerClasses
 -keepattributes EnclosingMethod, InnerClasses
 -keepattributes *Annotation*
 -keepattributes Signature
@@ -59,35 +59,7 @@
 -keep interface androidx.** { *; }
 #-keep public class * extends androidx.**
 
-#r8 xuameng 保留META-INF/services声明
--keep class META-INF.services.org.xmlpull.v1.XmlPullParserFactory
--keep class **.META-INF.services.org.xmlpull.v1.XmlPullParserFactory
-
 -keep class org.xmlpull.v1.** {*;}
-#r8 xuameng新增
--keep class org.xmlpull.mxp1.** { *; }
--keep class org.xmlpull.mxp1_serializer.** { *; }
-# Bea XML Stream兼容层
--keep class com.bea.xml.stream.** { *; }
-# 动态加载类保护
--keep class * implements org.xmlpull.v1.XmlPullParser {
-    public <init>();
-    public <methods>;
-}
--keep class * implements javax.xml.stream.XMLStreamReader {
-    public <init>();
-    public <methods>;
-}
-# 系统类桥接保留
--keepclassmembers class android.content.res.XmlResourceParser {
-    public *;
-}
--keepclassmembers interface org.xmlpull.v1.XmlPullParser {
-    public *;
-}
--keep class * {
-    @com.bea.xml.stream.** *;
-}
 #r8 xuameng忽略kxml2解析器库的缺失警告
 -dontwarn org.kxml2.io.KXmlParser
 -dontwarn org.xmlpull.mxp1.MXParser
