@@ -18,6 +18,7 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assemblerelease --build-cache --parallel --daemon --warning-mode all
+#debug模式  ./gradlew assembleDebug
       - name: Prepare App
         run: |
           mkdir -p ${{ github.workspace }}/apk/
