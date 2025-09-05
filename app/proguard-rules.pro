@@ -19,7 +19,7 @@
 -renamesourcefileattribute SourceFile
 
 # 重新包装所有重命名的包并放在给定的单一包中
--flattenpackagehierarchy androidx.base
+#R8冲突xuameng  -flattenpackagehierarchy androidx.base
 
 # 将包里的类混淆成n个再重新打包到一个统一的package中  会覆盖flattenpackagehierarchy选项
 -repackageclasses androidx.base
@@ -60,6 +60,9 @@
 #-keep public class * extends androidx.**
 
 -keep class org.xmlpull.v1.** {*;}
+#r8 xuameng忽略kxml2解析器库的缺失警告
+-dontwarn org.kxml2.io.KXmlParser
+-dontwarn org.xmlpull.mxp1.MXParser
 
 # 保留R下面的资源
 -keep class **.R$* {*;}
