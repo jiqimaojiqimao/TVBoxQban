@@ -65,6 +65,10 @@
 -dontwarn org.xmlpull.mxp1.MXParser
 -dontwarn com.ctc.wstx.stax.WstxInputFactory
 -dontwarn com.ctc.wstx.stax.WstxOutputFactory
+-keep class com.bea.xml.stream.MXParserFactory
+-keep class com.bea.xml.stream.XMLOutputFactoryBase
+-dontwarn com.bea.xml.stream.**
+-dontwarn java.awt.Color
 
 # 保留R下面的资源
 -keep class **.R$* {*;}
