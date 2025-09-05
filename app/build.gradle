@@ -76,6 +76,7 @@ configurations {
     all*.exclude group: 'xmlpull', module: 'xmlpull'
     all*.exclude group: 'xpp3', module: 'xpp3'
     all*.exclude group: 'stax', module: 'stax-api'
+    all*.exclude group: 'org.xmlpull', module: 'mxp1'
 }
 
 dependencies {
@@ -103,6 +104,7 @@ dependencies {
     implementation 'me.jessyan:autosize:1.2.1'
     implementation('com.thoughtworks.xstream:xstream:1.4.15') {
         exclude group: 'xmlpull', module: 'xmlpull'
+        exclude group: 'org.xmlpull', module: 'mxp1'
         exclude group: 'stax', module: 'stax-api'
         exclude group: 'xpp3', module: 'xpp3'
     }
