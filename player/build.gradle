@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 26
+        targetSdkVersion 28
     }
 
     buildTypes {
@@ -36,3 +36,4 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.12.11'      
     api 'xyz.doikki.android.dkplayer:dkplayer-ui:3.3.5'
 }
+
