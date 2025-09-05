@@ -62,14 +62,11 @@
 -keep class org.xmlpull.v1.** {*;}
 #r8 xuameng忽略kxml2解析器库的缺失警告
 -dontwarn org.kxml2.io.KXmlParser
--dontwarn org.xmlpull.mxp1.MXParser
--dontwarn com.ctc.wstx.stax.WstxInputFactory
--dontwarn com.ctc.wstx.stax.WstxOutputFactory
--keep class com.bea.xml.stream.MXParserFactory
--keep class com.bea.xml.stream.XMLOutputFactoryBase
+-dontwarn org.xmlpull.mxp1.**
+-dontwarn com.ctc.wstx.stax.**
+-keep class com.bea.xml.stream.**
 -dontwarn com.bea.xml.stream.**
--dontwarn java.awt.Color
-
+-dontwarn java.awt.**
 # 保留R下面的资源
 -keep class **.R$* {*;}
 
