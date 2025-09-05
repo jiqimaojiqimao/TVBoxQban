@@ -26,20 +26,25 @@ android {
     }
 
     buildTypes {
-        debug {
+        release {
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            minifyEnabled false
+        }
+    }
 
+    flavorDimensions += ["abi"]
+    productFlavors {
+        armeabi {
+            dimension = "abi"
             ndk {
                 abiFilters 'armeabi-v7a'
             }
         }
-        release {
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            minifyEnabled true
-
+        arm64 {
+            dimension = "abi"
             ndk {
-                abiFilters 'armeabi-v7a'
+                abiFilters 'arm64-v8a'
             }
         }
     }
@@ -123,5 +128,3 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
 }
-
-
