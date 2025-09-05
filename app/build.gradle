@@ -33,8 +33,9 @@ android {
         }
 
         debug {
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
             minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+
         }
     }
 
@@ -72,13 +73,6 @@ repositories {
     }
 }
 
-configurations {
-    all*.exclude group: 'xmlpull', module: 'xmlpull'
-    all*.exclude group: 'xpp3', module: 'xpp3'
-    all*.exclude group: 'stax', module: 'stax-api'
-    all*.exclude group: 'org.xmlpull', module: 'mxp1'
-}
-
 dependencies {
     api fileTree(dir: "libs", include: ["*.jar"])
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  //xuameng 启用Java 8脱糖
@@ -104,9 +98,6 @@ dependencies {
     implementation 'me.jessyan:autosize:1.2.1'
     implementation('com.thoughtworks.xstream:xstream:1.4.15') {
         exclude group: 'xmlpull', module: 'xmlpull'
-        exclude group: 'org.xmlpull', module: 'mxp1'
-        exclude group: 'stax', module: 'stax-api'
-        exclude group: 'xpp3', module: 'xpp3'
     }
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'com.orhanobut:hawk:2.0.1'
