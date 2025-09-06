@@ -73,11 +73,11 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             // 选择器优先
             rendererMode = (exoSelect == 1) 
                 ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF    // 硬解
-                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
+                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON; // 软解
         } else {
             // 使用exoDecode配置
             rendererMode = exoDecode 
-                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
+                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON // 软解
                 : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
 		mRenderersFactory = new DefaultRenderersFactory(mAppContext);
