@@ -124,6 +124,7 @@ dependencies {
 //    implementation 'com.google.android.gms:play-services-cronet:18.0.1'
     implementation ('org.chromium.net:cronet-embedded:101.4951.41')
       //工具类
+        implementation "com.github.anilbeesetti.nextlib:nextlib-media3ext:0.7.1"
     implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     implementation 'com.blankj:utilcodex:1.31.0'
     //xuameng exo
@@ -134,5 +135,6 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
 }
+
 
 
