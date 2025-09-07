@@ -134,7 +134,3 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
 }
-
-
-
-
