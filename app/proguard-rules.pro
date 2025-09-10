@@ -72,6 +72,9 @@
 -dontwarn java.beans.Introspector
 -dontwarn java.beans.PropertyDescriptor
 -dontwarn java.beans.PropertyEditor
+-dontwarn javax.activation.ActivationDataFlavor
+-dontwarn javax.swing.plaf.FontUIResource
+-dontwarn javax.xml.bind.DatatypeConverter
 # 保留R下面的资源
 -keep class **.R$* {*;}
 
