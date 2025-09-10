@@ -60,6 +60,10 @@
 #-keep public class * extends androidx.**
 
 -keep class org.xmlpull.v1.** {*;}
+
+-keep class javax.xml.stream.** { *; }
+-keep class com.bea.xml.stream.** { *; }
+-keep class javax.xml.bind.** { *; }
 #r8 xuameng忽略kxml2解析器库的缺失警告
 # from app -> build -> outputs -> mapping -> your_app_name -> missing_rules.txt
 # Please add these rules to your existing keep rules in order to suppress warnings.
