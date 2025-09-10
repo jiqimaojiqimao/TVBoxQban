@@ -104,8 +104,6 @@ dependencies {
     implementation('com.thoughtworks.xstream:xstream:1.4.20') {
         exclude group: 'xmlpull', module: 'xmlpull'
     }
-    implementation 'javax.xml.bind:jaxb-api:2.3.1'
-
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'com.orhanobut:hawk:2.0.1'
 
