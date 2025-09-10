@@ -6,7 +6,7 @@ android {
     compileSdk 35
 
     defaultConfig {
-        namespace 'com.whl.quickjs.android'
+        namespace = 'com.whl.quickjs.android'
         minSdk 24
         targetSdk 28
     }
