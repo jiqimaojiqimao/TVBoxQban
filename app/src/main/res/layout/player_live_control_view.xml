@@ -48,6 +48,7 @@
     <ProgressBar
         android:layout_gravity="center"
         android:tag="vod_control_loading"
+        android:id="@+id/loading"
         android:visibility="gone"
         android:layout_width="@dimen/vs_50"
         android:layout_height="@dimen/vs_50"
