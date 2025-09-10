@@ -67,6 +67,11 @@
 -keep class com.bea.xml.stream.**
 -dontwarn com.bea.xml.stream.**
 -dontwarn java.awt.**
+-dontwarn java.beans.BeanInfo
+-dontwarn java.beans.IntrospectionException
+-dontwarn java.beans.Introspector
+-dontwarn java.beans.PropertyDescriptor
+-dontwarn java.beans.PropertyEditor
 # 保留R下面的资源
 -keep class **.R$* {*;}
 
