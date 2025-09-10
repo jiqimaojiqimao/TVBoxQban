@@ -9,7 +9,7 @@ android {
     defaultConfig {
         namespace 'com.jvhuiys.player'
         minSdkVersion 24
-        targetSdkVersion 28
+        targetSdkVersion 35
         versionCode 1
         versionName '2025905-2222'
         multiDexEnabled true
