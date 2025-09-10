@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 35
 
     defaultConfig {
         applicationId 'com.jvhuiys.player'
@@ -144,3 +144,4 @@ dependencies {
     implementation 'androidx.media3:media3-extractor:1.8.0'
     implementation 'androidx.media3:media3-ui:1.8.0'
 }
+
