@@ -81,8 +81,8 @@ import com.lzy.okgo.model.Response;
 import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.orhanobut.hawk.Hawk;
 
-import androidx.media3.common.Player;
-import androidx.media3.common.text.Cue;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.text.Cue;
 import com.github.tvbox.osc.bean.IJKCode;  //xuamengIJK切换用
 
 import org.greenrobot.eventbus.Subscribe;
