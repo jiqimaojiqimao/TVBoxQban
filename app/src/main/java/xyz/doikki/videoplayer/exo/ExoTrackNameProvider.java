@@ -4,12 +4,11 @@ import android.content.res.Resources;
 import android.text.TextUtils;
 import androidx.annotation.Nullable;
 import com.github.tvbox.osc.player.R;
-import androidx.media3.common.C;
-import androidx.media3.common.Format;
-import androidx.media3.common.MimeTypes;
-import androidx.media3.common.util.Assertions;
-import androidx.media3.common.util.UnstableApi;
-import androidx.media3.common.util.Util;
+import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.util.Assertions;
+import com.google.android.exoplayer2.util.MimeTypes;
+import com.google.android.exoplayer2.util.Util;
 import java.util.Locale;
 public class ExoTrackNameProvider {
     private final Resources resources;
