@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId 'com.jvhuiys.player'
@@ -128,20 +128,19 @@ dependencies {
     implementation 'com.blankj:utilcodex:1.31.0'
     //xuameng exo
     implementation 'io.github.anilbeesetti:nextlib-media3ext:1.8.0-0.9.0'
-    def exoplayerVersion = "1.8.0"
-    implementation 'androidx.media3:media3-common:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-container:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-database:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-datasource:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-datasource-okhttp:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-datasource-rtmp:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-decoder:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-effect:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-exoplayer:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-exoplayer-dash:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-exoplayer-hls:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-exoplayer-rtsp:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-exoplayer-smoothstreaming:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-extractor:' + $exoplayerVersion
-    implementation 'androidx.media3:media3-ui:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-common:1.8.0'
+    implementation 'androidx.media3:media3-container:1.8.0'
+    implementation 'androidx.media3:media3-database:1.8.0'
+    implementation 'androidx.media3:media3-datasource:1.8.0'
+    implementation 'androidx.media3:media3-datasource-okhttp:1.8.0'
+    implementation 'androidx.media3:media3-datasource-rtmp:1.8.0'
+    implementation 'androidx.media3:media3-decoder:1.8.0'
+    implementation 'androidx.media3:media3-effect:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer:'
+    implementation 'androidx.media3:media3-exoplayer-dash:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer-rtsp:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer-smoothstreaming:1.8.0'
+    implementation 'androidx.media3:media3-extractor:1.8.0'
+    implementation 'androidx.media3:media3-ui:1.8.0'
 }
