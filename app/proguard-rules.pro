@@ -64,6 +64,8 @@
 -dontwarn org.kxml2.io.KXmlParser
 -dontwarn org.xmlpull.mxp1.**
 -dontwarn com.ctc.wstx.stax.**
+-dontwarn com.ctc.wstx.stax.WstxInputFactory
+-dontwarn com.ctc.wstx.stax.WstxOutputFactory
 -keep class com.bea.xml.stream.**
 -dontwarn com.bea.xml.stream.**
 -dontwarn java.awt.**
@@ -74,6 +76,7 @@
 -dontwarn java.beans.PropertyEditor
 -dontwarn javax.activation.ActivationDataFlavor
 -dontwarn javax.swing.plaf.FontUIResource
+-dontwarn javax.xml.stream.**
 -dontwarn javax.xml.bind.DatatypeConverter
 # 保留R下面的资源
 -keep class **.R$* {*;}
