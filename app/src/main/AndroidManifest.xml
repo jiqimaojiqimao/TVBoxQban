@@ -39,8 +39,7 @@
 
         <activity
             android:name=".ui.activity.HomeActivity"
-            android:exported="true"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -51,7 +50,7 @@
 
         <activity
             android:name=".ui.activity.LivePlayActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.DetailActivity"
@@ -63,30 +62,30 @@
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.PushActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.SearchActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.FastSearchActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.SettingActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.HistoryActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".ui.activity.CollectActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
 
-        <receiver android:name=".receiver.SearchReceiver" android:exported="true">
+        <receiver android:name=".receiver.SearchReceiver">
             <intent-filter>
                 <action android:name="android.content.movie.search.Action" />
             </intent-filter>
@@ -97,7 +96,7 @@
                 <action android:name="android.content.movie.detail.Action" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".receiver.CustomWebReceiver" android:exported="false">
+        <receiver android:name=".receiver.CustomWebReceiver">
             <intent-filter>
                 <action android:name="android.content.movie.custom.web.Action" />
             </intent-filter>
