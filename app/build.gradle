@@ -8,7 +8,6 @@ android {
 
     defaultConfig {
         namespace = 'com.github.tvbox.osc'
-        applicationId 'com.jvhuiys.player'
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
@@ -149,3 +148,4 @@ dependencies {
     implementation 'androidx.media3:media3-extractor:1.8.0'
     implementation 'androidx.media3:media3-ui:1.8.0'
 }
+
