@@ -1,17 +1,43 @@
-plugins {
-    id 'com.android.library'
-}
-
-android {
-    compileSdk 35
-
-    defaultConfig {
-        namespace = 'com.whl.quickjs.android'
-        minSdk 24
-        targetSdk 28
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext.kotlin_version = "1.9.25"
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        maven { url = "https://jitpack.io" }
+        maven { url = "https://maven.aliyun.com/repository/releases" }
+        maven { url = "https://maven.aliyun.com/repository/public" }
+        maven { url = "https://storage.googleapis.com/r8-releases/raw" }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
     }
 }
 
-dependencies {
-    
+plugins {
+    id 'com.android.application' version '8.12.2' apply false
+    id 'com.android.library' version '8.12.2' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.25' apply false
 }
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = "https://jitpack.io" }
+        maven { url = "https://maven.aliyun.com/repository/releases" }
+        maven { url = "https://maven.aliyun.com/repository/public" }
+        gradlePluginPortal()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+
+
