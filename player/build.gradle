@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    compileSdk 33
+    compileSdkVersion 34
 
     defaultConfig {
-        minSdk 24
-        targetSdk 28
+        minSdkVersion 24
+        targetSdkVersion 28
     }
 
     buildTypes {
@@ -36,5 +36,4 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.12.11'      
     api 'xyz.doikki.android.dkplayer:dkplayer-ui:3.3.5'
 }
-
 
