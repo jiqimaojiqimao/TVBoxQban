@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 34
 
     defaultConfig {
         applicationId 'com.jvhuiys.player'
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
         versionName '2025905-2222'
@@ -127,10 +127,21 @@ dependencies {
     implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     implementation 'com.blankj:utilcodex:1.31.0'
     //xuameng exo
-    def exoplayerVersion = "2.19.1"
-    api "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-dash:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
-    api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
+    implementation 'io.github.anilbeesetti:nextlib-media3ext:1.8.0-0.9.0'
+    def exoplayerVersion = "1.8.0"
+    implementation 'androidx.media3:media3-common:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-container:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-database:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-datasource:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-datasource-okhttp:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-datasource-rtmp:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-decoder:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-effect:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-exoplayer:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-exoplayer-dash:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-exoplayer-hls:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-exoplayer-rtsp:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-exoplayer-smoothstreaming:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-extractor:' + $exoplayerVersion
+    implementation 'androidx.media3:media3-ui:' + $exoplayerVersion
 }
