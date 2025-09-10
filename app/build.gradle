@@ -4,10 +4,10 @@ plugins {
 }
 
 android {
-    compileSdkVersion 35
+    compileSdk 35
 
     defaultConfig {
-        applicationId 'com.jvhuiys.player'
+        namespace 'com.jvhuiys.player'
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
@@ -68,9 +68,7 @@ android {
 }
 
 repositories {
-    flatDir {
-        dirs 'libs'
-    }
+    maven { url = uri('libs') } // 替代flatDir
 }
 
 dependencies {
