@@ -6,7 +6,7 @@ android {
     compileSdkVersion 35
 
     defaultConfig {
-        namespace 'com.github.tvbox.osc.player'
+        namespace = 'com.github.tvbox.osc.player'
         minSdkVersion 24
         targetSdkVersion 28
     }
