@@ -7,7 +7,7 @@ android {
     compileSdkVersion 35
 
     defaultConfig {
-        applicationId 'com.jvhuiys.player'
+        namespace 'com.jvhuiys.player'
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
@@ -144,4 +144,3 @@ dependencies {
     implementation 'androidx.media3:media3-extractor:1.8.0'
     implementation 'androidx.media3:media3-ui:1.8.0'
 }
-
