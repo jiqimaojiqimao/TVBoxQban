@@ -106,6 +106,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         setOptions();
         mMediaPlayer.addListener(this);
+	}
 
     public DefaultTrackSelector getTrackSelector() {
         return mTrackSelector;
