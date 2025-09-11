@@ -41,12 +41,12 @@ android {
 
     flavorDimensions += ["abi"]
     productFlavors {
-    //    armeabi {
-    //        dimension = "abi"
-    //        ndk {
-    //            abiFilters 'armeabi-v7a'
-    //        }
-    //    }
+        armeabi {
+            dimension = "abi"
+            ndk {
+                abiFilters 'armeabi-v7a'
+            }
+        }
         arm64 {
             dimension = "abi"
             ndk {
@@ -134,6 +134,7 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
 }
+
 
 
 
