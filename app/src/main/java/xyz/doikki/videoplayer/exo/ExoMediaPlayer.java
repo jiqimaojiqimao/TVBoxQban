@@ -21,6 +21,7 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
 import com.google.android.exoplayer2.video.VideoSize;
 import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
 import com.orhanobut.hawk.Hawk; //xuameng EXO解码
@@ -46,6 +47,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private LoadControl mLoadControl;
     private DefaultRenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
+    private DefaultMediaSourceFactory mMediaSourceFactory;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 
     private int errorCode = -100;
@@ -89,6 +91,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         //xuameng加载策略控制
         mLoadControl = new DefaultLoadControl();
 
+        //xuameng媒体源的核心工厂类
+        mMediaSourceFactory = new DefaultMediaSourceFactory(mAppContext);
+
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
             .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
@@ -97,6 +102,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
                 .setRenderersFactory(mRenderersFactory)
+                .setMediaSourceFactory(mMediaSourceFactory)
                 .setTrackSelector(mTrackSelector).build();
 
         setOptions();
