@@ -96,7 +96,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             .setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
 
 
-	    SimpleExoPlayer.Builder builder = new SimpleExoPlayer.Builder(mAppContext,mrenderersFactory)
+	    SimpleExoPlayer.Builder builder = new SimpleExoPlayer.Builder(mAppContext,mRenderersFactory)
         .setTrackSelector(mTrackSelector)
         .setLoadControl(mLoadControl);
 
