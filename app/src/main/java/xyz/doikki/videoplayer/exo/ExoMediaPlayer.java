@@ -97,11 +97,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
 
 	    SimpleExoPlayer.Builder builder = new SimpleExoPlayer.Builder(mAppContext)
-		.setRenderersFactory(mRenderersFactory)
         .setTrackSelector(mTrackSelector)
         .setLoadControl(mLoadControl);
 
-
+//builder.setRenderersFactory(mRenderersFactory);
 	SimpleExoPlayer mMediaPlayer = builder.build();
 
         setOptions();
