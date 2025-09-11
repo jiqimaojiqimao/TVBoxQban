@@ -100,7 +100,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         .setTrackSelector(mTrackSelector)
         .setLoadControl(mLoadControl);
 
-	SimpleExoPlayer mMediaPlayer = builder.build();
+	mMediaPlayer = builder.build();
 
         setOptions();
         mMediaPlayer.addListener(this);
