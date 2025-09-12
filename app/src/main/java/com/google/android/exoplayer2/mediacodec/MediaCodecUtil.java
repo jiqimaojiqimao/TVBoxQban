@@ -428,8 +428,8 @@ public final class MediaCodecUtil {
           if ((!key.secure && secureRequired) || (key.secure && !secureSupported)) {
             continue;
           }
-          boolean hardwareAccelerated = isHardwareAccelerated(codecInfo, mimeType);
-          boolean softwareOnly = isSoftwareOnly(codecInfo, mimeType);
+          boolean hardwareAccelerated = isHardwareAccelerated(codecInfo);
+          boolean softwareOnly = isSoftwareOnly(codecInfo);
           boolean vendor = isVendor(codecInfo);
           if ((secureDecodersExplicit && key.secure == secureSupported)
               || (!secureDecodersExplicit && !key.secure)) {
@@ -713,14 +713,13 @@ public final class MediaCodecUtil {
    * The result of {@link android.media.MediaCodecInfo#isHardwareAccelerated()} for API levels 29+,
    * or a best-effort approximation for lower levels.
    */
-  private static boolean isHardwareAccelerated(
-      android.media.MediaCodecInfo codecInfo, String mimeType) {
+  private static boolean isHardwareAccelerated(android.media.MediaCodecInfo codecInfo) {
     if (Util.SDK_INT >= 29) {
       return isHardwareAcceleratedV29(codecInfo);
     }
     // codecInfo.isHardwareAccelerated() != codecInfo.isSoftwareOnly() is not necessarily true.
     // However, we assume this to be true as an approximation.
-    return !isSoftwareOnly(codecInfo, mimeType);
+    return !isSoftwareOnly(codecInfo);
   }
 
   @RequiresApi(29)
@@ -732,7 +731,7 @@ public final class MediaCodecUtil {
    * The result of {@link android.media.MediaCodecInfo#isSoftwareOnly()} for API levels 29+, or a
    * best-effort approximation for lower levels.
    */
-  private static boolean isSoftwareOnly(android.media.MediaCodecInfo codecInfo, String mimeType) {
+  private static boolean isSoftwareOnly(android.media.MediaCodecInfo codecInfo) {
     if (Util.SDK_INT >= 29) {
       return isSoftwareOnlyV29(codecInfo);
     }
