@@ -735,10 +735,6 @@ public final class MediaCodecUtil {
     if (Util.SDK_INT >= 29) {
       return isSoftwareOnlyV29(codecInfo);
     }
-    if (MimeTypes.isAudio(mimeType)) {
-      // Assume audio decoders are software only.
-      return true;
-    }
     String codecName = Ascii.toLowerCase(codecInfo.getName());
     if (codecName.startsWith("arc.")) {
       // App Runtime for Chrome (ARC) codecs
