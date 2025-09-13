@@ -1158,7 +1158,6 @@ public class PlayFragment extends BaseLazyFragment {
                 return true;
            }        
            //切换播放器不占用重试次数
-           //切换播放器不占用重试次数
            if (switchPlayer){  //xuameng是否开启播放切换
                if(mController.switchPlayer()){
                    autoRetryCount++;
