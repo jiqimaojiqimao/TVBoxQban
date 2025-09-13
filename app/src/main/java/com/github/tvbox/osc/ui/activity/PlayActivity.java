@@ -1121,6 +1121,8 @@ public class PlayActivity extends BaseActivity {
            if (switchPlayer){  //xuameng是否开启播放切换
                if(mController.switchPlayer()){
                    autoRetryCount++;
+               }else {
+                   autoRetryCount++;
                }
            }else {
                autoRetryCount++;
