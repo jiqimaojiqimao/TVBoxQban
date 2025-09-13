@@ -779,7 +779,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 FastClickCheckUtil.check(v);
                 boolean is_switchdecode=Hawk.get(HawkConfig.VOD_SWITCHDECODE, false);
                 Hawk.put(HawkConfig.VOD_SWITCHDECODE, !is_switchdecode);
-                tvSwitchDecode.setText(!VOD_SWITCHDECODE ? "已开启" : "已关闭");
+                tvSwitchDecode.setText(!is_switchdecode ? "已开启" : "已关闭");
             }
         });
         findViewById(R.id.llSwitchPlayer).setOnClickListener(new View.OnClickListener() {   //xuameng播放器切换
@@ -788,7 +788,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 FastClickCheckUtil.check(v);
                 boolean is_switchplayer=Hawk.get(HawkConfig.VOD_SWITCHDECODE, false);
                 Hawk.put(HawkConfig.VOD_SWITCHPLAYER, !is_switchplayer);
-                tvSwitchPlayer.setText(!VOD_SWITCHPLAYER ? "已开启" : "已关闭");
+                tvSwitchPlayer.setText(!is_switchplayer ? "已开启" : "已关闭");
             }
         });
         findViewById(R.id.llHomeRecStyle).setOnClickListener(new View.OnClickListener() {
