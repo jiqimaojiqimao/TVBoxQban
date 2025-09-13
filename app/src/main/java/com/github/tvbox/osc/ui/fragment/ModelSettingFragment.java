@@ -81,6 +81,8 @@ public class ModelSettingFragment extends BaseLazyFragment {
     private TextView tvShowMusicZb;  //xuameng 直播动画
     private TextView tvShowMusicDb;  //xuameng 点播动画
     private TextView tvExodecode;  //xuameng Exo解码方式
+	private TextView tvSwitchDecode;  //解码切换
+	private TextView tvSwitchPlayer;  //播放器切换
     private TextView tvDns;
     private TextView tvHomeRec;
     private TextView tvHistoryNum;
@@ -109,6 +111,8 @@ public class ModelSettingFragment extends BaseLazyFragment {
     protected void init() {
         tvFastSearchText = findViewById(R.id.showFastSearchText);
         tvm3u8AdText = findViewById(R.id.m3u8AdText);    //xuameng去广告
+        tvSwitchDecode = findViewById(R.id.tvSwitchDecode);    //解码切换
+        tvSwitchPlayer = findViewById(R.id.tvSwitchPlayer);    //播放器切换
         tvShowMusicZb = findViewById(R.id.zbmusictext);    //xuameng直播动画
         tvShowMusicDb = findViewById(R.id.dbmusictext);    //xuameng点播动画
         tvExodecode = findViewById(R.id.tvexodecode);   //xuameng Exo解码方式
@@ -116,6 +120,8 @@ public class ModelSettingFragment extends BaseLazyFragment {
         tvShowMusicDb.setText(Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false) ? "已开启" : "已关闭");
         tvExodecode.setText(Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false) ? "软解码" : "硬解码");
         tvm3u8AdText.setText(Hawk.get(HawkConfig.M3U8_PURIFY, false) ? "已开启" : "已关闭"); //xuameng去广告
+        tvSwitchDecode.setText(Hawk.get(HawkConfig.VOD_SWITCHDECODE, false) ? "已开启" : "已关闭"); //xuameng解码切换
+        tvSwitchPlayer.setText(Hawk.get(HawkConfig.VOD_SWITCHPLAYER, true) ? "已开启" : "已关闭"); //xuameng播放器切换
         tvFastSearchText.setText(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) ? "已开启" : "已关闭");
         tvRecStyleText = findViewById(R.id.showRecStyleText);
         tvRecStyleText.setText(Hawk.get(HawkConfig.HOME_REC_STYLE, false) ? "已开启" : "已关闭");
@@ -765,6 +771,24 @@ public class ModelSettingFragment extends BaseLazyFragment {
                     }
                 }, decodeModes, defaultPos);
                 dialog.show();
+            }
+        });
+        findViewById(R.id.llSwitchDecode).setOnClickListener(new View.OnClickListener() {   //xuameng解码切换
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                boolean is_switchdecode=Hawk.get(HawkConfig.VOD_SWITCHDECODE, false);
+                Hawk.put(HawkConfig.VOD_SWITCHDECODE, !is_switchdecode);
+                tvSwitchDecode.setText(!VOD_SWITCHDECODE ? "已开启" : "已关闭");
+            }
+        });
+        findViewById(R.id.llSwitchPlayer).setOnClickListener(new View.OnClickListener() {   //xuameng播放器切换
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                boolean is_switchplayer=Hawk.get(HawkConfig.VOD_SWITCHDECODE, false);
+                Hawk.put(HawkConfig.VOD_SWITCHPLAYER, !is_switchplayer);
+                tvSwitchPlayer.setText(!VOD_SWITCHPLAYER ? "已开启" : "已关闭");
             }
         });
         findViewById(R.id.llHomeRecStyle).setOnClickListener(new View.OnClickListener() {
