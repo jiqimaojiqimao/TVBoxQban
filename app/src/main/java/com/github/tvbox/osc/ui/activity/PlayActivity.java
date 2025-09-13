@@ -1004,8 +1004,8 @@ public class PlayActivity extends BaseActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        // 如果距离上次重试超过 10 秒（10000 毫秒），重置重试次数
-        if (currentTime - lastRetryTime > 60_000) {
+        // 如果距离上次重试超过 30 秒（30000 毫秒），重置重试次数
+        if (currentTime - lastRetryTime > 30_000) {
             LOG.i("echo-reset-autoRetryCount");
             autoRetryCount = 0;
             mRetryCountExo = 0;  //xuameng播放出错计数器重置
