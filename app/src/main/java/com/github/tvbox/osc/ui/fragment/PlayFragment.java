@@ -1033,7 +1033,7 @@ public class PlayFragment extends BaseLazyFragment {
     boolean autoRetry() {
         boolean exoCode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false); //xuameng EXO默认设置解码
         boolean switchCode=Hawk.get(HawkConfig.VOD_SWITCHDECODE, false); //xuameng 解码切换
-        boolean switchPlayer=Hawk.get(HawkConfig.VOD_SWITCHPLAYER, false); //xuameng 播放器切换
+        boolean switchPlayer=Hawk.get(HawkConfig.VOD_SWITCHPLAYER, true); //xuameng 播放器切换
         int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);  //xuameng exo解码动态选择
         long currentTime = System.currentTimeMillis();
         int playerType = 0;   //xuameng默认播放器类型
