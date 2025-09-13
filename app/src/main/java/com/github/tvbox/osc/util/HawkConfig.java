@@ -54,7 +54,7 @@ public class HawkConfig {
     public static final String LIVE_MUSIC_ANIMATION = "live_music_animation";  //xuameng直播音乐动画
     public static final String VOD_MUSIC_ANIMATION = "vod_music_animation";  //xuameng点播音乐动画
     public static final String EXO_PLAYER_DECODE = "exo_player_decode";  //xuameng exo解码方式
-    public static final String EXO_PLAY_SELECTCODE = "exo_play_selectcode"; //xuameng 动态选择  
+    public static final String EXO_PLAY_SELECTCODE = "exo_play_selectcode"; //xuameng exo解码动态选择  
     public static final String EXO_PROGRESS_KEY = "exo_progress_key"; //xuameng 进程KEY
     public static final String IJK_PROGRESS_KEY = "ijk_progress_key"; //xuameng 进程KEY
 	public static final String VOD_SWITCHDECODE = "vod_switchdecode";  //xuameng解码切换
