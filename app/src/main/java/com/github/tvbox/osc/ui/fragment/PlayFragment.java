@@ -1083,7 +1083,7 @@ public class PlayFragment extends BaseLazyFragment {
                 mRetryCountJP = 0;
                 return false;
             }
-            if (playerType == 1 && mRetryCountIjk < MAX_RETRIES && switchCode) {     //xuameng播放出错计数器
+            if (playerType == 1 && mRetryCountIjk < MAX_RETRIES && switchCode) {     //xuameng播放出错计数器  是否开启解码切换
                 try {
                     String ijk = mVodPlayerCfg.getString("ijk");
                     List < IJKCode > codecs = ApiConfig.get().getIjkCodes();
@@ -1107,7 +1107,7 @@ public class PlayFragment extends BaseLazyFragment {
                       e.printStackTrace();
                 }
             }
-            if (playerType == 2 && mRetryCountExo < MAX_RETRIES && switchCode) {     //xuameng播放出错计数器
+            if (playerType == 2 && mRetryCountExo < MAX_RETRIES && switchCode) {     //xuameng播放出错计数器   是否开启解码切换
                 try {
                     exoSelect = mVodPlayerCfg.getInt("exocode");  //xuameng exo解码动态选择
                 } catch (JSONException e) {
@@ -1158,8 +1158,10 @@ public class PlayFragment extends BaseLazyFragment {
                 return true;
            }        
            //切换播放器不占用重试次数
-           if(mController.switchPlayer() && switchPlayer){
-               autoRetryCount++;
+           if (switchPlayer){ //xuameng是否开启播放切换
+               if(mController.switchPlayer()){
+                   autoRetryCount++;
+               }
            }else {
                autoRetryCount++;
            }
