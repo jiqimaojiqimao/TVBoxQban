@@ -786,7 +786,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
-                boolean is_switchplayer=Hawk.get(HawkConfig.VOD_SWITCHDECODE, false);
+                boolean is_switchplayer=Hawk.get(HawkConfig.VOD_SWITCHPLAYER, true);
                 Hawk.put(HawkConfig.VOD_SWITCHPLAYER, !is_switchplayer);
                 tvSwitchPlayer.setText(!is_switchplayer ? "已开启" : "已关闭");
             }
