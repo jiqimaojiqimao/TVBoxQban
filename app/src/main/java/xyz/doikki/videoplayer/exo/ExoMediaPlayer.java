@@ -92,24 +92,29 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
         @Override
         public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
             try {
-                // 优先查询具体MIME类型，避免null参数
+                // 基础解码器查询
                 List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
-                    mimeType != null ? mimeType : "video/avc", 
-                    false, 
+                    mimeType != null ? mimeType : "video/hevc", // HEVC专用MIME
+                    false,
                     false
                 );
                 
-                // 过滤空值解码器
+                // 白名单解码器硬编码
+                List<MediaCodecInfo> whiteList = new ArrayList<>();
+                whiteList.add(new MediaCodecInfo("OMX.amlogic.hevc.decoder.awesome2", "Amlogic HEVC Decoder"));
+                
+                // 合并结果（白名单优先级最高）
+                List<MediaCodecInfo> finalList = new ArrayList<>();
                 if (allDecoders != null) {
-                    List<MediaCodecInfo> filtered = new ArrayList<>();
-                    for (MediaCodecInfo info : allDecoders) {
-                        if (info != null) {
-                            filtered.add(info);
-                        }
-                    }
-                    return filtered.isEmpty() ? Collections.emptyList() : filtered;
+                    finalList.addAll(whiteList);
+                    finalList.addAll(allDecoders.stream()
+                        .filter(info -> info != null)
+                        .collect(Collectors.toList()));
+                } else {
+                    return whiteList.isEmpty() ? Collections.emptyList() : whiteList;
                 }
-                return Collections.emptyList();
+                
+                return finalList;
             } catch (MediaCodecUtil.DecoderQueryException e) {
                 Log.e("ExoPlayer", "Decoder query failed", e);
                 return Collections.emptyList();
