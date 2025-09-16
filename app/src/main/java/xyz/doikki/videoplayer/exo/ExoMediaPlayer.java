@@ -92,15 +92,27 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
         @Override
         public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
             try {
-                // 返回所有解码器（忽略MIME类型和安全性限制）
-                List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(null, false, false);
-                if (allDecoders == null) {
-                    return Collections.emptyList(); // 显式处理null情况
+                // 优先查询具体MIME类型，避免null参数
+                List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
+                    mimeType != null ? mimeType : "video/avc", 
+                    false, 
+                    false
+                );
+                
+                // 过滤空值解码器
+                if (allDecoders != null) {
+                    List<MediaCodecInfo> filtered = new ArrayList<>();
+                    for (MediaCodecInfo info : allDecoders) {
+                        if (info != null && info.getName() != null) {
+                            filtered.add(info);
+                        }
+                    }
+                    return filtered.isEmpty() ? Collections.emptyList() : filtered;
                 }
-                return allDecoders;
+                return Collections.emptyList();
             } catch (MediaCodecUtil.DecoderQueryException e) {
                 Log.e("ExoPlayer", "Decoder query failed", e);
-                return Collections.emptyList(); // 返回空列表作为容错处理
+                return Collections.emptyList();
             }
         }
     })
