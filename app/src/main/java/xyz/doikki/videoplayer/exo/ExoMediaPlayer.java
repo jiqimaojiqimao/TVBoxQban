@@ -32,7 +32,7 @@ import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
+import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -419,8 +419,15 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
         }
     }
 
-	private CodecCapabilities getCodecCapabilities(String mimeType) {
-    MediaCodec codec = MediaCodec.createDecoderByType(mimeType);
-    return codec.getCodecInfo().getCapabilitiesForType(mimeType);
-}
+public static CodecCapabilities getCodecCapabilities(String mimeType) throws IOException {
+        MediaCodec codec = null;
+        try {
+            codec = MediaCodec.createDecoderByType(mimeType);
+            return codec.getCodecInfo().getCapabilitiesForType(mimeType);
+        } finally {
+            if (codec != null) {
+                codec.release();
+            }
+        }
+    }
 }
