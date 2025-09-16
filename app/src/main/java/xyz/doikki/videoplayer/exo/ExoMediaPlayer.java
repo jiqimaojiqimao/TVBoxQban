@@ -106,7 +106,7 @@ boolean requiresTunnelingDecoder) {
         }
         return !filteredCodecs.isEmpty() ? filteredCodecs : codecInfos;
     }
-});
+})
 
             .setExtensionRendererMode(rendererMode);
 
