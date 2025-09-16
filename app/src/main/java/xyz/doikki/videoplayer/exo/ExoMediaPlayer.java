@@ -90,41 +90,11 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mRenderersFactory = new DefaultRenderersFactory(mAppContext)
     .setMediaCodecSelector(new MediaCodecSelector() {
         @Override
-        public List<MediaCodecInfo> getDecoderInfos(
-String mimeType,
-boolean requiresSecureDecoder,
-boolean requiresTunnelingDecoder) {
-    try {
-        List<MediaCodecInfo> codecInfos = MediaCodecSelector.DEFAULT.getDecoderInfos(
-            mimeType,
-            requiresSecureDecoder,
-            requiresTunnelingDecoder);
-        
-        List<MediaCodecInfo> filteredCodecs = new ArrayList<>();
-        for (MediaCodecInfo info : codecInfos) {
-            // 阶段1：排除Google软件解码器
-            if (!info.name.startsWith("OMX.google.")) {
-                filteredCodecs.add(info);
-            }
-          //   阶段2：可选：添加特殊厂商解码器处理
-        if (info.name.contains("amlogic.hevc.decoder")) {
-            // 添加芯片版本判断
-            String[] parts = info.name.split("\\.");
-            if (parts.length > 2 && parts[2].equals("awesome2")) {
-                // 特殊处理awesome2版本
-                MediaCodecInfo modifiedInfo = info; 
-                filteredCodecs.add(modifiedInfo);
-            }
+        public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
+            // 强制返回所有解码器（忽略MIME类型和安全性限制）
+            return MediaCodecSelector.DEFAULT.getDecoderInfos(null, false, false);
         }
-        }
-        
-        return !filteredCodecs.isEmpty() ? filteredCodecs : codecInfos;
-    } catch (MediaCodecUtil.DecoderQueryException e) {
-        Log.e("EXOPLAYER", "Decoder query failed, fallback to default", e);
-		return Collections.emptyList();
-    }
-}
-})
+    })
 
             .setExtensionRendererMode(rendererMode);
 
