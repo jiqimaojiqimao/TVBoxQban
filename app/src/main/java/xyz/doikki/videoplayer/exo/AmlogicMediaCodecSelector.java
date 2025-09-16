@@ -51,4 +51,4 @@ private MediaCodecInfo convertToExoMediaCodecInfo(
         androidInfo.isHardwareAccelerated()
     );
 }
-
+}
