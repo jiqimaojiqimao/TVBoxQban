@@ -93,20 +93,21 @@ String mimeType,
 boolean requiresSecureDecoder,
 boolean requiresTunnelingDecoder) {
         List<MediaCodecInfo> codecInfos = MediaCodecSelector.DEFAULT.getDecoderInfos(
-            mimeType, 
+            mimeType,
             requiresSecureDecoder,
             requiresTunnelingDecoder);
             
         List<MediaCodecInfo> filteredCodecs = new ArrayList<>();
         for (MediaCodecInfo info : codecInfos) {
-            // 新版本硬件解码判断方式
-            if (!info.isSoftwareOnly()) {
+            // 新版硬件解码判断标准
+            if (!info.name.startsWith("OMX.google.")) {
                 filteredCodecs.add(info);
             }
         }
         return !filteredCodecs.isEmpty() ? filteredCodecs : codecInfos;
     }
-})
+});
+
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
