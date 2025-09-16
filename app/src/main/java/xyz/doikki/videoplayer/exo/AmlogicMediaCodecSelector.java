@@ -1,7 +1,7 @@
 package xyz.doikki.videoplayer.exo;
 
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
-import android.media.MediaCodecInfo;
+import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import android.media.MediaCodecList;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,10 +15,14 @@ public class AmlogicMediaCodecSelector implements MediaCodecSelector {
     };
 
     @Override
-    public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
+    public List<MediaCodecInfo> getDecoderInfos(
+        String mimeType, 
+        boolean requiresSecureDecoder,
+        boolean requiresTunnelingDecoder
+    ) {
         List<MediaCodecInfo> infos = new ArrayList<>();
-        
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        
         for (MediaCodecInfo info : codecList.getCodecInfos()) {
             if (isAmlogicDecoder(info)) {
                 infos.add(0, info);
@@ -30,7 +34,8 @@ public class AmlogicMediaCodecSelector implements MediaCodecSelector {
     }
 
     private boolean isAmlogicDecoder(MediaCodecInfo info) {
-        return info.getName().contains(AML_SIGNATURE) 
-            || Arrays.asList(AML_DECODERS).contains(info.getName());
+        String name = info.getName();
+        return name.contains(AML_SIGNATURE) || 
+               Arrays.asList(AML_DECODERS).contains(name);
     }
 }
