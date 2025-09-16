@@ -27,13 +27,6 @@ import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 
-import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
-import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
-import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-
 import java.util.Map;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
@@ -87,39 +80,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
                 : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
-mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-    .setMediaCodecSelector(new MediaCodecSelector() {
-        @Override
-        public List<MediaCodecInfo> getDecoderInfos(
-            String mimeType, 
-            boolean requiresSecureDecoder, 
-            boolean requiresTunnelingDecoder) {
-            
-            try {
-                List<MediaCodecInfo> defaultDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
-                    mimeType, requiresSecureDecoder, requiresTunnelingDecoder);
-                
-                if ("video".equals(mimeType)) {
-                    List<MediaCodecInfo> amlogicFirst = new ArrayList<>();
-                    for (MediaCodecInfo info : defaultDecoders) {
-                        if (info.toString().contains("amlogic")) {
-                            amlogicFirst.add(info);
-                        }
-                    }
-                    // 如果有Amlogic解码器，则优先返回
-                    if (!amlogicFirst.isEmpty()) {
-                        return amlogicFirst;
-                    }
-                }
-                return defaultDecoders;
-            } catch (MediaCodecUtil.DecoderQueryException e) {
-                Log.e("ExoPlayer", "Decoder query failed", e);
-                return Collections.emptyList();
-            }
-        }
-    })
-    .setExtensionRendererMode(rendererMode);
-
+        mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+            .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
