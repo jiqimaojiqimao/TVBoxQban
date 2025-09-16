@@ -103,7 +103,7 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                 if (allDecoders != null) {
                     List<MediaCodecInfo> filtered = new ArrayList<>();
                     for (MediaCodecInfo info : allDecoders) {
-                        if (info != null && info.getName() != null) {
+                        if (info != null) {
                             filtered.add(info);
                         }
                     }
