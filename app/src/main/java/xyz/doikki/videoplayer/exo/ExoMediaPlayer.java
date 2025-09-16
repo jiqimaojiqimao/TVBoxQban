@@ -93,23 +93,26 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
         public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
             try {
                 // 基础解码器查询
-                List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
-                    mimeType != null ? mimeType : "video/hevc", // HEVC专用MIME
-                    false,
-                    false
-                );
+            List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
+            mimeType,
+            requiresSecureDecoder,
+            requiresTunnelingDecoder);
+
                 
-                // 白名单解码器硬编码
+                // 白名单解码器硬编码（需完全参数化构造）
                 List<MediaCodecInfo> whiteList = new ArrayList<>();
-                whiteList.add(new MediaCodecInfo("OMX.amlogic.hevc.decoder.awesome2", "Amlogic HEVC Decoder"));
+                whiteList.add(new MediaCodecInfo(
+                    "OMX.amlogic.hevc.decoder.awesome2",
+                    "Amlogic HEVC Decoder",
+                    CodecCapabilities.CAPABILITY_HARDWARE, // 硬件能力
+                    false, false, false, false, false, false // 其他参数
+                ));
                 
                 // 合并结果（白名单优先级最高）
                 List<MediaCodecInfo> finalList = new ArrayList<>();
                 if (allDecoders != null) {
                     finalList.addAll(whiteList);
-                    finalList.addAll(allDecoders.stream()
-                        .filter(info -> info != null)
-                        .collect(Collectors.toList()));
+                    finalList.addAll(allDecoders);
                 } else {
                     return whiteList.isEmpty() ? Collections.emptyList() : whiteList;
                 }
