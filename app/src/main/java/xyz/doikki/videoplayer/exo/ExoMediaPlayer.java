@@ -30,9 +30,6 @@ import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
-import android.media.MediaCodecInfo.CodecCapabilities;
-import android.media.MediaCodec;
-import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,44 +90,31 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 mRenderersFactory = new DefaultRenderersFactory(mAppContext)
     .setMediaCodecSelector(new MediaCodecSelector() {
         @Override
-        public List<MediaCodecInfo> getDecoderInfos(
-            String mimeType,
-            boolean requiresSecureDecoder,
-            boolean requiresTunnelingDecoder) {
-            
+        public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
             try {
-                List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
-                    mimeType, requiresSecureDecoder, requiresTunnelingDecoder);
-
-                // 创建白名单解码器（需先获取实际编解码能力）
-                CodecCapabilities caps = getCodecCapabilities(mimeType); // 需实现该方法
-                MediaCodecInfo amlogicDecoder = new MediaCodecInfo(
-                    "OMX.amlogic.hevc.decoder.awesome2",
-                    "Amlogic HEVC Decoder",
-                    caps,  // 必须传入有效CodecCapabilities对象
-                    false, // isEncoder
-                    true,  // isVendor
-                    false, // isSoftwareOnly
-                    true,  // isHardwareAccelerated
-                    false, // isAlias
-                    true,  // isEnabled
-                    false  // isDisabled
-                );
-
-                List<MediaCodecInfo> finalList = new ArrayList<>();
+                // 优先查询具体MIME类型，避免null参数
+			List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
+            mimeType,
+            requiresSecureDecoder,
+            requiresTunnelingDecoder);
+                
+                // 过滤空值解码器
                 if (allDecoders != null) {
-                    finalList.add(amlogicDecoder);
-                    finalList.addAll(allDecoders);
+                    List<MediaCodecInfo> filtered = new ArrayList<>();
+                    for (MediaCodecInfo info : allDecoders) {
+                        if (info != null) {
+                            filtered.add(info);
+                        }
+                    }
+                    return filtered.isEmpty() ? Collections.emptyList() : filtered;
                 }
-                return finalList;
-            } catch (Exception e) {
-                Log.e("ExoPlayer", "Decoder init failed", e);
+                return Collections.emptyList();
+            } catch (MediaCodecUtil.DecoderQueryException e) {
+                Log.e("ExoPlayer", "Decoder query failed", e);
                 return Collections.emptyList();
             }
         }
     })
-
-
     .setExtensionRendererMode(rendererMode);
 
 
@@ -415,18 +399,6 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
             mPlayerEventListener.onVideoSizeChanged(videoSize.width, videoSize.height);
             if (videoSize.unappliedRotationDegrees > 0) {
                 mPlayerEventListener.onInfo(MEDIA_INFO_VIDEO_ROTATION_CHANGED, videoSize.unappliedRotationDegrees);
-            }
-        }
-    }
-
-public static CodecCapabilities getCodecCapabilities(String mimeType) throws IOException {
-        MediaCodec codec = null;
-        try {
-            codec = MediaCodec.createDecoderByType(mimeType);
-            return codec.getCodecInfo().getCapabilitiesForType(mimeType);
-        } finally {
-            if (codec != null) {
-                codec.release();
             }
         }
     }
