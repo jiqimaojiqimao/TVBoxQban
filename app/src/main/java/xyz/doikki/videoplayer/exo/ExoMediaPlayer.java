@@ -27,6 +27,11 @@ import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 
+import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
+import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
+import java.util.List;
+import java.util.ArrayList;
+
 import java.util.Map;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
@@ -81,6 +86,20 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
         mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+    .setMediaCodecSelector(new MediaCodecSelector() {
+        @Override
+        public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder) {
+            // 强制优先返回硬件解码器
+            List<MediaCodecInfo> codecInfos = MediaCodecSelector.DEFAULT.getDecoderInfos(mimeType, requiresSecureDecoder);
+            List<MediaCodecInfo> hardwareCodecs = new ArrayList<>();
+            for (MediaCodecInfo info : codecInfos) {
+                if (info.isHardwareAccelerated()) {
+                    hardwareCodecs.add(info);
+                }
+            }
+            return !hardwareCodecs.isEmpty() ? hardwareCodecs : codecInfos;
+        }
+    })
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
