@@ -102,7 +102,7 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                 whiteList.add(new MediaCodecInfo(
                     "OMX.amlogic.hevc.decoder.awesome2",
                     "Amlogic HEVC Decoder",
-                    CodecCapabilities.FEATURE_HardwareAccelerated, // 修正点
+                    null,
                     true, false, true, false, false, false
                 ));
 
