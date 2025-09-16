@@ -8,7 +8,7 @@ import com.google.android.exoplayer2.DefaultRenderersFactory;
 import java.util.List;
 
 public class AmlogicMediaCodecSelector  extends DefaultVideoDecoderFactory {
-    public ForceHardwareDecoderFactory(Context context) {
+    public AmlogicMediaCodecSelector(Context context) {
         super(context, MediaCodecSelector.DEFAULT, false);
     }
 
