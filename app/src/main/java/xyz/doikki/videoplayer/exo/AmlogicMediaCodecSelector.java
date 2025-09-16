@@ -13,12 +13,7 @@ public class AmlogicMediaCodecSelector extends DefaultRenderersFactory {
     }
 
     @Override
-    public void createInputDecoder(
-            String mimeType,
-            boolean requiresSecureDecoder,
-            boolean requiresTunnelingDecoder,
-            MediaCodecSelector mediaCodecSelector,
-            boolean allowOtherCodecs) {
+    public void createDecoderSelector(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
         // 获取所有可用的解码器信息
         List<MediaCodecInfo> decoderInfos = MediaCodecUtil.getDecoderInfos(
                 mimeType,
@@ -41,12 +36,10 @@ public class AmlogicMediaCodecSelector extends DefaultRenderersFactory {
         }
 
         // 调用基类方法创建解码器
-        super.createInputDecoder(
+        super.createDecoderSelector(
                 mimeType,
                 requiresSecureDecoder,
-                requiresTunnelingDecoder,
-                mediaCodecSelector,
-                allowOtherCodecs
+                requiresTunnelingDecoder
         );
     }
 }
