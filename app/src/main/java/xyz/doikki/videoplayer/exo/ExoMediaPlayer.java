@@ -102,7 +102,7 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                 if ("video".equals(mimeType)) {
                     List<MediaCodecInfo> amlogicFirst = new ArrayList<>();
                     for (MediaCodecInfo info : defaultDecoders) {
-                        if (info.toString().contains("amlogic.hevc.decoder.awesome2")) {
+                        if (info.toString().contains("amlogic")) {
                             amlogicFirst.add(info);
                         }
                     }
