@@ -1,9 +1,9 @@
 package xyz.doikki.videoplayer.exo;
 
-import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
-import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import com.google.android.exoplayer2.MediaCodecSelector;
+import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,4 +51,5 @@ private MediaCodecInfo convertToExoMediaCodecInfo(
         androidInfo.isHardwareAccelerated()
     );
 }
+
 }
