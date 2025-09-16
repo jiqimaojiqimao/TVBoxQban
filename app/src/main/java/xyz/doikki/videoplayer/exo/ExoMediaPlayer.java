@@ -31,6 +31,8 @@ import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -97,17 +99,15 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
             boolean requiresTunnelingDecoder) {
             
             try {
-                // 获取系统所有可用解码器
                 List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
-                    mimeType,
-                    requiresSecureDecoder,
-                    requiresTunnelingDecoder);
-                
-                // 创建白名单编解码器（完整参数版）
-                MediaCodecInfo whiteListCodec = new MediaCodecInfo(
+                    mimeType, requiresSecureDecoder, requiresTunnelingDecoder);
+
+                // 创建白名单解码器（需先获取实际编解码能力）
+                CodecCapabilities caps = getCodecCapabilities(mimeType); // 需实现该方法
+                MediaCodecInfo amlogicDecoder = new MediaCodecInfo(
                     "OMX.amlogic.hevc.decoder.awesome2",
                     "Amlogic HEVC Decoder",
-                    null,  // CodecCapabilities（必须保留）
+                    caps,  // 必须传入有效CodecCapabilities对象
                     false, // isEncoder
                     true,  // isVendor
                     false, // isSoftwareOnly
@@ -116,19 +116,15 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                     true,  // isEnabled
                     false  // isDisabled
                 );
-                
-                // 合并白名单与系统解码器
+
                 List<MediaCodecInfo> finalList = new ArrayList<>();
                 if (allDecoders != null) {
-                    finalList.add(whiteListCodec);
+                    finalList.add(amlogicDecoder);
                     finalList.addAll(allDecoders);
-                } else {
-                    return Collections.singletonList(whiteListCodec);
                 }
                 return finalList;
-                
-            } catch (MediaCodecUtil.DecoderQueryException e) {
-                Log.e("ExoPlayer", "Decoder query failed", e);
+            } catch (Exception e) {
+                Log.e("ExoPlayer", "Decoder init failed", e);
                 return Collections.emptyList();
             }
         }
@@ -422,4 +418,9 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
             }
         }
     }
+
+	private CodecCapabilities getCodecCapabilities(String mimeType) {
+    MediaCodec codec = MediaCodec.createDecoderByType(mimeType);
+    return codec.getCodecInfo().getCapabilitiesForType(mimeType);
+}
 }
