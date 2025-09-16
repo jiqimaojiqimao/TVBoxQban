@@ -113,7 +113,7 @@ boolean requiresTunnelingDecoder) {
         }
         
         return !filteredCodecs.isEmpty() ? filteredCodecs : codecInfos;
-    } catch (MediaCodecUtil.DecoderException e) {
+    } catch (MediaCodecUtil.DecoderQueryException e) {
         Log.e("EXOPLAYER", "Decoder query failed, fallback to default", e);
 		return Collections.emptyList();
     }
