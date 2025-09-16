@@ -112,9 +112,7 @@ boolean requiresTunnelingDecoder) {
             String[] parts = info.name.split("\\.");
             if (parts.length > 2 && parts[2].equals("awesome2")) {
                 // 特殊处理awesome2版本
-                MediaCodecInfo modifiedInfo = new MediaCodecInfo.Builder(info)
-                    .setName(info.name + "_legacy")
-                    .build();
+                MediaCodecInfo modifiedInfo = info; 
                 filteredCodecs.add(modifiedInfo);
             }
         }
