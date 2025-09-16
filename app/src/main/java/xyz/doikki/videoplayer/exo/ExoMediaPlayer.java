@@ -29,8 +29,10 @@ import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
+import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import java.util.Map;
 
@@ -111,7 +113,7 @@ boolean requiresTunnelingDecoder) {
         }
         
         return !filteredCodecs.isEmpty() ? filteredCodecs : codecInfos;
-    } catch (DecoderQueryException e) {
+    } catch (MediaCodecUtil.DecoderException e) {
         Log.e("EXOPLAYER", "Decoder query failed, fallback to default", e);
 		return Collections.emptyList();
     }
