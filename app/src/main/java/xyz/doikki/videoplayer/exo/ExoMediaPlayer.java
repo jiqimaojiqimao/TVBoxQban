@@ -107,9 +107,17 @@ boolean requiresTunnelingDecoder) {
                 filteredCodecs.add(info);
             }
           //   阶段2：可选：添加特殊厂商解码器处理
-             if (info.name.contains("amlogic.hevc.decoder")) {
-                 filteredCodecs.add(info);
-             }
+        if (info.name.contains("amlogic.hevc.decoder")) {
+            // 添加芯片版本判断
+            String[] parts = info.name.split("\\.");
+            if (parts.length > 2 && parts[2].equals("awesome2")) {
+                // 特殊处理awesome2版本
+                MediaCodecInfo modifiedInfo = new MediaCodecInfo.Builder(info)
+                    .setName(info.name + "_legacy")
+                    .build();
+                filteredCodecs.add(modifiedInfo);
+            }
+        }
         }
         
         return !filteredCodecs.isEmpty() ? filteredCodecs : codecInfos;
