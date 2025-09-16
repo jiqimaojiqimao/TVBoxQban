@@ -91,25 +91,23 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
     .setMediaCodecSelector(new MediaCodecSelector() {
         @Override
         public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
-            try {
-                // 优先查询具体MIME类型，避免null参数
-			List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
-            mimeType,
-            requiresSecureDecoder,
-            requiresTunnelingDecoder);
-                
-                // 过滤空值解码器
-                if (allDecoders != null) {
-                    List<MediaCodecInfo> filtered = new ArrayList<>();
-                    for (MediaCodecInfo info : allDecoders) {
-                        if (info != null) {
-                            filtered.add(info);
-                        }
-                    }
-                    return filtered.isEmpty() ? Collections.emptyList() : filtered;
+    try {
+        List<MediaCodecInfo> defaultDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
+            mimeType, requiresSecureDecoder, requiresTunnelingDecoder);
+            
+        // 强制优先使用Amlogic解码器
+        if ("video".equals(mimeType)) {
+            List<MediaCodecInfo> amlogicFirst = new ArrayList<>();
+            for (MediaCodecInfo info : defaultDecoders) {
+                if (info.getName().contains("amlogic.hevc.decoder.awesome2")) {
+                    amlogicFirst.add(info);
                 }
-                return Collections.emptyList();
-            } catch (MediaCodecUtil.DecoderQueryException e) {
+            }
+            amlogicFirst.addAll(defaultDecoders);
+            return amlogicFirst;
+        }
+        return defaultDecoders;
+    } catch (MediaCodecUtil.DecoderQueryException e) {
                 Log.e("ExoPlayer", "Decoder query failed", e);
                 return Collections.emptyList();
             }
