@@ -92,20 +92,29 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 String mimeType,
 boolean requiresSecureDecoder,
 boolean requiresTunnelingDecoder) {
+    try {
         List<MediaCodecInfo> codecInfos = MediaCodecSelector.DEFAULT.getDecoderInfos(
             mimeType,
             requiresSecureDecoder,
             requiresTunnelingDecoder);
-            
+        
         List<MediaCodecInfo> filteredCodecs = new ArrayList<>();
         for (MediaCodecInfo info : codecInfos) {
-            // 新版硬件解码判断标准
+            // 阶段1：排除Google软件解码器
             if (!info.name.startsWith("OMX.google.")) {
                 filteredCodecs.add(info);
             }
+          //   阶段2：可选：添加特殊厂商解码器处理
+             if (info.name.contains("amlogic.hevc.decoder")) {
+                 filteredCodecs.add(info);
+             }
         }
+        
         return !filteredCodecs.isEmpty() ? filteredCodecs : codecInfos;
+    } catch (DecoderQueryException e) {
+        Log.e("EXOPLAYER", "Decoder query failed, fallback to default", e);
     }
+}
 })
 
             .setExtensionRendererMode(rendererMode);
