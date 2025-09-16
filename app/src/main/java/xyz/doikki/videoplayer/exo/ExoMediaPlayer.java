@@ -119,7 +119,7 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                 return Collections.emptyList();
             }
         }
-    });
+    })
 
     .setExtensionRendererMode(rendererMode);
 
