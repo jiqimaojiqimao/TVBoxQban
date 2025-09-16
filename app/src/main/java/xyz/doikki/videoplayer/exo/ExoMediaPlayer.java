@@ -90,23 +90,29 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 mRenderersFactory = new DefaultRenderersFactory(mAppContext)
     .setMediaCodecSelector(new MediaCodecSelector() {
         @Override
-        public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
-    try {
-        List<MediaCodecInfo> defaultDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
-            mimeType, requiresSecureDecoder, requiresTunnelingDecoder);
+        public List<MediaCodecInfo> getDecoderInfos(
+            String mimeType, 
+            boolean requiresSecureDecoder, 
+            boolean requiresTunnelingDecoder) {
             
-        // 强制优先使用Amlogic解码器
-        if ("video".equals(mimeType)) {
-            List<MediaCodecInfo> amlogicFirst = new ArrayList<>();
-            for (MediaCodecInfo info : defaultDecoders) {
-                if (info.toString().contains("amlogic.hevc.decoder.awesome2")) {
-                    amlogicFirst.add(info);
-					return amlogicFirst;
+            try {
+                List<MediaCodecInfo> defaultDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
+                    mimeType, requiresSecureDecoder, requiresTunnelingDecoder);
+                
+                if ("video".equals(mimeType)) {
+                    List<MediaCodecInfo> amlogicFirst = new ArrayList<>();
+                    for (MediaCodecInfo info : defaultDecoders) {
+                        if (info.toString().contains("amlogic.hevc.decoder.awesome2")) {
+                            amlogicFirst.add(info);
+                        }
+                    }
+                    // 如果有Amlogic解码器，则优先返回
+                    if (!amlogicFirst.isEmpty()) {
+                        return amlogicFirst;
+                    }
                 }
-            }
-        }
-        return defaultDecoders;
-    } catch (MediaCodecUtil.DecoderQueryException e) {
+                return defaultDecoders;
+            } catch (MediaCodecUtil.DecoderQueryException e) {
                 Log.e("ExoPlayer", "Decoder query failed", e);
                 return Collections.emptyList();
             }
