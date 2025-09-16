@@ -91,36 +91,49 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 mRenderersFactory = new DefaultRenderersFactory(mAppContext)
     .setMediaCodecSelector(new MediaCodecSelector() {
         @Override
-        public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
+        public List<MediaCodecInfo> getDecoderInfos(
+            String mimeType,
+            boolean requiresSecureDecoder,
+            boolean requiresTunnelingDecoder) {
+            
             try {
+                // 获取系统所有可用解码器
                 List<MediaCodecInfo> allDecoders = MediaCodecSelector.DEFAULT.getDecoderInfos(
                     mimeType,
                     requiresSecureDecoder,
                     requiresTunnelingDecoder);
-
-                List<MediaCodecInfo> whiteList = new ArrayList<>();
-                whiteList.add(new MediaCodecInfo(
+                
+                // 创建白名单编解码器（完整参数版）
+                MediaCodecInfo whiteListCodec = new MediaCodecInfo(
                     "OMX.amlogic.hevc.decoder.awesome2",
                     "Amlogic HEVC Decoder",
-                    null,
-                    true, false, true, false, false, false ,false  // 新增参数（根据实际需求设置）
-                ));
-
-
+                    null,  // CodecCapabilities（必须保留）
+                    false, // isEncoder
+                    true,  // isVendor
+                    false, // isSoftwareOnly
+                    true,  // isHardwareAccelerated
+                    false, // isAlias
+                    true,  // isEnabled
+                    false  // isDisabled
+                );
+                
+                // 合并白名单与系统解码器
                 List<MediaCodecInfo> finalList = new ArrayList<>();
                 if (allDecoders != null) {
-                    finalList.addAll(whiteList);
+                    finalList.add(whiteListCodec);
                     finalList.addAll(allDecoders);
                 } else {
-                    return whiteList.isEmpty() ? Collections.emptyList() : whiteList;
+                    return Collections.singletonList(whiteListCodec);
                 }
                 return finalList;
+                
             } catch (MediaCodecUtil.DecoderQueryException e) {
                 Log.e("ExoPlayer", "Decoder query failed", e);
                 return Collections.emptyList();
             }
         }
-    })
+    });
+
 
     .setExtensionRendererMode(rendererMode);
 
