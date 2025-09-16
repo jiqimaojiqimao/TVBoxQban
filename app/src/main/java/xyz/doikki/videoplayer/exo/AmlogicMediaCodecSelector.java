@@ -1,55 +1,33 @@
-package xyz.doikki.videoplayer.exo;
 
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
+import android.content.Context;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
+import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.google.android.exoplayer2.video.VideoDecoderOutputBufferRenderer;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
 import java.util.List;
 
-public class AmlogicMediaCodecSelector implements MediaCodecSelector {
-
-    private static final String AML_SIGNATURE = "amlogic";
-    private static final String[] AML_DECODERS = {
-        "amlogic.hevc.decoder.awesome2",
-        "amlogic.avc.decoder.awesome"
-    };
+public class AmlogicMediaCodecSelector  extends DefaultVideoDecoderFactory {
+    public ForceHardwareDecoderFactory(Context context) {
+        super(context, MediaCodecSelector.DEFAULT, false);
+    }
 
     @Override
-    public List<MediaCodecInfo> getDecoderInfos(
-            String mimeType,
-            boolean requiresSecureDecoder,
-            boolean requiresTunnelingDecoder) {
-
-        List<MediaCodecInfo> infos = new ArrayList<>();
-        MediaCodecList codecList = new MediaCodecList(MediaCodecList.ALL_CODECS);
-
-        for (android.media.MediaCodecInfo androidInfo : codecList.getCodecInfos()) {
-            MediaCodecInfo info = convertToExoMediaCodecInfo(androidInfo);
-            if (isAmlogicDecoder(info)) {
-                infos.add(0, info);
-            } else if (info.isHardwareAccelerated()) {
-                infos.add(info);
+    public MediaCodecInfo getDecoderInfo(
+            String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
+        List<MediaCodecInfo> decoderInfos = MediaCodecUtil.getDecoderInfos(
+                mimeType, 
+                requiresSecureDecoder,
+                requiresTunnelingDecoder);
+        
+        // 优先选择硬件解码器
+        for (MediaCodecInfo info : decoderInfos) {
+            if (info.isHardwareAccelerated()) {
+                return info;
             }
         }
-        return infos;
-    }
-
-    private boolean isAmlogicDecoder(MediaCodecInfo info) {
-        String name = info.getName();
-        return name.contains(AML_SIGNATURE) || 
-               Arrays.asList(AML_DECODERS).contains(name);
-    }
-
-    private MediaCodecInfo convertToExoMediaCodecInfo(
-            android.media.MediaCodecInfo androidInfo) {
-
-        return new MediaCodecInfo(
-            androidInfo.getName(),
-            androidInfo.isEncoder(),
-            androidInfo.getSecure() ? true : false, // 修正为getSecure()
-            androidInfo.isHardwareAccelerated()
-        );
+        
+        // 如果没有硬件解码器则返回null（不自动降级到软件解码）
+        return null;
     }
 }
