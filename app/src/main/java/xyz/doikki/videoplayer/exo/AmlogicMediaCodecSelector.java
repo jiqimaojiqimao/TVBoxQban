@@ -13,7 +13,7 @@ public class AmlogicMediaCodecSelector extends DefaultRenderersFactory {
     }
 
     @Override
-    public void createDecoderSelector(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
+    public MediaCodecSelector createDecoderSelector(String mimeType, boolean requiresSecureDecoder, boolean requiresTunnelingDecoder) {
         // 获取所有可用的解码器信息
         List<MediaCodecInfo> decoderInfos = MediaCodecUtil.getDecoderInfos(
                 mimeType,
@@ -24,7 +24,8 @@ public class AmlogicMediaCodecSelector extends DefaultRenderersFactory {
         // 优先选择硬件解码器
         MediaCodecInfo selectedDecoder = null;
         for (MediaCodecInfo info : decoderInfos) {
-            if (info.isHardwareAccelerated()) {
+            // 通过名称判断是否为Amlogic硬件解码器
+            if (isAmlogicHardwareDecoder(info.getName())) {
                 selectedDecoder = info;
                 break;
             }
@@ -32,14 +33,20 @@ public class AmlogicMediaCodecSelector extends DefaultRenderersFactory {
 
         // 如果没有找到硬件解码器，则抛出异常
         if (selectedDecoder == null) {
-            throw new IllegalStateException("No hardware decoder available for " + mimeType);
+            throw new IllegalStateException("No Amlogic hardware decoder available for " + mimeType);
         }
 
-        // 调用基类方法创建解码器
-        super.createDecoderSelector(
-                mimeType,
-                requiresSecureDecoder,
-                requiresTunnelingDecoder
-        );
+        // 返回自定义的MediaCodecSelector
+        return new MediaCodecSelector() {
+            @Override
+            public MediaCodecInfo getDecoderInfo(String mimeType) {
+                return selectedDecoder;
+            }
+        };
+    }
+
+    // 判断是否为Amlogic硬件解码器
+    private boolean isAmlogicHardwareDecoder(String name) {
+        return name != null && (name.contains("OMX.Amlogic.") || name.contains("OMX.amlogic."));
     }
 }
