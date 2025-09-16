@@ -3,10 +3,10 @@ import android.content.Context;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
-import com.google.android.exoplayer2.DefaultVideoDecoderFactory;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
 import java.util.List;
 
-public class AmlogicMediaCodecSelector  extends DefaultVideoDecoderFactory {
+public class AmlogicMediaCodecSelector  extends DefaultRenderersFactory {
     public AmlogicMediaCodecSelector(Context context) {
         super(context, MediaCodecSelector.DEFAULT, false);
     }
