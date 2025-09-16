@@ -103,8 +103,9 @@ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                     "OMX.amlogic.hevc.decoder.awesome2",
                     "Amlogic HEVC Decoder",
                     null,
-                    true, false, true, false, false, false
+                    true, false, true, false, false, false ,false  // 新增参数（根据实际需求设置）
                 ));
+
 
                 List<MediaCodecInfo> finalList = new ArrayList<>();
                 if (allDecoders != null) {
