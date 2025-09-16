@@ -88,18 +88,25 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mRenderersFactory = new DefaultRenderersFactory(mAppContext)
     .setMediaCodecSelector(new MediaCodecSelector() {
         @Override
-        public List<MediaCodecInfo> getDecoderInfos(String mimeType, boolean requiresSecureDecoder) {
-            // 强制优先返回硬件解码器
-            List<MediaCodecInfo> codecInfos = MediaCodecSelector.DEFAULT.getDecoderInfos(mimeType, requiresSecureDecoder);
-            List<MediaCodecInfo> hardwareCodecs = new ArrayList<>();
-            for (MediaCodecInfo info : codecInfos) {
-                if (info.isHardwareAccelerated()) {
-                    hardwareCodecs.add(info);
-                }
+        public List<MediaCodecInfo> getDecoderInfos(
+String mimeType,
+boolean requiresSecureDecoder,
+boolean requiresTunnelingDecoder) {
+        List<MediaCodecInfo> codecInfos = MediaCodecSelector.DEFAULT.getDecoderInfos(
+            mimeType, 
+            requiresSecureDecoder,
+            requiresTunnelingDecoder);
+            
+        List<MediaCodecInfo> filteredCodecs = new ArrayList<>();
+        for (MediaCodecInfo info : codecInfos) {
+            // 新版本硬件解码判断方式
+            if (!info.isSoftwareOnly()) {
+                filteredCodecs.add(info);
             }
-            return !hardwareCodecs.isEmpty() ? hardwareCodecs : codecInfos;
         }
-    })
+        return !filteredCodecs.isEmpty() ? filteredCodecs : codecInfos;
+    }
+})
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
