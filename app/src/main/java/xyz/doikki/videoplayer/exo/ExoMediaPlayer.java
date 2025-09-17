@@ -99,6 +99,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
                 .setRenderersFactory(mRenderersFactory)
+                .setMediaSourceFactory(new MediaSourceFactory)
                 .setTrackSelector(mTrackSelector).build();
 
         setOptions();
@@ -111,7 +112,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void setDataSource(String path, Map<String, String> headers) {
-        mMediaSource = mMediaSourceHelper.getMediaSource(path, headers);
+        mMediaSource = mMediaSourceHelper.getMediaSource(path, headers, false, errorCode);
     }
 
     @Override
