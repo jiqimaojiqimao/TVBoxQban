@@ -22,7 +22,7 @@ import androidx.media3.exoplayer.rtsp.RtspMediaSource;
 
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
-import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource;
+import com.google.androidx.media3.exoplayer.ext.okhttp.OkHttpDataSource;
 
 import com.github.tvbox.osc.util.FileUtils;      //xuameng exo
 
