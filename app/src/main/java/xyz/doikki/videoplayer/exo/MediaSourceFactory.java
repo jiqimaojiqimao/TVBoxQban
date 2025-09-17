@@ -22,7 +22,6 @@ import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.extractor.ts.TsExtractor;
 
 import com.github.tvbox.osc.base.App;
-import com.github.catvod.net.OkHttp;
 
 import java.util.HashMap;
 import java.util.Map;
