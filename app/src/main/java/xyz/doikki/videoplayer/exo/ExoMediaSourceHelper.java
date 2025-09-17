@@ -75,7 +75,7 @@ public final class ExoMediaSourceHelper {
         return getMediaSource(uri, null, isCache);
     }
 
-    public MediaSource getMediaSource(String uri, Map<String, String> headers, boolean isCache) {
+    public MediaSource getMediaSource(String uri, Map<String, String> headers, boolean isCache, int errorCode) {
         Uri contentUri = Uri.parse(uri);
         if ("rtmp".equals(contentUri.getScheme())) {
             return new ProgressiveMediaSource.Factory(new RtmpDataSourceFactory(null))
