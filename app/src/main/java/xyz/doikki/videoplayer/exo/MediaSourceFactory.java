@@ -22,9 +22,11 @@ import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.extractor.ts.TsExtractor;
 
 import com.github.tvbox.osc.base.App;
+import com.github.catvod.net.OkHttp;
 
 import java.util.HashMap;
 import java.util.Map;
+import okhttp3.OkHttpClient;
 
 public class MediaSourceFactory implements MediaSource.Factory {
 
@@ -32,6 +34,7 @@ public class MediaSourceFactory implements MediaSource.Factory {
     private HttpDataSource.Factory httpDataSourceFactory;
     private DataSource.Factory dataSourceFactory;
     private ExtractorsFactory extractorsFactory;
+    private OkHttpClient mOkClient = null;
 
     public MediaSourceFactory() {
         defaultMediaSourceFactory = new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory());
@@ -96,7 +99,9 @@ public class MediaSourceFactory implements MediaSource.Factory {
     }
 
     private HttpDataSource.Factory getHttpDataSourceFactory() {
-        if (httpDataSourceFactory == null) httpDataSourceFactory = new OkHttpDataSource.Factory(OkHttp.client());
+        if (httpDataSourceFactory == null) {
+            httpDataSourceFactory = new OkHttpDataSource.Factory(mOkClient);
+        }
         return httpDataSourceFactory;
     }
 }
