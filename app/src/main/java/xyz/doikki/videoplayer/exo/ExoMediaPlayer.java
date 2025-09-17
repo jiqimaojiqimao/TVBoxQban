@@ -112,7 +112,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void setDataSource(String path, Map<String, String> headers) {
-        mMediaSource = mMediaSourceHelper.getMediaSource(path, headers, false, errorCode);
+        mMediaSource = mMediaSourceHelper.getMediaSource(path, headers);
     }
 
     @Override
