@@ -168,7 +168,19 @@
 -keep class com.thoughtworks.xstream.converters.extended.CurrencyConverter { *; }
 -keep class com.thoughtworks.xstream.converters.extended.RegexPatternConverter { *; }
 -keep class com.thoughtworks.xstream.converters.extended.CharsetConverter { *; }
+-keep class com.thoughtworks.xstream.converters.javabean.PropertyDictionary { *; }
+-keep class com.thoughtworks.xstream.core.util.HierarchicalNavigator { *; }
+
+
 -keep class com.thoughtworks.xstream.** { *; }
+# 保留Java Beans相关类
+-keep class java.beans.** { *; }
+# 保留XML解析相关类
+-keep class android.content.res.XmlResourceParser { *; }
+# 显式声明缺失的类
+-keep class java.beans.BeanInfo { *; }
+-keep class java.beans.IntrospectionException { *; }
+-keep class java.beans.Introspector { *; }
 #eventbus
 -keepclassmembers class * {
     @org.greenrobot.eventbus.Subscribe <methods>;
