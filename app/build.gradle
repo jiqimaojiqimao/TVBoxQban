@@ -4,15 +4,16 @@ plugins {
 }
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 35
 
     defaultConfig {
+        namespace = 'com.github.tvbox.osc'
         applicationId 'com.jvhuiys.player'
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
-        versionName '2025915-2222'
-        multiDexEnabled true
+        versionName '2025905-2222'
+        multiDexEnabled = true
         //设置room的Schema的位置
         javaCompileOptions {
             annotationProcessorOptions {
@@ -27,8 +28,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
+            shrinkResources = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
@@ -47,23 +48,27 @@ android {
                 abiFilters 'armeabi-v7a'
             }
         }
- //       arm64 {
- //           dimension = "abi"
- //           ndk {
- //               abiFilters 'arm64-v8a'
- //           }
- //       }
+  //      arm64 {
+  //          dimension = "abi"
+  //          ndk {
+  //              abiFilters 'arm64-v8a'
+  //          }
+  //      }
     }
 
     compileOptions {
-        coreLibraryDesugaringEnabled true   //xuameng 启用Java 8脱糖
+        coreLibraryDesugaringEnabled = true   //xuameng 启用Java 8脱糖
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
     lintOptions {
-        checkReleaseBuilds false
-        abortOnError false
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 
@@ -96,7 +101,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.7'
     implementation 'com.squareup.picasso:picasso:2.71828'
     implementation 'me.jessyan:autosize:1.2.1'
-    implementation('com.thoughtworks.xstream:xstream:1.4.15') {
+    implementation('com.thoughtworks.xstream:xstream:1.4.20') {
         exclude group: 'xmlpull', module: 'xmlpull'
     }
     implementation 'org.greenrobot:eventbus:3.2.0'
@@ -127,15 +132,20 @@ dependencies {
     implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     implementation 'com.blankj:utilcodex:1.31.0'
     //xuameng exo
-    def exoplayerVersion = "2.19.1"
-    api "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-dash:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
-    api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
+    implementation 'io.github.anilbeesetti:nextlib-media3ext:1.8.0-0.9.0'
+    implementation 'androidx.media3:media3-common:1.8.0'
+    implementation 'androidx.media3:media3-container:1.8.0'
+    implementation 'androidx.media3:media3-database:1.8.0'
+    implementation 'androidx.media3:media3-datasource:1.8.0'
+ //   implementation 'androidx.media3:media3-datasource-okhttp:1.8.0'
+    implementation 'androidx.media3:media3-datasource-rtmp:1.8.0'
+    implementation 'androidx.media3:media3-decoder:1.8.0'
+    implementation 'androidx.media3:media3-effect:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer:'
+    implementation 'androidx.media3:media3-exoplayer-dash:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer-rtsp:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer-smoothstreaming:1.8.0'
+    implementation 'androidx.media3:media3-extractor:1.8.0'
+    implementation 'androidx.media3:media3-ui:1.8.0'
 }
-
-
-
-
-
