@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 
-
 import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.util.Util;
@@ -19,10 +18,9 @@ import androidx.media3.datasource.rtmp.RtmpDataSourceFactory;
 import androidx.media3.exoplayer.dash.DashMediaSource;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
 import androidx.media3.exoplayer.rtsp.RtspMediaSource;
-
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
-import com.google.androidx.media3.exoplayer.ext.okhttp.OkHttpDataSource;
+import androidx.media3.datasource.okhttp.OkHttpDataSource;
 
 import com.github.tvbox.osc.util.FileUtils;      //xuameng exo
 
@@ -36,7 +34,6 @@ import okhttp3.OkHttpClient;
 public final class ExoMediaSourceHelper {
 
     private static ExoMediaSourceHelper sInstance;
-
     private final String mUserAgent;
     private final Context mAppContext;
     private OkHttpDataSource.Factory mHttpDataSourceFactory;
