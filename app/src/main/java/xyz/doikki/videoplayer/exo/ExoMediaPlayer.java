@@ -9,20 +9,19 @@ import android.view.SurfaceHolder;
 
 import androidx.annotation.NonNull;
 
-import androidx.media3.common.PlaybackException;
-import androidx.media3.common.PlaybackParameters;
-import androidx.media3.common.Player;
-import androidx.media3.common.Tracks;
-import androidx.media3.common.VideoSize;
-import androidx.media3.exoplayer.DefaultLoadControl;
-import androidx.media3.exoplayer.DefaultRenderersFactory;
-import androidx.media3.exoplayer.ExoPlayer;
-import androidx.media3.exoplayer.LoadControl;
-import androidx.media3.exoplayer.source.MediaSource;
-import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
-import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory;
-import androidx.media3.ui.PlayerView;
+import com.google.android.exoplayer2.DefaultLoadControl;
+import com.google.android.exoplayer2.DefaultRenderersFactory;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.LoadControl;
+import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.Tracks;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
+import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.video.VideoSize;
 import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
 import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
@@ -73,17 +72,16 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (exoSelect > 0) {
             // 选择器优先
             rendererMode = (exoSelect == 1) 
-                ? NextRenderersFactory.EXTENSION_RENDERER_MODE_ON    // 硬解
-                : NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
+                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF    // 硬解
+                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
         } else {
             // 使用exoDecode配置
             rendererMode = exoDecode 
-                ? NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
-                : NextRenderersFactory.EXTENSION_RENDERER_MODE_ON;   // 硬解
+                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
+                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
-        mRenderersFactory = new NextRenderersFactory(mAppContext);
-        mRenderersFactory.setExtensionRendererMode(rendererMode);
-        mRenderersFactory.setEnableDecoderFallback(true);
+        mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+            .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
@@ -111,7 +109,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void setDataSource(String path, Map<String, String> headers) {
-        mMediaSource = mMediaSourceHelper.getMediaSource(path, headers);
+        mMediaSource = mMediaSourceHelper.getMediaSource(path, headers, false, errorCode);
     }
 
     @Override
@@ -314,7 +312,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
        String progressKey = Hawk.get(HawkConfig.EXO_PROGRESS_KEY, "");
         errorCode = error.errorCode;
         Log.e("EXOPLAYER", "" + error.errorCode);      //xuameng音频出错后尝试重播
-        if (errorCode == 5001 && mRetryCount < MAX_RETRIES || errorCode == 5002 && mRetryCount < MAX_RETRIES || errorCode == 4001 && mRetryCount < MAX_RETRIES || errorCode == 4003 && mRetryCount < MAX_RETRIES){
+        if (errorCode == 5001 && mRetryCount < MAX_RETRIES || errorCode == 5002 && mRetryCount < MAX_RETRIES || errorCode == 4001 && mRetryCount < MAX_RETRIES){
             boolean exoDecodeXu = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
             int exoSelectXu = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
             if (exoSelectXu == 1 && mRetryCount < MAX_RETRIES) {
