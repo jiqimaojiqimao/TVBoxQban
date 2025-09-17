@@ -137,7 +137,7 @@ dependencies {
     implementation 'androidx.media3:media3-container:1.8.0'
     implementation 'androidx.media3:media3-database:1.8.0'
     implementation 'androidx.media3:media3-datasource:1.8.0'
-    implementation 'androidx.media3:media3-datasource-okhttp:1.8.0'
+ //   implementation 'androidx.media3:media3-datasource-okhttp:1.8.0'
     implementation 'androidx.media3:media3-datasource-rtmp:1.8.0'
     implementation 'androidx.media3:media3-decoder:1.8.0'
     implementation 'androidx.media3:media3-effect:1.8.0'
