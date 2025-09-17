@@ -3,10 +3,11 @@ plugins {
 }
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 35
 
     defaultConfig {
-        minSdkVersion 21
+        namespace 'com.github.tvbox.osc.player'
+        minSdkVersion 24
         targetSdkVersion 28
     }
 
@@ -36,4 +37,3 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.12.11'      
     api 'xyz.doikki.android.dkplayer:dkplayer-ui:3.3.5'
 }
-
