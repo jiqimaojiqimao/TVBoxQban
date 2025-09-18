@@ -3,14 +3,17 @@ import android.annotation.SuppressLint;
 import android.content.res.Resources;
 import android.text.TextUtils;
 import androidx.annotation.Nullable;
+import java.util.Locale;
+
 import com.github.tvbox.osc.player.R;
+
 import androidx.media3.common.C;
 import androidx.media3.common.Format;
 import androidx.media3.common.MimeTypes;
 import androidx.media3.common.util.Assertions;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.common.util.Util;
-import java.util.Locale;
+
 public class ExoTrackNameProvider {
     private final Resources resources;
     /**
