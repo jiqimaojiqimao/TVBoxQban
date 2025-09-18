@@ -28,8 +28,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources = false
+            minifyEnabled true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
@@ -151,6 +151,7 @@ dependencies {
     implementation 'io.antmedia:rtmp-client:3.2.0'
     implementation 'com.github.teamnewpipe:NewPipeExtractor:v0.24.8'
 }
+
 
 
 
