@@ -32,22 +32,24 @@ public class AdaptiveDecoderSelector implements MediaCodecSelector {
 public List<MediaCodecInfo> getDecoderInfos(
         String mimeType,
         boolean requiresSecure,
-        boolean requiresTunneling) throws DecoderQueryException {
+        boolean requiresTunneling) throws MediaCodecUtil.DecoderQueryException {
+    
     try {
-    if (useHardwareDecoder) {
-        List<MediaCodecInfo> candidates = MediaCodecSelector.DEFAULT
-            .getDecoderInfos(mimeType, requiresSecure, requiresTunneling);
-        
-        // 优先选择Amlogic解码器
-        for (MediaCodecInfo info : candidates) {
-            if (info.getName().equals("amlogic.avc.decoder")) {
-                return Collections.singletonList(info);
+        if (useHardwareDecoder) {
+            List<MediaCodecInfo> candidates = MediaCodecSelector.DEFAULT
+                .getDecoderInfos(mimeType, requiresSecure, requiresTunneling);
+            
+            // 优先选择Amlogic解码器
+            for (MediaCodecInfo info : candidates) {
+                if (info.getName().equals("amlogic.avc.decoder")) {
+                    return Collections.singletonList(info);
+                }
             }
+            return candidates;
         }
-        return candidates;
-    }
-    return Collections.emptyList();
-}catch (Exception e) {
+        return Collections.emptyList();
+    } catch (Exception e) {
         throw new MediaCodecUtil.DecoderQueryException(e);
     }
+}
 }
