@@ -39,6 +39,15 @@ android {
 
         }
     }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+        resources {
+            exclude 'META-INF/beans.xml'
+            exclude 'META-INF/versions/9/OSGI-INF/MANIFEST.MF'
+        }
+    }
 
     flavorDimensions += ["abi"]
     productFlavors {
@@ -151,6 +160,7 @@ dependencies {
     implementation 'io.antmedia:rtmp-client:3.2.0'
     implementation 'com.github.teamnewpipe:NewPipeExtractor:v0.24.8'
 }
+
 
 
 
