@@ -60,7 +60,7 @@
 -keep interface androidx.** { *; }
 #-keep public class * extends androidx.**
 
-#-keep class org.xmlpull.v1.** {*;}
+-keep class org.xmlpull.v1.** {*;}
 #r8 xuameng忽略kxml2解析器库的缺失警告
 -dontwarn org.kxml2.io.KXmlParser
 -dontwarn org.xmlpull.mxp1.**
