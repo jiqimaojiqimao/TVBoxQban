@@ -68,6 +68,7 @@
 -keep class com.bea.xml.stream.**
 -dontwarn com.bea.xml.stream.**
 -dontwarn java.awt.**
+-dontwarn javax.swing.plaf.FontUIResource
 # 保留R下面的资源
 -keep class **.R$* {*;}
 
