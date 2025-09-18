@@ -151,9 +151,3 @@ dependencies {
     implementation 'io.antmedia:rtmp-client:3.2.0'
     implementation 'com.github.teamnewpipe:NewPipeExtractor:v0.24.8'
 }
-
-
-
-
-
-
