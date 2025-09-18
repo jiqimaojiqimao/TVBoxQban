@@ -3,10 +3,8 @@ package com.github.tvbox.osc.player;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.text.TextUtils;
-
 import androidx.annotation.Nullable;
 
-import com.github.tvbox.osc.util.StringUtils;
 import androidx.media3.common.C;
 import androidx.media3.common.Format;
 import androidx.media3.common.MimeTypes;
@@ -18,9 +16,12 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.exoplayer.trackselection.MappingTrackSelector;
 
 import xyz.doikki.videoplayer.exo.ExoMediaPlayer;
+
+import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
+import com.github.tvbox.osc.util.StringUtils;
+
 import android.util.Pair;  //xuameng记忆选择音轨
 import java.util.Map;  //xuameng记忆选择音轨
-import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 
 public class EXOmPlayer extends ExoMediaPlayer {
     private String audioId = "";
