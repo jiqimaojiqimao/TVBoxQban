@@ -15,7 +15,9 @@ import androidx.media3.common.Player;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.VideoSize;
 import androidx.media3.exoplayer.DefaultLoadControl;
-import androidx.media3.exoplayer.DefaultRenderersFactory;
+import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON;
+import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;
+import androidx.media3.exoplayer.RenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.LoadControl;
 import androidx.media3.exoplayer.source.MediaSource;
@@ -45,7 +47,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private boolean mIsPreparing;
 
     private LoadControl mLoadControl;
-    private NextRenderersFactory mRenderersFactory;
+    private RenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 
@@ -73,22 +75,23 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (exoSelect > 0) {
             // 选择器优先
             rendererMode = (exoSelect == 1) 
-                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF    // 硬解
-                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
+                ? EXTENSION_RENDERER_MODE_ON    // 硬解
+                : EXTENSION_RENDERER_MODE_PREFER; // 软解
         } else {
             // 使用exoDecode配置
             rendererMode = exoDecode 
-                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
-                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
+                ? EXTENSION_RENDERER_MODE_PREFER // 软解
+                : EXTENSION_RENDERER_MODE_ON;   // 硬解
         }
         mRenderersFactory = new NextRenderersFactory(mAppContext)
+            .setEnableDecoderFallback(true)
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
 
         //xuameng加载策略控制
-        mLoadControl = new DefaultLoadControl();
+        mLoadControl = new DefaultLoadControl.Builder().setBufferDurationsMs(DefaultLoadControl.DEFAULT_MIN_BUFFER_MS * Setting.getBuffer(), DefaultLoadControl.DEFAULT_MAX_BUFFER_MS * Setting.getBuffer(), DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS, DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS).build();
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
