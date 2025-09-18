@@ -1,5 +1,9 @@
+package xyz.doikki.videoplayer.exo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
+import android.content.Context;
+import java.util.Collections; 
+import java.util.List; 
 
 // 设备性能检测与解码策略选择
 public class AdaptiveDecoderSelector implements MediaCodecSelector {
