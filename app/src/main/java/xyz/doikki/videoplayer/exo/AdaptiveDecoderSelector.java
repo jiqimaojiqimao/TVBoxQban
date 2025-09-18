@@ -1,12 +1,12 @@
 package xyz.doikki.videoplayer.exo;
 
+import android.content.Context;
+import android.os.Build;
 import com.google.android.exoplayer2.mediacodec.MediaCodecInfo;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
-import android.content.Context;
 import java.util.Collections;
 import java.util.List;
-import android.os.Build;
 
 public class AdaptiveDecoderSelector implements MediaCodecSelector {
     private final Context context;
@@ -29,24 +29,29 @@ public class AdaptiveDecoderSelector implements MediaCodecSelector {
             String mimeType,
             boolean requiresSecure,
             boolean requiresTunneling) throws MediaCodecUtil.DecoderQueryException {
-        
+
         try {
             if (useHardwareDecoder) {
                 List<MediaCodecInfo> candidates = MediaCodecSelector.DEFAULT
                     .getDecoderInfos(mimeType, requiresSecure, requiresTunneling);
-                
+
                 for (MediaCodecInfo info : candidates) {
-if (info.name.equals("amlogic.avc.decoder")) {
-    // 创建新实例并强制标记硬件加速
-    MediaCodecInfo amlogicInfo = new MediaCodecInfo(
-        info.name, 
-        info.mimeType, 
-        true,  // 强制硬件加速
-        false, // 非纯软件
-        false  // 非安全解码器
-    );
-    return Collections.singletonList(amlogicInfo);
-}
+                    if (info.name.equals("amlogic")) {
+                        // 创建新实例并强制标记硬件加速
+MediaCodecInfo amlogicInfo = new MediaCodecInfo(
+    info.name,
+    info.mimeType,
+    null, // codecAlias
+    info.getCapabilitiesForType(info.mimeType), // capabilities
+    true,  // hardwareAccelerated
+    false, // softwareOnly
+    false, // vendor
+    false, // alias
+    false, // encoder
+    false  // forceDisableAdaptive
+);
+                        return Collections.singletonList(amlogicInfo);
+                    }
                 }
                 return candidates;
             }
