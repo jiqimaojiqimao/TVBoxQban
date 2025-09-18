@@ -38,18 +38,25 @@ public class AdaptiveDecoderSelector implements MediaCodecSelector {
                 for (MediaCodecInfo info : candidates) {
                     if (info.name.equals("amlogic")) {
                         // 创建新实例并强制标记硬件加速
-MediaCodecInfo amlogicInfo = new MediaCodecInfo(
-    info.name,
-    info.mimeType,
-    null, // codecAlias
-    info.getCapabilitiesForType(info.mimeType), // capabilities
-    true,  // hardwareAccelerated
-    false, // softwareOnly
-    false, // vendor
-    false, // alias
-    false, // encoder
-    false  // forceDisableAdaptive
+                        MediaCodecInfo.CodecCapabilities capabilities = MediaCodecUtil.getDecoderCapabilities(
+    mimeType,
+    requiresSecure,
+    requiresTunneling
 );
+
+
+                        MediaCodecInfo amlogicInfo = new MediaCodecInfo(
+                                info.name,
+                                info.mimeType,
+                                null, // codecAlias
+                                capabilities,  // 使用新获取的能力信息
+                                true,  // hardwareAccelerated
+                                false, // softwareOnly
+                                false, // vendor
+                                false, // alias
+                                false, // encoder
+                                false  // forceDisableAdaptive
+                        );
                         return Collections.singletonList(amlogicInfo);
                     }
                 }
