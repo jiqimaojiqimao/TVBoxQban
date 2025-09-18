@@ -36,15 +36,23 @@ public class AdaptiveDecoderSelector implements MediaCodecSelector {
                     .getDecoderInfos(mimeType, requiresSecure, requiresTunneling);
                 
                 for (MediaCodecInfo info : candidates) {
-                    if (info.name.equals("amlogic.avc.decoder")) {
-                        return Collections.singletonList(info);
-                    }
+if (info.name.equals("amlogic.avc.decoder")) {
+    // 创建新实例并强制标记硬件加速
+    MediaCodecInfo amlogicInfo = new MediaCodecInfo(
+        info.name, 
+        info.mimeType, 
+        true,  // 强制硬件加速
+        false, // 非纯软件
+        false  // 非安全解码器
+    );
+    return Collections.singletonList(amlogicInfo);
+}
                 }
                 return candidates;
             }
             return Collections.emptyList();
         } catch (Exception e) {
-            throw new MediaCodecUtil.DecoderQueryException(e);
+            throw new RuntimeException("Decoder query failed", e);
         }
     }
 }
