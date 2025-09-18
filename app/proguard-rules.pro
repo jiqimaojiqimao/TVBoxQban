@@ -59,7 +59,7 @@
 -keep interface androidx.** { *; }
 #-keep public class * extends androidx.**
 
--keep class org.xmlpull.v1.** {*;}
+#-keep class org.xmlpull.v1.** {*;}
 #r8 xuameng忽略kxml2解析器库的缺失警告
 -dontwarn com.ctc.wstx.stax.WstxInputFactory
 -dontwarn com.ctc.wstx.stax.WstxOutputFactory
@@ -291,4 +291,3 @@
 -keep class org.chromium.net.**{*;}
 # Nano
 -keep class fi.iki.elonen.** { *; }
-
