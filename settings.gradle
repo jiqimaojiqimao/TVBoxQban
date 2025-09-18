@@ -1,3 +1,10 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
 rootProject.name = "com.jvhuiys.player"
 include ':app'
 include ':player'
