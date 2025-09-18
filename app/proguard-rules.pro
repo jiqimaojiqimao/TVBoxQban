@@ -164,13 +164,13 @@
   @com.google.gson.annotations.SerializedName <fields>;
 }
 #xstream
-#-keep class com.thoughtworks.xstream.converters.extended.SubjectConverter { *; }
-#-keep class com.thoughtworks.xstream.converters.extended.ThrowableConverter { *; }
-#-keep class com.thoughtworks.xstream.converters.extended.StackTraceElementConverter { *; }
-#-keep class com.thoughtworks.xstream.converters.extended.CurrencyConverter { *; }
-#-keep class com.thoughtworks.xstream.converters.extended.RegexPatternConverter { *; }
-#-keep class com.thoughtworks.xstream.converters.extended.CharsetConverter { *; }
-#-keep class com.thoughtworks.xstream.** { *; }
+-keep class com.thoughtworks.xstream.converters.extended.SubjectConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.ThrowableConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.StackTraceElementConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.CurrencyConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.RegexPatternConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.CharsetConverter { *; }
+-keep class com.thoughtworks.xstream.** { *; }
 #eventbus
 -keepclassmembers class * {
     @org.greenrobot.eventbus.Subscribe <methods>;
