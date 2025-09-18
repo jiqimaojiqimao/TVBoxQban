@@ -1,4 +1,3 @@
-
 #############################################
 #
 # 对于一些基本指令的添加
@@ -68,7 +67,6 @@
 -keep class com.bea.xml.stream.**
 -dontwarn com.bea.xml.stream.**
 -dontwarn java.awt.**
--dontwarn javax.swing.plaf.FontUIResource
 # 保留R下面的资源
 -keep class **.R$* {*;}
 
@@ -225,3 +223,4 @@
 -keep class org.chromium.net.**{*;}
 # Nano
 -keep class fi.iki.elonen.** { *; }
+
