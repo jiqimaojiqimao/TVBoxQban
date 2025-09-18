@@ -39,6 +39,7 @@ android {
 
         }
     }
+    
     packagingOptions {
         jniLibs {
             useLegacyPackaging true
@@ -99,7 +100,6 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation files('libs/thunder.jar')
     implementation files('libs/commons-lang3-3.12.0.jar')
-
     implementation 'com.squareup.okhttp3:okhttp:3.12.11'
     annotationProcessor 'androidx.room:room-compiler:2.3.0'
     implementation 'androidx.room:room-runtime:2.3.0'
@@ -118,15 +118,8 @@ dependencies {
 
     implementation project(":player")
     implementation project(":quickjs")
-
-//    implementation('org.xwalk:xwalk_shared_library:23.53.589.4') {
-//        exclude group: 'com.android.support'
-//    }
     implementation 'com.lzy.net:okgo:3.0.4'
-    // implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'
     implementation 'com.owen:tv-recyclerview:3.0.0'
-
-     //   implementation 'com.github.getActivity:XXPermissions:13.6'
     implementation 'com.github.getActivity:XXPermissions:18.5'
     implementation 'org.jsoup:jsoup:1.14.1'
     implementation 'com.github.hedzr:android-file-chooser:v1.2.0-final'
@@ -135,7 +128,6 @@ dependencies {
     implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
         //支持http3
     implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
-//    implementation 'com.google.android.gms:play-services-cronet:18.0.1'
     implementation ('org.chromium.net:cronet-embedded:101.4951.41')
       //工具类
     implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
@@ -145,7 +137,6 @@ dependencies {
     implementation 'androidx.media3:media3-container:1.8.0'
     implementation 'androidx.media3:media3-database:1.8.0'
     implementation 'androidx.media3:media3-datasource:1.8.0'
- //   implementation 'androidx.media3:media3-datasource-okhttp:1.6.0'
     implementation 'androidx.media3:media3-datasource-rtmp:1.8.0'
     implementation 'androidx.media3:media3-decoder:1.8.0'
     implementation 'androidx.media3:media3-effect:1.8.0'
@@ -160,8 +151,6 @@ dependencies {
     implementation 'io.antmedia:rtmp-client:3.2.0'
     implementation 'com.github.teamnewpipe:NewPipeExtractor:v0.24.8'
 }
-
-
 
 
 
