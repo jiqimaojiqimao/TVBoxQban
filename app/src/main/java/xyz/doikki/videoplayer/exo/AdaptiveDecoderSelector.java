@@ -44,7 +44,7 @@ public class AdaptiveDecoderSelector implements MediaCodecSelector {
             }
             return Collections.emptyList();
         } catch (Exception e) {
-            throw MediaCodecUtil.DecoderQueryException.create(e);
+            throw new MediaCodecUtil.DecoderQueryException(e);
         }
     }
 }
