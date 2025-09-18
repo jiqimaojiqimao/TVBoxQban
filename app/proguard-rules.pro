@@ -61,18 +61,6 @@
 
 -keep class org.xmlpull.v1.** {*;}
 #r8 xuameng忽略kxml2解析器库的缺失警告
--dontwarn org.kxml2.io.KXmlParser
--dontwarn org.xmlpull.mxp1.**
--dontwarn com.ctc.wstx.stax.**
--keep class com.bea.xml.stream.**
--dontwarn com.bea.xml.stream.**
--dontwarn java.awt.**
--dontwarn java.beans.BeanInfo
--dontwarn java.beans.IntrospectionException
--dontwarn java.beans.Introspector
--dontwarn java.beans.PropertyDescriptor
--dontwarn java.beans.PropertyEditor
--dontwarn com.android.org.conscrypt.SSLParametersImpl
 -dontwarn com.ctc.wstx.stax.WstxInputFactory
 -dontwarn com.ctc.wstx.stax.WstxOutputFactory
 -dontwarn java.awt.Color
