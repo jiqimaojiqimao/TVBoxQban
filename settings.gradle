@@ -12,6 +12,8 @@ dependencyResolutionManagement {
         google()
         maven {
             url "https://jitpack.io"
+            url "https://maven.aliyun.com/repository/releases" 
+            url "https://maven.aliyun.com/repository/public" 
         }
         maven {
             url "http://4thline.org/m2"
