@@ -111,12 +111,12 @@ public final class ExoMediaSourceHelper {
         }
         switch (contentType) {
             case C.TYPE_DASH:
-                return new DefaultMediaSourceFactory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+                return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(MediaItem.fromUri(contentUri));
             case C.TYPE_HLS:
-                return new DefaultMediaSourceFactory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+                return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
-                return new DefaultMediaSourceFactory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+                return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(MediaItem.fromUri(contentUri));
         }
     }
 
@@ -128,7 +128,7 @@ public final class ExoMediaSourceHelper {
     }
 
     private static synchronized ExtractorsFactory getExtractorsFactory() {
-        return new DefaultExtractorsFactory().setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS).setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
+        return new DefaultExtractorsFactory().setTsExtractorFlags(FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS).setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 10);
 
     }
 
