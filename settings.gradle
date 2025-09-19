@@ -10,6 +10,9 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         google()
+        flatDir {
+            dirs 'libs'
+        }
         maven {
             url "https://jitpack.io"
             url "https://maven.aliyun.com/repository/releases" 
