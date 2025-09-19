@@ -75,7 +75,7 @@ repositories {
 }
 
 dependencies {
-    api fileTree(dir: "libs", include: ['*.jar', '*.aar'])
+    api fileTree(dir: "libs", include: ["*.jar"])
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  //xuameng 启用Java 8脱糖
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
@@ -86,9 +86,6 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation files('libs/thunder.jar')
     implementation files('libs/commons-lang3-3.12.0.jar')
-    implementation files('libs/forcetech-release.aar')
-    implementation files('libs/hook-release.aar')
-    implementation files('libs/dfm-release.aar')
 
     implementation 'com.squareup.okhttp3:okhttp:3.12.11'
     annotationProcessor 'androidx.room:room-compiler:2.3.0'
@@ -123,6 +120,9 @@ dependencies {
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
     implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
+    implementation(name:'forcetech-release',ext:'aar')
+    implementation(name:'hook-release',ext:'aar')
+    implementation(name:'dfm-release.aar',ext:'aar')
         //支持http3
     implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
 //    implementation 'com.google.android.gms:play-services-cronet:18.0.1'
