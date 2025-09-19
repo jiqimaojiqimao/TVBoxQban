@@ -134,5 +134,22 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
+
+    implementation(ext: 'aar', name: 'lib-common-release')
+    implementation(ext: 'aar', name: 'lib-container-release')
+    implementation(ext: 'aar', name: 'lib-database-release')
+    implementation(ext: 'aar', name: 'lib-datasource-release')
+    implementation(ext: 'aar', name: 'lib-datasource-okhttp-release')
+    implementation(ext: 'aar', name: 'lib-datasource-rtmp-release')
+    implementation(ext: 'aar', name: 'lib-decoder-release')
+    implementation(ext: 'aar', name: 'lib-decoder-av1-release')
+    implementation(ext: 'aar', name: 'lib-exoplayer-release')
+    implementation(ext: 'aar', name: 'lib-exoplayer-dash-release')
+    implementation(ext: 'aar', name: 'lib-exoplayer-hls-release')
+    implementation(ext: 'aar', name: 'lib-exoplayer-rtsp-release')
+    implementation(ext: 'aar', name: 'lib-exoplayer-smoothstreaming-release')
+    implementation(ext: 'aar', name: 'lib-extractor-release')
+    implementation(ext: 'aar', name: 'lib-ui-release')
 }
+
 
