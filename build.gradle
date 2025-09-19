@@ -2,9 +2,6 @@
 buildscript {
     ext.kotlin_version = "1.5.31"
     repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
         maven { url "https://jitpack.io" }
         maven { url "https://maven.aliyun.com/repository/releases" }
         maven { url "https://maven.aliyun.com/repository/public" }
@@ -20,12 +17,9 @@ buildscript {
 
 allprojects {
     repositories {
-        google()
-        mavenCentral()
         maven { url "https://jitpack.io" }
         maven { url "https://maven.aliyun.com/repository/releases" }
         maven { url "https://maven.aliyun.com/repository/public" }
-        gradlePluginPortal()
     }
 }
 
