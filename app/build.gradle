@@ -68,12 +68,6 @@ android {
     }
 }
 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
 dependencies {
     api fileTree(dir: "libs", include: ["*.jar"])
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  //xuameng 启用Java 8脱糖
@@ -151,6 +145,7 @@ dependencies {
     implementation(ext: 'aar', name: 'lib-extractor-release')
     implementation(ext: 'aar', name: 'lib-ui-release')
 }
+
 
 
 
