@@ -1,138 +1,37 @@
-plugins {
-    id 'com.android.application' version '7.3.0'
-    id 'kotlin-android'
-}
-
-android {
-    compileSdkVersion 33
-
-    defaultConfig {
-        namespace = 'com.github.tvbox.osc'
-        applicationId 'com.jvhuiys.player'
-        minSdkVersion 21
-        targetSdkVersion 28
-        versionCode 1
-        versionName '2025917-2222'
-        multiDexEnabled true
-        //设置room的Schema的位置
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
-            }
-        }
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext.kotlin_version = "1.5.31"
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+        maven { url "https://maven.aliyun.com/repository/releases" }
+        maven { url "https://maven.aliyun.com/repository/public" }
+        maven { url "https://storage.googleapis.com/r8-releases/raw" }
     }
-
-    packagingOptions {
-        exclude 'META-INF/DEPENDENCIES'
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-
-        debug {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
-
-        }
-    }
-
-    flavorDimensions += ["abi"]
-    productFlavors {
-        armeabi {
-            dimension = "abi"
-            ndk {
-                abiFilters 'armeabi-v7a'
-            }
-        }
-  //      arm64 {
-  //          dimension = "abi"
-  //          ndk {
-  //              abiFilters 'arm64-v8a'
-  //          }
-  //      }
-    }
-
-    compileOptions {
-        coreLibraryDesugaringEnabled true   //xuameng 启用Java 8脱糖
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    lintOptions {
-        checkReleaseBuilds false
-        abortOnError false
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
     }
 }
 
-repositories {
-    flatDir {
-        dirs 'libs'
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+        maven { url "https://maven.aliyun.com/repository/releases" }
+        maven { url "https://maven.aliyun.com/repository/public" }
+        gradlePluginPortal()
     }
 }
 
-dependencies {
-    api fileTree(dir: "libs", include: ["*.jar"])
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  //xuameng 启用Java 8脱糖
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'org.nanohttpd:nanohttpd:2.3.1'
-    implementation 'com.google.zxing:core:3.3.0'
-    implementation 'androidx.appcompat:appcompat:1.3.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    implementation files('libs/thunder.jar')
-    implementation files('libs/commons-lang3-3.12.0.jar')
-
-    implementation 'com.squareup.okhttp3:okhttp:3.12.11'
-    annotationProcessor 'androidx.room:room-compiler:2.3.0'
-    implementation 'androidx.room:room-runtime:2.3.0'
-    implementation 'androidx.multidex:multidex:2.0.1'
-    implementation 'com.squareup.okio:okio:2.8.0'
-    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.45-androidx'
-    implementation 'com.kingja.loadsir:loadsir:1.3.8'
-    implementation 'com.google.code.gson:gson:2.8.7'
-    implementation 'com.squareup.picasso:picasso:2.71828'
-    implementation 'me.jessyan:autosize:1.2.1'
-    implementation('com.thoughtworks.xstream:xstream:1.4.15') {
-        exclude group: 'xmlpull', module: 'xmlpull'
-    }
-    implementation 'org.greenrobot:eventbus:3.2.0'
-    implementation 'com.orhanobut:hawk:2.0.1'
-
-    implementation project(":player")
-    implementation project(":quickjs")
-
-//    implementation('org.xwalk:xwalk_shared_library:23.53.589.4') {
-//        exclude group: 'com.android.support'
-//    }
-    implementation 'com.lzy.net:okgo:3.0.4'
-    // implementation 'com.tencent.bugly:crashreport_upgrade:latest.release'
-    implementation 'com.owen:tv-recyclerview:3.0.0'
-
-     //   implementation 'com.github.getActivity:XXPermissions:13.6'
-    implementation 'com.github.getActivity:XXPermissions:18.5'
-    implementation 'org.jsoup:jsoup:1.14.1'
-    implementation 'com.github.hedzr:android-file-chooser:v1.2.0-final'
-    implementation 'commons-io:commons-io:2.11.0'
-    implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
-    implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
-        //支持http3
-    implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
-//    implementation 'com.google.android.gms:play-services-cronet:18.0.1'
-    implementation ('org.chromium.net:cronet-embedded:101.4951.41')
-      //工具类
-    implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
-    implementation 'com.blankj:utilcodex:1.31.0'
-    //xuameng exo
-    def exoplayerVersion = "2.19.1"
-    api "com.google.android.exoplayer:exoplayer-core:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-dash:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-hls:$exoplayerVersion"
-    api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
-    api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
+
+
 
