@@ -122,7 +122,7 @@ dependencies {
     implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
     implementation(name:'forcetech-release',ext:'aar')
     implementation(name:'hook-release',ext:'aar')
-    implementation(name:'dfm-release.aar',ext:'aar')
+    implementation(name:'dfm-release',ext:'aar')
         //支持http3
     implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
 //    implementation 'com.google.android.gms:play-services-cronet:18.0.1'
