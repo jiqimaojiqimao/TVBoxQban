@@ -20,6 +20,7 @@ import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDER
 import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
 import androidx.media3.exoplayer.RenderersFactory;
 import androidx.media3.exoplayer.util.EventLogger;
+import androidx.media3.common.AudioAttributes;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.LoadControl;
 import androidx.media3.exoplayer.source.MediaSource;
@@ -373,7 +374,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
     }
 
-    public static RenderersFactory buildRenderersFactory(int renderMode) {
+    private void RenderersFactory buildRenderersFactory(int renderMode) {
         return new NextRenderersFactory(mAppContext).setEnableDecoderFallback(true).setExtensionRendererMode(renderMode);
     }
 }
