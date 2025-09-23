@@ -12,7 +12,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
-        versionName '2025917-2222'
+        versionName '20250923-2222'
         multiDexEnabled true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -135,5 +135,6 @@ dependencies {
     api "com.google.android.exoplayer:exoplayer-rtsp:$exoplayerVersion"
     api "com.google.android.exoplayer:extension-rtmp:$exoplayerVersion"
 }
+
 
 
