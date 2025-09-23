@@ -108,12 +108,12 @@ public final class ExoMediaSourceHelper {
         }
         switch (contentType) {
             case C.TYPE_DASH:
-                return new DefaultMediaSourceFactory(factory, getExtractorsFactory()).createMediaSource(MediaItem.fromUri(contentUri));
+                return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
             case C.TYPE_HLS:
-                return new DefaultMediaSourceFactory(factory, getExtractorsFactory()).createMediaSource(MediaItem.fromUri(contentUri));
+                return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
-                return new DefaultMediaSourceFactory(factory, getExtractorsFactory()).createMediaSource(MediaItem.fromUri(contentUri));
+                return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
         }
     }
 
