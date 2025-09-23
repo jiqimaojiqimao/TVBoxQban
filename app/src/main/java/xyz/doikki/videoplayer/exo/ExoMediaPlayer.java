@@ -19,7 +19,7 @@ import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDER
 import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;
 import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
 import androidx.media3.exoplayer.RenderersFactory;
-import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.SimpleExoPlayer;
 import androidx.media3.exoplayer.LoadControl;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
@@ -39,7 +39,7 @@ import xyz.doikki.videoplayer.util.PlayerUtils;
 public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     protected Context mAppContext;
-    protected ExoPlayer mMediaPlayer;
+    protected SimpleExoPlayer mMediaPlayer;
     protected MediaSource mMediaSource;
     protected ExoMediaSourceHelper mMediaSourceHelper;
     protected ExoTrackNameProvider trackNameProvider;
@@ -51,7 +51,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private RenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
-    private PlayerView view;
 
     private int errorCode = -100;
     private int mRetryCount = 0;  //xuameng播放出错重试十次
@@ -100,15 +99,14 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
             .setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
 
-        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
-                .setLoadControl(mLoadControl)
-                .setRenderersFactory(mRenderersFactory)
-                .setTrackSelector(mTrackSelector).build();
+// 创建优先使用扩展渲染器的播放器实例
+SimpleExoPlayer mMediaPlayer = new SimpleExoPlayer.Builder(mAppContext)
+    .setRenderersFactory(new DefaultRenderersFactory(mAppContext)
+    .build();
+
 
         setOptions();
         mMediaPlayer.addListener(this);
-		setPlayerView(view);
-        this.view = view;
     }
 
     public DefaultTrackSelector getTrackSelector() {
@@ -373,12 +371,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             if (videoSize.unappliedRotationDegrees > 0) {
                 mPlayerEventListener.onInfo(MEDIA_INFO_VIDEO_ROTATION_CHANGED, videoSize.unappliedRotationDegrees);
             }
-        }
-    }
-
-    public void setPlayerView(PlayerView view) {
-        if (mMediaPlayer != null) {
-            view.setPlayer(mMediaPlayer);
         }
     }
 }
