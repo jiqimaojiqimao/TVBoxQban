@@ -222,9 +222,12 @@ public class IjkPlayer extends AbstractPlayer implements IMediaPlayer.OnErrorLis
 
     @Override
     public boolean onError(IMediaPlayer mp, int what, int extra) {
-        mPlayerEventListener.onError();
+      //  mPlayerEventListener.onError();
+        mPlayerEventListener.onError(what, extra);
         String progressKey = Hawk.get(HawkConfig.IJK_PROGRESS_KEY, "");
-        memory.getInstance(mAppContext).deleteIjkTrack(progressKey);   //xuameng删除记忆音轨
+        if (what != -10000){
+            memory.getInstance(mAppContext).deleteIjkTrack(progressKey);   //xuameng删除记忆音轨
+        }
         return true;
     }
 
