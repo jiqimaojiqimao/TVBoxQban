@@ -1,14 +1,14 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    ext.kotlin_version = "2.1.0"
+    ext.kotlin_version = "1.5.31"
     repositories {
         gradlePluginPortal()
         google()
         mavenCentral()
-        maven { url = "https://jitpack.io" }
-        maven { url = "https://maven.aliyun.com/repository/releases" }
-        maven { url = "https://maven.aliyun.com/repository/public" }
-        maven { url = "https://storage.googleapis.com/r8-releases/raw" }
+        maven { url "https://jitpack.io" }
+        maven { url "https://maven.aliyun.com/repository/releases" }
+        maven { url "https://maven.aliyun.com/repository/public" }
+        maven { url "https://storage.googleapis.com/r8-releases/raw" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.2'
@@ -18,18 +18,13 @@ buildscript {
     }
 }
 
-plugins {
-    id 'com.android.application' version '8.12.2' apply false
-    id 'com.android.library' version '8.12.2' apply false
-}
-
 allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url = "https://jitpack.io" }
-        maven { url = "https://maven.aliyun.com/repository/releases" }
-        maven { url = "https://maven.aliyun.com/repository/public" }
+        maven { url "https://jitpack.io" }
+        maven { url "https://maven.aliyun.com/repository/releases" }
+        maven { url "https://maven.aliyun.com/repository/public" }
         gradlePluginPortal()
     }
 }
@@ -37,3 +32,6 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+
+
