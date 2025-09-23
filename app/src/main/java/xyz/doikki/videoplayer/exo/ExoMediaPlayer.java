@@ -19,6 +19,7 @@ import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDER
 import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;
 import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
 import androidx.media3.exoplayer.RenderersFactory;
+import androidx.media3.exoplayer.util.EventLogger;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.LoadControl;
 import androidx.media3.exoplayer.source.MediaSource;
@@ -48,7 +49,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private boolean mIsPreparing;
 
     private LoadControl mLoadControl;
-    private RenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 
@@ -84,8 +84,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 ? EXTENSION_RENDERER_MODE_PREFER // 软解
                 : EXTENSION_RENDERER_MODE_ON;   // 硬解
         }
-        mRenderersFactory = new NextRenderersFactory(mAppContext)
-            .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
@@ -99,10 +97,13 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             .setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
 
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
-                .setRenderersFactory(mRenderersFactory)
+                .setRenderersFactory(buildRenderersFactory(rendererMode))
                 .setLoadControl(mLoadControl)
                 .setTrackSelector(mTrackSelector).build();
 
+        mMediaPlayer.setAudioAttributes(AudioAttributes.DEFAULT, true);
+        mMediaPlayer.addAnalyticsListener(new EventLogger());
+        mMediaPlayer.setHandleAudioBecomingNoisy(true);
         setOptions();
         mMediaPlayer.addListener(this);
     }
@@ -370,5 +371,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 mPlayerEventListener.onInfo(MEDIA_INFO_VIDEO_ROTATION_CHANGED, videoSize.unappliedRotationDegrees);
             }
         }
+    }
+
+    public static RenderersFactory buildRenderersFactory(int renderMode) {
+        return new NextRenderersFactory(mAppContext).setEnableDecoderFallback(true).setExtensionRendererMode(renderMode);
     }
 }
