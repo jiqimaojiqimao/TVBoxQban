@@ -101,7 +101,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
 // 创建优先使用扩展渲染器的播放器实例
 SimpleExoPlayer mMediaPlayer = new SimpleExoPlayer.Builder(mAppContext)
-    .setRenderersFactory(new DefaultRenderersFactory(mAppContext)
+    .setRenderersFactory(new DefaultRenderersFactory(mAppContext))
 	.setLoadControl(mLoadControl)
 	.setTrackSelector(mTrackSelector)
     .build();
