@@ -35,7 +35,7 @@ public class LivePlayerManager {
             }
             if (!defaultPlayerConfig.has("exocode")) {
                 defaultPlayerConfig.put("exocode", 0);      //xuameng exo动态解码  大于0为选择
-			    Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择
+			//    Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择
             }
             if (!defaultPlayerConfig.has("music")) {
                 defaultPlayerConfig.put("music", Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false));   //xuameng音乐播放动画设置
