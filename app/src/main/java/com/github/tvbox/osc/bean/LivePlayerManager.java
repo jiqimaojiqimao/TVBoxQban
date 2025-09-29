@@ -69,6 +69,7 @@ public class LivePlayerManager {
             if (playerConfig.getInt("pl") == currentPlayerConfig.getInt("pl")
                     && playerConfig.getInt("pr") == currentPlayerConfig.getInt("pr")
                     && playerConfig.getInt("exocode") == currentPlayerConfig.getInt("exocode")
+                    && playerConfig.getInt("music") == currentPlayerConfig.getInt("music")
                     && playerConfig.getString("ijk").equals(currentPlayerConfig.getString("ijk"))) {
                 videoView.setScreenScaleType(playerConfig.getInt("sc"));
             } else {
