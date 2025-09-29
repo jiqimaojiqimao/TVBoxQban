@@ -28,11 +28,18 @@ public class LivePlayerManager {
                 defaultPlayerConfig.put("pl", Hawk.get(HawkConfig.PLAY_TYPE, 0));  //xuameng升级直播JSON没有指定，默认跟随设置
             }
             defaultPlayerConfig.put("ijk", Hawk.get(HawkConfig.IJK_CODEC, "软解码"));
-            defaultPlayerConfig.put("pr", Hawk.get(HawkConfig.PLAY_RENDER, 0));  //xuameng 渲染设置
             defaultPlayerConfig.put("sc", Hawk.get(HawkConfig.PLAY_SCALE, 0));
-            defaultPlayerConfig.put("exocode", 0);      //xuameng exo动态解码  大于0为选择
-			Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择
-            defaultPlayerConfig.put("music", Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false));   //xuameng音乐播放动画设置
+
+            if (!currentPlayerConfig.has("pr")) {
+                defaultPlayerConfig.put("pr", Hawk.get(HawkConfig.PLAY_RENDER, 0));  //xuameng 渲染设置
+            }
+            if (!currentPlayerConfig.has("exocode")) {
+                defaultPlayerConfig.put("exocode", 0);      //xuameng exo动态解码  大于0为选择
+			    Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择
+            }
+            if (!currentPlayerConfig.has("music")) {
+                defaultPlayerConfig.put("music", Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false));   //xuameng音乐播放动画设置
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
