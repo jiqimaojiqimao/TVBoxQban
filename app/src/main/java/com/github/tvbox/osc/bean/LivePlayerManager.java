@@ -43,6 +43,8 @@ public class LivePlayerManager {
         PlayerHelper.updateCfg(videoView, defaultPlayerConfig);
         try {
             currentPlayerConfig = new JSONObject(defaultPlayerConfig.toString());
+                    currentPlayerConfig.put("exocode", 0);   //xuameng EXO硬解 动态设置
+                    Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);
         } catch (JSONException e) {
             e.printStackTrace();
         }
