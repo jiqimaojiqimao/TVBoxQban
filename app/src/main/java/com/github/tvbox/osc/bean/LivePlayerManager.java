@@ -30,8 +30,8 @@ public class LivePlayerManager {
             defaultPlayerConfig.put("ijk", Hawk.get(HawkConfig.IJK_CODEC, "软解码"));
             defaultPlayerConfig.put("pr", Hawk.get(HawkConfig.PLAY_RENDER, 0));  //xuameng 渲染设置
             defaultPlayerConfig.put("sc", Hawk.get(HawkConfig.PLAY_SCALE, 0));
-            defaultPlayerConfig.put("exocode", 0);      //xuameng exo动态解码  大于0为选择
-			Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择
+         //   defaultPlayerConfig.put("exocode", 0);      //xuameng exo动态解码  大于0为选择
+         //   Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择
             defaultPlayerConfig.put("music", Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false));   //xuameng音乐播放动画设置
         } catch (JSONException e) {
             e.printStackTrace();
@@ -71,8 +71,6 @@ public class LivePlayerManager {
         }
 
         currentPlayerConfig = playerConfig;
-        getLivePlayrender();
-        getExoCode();
     }
 
     public int getLivePlayerType() {
@@ -262,26 +260,5 @@ public class LivePlayerManager {
             Hawk.put(channelName, playerConfig);
 
         currentPlayerConfig = playerConfig;
-    }
-
-    public void getExoCode() {
-        boolean exocode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);  //xuameng exo解码默认设置
-        int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);  //xuameng exo解码动态选择
-        try {
-            // 安全获取配置值
-            if (currentPlayerConfig.has("exocode")) {
-                exoSelect = currentPlayerConfig.getInt("exocode");     //xuameng exo解码动态选择 0默认设置 1硬解 2软解
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        if (exoSelect > 0){
-            // xuameng EXO 动态选择解码 存储选择状态
-            if (exoSelect == 1) {
-                Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 1);  // 硬解码标记存储
-            } else {
-                Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 2);  // 软解码标记存储
-            }
-        }
     }
 }
