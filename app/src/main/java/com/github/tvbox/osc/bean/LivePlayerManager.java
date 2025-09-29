@@ -51,10 +51,15 @@ public class LivePlayerManager {
     public void getLiveChannelPlayer(VideoView videoView, String channelName) {
         JSONObject playerConfig = Hawk.get(channelName, null);
         if (playerConfig == null) {
-            if (!currentPlayerConfig.toString().equals(defaultPlayerConfig.toString()))
-                defaultPlayerConfig.put("exocode", 0);      //xuameng exo动态解码  大于0为选择
-			    Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择
+            if (!currentPlayerConfig.toString().equals(defaultPlayerConfig.toString())){
+                try {
+                    defaultPlayerConfig.put("exocode", 0);      //xuameng exo动态解码  大于0为选择
+                    Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 getDefaultLiveChannelPlayer(videoView);
+            }
             return;
         }
         if (playerConfig.toString().equals(currentPlayerConfig.toString()))
