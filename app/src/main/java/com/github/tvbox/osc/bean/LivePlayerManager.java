@@ -30,14 +30,14 @@ public class LivePlayerManager {
             defaultPlayerConfig.put("ijk", Hawk.get(HawkConfig.IJK_CODEC, "软解码"));
             defaultPlayerConfig.put("sc", Hawk.get(HawkConfig.PLAY_SCALE, 0));
 
-            if (!currentPlayerConfig.has("pr")) {
+            if (!defaultPlayerConfig.has("pr")) {
                 defaultPlayerConfig.put("pr", Hawk.get(HawkConfig.PLAY_RENDER, 0));  //xuameng 渲染设置
             }
-            if (!currentPlayerConfig.has("exocode")) {
+            if (!defaultPlayerConfig.has("exocode")) {
                 defaultPlayerConfig.put("exocode", 0);      //xuameng exo动态解码  大于0为选择
 			    Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择
             }
-            if (!currentPlayerConfig.has("music")) {
+            if (!defaultPlayerConfig.has("music")) {
                 defaultPlayerConfig.put("music", Hawk.get(HawkConfig.LIVE_MUSIC_ANIMATION, false));   //xuameng音乐播放动画设置
             }
         } catch (JSONException e) {
