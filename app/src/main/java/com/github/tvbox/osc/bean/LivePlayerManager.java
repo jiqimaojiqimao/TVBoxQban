@@ -116,7 +116,13 @@ public class LivePlayerManager {
                             playerTypeIndex = 4;
                         }
                     }else {
-                        playerTypeIndex = exocode ? 4 : 3;         //xuameng EXO获取默认设置
+                        if (exocode){
+                            Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 2);  // 软解码标记存储
+                            playerTypeIndex = 4;
+                        }else{
+                            Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 1);  // 硬解码标记存储
+                            playerTypeIndex = 3;
+                        }
                     }
                     break;
             }
