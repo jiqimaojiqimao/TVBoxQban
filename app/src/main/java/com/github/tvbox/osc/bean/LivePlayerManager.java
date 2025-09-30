@@ -39,10 +39,11 @@ public class LivePlayerManager {
         getDefaultLiveChannelPlayer(videoView);
     }
 
-    public void getDefaultLiveChannelPlayer(VideoView videoView) {
+    public void getDefaultLiveChannelPlayer(VideoView videoView) {   //xuameng播放器默认设置
         PlayerHelper.updateCfg(videoView, defaultPlayerConfig);
         try {
             currentPlayerConfig = new JSONObject(defaultPlayerConfig.toString());
+            Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择 EXO解码恢复默认值
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -50,13 +51,13 @@ public class LivePlayerManager {
 
     public void getLiveChannelPlayer(VideoView videoView, String channelName) {
         JSONObject playerConfig = Hawk.get(channelName, null);
-        if (playerConfig == null) {
+        if (playerConfig == null) {   //xuameng没有动态配置的就走默认配置
             if (!currentPlayerConfig.toString().equals(defaultPlayerConfig.toString())){
                 getDefaultLiveChannelPlayer(videoView);
             }
             return;
         }
-        if (playerConfig.toString().equals(currentPlayerConfig.toString()))
+        if (playerConfig.toString().equals(currentPlayerConfig.toString()))   //xuameng配置没变就反回
             return;
 
         try {
@@ -72,7 +73,7 @@ public class LivePlayerManager {
         }
 
         currentPlayerConfig = playerConfig;
-        getExoCode();
+        setExoCode();    //xuameng 动态设置EXOCODE
     }
 
     public int getLivePlayerType() {
@@ -155,7 +156,6 @@ public class LivePlayerManager {
         }
         return musicType;
     }
-
 
     public void changeLivePlayerType(VideoView videoView, int playerType, String channelName) {
         JSONObject playerConfig = currentPlayerConfig;
@@ -263,8 +263,8 @@ public class LivePlayerManager {
 
         currentPlayerConfig = playerConfig;
     }
-    public void getExoCode() {
-        boolean exocode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);  //xuameng exo解码默认设置
+
+    private void setExoCode() {    //xuameng 动态设置EXOCODE
         int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);  //xuameng exo解码动态选择
         try {
             // 安全获取配置值
@@ -281,8 +281,6 @@ public class LivePlayerManager {
             } else {
                 Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 2);  // 软解码标记存储
             }
-        }else{
-            Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);   
         }
     }    
 }
