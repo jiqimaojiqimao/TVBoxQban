@@ -263,6 +263,7 @@ public class LivePlayerManager {
     }
 
     private void setExoCode() {    //xuameng 动态设置EXOCODE
+        Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择 EXO解码恢复默认值
         int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);  //xuameng exo解码动态选择
         try {
             // 安全获取配置值
