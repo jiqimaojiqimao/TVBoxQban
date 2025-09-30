@@ -78,6 +78,7 @@ public class LivePlayerManager {
         }
 
         currentPlayerConfig = playerConfig;
+        getExoCode();
     }
 
     public int getLivePlayerType() {
@@ -268,4 +269,26 @@ public class LivePlayerManager {
 
         currentPlayerConfig = playerConfig;
     }
+    public void getExoCode() {
+        boolean exocode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);  //xuameng exo解码默认设置
+        int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);  //xuameng exo解码动态选择
+        try {
+            // 安全获取配置值
+            if (currentPlayerConfig.has("exocode")) {
+                exoSelect = currentPlayerConfig.getInt("exocode");     //xuameng exo解码动态选择 0默认设置 1硬解 2软解
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        if (exoSelect > 0){
+            // xuameng EXO 动态选择解码 存储选择状态
+            if (exoSelect == 1) {
+                Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 1);  // 硬解码标记存储
+            } else {
+                Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 2);  // 软解码标记存储
+            }
+        }else{
+            Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);   
+        }
+    }    
 }
