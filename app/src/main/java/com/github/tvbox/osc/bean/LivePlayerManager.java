@@ -177,13 +177,11 @@ public class LivePlayerManager {
                     playerConfig.put("pl", 2);         //exo 播放器
                     playerConfig.put("exocode", 1);   //xuameng EXO硬解 动态设置
                     Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 1);
-                    playerConfig.put("ijk", "软解码");
                     break;
                 case 4:
                     playerConfig.put("pl", 2);
                     playerConfig.put("exocode", 2);       //xuameng EXO软解 动态设置
                     Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 2);
-                    playerConfig.put("ijk", "软解码");
                     break;
             }
         } catch (JSONException e) {
