@@ -7,7 +7,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.text.TextWatcher;  //xuameng输入监听依赖
 import android.text.Editable;		//xuameng输入监听依赖
-import java.util.Arrays;   //xuameng输入监听依赖
 import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import androidx.annotation.NonNull;
@@ -45,6 +44,7 @@ public class PushDialog extends BaseDialog {
         etAddr = findViewById(R.id.etAddr);
 
 		etAddr.addTextChangedListener(new TextWatcher() {         //xuameng输入监听
+		    private boolean isPointAdded = false;
  
 		    @Override
 		    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -57,33 +57,18 @@ public class PushDialog extends BaseDialog {
 		    }
  
 		    @Override
-            public void afterTextChanged(Editable s) {
+		    public void afterTextChanged(Editable s) {
                 String text = s.toString();
-    
-                // 1. 自动修正连续输入点的情况
                 if (text.contains("..")) {
-                    int lastDotIndex = text.lastIndexOf(".");
-                    etAddr.getEditableText().delete(lastDotIndex, lastDotIndex + 1);
-                }
-    
-                // 2. 验证IP地址格式
-                boolean isValid = text.matches(
-                    "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-                );
-    
-                // 3. 处理非法输入
-                if (!isValid) {
-                    if (text.contains(".")) {
-                        // 保留最后一个有效段
-                        String[] parts = text.split("\\.");
-                        if (parts.length > 1) {
-                            text = String.join(".", Arrays.copyOf(parts, parts.length - 1));
-                        }
-                    }
-                    etAddr.setText(text);
+                    // 移除最后输入的点
+                    int index = text.lastIndexOf(".");
+                    etAddr.getEditableText().delete(index, index + 1);
+                    isPointAdded = false;
                     App.showToastShort(PushDialog.this.getContext(), "聚汇影视提示：IP地址格式为222.222.222.222");
-                }
-            }
+                } else {				
+                    isPointAdded = true;				
+			    }
+		    }
 		});            //xuameng输入监听完
 
         etPort = findViewById(R.id.etPort);
