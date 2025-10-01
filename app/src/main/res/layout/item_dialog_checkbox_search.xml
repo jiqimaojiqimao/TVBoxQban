@@ -10,17 +10,18 @@
         android:layout_height="wrap_content">
         <CheckBox
             android:textSize="@dimen/ts_22"
+            android:ellipsize="marquee"
             android:gravity="center"
             android:id="@+id/oneSearchSource"
             android:background="@drawable/button_dialog_main"
             android:paddingRight="@dimen/vs_10"
             android:focusable="true"
             android:clickable="true"
-			android:singleLine="true"
-			android:ellipsize="marquee"
-			android:marqueeRepeatLimit="marquee_forever"
+            android:focusableInTouchMode="true"
             android:layout_width="fill_parent"
             android:layout_height="53.0mm"
-            android:text="1111"/>
+            android:text="1111"
+            android:singleLine="true"
+            android:marqueeRepeatLimit="marquee_forever"/>
     </LinearLayout>
 </FrameLayout>
