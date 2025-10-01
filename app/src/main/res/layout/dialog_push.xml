@@ -40,12 +40,12 @@
                 android:layout_width="@dimen/vs_200"
                 android:layout_height="@dimen/vs_50"
                 android:hint="推送 IP 地址"
-                android:maxLength="15"
                 android:singleLine="true"
-                android:imeOptions="actionDone"
-                android:inputType="text"
+                android:maxLength="15"
                 android:digits="0123456789."
-                android:layout_weight="1.0"/>
+                android:layout_weight="1.0"
+                android:inputType="text"
+                android:imeOptions="actionDone"/>
             <TextView
                 android:textSize="@dimen/ts_24"
                 android:textColor="@color/color_80000000"
@@ -72,7 +72,8 @@
                 android:maxWidth="@dimen/vs_70"
                 android:minWidth="@dimen/vs_70"
                 android:hint="端口"
-                android:maxLines="1"
+                android:singleLine="true"
+                android:imeOptions="actionDone"
                 android:maxLength="5"
                 android:layout_weight="1.0"
                 android:inputType="number"/>
