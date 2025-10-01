@@ -40,11 +40,12 @@
                 android:layout_width="@dimen/vs_200"
                 android:layout_height="@dimen/vs_50"
                 android:hint="推送 IP 地址"
-                android:maxLines="1"
                 android:maxLength="15"
-				android:digits="0123456789."
-                android:layout_weight="1.0"
-                android:inputType="text"/>
+                android:singleLine="true"
+                android:imeOptions="actionDone"
+                android:inputType="textNoSuggestions"
+                android:digits="0123456789."
+                android:layout_weight="1.0"/>
             <TextView
                 android:textSize="@dimen/ts_24"
                 android:textColor="@color/color_80000000"
