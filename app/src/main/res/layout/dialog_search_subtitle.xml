@@ -10,7 +10,7 @@
         android:background="@drawable/shape_dialog_bg_main"
         android:padding="@dimen/vs_30"
         android:layout_width="@dimen/vs_960"
-        android:layout_height="496mm">
+        android:layout_height="496.0mm">
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="fill_parent"
@@ -28,7 +28,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:hint="请输入字幕名称"
-                android:maxLines="1"
+                android:singleLine="true"
+                android:imeOptions="actionDone"
                 android:layout_weight="1.0"
                 android:inputType="text"/>
             <TextView
@@ -47,14 +48,14 @@
         </LinearLayout>
         <LinearLayout
             android:layout_gravity="center|top"
-            android:layout_marginTop="@dimen/vs_10"
             android:orientation="vertical"
             android:focusable="false"
             android:focusableInTouchMode="false"
             android:clipChildren="false"
             android:clipToPadding="false"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/vs_10">
             <com.owen.tvrecyclerview.widget.TvRecyclerView
                 android:id="@+id/mGridView"
                 android:clipChildren="false"
@@ -66,10 +67,10 @@
                 app:tv_verticalSpacingWithMargins="@dimen/vs_5"/>
         </LinearLayout>
         <ProgressBar
+            android:gravity="center"
             android:layout_gravity="center"
             android:id="@+id/loadingBar"
             android:visibility="gone"
-            android:gravity="center"
             android:layout_width="@dimen/vs_50"
             android:layout_height="@dimen/vs_50"
             android:indeterminateOnly="true"
