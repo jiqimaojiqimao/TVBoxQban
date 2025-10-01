@@ -7,6 +7,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.text.TextWatcher;  //xuameng输入监听依赖
 import android.text.Editable;		//xuameng输入监听依赖
+import android.view.inputmethod.InputMethodManager;  //xuameng Enter  隐藏软键盘问题
 import android.view.inputmethod.EditorInfo;
 import com.github.tvbox.osc.base.App;  //xuameng toast
 
@@ -43,7 +44,7 @@ public class PushDialog extends BaseDialog {
 
         // Push IP / Port
         etAddr = findViewById(R.id.etAddr);
-etAddr.setImeOptions(EditorInfo.IME_ACTION_DONE);
+
 		etAddr.addTextChangedListener(new TextWatcher() {         //xuameng输入监听
 		private boolean isPointAdded = false;
  
@@ -71,6 +72,18 @@ etAddr.setImeOptions(EditorInfo.IME_ACTION_DONE);
 			}
 		  }
 		});            //xuameng输入监听完
+
+etAddr.setOnEditorActionListener((v, actionId, event) -> {
+    if (actionId == EditorInfo.IME_ACTION_DONE) {
+        InputMethodManager imm = (InputMethodManager) v.getContext()
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        }
+        return true;
+    }
+    return false;
+});
         etPort = findViewById(R.id.etPort);
         String cfgAddr = Hawk.get(HawkConfig.PUSH_TO_ADDR, "");
         String cfgPort = Hawk.get(HawkConfig.PUSH_TO_PORT, "");
