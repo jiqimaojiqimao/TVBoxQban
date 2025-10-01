@@ -7,7 +7,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.view.KeyEvent;       //xuameng 键盘问题
+import android.view.KeyEvent;       //xuameng Enter  隐藏软键盘问题
+import android.view.inputmethod.InputMethodManager;  //xuameng Enter  隐藏软键盘问题
 import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import androidx.annotation.NonNull;
@@ -103,7 +104,7 @@ public class SearchSubtitleDialog extends BaseDialog {
             }
         }, mGridView);
 
-        // xuameng : Fix on Key Enter
+        // xuameng : Fix on Key Enter  隐藏软键盘
         subtitleSearchEt.setOnKeyListener(onSoftKeyPress);
 
         subtitleSearchBtn.setOnClickListener(new View.OnClickListener() {
@@ -117,13 +118,27 @@ public class SearchSubtitleDialog extends BaseDialog {
         searchAdapter.setNewData(new ArrayList<>());
     }
 
-// xuameng : Fix on Key Enter
+    // xuameng : Fix on Key Enter  隐藏软键盘
     private final View.OnKeyListener onSoftKeyPress = new View.OnKeyListener() {
+        @Override
         public boolean onKey(View v, int keyCode, KeyEvent event) {
-            if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
-                // hide soft keyboard, set focus on next button
-                subtitleSearchEt.clearFocus();
-                subtitleSearchBtn.requestFocus();
+            InputMethodManager imm = (InputMethodManager) v.getContext()
+                .getSystemService(Context.INPUT_METHOD_SERVICE);        
+            if (imm != null) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN && 
+                    keyCode == KeyEvent.KEYCODE_ENTER || event.getAction() == KeyEvent.ACTION_DOWN && 
+                    keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                    v.requestFocus();
+                    imm.showSoftInput(v, InputMethodManager.SHOW_IMPLICIT);
+                    return true;
+                } else if (event.getAction() == KeyEvent.ACTION_UP && 
+                    keyCode == KeyEvent.KEYCODE_ENTER || event.getAction() == KeyEvent.ACTION_UP && 
+                    keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                    subtitleSearchEt.clearFocus();
+                    subtitleSearchBtn.requestFocus();
+                    return true;
+                }
             }
             return false;
         }
