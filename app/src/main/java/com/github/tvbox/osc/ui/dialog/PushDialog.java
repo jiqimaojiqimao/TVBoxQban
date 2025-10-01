@@ -7,6 +7,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.text.TextWatcher;  //xuameng输入监听依赖
 import android.text.Editable;		//xuameng输入监听依赖
+import android.view.inputmethod.EditorInfo;
 import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import androidx.annotation.NonNull;
@@ -42,46 +43,34 @@ public class PushDialog extends BaseDialog {
 
         // Push IP / Port
         etAddr = findViewById(R.id.etAddr);
-
+etAddr.setImeOptions(EditorInfo.IME_ACTION_DONE);
 		etAddr.addTextChangedListener(new TextWatcher() {         //xuameng输入监听
-		    private boolean isPointAdded = false;
+		private boolean isPointAdded = false;
  
-		    @Override
-		    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            // 在文本改变之前不需要做任何操作
-		    }
+		@Override
+		public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        // 在文本改变之前不需要做任何操作
+		}
  
-		    @Override
-		    public void onTextChanged(CharSequence s, int start, int before, int count) {
-	        // 在文本改变时也不需要做任何操作
-		    }
+		@Override
+		public void onTextChanged(CharSequence s, int start, int before, int count) {
+	    // 在文本改变时也不需要做任何操作
+		}
  
-		    @Override
-            public void afterTextChanged(Editable s) {
-                String text = s.toString();
-    
-                // 移除连续点（保留原逻辑）
-                if (text.contains("..")) {
-                    int index = text.lastIndexOf(".");
-                    etAddr.getEditableText().delete(index, index + 1);
-                    isPointAdded = false;
-                    App.showToastShort(PushDialog.this.getContext(), "聚汇影视提示：IP地址格式错误，请按照222.222.222.222格式输入");
-                    return;
-                }
-    
-                // 新增正则表达式校验
-                if (text.matches("^((25[0-5]|2[0-4]\\d|[0-1]?\\d?\\.){3}(25[0-5]|2[0-4]\\d|[0-1]?\\d?))$")) {
-                    // 合法IP逻辑（可扩展为自动补全等操作）
-                    isPointAdded = true;
-                } else {
-                    // 非法IP处理（可选：自动清除或提示）
-                    if (!text.isEmpty()) {
-                        App.showToastShort(PushDialog.this.getContext(), "聚汇影视提示：IP地址格式，请按照222.222.222.222格式输入");
-                    }
-                }
-            }
-        });            //xuameng输入监听完
-
+		@Override
+		public void afterTextChanged(Editable s) {
+        String text = s.toString();
+		   if (text.contains("..")) {
+			    // 移除最后输入的点
+			  int index = text.lastIndexOf(".");
+			  etAddr.getEditableText().delete(index, index + 1);
+			  isPointAdded = false;
+              App.showToastShort(PushDialog.this.getContext(), "聚汇影视提示：IP地址格式为222.222.222.222");
+			} else {				
+			  isPointAdded = true;				
+			}
+		  }
+		});            //xuameng输入监听完
         etPort = findViewById(R.id.etPort);
         String cfgAddr = Hawk.get(HawkConfig.PUSH_TO_ADDR, "");
         String cfgPort = Hawk.get(HawkConfig.PUSH_TO_PORT, "");
