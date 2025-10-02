@@ -120,7 +120,7 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
                     } else {
                         isFocused = false;
                     }
-                    // 使用post延迟通知
+                    // xuameng使用post延迟通知     防止 layout or scrolling问题
                     holder.itemView.post(() -> {
                         if (holder.getAdapterPosition() == select) {
                             notifyItemChanged(select);
