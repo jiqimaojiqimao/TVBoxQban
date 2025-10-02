@@ -56,6 +56,10 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
 
     private SelectDialogInterface dialogInterface;
 
+private boolean isFocused = false; // 新增焦点状态标志
+private static final int ACTIVE_COLOR = 0xffffffff;  // 白色
+private static final int INACTIVE_COLOR = 0xff02f8e1; // 原选中色
+
     public SelectDialogAdapter(SelectDialogInterface dialogInterface, DiffUtil.ItemCallback diffCallback) {
         super(diffCallback);
         this.dialogInterface = dialogInterface;
@@ -80,18 +84,20 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
     }
 
     @Override
-    public void onBindViewHolder(@NonNull @NotNull SelectDialogAdapter.SelectViewHolder holder, @SuppressLint("RecyclerView") int position) {
-        T value = data.get(position);
-        String name = dialogInterface.getDisplay(value);
-        TextView view = holder.itemView.findViewById(R.id.tvName);
-        if (position == select) {
-            view.setTextColor(0xff02f8e1);
-            view .setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
-        }else {
-            view.setTextColor(Color.WHITE);
-            view .setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL));
-        }
-        view.setText(name);
+public void onBindViewHolder(@NonNull @NotNull SelectDialogAdapter.SelectViewHolder holder, @SuppressLint("RecyclerView") int position) {
+    T value = data.get(position);
+    String name = dialogInterface.getDisplay(value);
+    TextView view = holder.itemView.findViewById(R.id.tvName);
+    
+    // 动态绑定样式
+    view.setTextColor(position == select ? 
+        (isFocused ? ACTIVE_COLOR : INACTIVE_COLOR) : 
+        Color.WHITE);
+    view.setTypeface(position == select ?
+        (isFocused ? Typeface.NORMAL : Typeface.BOLD) :
+        Typeface.NORMAL);
+    view.setText(name);
+    // 点击事件
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -103,5 +109,18 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
                 dialogInterface.click(value, position);
             }
         });
+    
+    // 焦点事件
+holder.itemView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+    @Override
+    public void onFocusChange(View v, boolean hasFocus) {
+        if (position == select) {
+            isFocused = hasFocus;
+            notifyItemChanged(select);
+        }
     }
+});
+
+}
+
 }
