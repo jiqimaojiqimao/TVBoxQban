@@ -20,6 +20,20 @@ public class ParseAdapter extends BaseQuickAdapter<ParseBean, BaseViewHolder> {
     protected void convert(BaseViewHolder helper, ParseBean item) {
         TextView tvParse = helper.getView(R.id.tvParse);
         tvParse.setVisibility(View.VISIBLE);
+
+        tvParse.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (item.isDefault()) {
+                    if (hasFocus) {
+                        tvParse.setTextColor(mContext.getResources().getColor(R.color.color_02F8E1));
+                    } else {
+                        tvParse.setTextColor(Color.WHITE);
+                    }
+                }
+            }
+        });
+
         if (item.isDefault()) {
             tvParse.setTextColor(mContext.getResources().getColor(R.color.color_02F8E1));
         } else {
@@ -27,17 +41,4 @@ public class ParseAdapter extends BaseQuickAdapter<ParseBean, BaseViewHolder> {
         }
         tvParse.setText(item.getName());
     }
-
-    tvParse.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-        @Override
-        public void onFocusChange(View v, boolean hasFocus) {
-            if (item.isDefault()) {
-                if (hasFocus) {
-                    tvParse.setTextColor(mContext.getResources().getColor(R.color.color_02F8E1));
-                } else {
-                    tvParse.setTextColor(Color.WHITE);
-                }
-            }
-        }
-    });
 }
