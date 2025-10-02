@@ -23,12 +23,14 @@ public class ParseAdapter extends BaseQuickAdapter<ParseBean, BaseViewHolder> {
 
         if (item.isDefault()) {
             tvParse.setTextColor(mContext.getResources().getColor(R.color.color_02F8E1));
+            tvParse.setTypeface(Typeface.DEFAULT_BOLD);  // xuameng新增加粗
         } else {
             tvParse.setTextColor(Color.WHITE);
+            tvParse.setTypeface(Typeface.DEFAULT);  // xuameng新增恢复默认
         }
         tvParse.setText(item.getName());
 
-        tvParse.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        tvParse.setOnFocusChangeListener(new View.OnFocusChangeListener() {   //xuameng // xuameng新增焦点状态刷新颜色改变
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (item.isDefault()) {
