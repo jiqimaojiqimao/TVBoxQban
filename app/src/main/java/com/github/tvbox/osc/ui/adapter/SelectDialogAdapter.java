@@ -114,18 +114,20 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
         holder.itemView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-    if (position == select) {
-        if (hasFocus) {
-            isFocused = true;
-        } else {
-            isFocused = false;
-        }
-        // 使用post延迟通知
-        holder.itemView.post(() -> {
-            if (holder.getAdapterPosition() == select) {
-                notifyItemChanged(select);
+                if (position == select) {
+                    if (hasFocus) {
+                        isFocused = true;
+                    } else {
+                        isFocused = false;
+                    }
+                    // 使用post延迟通知
+                    holder.itemView.post(() -> {
+                        if (holder.getAdapterPosition() == select) {
+                            notifyItemChanged(select);
+                        }
+                    });
+                }
             }
         });
-    }
     }
 }
