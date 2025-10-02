@@ -10,6 +10,7 @@ import android.widget.TextView;
 import android.view.KeyEvent;       //xuameng Enter  隐藏软键盘问题
 import android.view.inputmethod.InputMethodManager;  //xuameng Enter  隐藏软键盘问题
 import android.view.inputmethod.EditorInfo;
+import android.widget.TextView;
 import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import androidx.annotation.NonNull;
@@ -143,13 +144,17 @@ public class SearchSubtitleDialog extends BaseDialog {
         }
     };
 
-subtitleSearchEt.setOnEditorActionListener((v, actionId, event) -> {
-    if (actionId == EditorInfo.IME_ACTION_DONE) {
+
+subtitleSearchEt.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+    @Override
+    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        if (actionId == EditorInfo.IME_ACTION_DONE) {
                     subtitleSearchEt.clearFocus();
                     subtitleSearchBtn.requestFocus();
-        return true; // 消费事件
+            return true;
+        }
+        return false;
     }
-    return false;
 });
 
 
