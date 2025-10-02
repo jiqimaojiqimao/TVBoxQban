@@ -93,9 +93,11 @@ public void onBindViewHolder(@NonNull @NotNull SelectDialogAdapter.SelectViewHol
     view.setTextColor(position == select ? 
         (isFocused ? ACTIVE_COLOR : INACTIVE_COLOR) : 
         Color.WHITE);
-    view.setTypeface(position == select ?
-        (isFocused ? Typeface.NORMAL : Typeface.BOLD) :
-        Typeface.NORMAL);
+view.setTypeface(
+    position == select ? 
+        (isFocused ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD) :
+        Typeface.DEFAULT
+);
     view.setText(name);
     // 点击事件
         holder.itemView.setOnClickListener(new View.OnClickListener() {
