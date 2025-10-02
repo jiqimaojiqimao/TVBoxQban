@@ -27,4 +27,17 @@ public class ParseAdapter extends BaseQuickAdapter<ParseBean, BaseViewHolder> {
         }
         tvParse.setText(item.getName());
     }
+
+    tvParse.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        @Override
+        public void onFocusChange(View v, boolean hasFocus) {
+            if (item.isDefault()) {
+                if (hasFocus) {
+                    tvParse.setTextColor(mContext.getResources().getColor(R.color.color_02F8E1));
+                } else {
+                    tvParse.setTextColor(Color.WHITE);
+                }
+            }
+        }
+    });
 }
