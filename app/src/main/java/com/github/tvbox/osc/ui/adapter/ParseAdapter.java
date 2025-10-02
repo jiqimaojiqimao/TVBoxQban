@@ -3,12 +3,12 @@ package com.github.tvbox.osc.ui.adapter;
 import android.graphics.Color;
 import android.view.View;
 import android.widget.TextView;
+import android.graphics.Typeface;   //xuameng字体加粗
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.bean.ParseBean;
-import android.graphics.Typeface;   //xuameng字体加粗
 
 import java.util.ArrayList;
 
