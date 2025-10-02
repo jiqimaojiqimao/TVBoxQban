@@ -51,14 +51,12 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
 
 
     private ArrayList<T> data = new ArrayList<>();
-
     private int select = 0;
-
     private SelectDialogInterface dialogInterface;
 
-private boolean isFocused = false; // 新增焦点状态标志
-private static final int ACTIVE_COLOR = 0xffffffff;  // 白色
-private static final int INACTIVE_COLOR = 0xff02f8e1; // 原选中色
+    private boolean isFocused = false; // xuameng新增焦点状态标志
+    private static final int ACTIVE_COLOR = 0xffffffff;  // xuameng拥有焦点选中白色
+    private static final int INACTIVE_COLOR = 0xff02f8e1; // xuameng失去焦点选中色
 
     public SelectDialogAdapter(SelectDialogInterface dialogInterface, DiffUtil.ItemCallback diffCallback) {
         super(diffCallback);
@@ -84,22 +82,22 @@ private static final int INACTIVE_COLOR = 0xff02f8e1; // 原选中色
     }
 
     @Override
-public void onBindViewHolder(@NonNull @NotNull SelectDialogAdapter.SelectViewHolder holder, @SuppressLint("RecyclerView") int position) {
-    T value = data.get(position);
-    String name = dialogInterface.getDisplay(value);
-    TextView view = holder.itemView.findViewById(R.id.tvName);
+    public void onBindViewHolder(@NonNull @NotNull SelectDialogAdapter.SelectViewHolder holder, @SuppressLint("RecyclerView") int position) {
+        T value = data.get(position);
+        String name = dialogInterface.getDisplay(value);
+        TextView view = holder.itemView.findViewById(R.id.tvName);
     
-    // 动态绑定样式
-    view.setTextColor(position == select ? 
-        (isFocused ? ACTIVE_COLOR : INACTIVE_COLOR) : 
-        Color.WHITE);
-view.setTypeface(
-    position == select ? 
-        (isFocused ? Typeface.DEFAULT : Typeface.DEFAULT_BOLD) :
-        Typeface.DEFAULT
-);
-    view.setText(name);
-    // 点击事件
+        // 动态绑定样式
+        view.setTextColor(position == select ? 
+            (isFocused ? ACTIVE_COLOR : INACTIVE_COLOR) :  // xuameng新增焦点状态标志颜色
+            Color.WHITE);
+        view.setTypeface(
+            position == select ?        // xuameng新增焦点状态标志字体加粗
+                Typeface.DEFAULT_BOLD :
+                Typeface.DEFAULT
+        );
+        view.setText(name);
+        // 点击事件
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -112,17 +110,15 @@ view.setTypeface(
             }
         });
     
-    // 焦点事件
-holder.itemView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-    @Override
-    public void onFocusChange(View v, boolean hasFocus) {
-        if (position == select) {
-            isFocused = hasFocus;
-            notifyItemChanged(select);
-        }
+        // 焦点事件    // xuameng新增焦点状态刷新
+        holder.itemView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (position == select) {
+                    isFocused = hasFocus;
+                    notifyItemChanged(select);
+                }
+            }
+        });
     }
-});
-
-}
-
 }
