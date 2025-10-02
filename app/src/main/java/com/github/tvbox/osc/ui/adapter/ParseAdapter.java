@@ -8,6 +8,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.bean.ParseBean;
+import android.graphics.Typeface;   //xuameng字体加粗
 
 import java.util.ArrayList;
 
