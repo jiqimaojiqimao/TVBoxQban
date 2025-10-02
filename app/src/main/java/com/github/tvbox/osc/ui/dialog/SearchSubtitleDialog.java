@@ -9,6 +9,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.view.KeyEvent;       //xuameng Enter  隐藏软键盘问题
 import android.view.inputmethod.InputMethodManager;  //xuameng Enter  隐藏软键盘问题
+import android.view.inputmethod.EditorInfo;
 import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import androidx.annotation.NonNull;
@@ -141,6 +142,16 @@ public class SearchSubtitleDialog extends BaseDialog {
             return false;
         }
     };
+
+subtitleSearchEt.setOnEditorActionListener((v, actionId, event) -> {
+    if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    subtitleSearchEt.clearFocus();
+                    subtitleSearchBtn.requestFocus();
+        return true; // 消费事件
+    }
+    return false;
+});
+
 
     public void setSearchWord(String wd) {
         wd = wd.replaceAll("(?:（|\\(|\\[|【|\\.mp4|\\.mkv|\\.avi|\\.MP4|\\.MKV|\\.AVI)", "");
