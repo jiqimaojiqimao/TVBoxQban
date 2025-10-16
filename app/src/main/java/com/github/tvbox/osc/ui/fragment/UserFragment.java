@@ -51,6 +51,8 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import com.github.tvbox.osc.util.FileUtils;  //xuameng 清缓存
+import java.io.File;   //xuameng 清缓存
 
 /**
  * @author pj567
@@ -65,10 +67,11 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
     private LinearLayout tvCollect;
     private LinearLayout tvPush;
     public static HomeHotVodAdapter homeHotVodAdapter;
-	public static HomeHotVodAdapterXu homeHotVodAdapterxu;  //xuameng首页单行
+    public static HomeHotVodAdapterXu homeHotVodAdapterxu;  //xuameng首页单行
     private List<Movie.Video> homeSourceRec;
     public static TvRecyclerView tvHotList1;   
     public static TvRecyclerView tvHotList2;   //xuameng首页单行
+    private ImgUtil.Style style;   //xuameng 图片样式
 
     public static UserFragment newInstance() {
         return new UserFragment();
@@ -89,14 +92,14 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             tvHotList1.setVisibility(View.VISIBLE);
             tvHotList2.setVisibility(View.GONE);
             tvHotList1.setHasFixedSize(true);
-			int spanCount = 5;
-			 if(style!=null && Hawk.get(HawkConfig.HOME_REC, 0) == 1)spanCount=ImgUtil.spanCountByStyle(style,spanCount);
-			tvHotList1.setLayoutManager(new V7GridLayoutManager(this.mContext, spanCount));
+            int spanCount = 5;
+            if(style!=null && Hawk.get(HawkConfig.HOME_REC, 0) == 1)spanCount=ImgUtil.spanCountByStyle(style,spanCount);
+            tvHotList1.setLayoutManager(new V7GridLayoutManager(this.mContext, spanCount));
         }else {
             tvHotList1.setVisibility(View.GONE);
             tvHotList2.setVisibility(View.VISIBLE);
-		//	tvHotList2.setHasFixedSize(true);      //xuameng不想显示单行
-        //    tvHotList2.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
+            //	tvHotList2.setHasFixedSize(true);      //xuameng不想显示单行
+            //    tvHotList2.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
         }
         super.onFragmentResume();
         if (Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
@@ -112,11 +115,11 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                     vod.note = "上次看到" + vodInfo.playNote;
                 vodList.add(vod);
             }
-			if(!Hawk.get(HawkConfig.HOME_REC_STYLE, false)){
-				homeHotVodAdapterxu.setNewData(vodList);
-			}else{
-				homeHotVodAdapter.setNewData(vodList);
-			}
+            if(!Hawk.get(HawkConfig.HOME_REC_STYLE, false)){
+                homeHotVodAdapterxu.setNewData(vodList);   //xuameng首页多行
+            }else{
+                homeHotVodAdapter.setNewData(vodList);  //xuameng首页单行
+            }
         }
     }
 
@@ -124,8 +127,6 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
     protected int getLayoutResID() {
         return R.layout.fragment_user;
     }
-
-	private ImgUtil.Style style;
 
     @Override
     protected void init() {
@@ -153,7 +154,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec!=null) {
             style=ImgUtil.initStyle();
         }
-		homeHotVodAdapter = new HomeHotVodAdapter(style);
+        homeHotVodAdapter = new HomeHotVodAdapter(style);
         homeHotVodAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
@@ -173,13 +174,13 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                     bundle.putString("sourceKey", vod.sourceKey);
                     if (vod.id.startsWith("msearch:")) {
                         bundle.putString("title", vod.name);
-                      if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
-                        jumpActivity(FastSearchActivity.class, bundle);
-                      }else {
-						jumpActivity(SearchActivity.class, bundle);
-					  }
-		              }else {
-						bundle.putString("picture", vod.pic);
+                        if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
+                            jumpActivity(FastSearchActivity.class, bundle);
+                        }else {
+                            jumpActivity(SearchActivity.class, bundle);
+                        }
+		    }else {
+                        bundle.putString("picture", vod.pic);
                         jumpActivity(DetailActivity.class, bundle);
                     }                           //xuameng 修复首页聚汇推荐单击不能搜索的问题结束
                 } else {
@@ -210,19 +211,19 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                     VodInfo vodInfo = RoomDataManger.getVodInfo(vod.sourceKey, vod.id);
                     RoomDataManger.deleteVodRecord(vod.sourceKey, vodInfo);
                     App.showToastShort(mContext, "已删除当前记录！");
-               }  else if (vod.id != null && !vod.id.isEmpty()) {         //xuameng 修复首页聚汇推荐单击不能搜索的问题
+                } else if (vod.id != null && !vod.id.isEmpty()) {         //xuameng 修复首页聚汇推荐单击不能搜索的问题
                     Bundle bundle = new Bundle();
                     bundle.putString("id", vod.id);
                     bundle.putString("sourceKey", vod.sourceKey);
                     if (vod.id.startsWith("msearch:")) {
                         bundle.putString("title", vod.name);
-                      if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
-                        jumpActivity(FastSearchActivity.class, bundle);
-                      }else {
-						jumpActivity(SearchActivity.class, bundle);
-					  }
-		              }else {
-						bundle.putString("picture", vod.pic);   //xuameng某些网站图片部显示
+                        if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
+                            jumpActivity(FastSearchActivity.class, bundle);
+                        }else {
+                            jumpActivity(SearchActivity.class, bundle);
+                        }
+		    }else {
+                        bundle.putString("picture", vod.pic);   //xuameng某些网站图片部显示
                         jumpActivity(DetailActivity.class, bundle);
                     }                           //xuameng 修复首页聚汇推荐单击不能搜索的问题结束
                 } else {
@@ -239,22 +240,22 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             }
         });
            //xuameng : start
-		    findViewById(R.id.tvHistory).setOnLongClickListener(new View.OnLongClickListener() {       //xuameng长按历史键重载主页数据
-        	@Override
+        findViewById(R.id.tvHistory).setOnLongClickListener(new View.OnLongClickListener() {       //xuameng长按历史键重载主页数据
+            @Override
             public boolean onLongClick(View v) {
-				FastClickCheckUtil.check(v);
-				Intent intent =new Intent(mContext, HomeActivity.class);
-				intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-				Bundle bundle = new Bundle();
-				bundle.putBoolean("useCache", true);
-				intent.putExtras(bundle);
-				startActivity(intent);
+                FastClickCheckUtil.check(v);
+                Intent intent =new Intent(mContext, HomeActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                Bundle bundle = new Bundle();
+                bundle.putBoolean("useCache", true);
+                intent.putExtras(bundle);
+                startActivity(intent);
                 App.showToastShort(mContext, "重新加载主页数据！");
-				return true;
+                return true;
             }
         });
 		
-            findViewById(R.id.tvxuameng).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.tvxuameng).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
@@ -263,25 +264,50 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             }
         });
 
-		    findViewById(R.id.tvxuameng).setOnLongClickListener(new View.OnLongClickListener() {       //xuameng长按许大师制作重启APP
-        	@Override
+        findViewById(R.id.tvxuameng).setOnLongClickListener(new View.OnLongClickListener() {       //xuameng长按许大师制作重启APP
+            @Override
             public boolean onLongClick(View v) {
-				FastClickCheckUtil.check(v);
-				DefaultConfig.restartApp();
-				return true;
+                FastClickCheckUtil.check(v);
+                DefaultConfig.restartApp();
+                return true;
             }
         });
 
-		    findViewById(R.id.tvxuameng).setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        findViewById(R.id.tvSetting).setOnLongClickListener(new View.OnLongClickListener() {       //xuameng长按设置清空缓存
+            @Override
+            public boolean onLongClick(View v) {
+                FastClickCheckUtil.check(v);
+                String cachePath = FileUtils.getCachePath();
+                File cacheDir = new File(cachePath);
+                String cspCachePath = FileUtils.getFilePath()+"/csp/";
+                File cspCacheDir = new File(cspCachePath);
+                if (!cacheDir.exists() && !cspCacheDir.exists()) return true;
+                new Thread(() -> {
+                    try {
+                        if(cacheDir.exists())FileUtils.cleanDirectory(cacheDir);
+                        if(cspCacheDir.exists()){
+                            FileUtils.cleanDirectory(cspCacheDir);
+                            //ApiConfig.get().clearJarLoader();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+                App.showToastShort(mContext, "缓存已清空！");
+                return true;
+            }
+        });
+
+        findViewById(R.id.tvxuameng).setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override         //xuameng许大师制作焦点变大
 	        public void onFocusChange(View v, boolean hasFocus){
-            if (hasFocus){
-                v.animate().scaleX(1.03f).scaleY(1.05f).setDuration(300).setInterpolator(new BounceInterpolator()).start();
-            }else{
-                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(300).setInterpolator(new BounceInterpolator()).start();
-            }
+                if (hasFocus){
+                    v.animate().scaleX(1.03f).scaleY(1.05f).setDuration(300).setInterpolator(new BounceInterpolator()).start();
+                }else{
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(300).setInterpolator(new BounceInterpolator()).start();
+                }
 	    }
-	    });
+        });
         //xuameng : end
         // takagen99 : Long press to trigger Delete Mode for VOD History on Home Page       
         homeHotVodAdapter.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
