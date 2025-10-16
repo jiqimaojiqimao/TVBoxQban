@@ -36,6 +36,7 @@ import com.google.gson.reflect.TypeToken;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.AbsCallback;
 import com.lzy.okgo.model.Response;
+import com.lzy.okgo.request.GetRequest;
 import com.orhanobut.hawk.Hawk;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
@@ -239,11 +240,14 @@ public class SourceViewModel extends ViewModel {
             String extend=sourceBean.getExt();
             extend=getFixUrl(extend);
             if(URLEncoder.encode(extend).length()<1000){
-                OkGo.<String>get(sourceBean.getApi())
+                GetRequest<String> request = OkGo.<String>get(sourceBean.getApi())
                         .tag(sourceBean.getKey() + "_sort")
-                        .params("filter", "true")
-                        .params("extend", extend)
-                        .execute(new AbsCallback<String>() {
+                        .params("filter", "true");
+                // 当 extend 不为空且非空字符串时添加参数
+                if (extend != null && !extend.isEmpty()) {
+                    request.params("extend", extend);
+                }
+                request.execute(new AbsCallback<String>() {
                             @Override
                             public String convertResponse(okhttp3.Response response) throws Throwable {
                                 if (response.body() != null) {
@@ -293,7 +297,9 @@ public class SourceViewModel extends ViewModel {
                 try {
                     Map<String, String> params = new HashMap<>();
                     params.put("filter","true");
-                    params.put("extend",extend);
+                    if (extend != null && !extend.isEmpty()) {
+                        params.put("extend",extend);
+                    }
                     RemoteTVBox.post(sourceBean.getApi(), params, new okhttp3.Callback() {
                         @Override
                         public void onFailure(@NonNull Call call, IOException e) {
@@ -338,7 +344,7 @@ public class SourceViewModel extends ViewModel {
                     try {
                         Spider sp = ApiConfig.get().getCSP(homeSourceBean);
                         String json = sp.categoryContent(sortData.id, page + "", true, sortData.filterSelect);
-                        LOG.i("categoryContent:"+json);
+                        LOG.i("echo-categoryContent:"+json);
                         json(listResult, json,homeSourceBean.getKey());
                     } catch (Throwable th) {
                         th.printStackTrace();
@@ -395,37 +401,47 @@ public class SourceViewModel extends ViewModel {
             }else {
                 ext = Base64.encodeToString("{}".getBytes(), Base64.DEFAULT |  Base64.NO_WRAP);
             }
-            OkGo.<String>get(homeSourceBean.getApi())
-                .tag(homeSourceBean.getApi())
-                .params("ac", "detail")
-                .params("filter", "true")
-                .params("t", sortData.id)
-                .params("pg", page)
-                .params("ext", ext)
-                .params("extend", extend)
-                .execute(new AbsCallback<String>() {
-                    @Override
-                    public String convertResponse(okhttp3.Response response) throws Throwable {
-                        if (response.body() != null) {
-                            return response.body().string();
-                        } else {
-                            throw new IllegalStateException("网络请求错误");
+
+            GetRequest<String> request = OkGo.<String>get(homeSourceBean.getApi())
+                    .tag(homeSourceBean.getApi())
+                    .params("ac", "detail")
+                    .params("filter", "true")
+                    .params("t", sortData.id)
+                    .params("pg", page)
+                    .params("ext", ext);
+            // 当 extend 不为空且非空字符串时添加参数
+            if (extend != null && !extend.isEmpty()) {
+                request.params("extend", extend);
+            }
+            request.execute(new AbsCallback<String>() {
+                        @Override
+                        public String convertResponse(okhttp3.Response response) throws Throwable {
+                            try {
+                                if (response.body() != null) {
+                                    return response.body().string();
+                                } else {
+                                    throw new IllegalStateException("网络请求错误，response body 为 null");
+                                }
+                            } catch (Exception e) {
+                                LOG.i("echo-list: convertResponse error"+ e.getMessage());
+                                throw e;  // 重新抛出异常
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onSuccess(Response<String> response) {
-                        String json = response.body();
-                        LOG.i("echo-list:"+json);
-                        json(listResult, json, homeSourceBean.getKey());
-                    }
+                        @Override
+                        public void onSuccess(Response<String> response) {
+                            String json = response.body();
+                            LOG.i("echo-list: " + json);
+                            json(listResult, json, homeSourceBean.getKey());
+                        }
 
-                    @Override
-                    public void onError(Response<String> response) {
-                        super.onError(response);
-                        listResult.postValue(null);
-                    }
-                });
+                        @Override
+                        public void onError(Response<String> response) {
+                            super.onError(response);
+                            listResult.postValue(null);
+                        }
+                    });
+
         } else {
             listResult.postValue(null);
         }
@@ -583,12 +599,16 @@ public class SourceViewModel extends ViewModel {
         } else if (type == 0 || type == 1|| type == 4) {
             String extend=sourceBean.getExt();
             extend=getFixUrl(extend);
-            OkGo.<String>get(sourceBean.getApi())
+
+            GetRequest<String> request = OkGo.<String>get(sourceBean.getApi())
                     .tag("detail")
                     .params("ac", type == 0 ? "videolist" : "detail")
-                    .params("ids", id)
-                    .params("extend", extend)
-                    .execute(new AbsCallback<String>() {
+                    .params("ids", id);
+            // 当 extend 不为空且非空字符串时添加参数
+            if (extend != null && !extend.isEmpty()) {
+                request.params("extend", extend);
+            }
+            request.execute(new AbsCallback<String>() {
 
                         @Override
                         public String convertResponse(okhttp3.Response response) throws Throwable {
@@ -679,13 +699,17 @@ public class SourceViewModel extends ViewModel {
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-            OkGo.<String>get(sourceBean.getApi())
-                .params("wd", wd)
-                .params("ac" ,"detail")
-                .params("quick" ,"false")
-                .params("extend" ,extend)
-                .tag("search")
-                .execute(new AbsCallback<String>() {
+
+            GetRequest<String> request = OkGo.<String>get(sourceBean.getApi())
+                    .tag("search")
+                    .params("wd", wd)
+                    .params("ac" ,"detail")
+                    .params("quick" ,"false");
+            // 当 extend 不为空且非空字符串时添加参数
+            if (extend != null && !extend.isEmpty()) {
+                request.params("extend", extend);
+            }
+            request.execute(new AbsCallback<String>() {
                     @Override
                     public String convertResponse(okhttp3.Response response) throws Throwable {
                         if (response.body() != null) {
@@ -762,13 +786,17 @@ public class SourceViewModel extends ViewModel {
         }else if (type == 4) {
             String extend=sourceBean.getExt();
             extend=getFixUrl(extend);
-            OkGo.<String>get(sourceBean.getApi())
-                .params("wd", wd)
-                .params("ac" ,"detail")
-                .params("quick" ,"true")
-                .params("extend" ,extend)
-                .tag("search")
-                .execute(new AbsCallback<String>() {
+
+            GetRequest<String> request = OkGo.<String>get(sourceBean.getApi())
+                    .tag("search")
+                    .params("wd", wd)
+                    .params("ac" ,"detail")
+                    .params("quick" ,"true");
+            // 当 extend 不为空且非空字符串时添加参数
+            if (extend != null && !extend.isEmpty()) {
+                request.params("extend", extend);
+            }
+            request.execute(new AbsCallback<String>() {
                     @Override
                     public String convertResponse(okhttp3.Response response) throws Throwable {
                         if (response.body() != null) {
@@ -872,12 +900,16 @@ public class SourceViewModel extends ViewModel {
         } else if (type == 4) {
             String extend=sourceBean.getExt();
             extend=getFixUrl(extend);
-            OkGo.<String>get(sourceBean.getApi())
-                .params("play", url)
-                .params("flag" ,playFlag)
-                .params("extend", extend)
-                .tag("play")
-                .execute(new AbsCallback<String>() {
+
+            GetRequest<String> request = OkGo.<String>get(sourceBean.getApi())
+                    .tag("play")
+                    .params("play", url)
+                    .params("flag" ,playFlag);
+            // 当 extend 不为空且非空字符串时添加参数
+            if (extend != null && !extend.isEmpty()) {
+                request.params("extend", extend);
+            }
+            request.execute(new AbsCallback<String>() {
                     @Override
                     public String convertResponse(okhttp3.Response response) throws Throwable {
                         if (response.body() != null) {
