@@ -76,13 +76,13 @@ public class ModelSettingFragment extends BaseLazyFragment {
     private TextView tvScale;
     private TextView tvApi;
     private TextView tvHomeApi;
-	private TextView tvHomeDefaultShow;       //xuameng直接进入直播
-	private TextView tvm3u8AdText;  //xuameng去广告
+    private TextView tvHomeDefaultShow;       //xuameng直接进入直播
+    private TextView tvm3u8AdText;  //xuameng去广告
     private TextView tvShowMusicZb;  //xuameng 直播动画
     private TextView tvShowMusicDb;  //xuameng 点播动画
     private TextView tvExodecode;  //xuameng Exo解码方式
-	private TextView tvSwitchDecode;  //解码切换
-	private TextView tvSwitchPlayer;  //播放器切换
+    private TextView tvSwitchDecode;  //xuameng解码切换
+    private TextView tvSwitchPlayer;  //xuameng播放器切换
     private TextView tvDns;
     private TextView tvHomeRec;
     private TextView tvHistoryNum;
@@ -91,7 +91,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
     private TextView tvFastSearchText;
     private TextView tvRecStyleText;
     private TextView tvIjkCachePlay;
-	private SelectDialog<SourceBean> mSiteSwitchDialog;
+    private SelectDialog<SourceBean> mSiteSwitchDialog;  //xuameng点播源切换
 
 
     public static ModelSettingFragment newInstance() {
@@ -149,8 +149,8 @@ public class ModelSettingFragment extends BaseLazyFragment {
         tvHomeRec.setText(getHomeRecName(Hawk.get(HawkConfig.HOME_REC, 0)));
         tvHistoryNum.setText(HistoryHelper.getHistoryNumName(Hawk.get(HawkConfig.HISTORY_NUM, 0)));
         tvSearchView.setText(getSearchView(Hawk.get(HawkConfig.SEARCH_VIEW, 0)));
-		tvHomeDefaultShow = findViewById(R.id.tvHomeDefaultShow);          //xuameng
-        tvHomeDefaultShow.setText(Hawk.get(HawkConfig.HOME_DEFAULT_SHOW, false) ? "已开启" : "已关闭");  //xuameng
+        tvHomeDefaultShow = findViewById(R.id.tvHomeDefaultShow);          //xuameng 直进直播
+        tvHomeDefaultShow.setText(Hawk.get(HawkConfig.HOME_DEFAULT_SHOW, false) ? "已开启" : "已关闭");  //xuameng 直进直播
         tvHomeApi.setText(ApiConfig.get().getHomeSourceBean().getName());
         tvScale.setText(PlayerHelper.getScaleName(Hawk.get(HawkConfig.PLAY_SCALE, 0)));
         tvPlay.setText(PlayerHelper.getPlayerName(Hawk.get(HawkConfig.PLAY_TYPE, 0)));
@@ -225,7 +225,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);  //xuameng 2秒
                 if (!ApiConfig.get().wallpaper.isEmpty()){
-				    HawkConfig.isGetWp = true;  //xuameng下载壁纸
+                    HawkConfig.isGetWp = true;  //xuameng下载壁纸
                     App.showToastShort(getContext(), "壁纸更换中！");
                     OkGo.<File>get(ApiConfig.get().wallpaper).tag("wallpaperDown").execute(new FileCallback(requireActivity().getFilesDir().getAbsolutePath(), "wp") {  //xuameng增加tag以便打断下载
                         @Override
@@ -233,7 +233,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                             if (HawkConfig.isGetWp){
                                 String mimeType = response.headers().get("Content-Type");
                                 if (mimeType != null && mimeType.startsWith("image/")) {   // 确认是图片文件
-							       ((BaseActivity) requireActivity()).changeWallpaper(true);      
+                                   ((BaseActivity) requireActivity()).changeWallpaper(true);      
                                    HawkConfig.isGetWp = false;  //xuameng下载壁纸 
                                    App.showToastShort(getContext(), "壁纸更换成功！");
                                 }else{
@@ -243,12 +243,12 @@ public class ModelSettingFragment extends BaseLazyFragment {
                                    HawkConfig.isGetWp = false;  //xuameng下载壁纸
                                    App.showToastShort(getContext(), "壁纸文件类型错误！已重置壁纸！");
                                 }
-							}
+                            }
                         }
 
                         @Override
                         public void onError(Response<File> response) {
-							HawkConfig.isGetWp = false;  //xuameng下载壁纸
+                            HawkConfig.isGetWp = false;  //xuameng下载壁纸
                             App.showToastShort(getContext(), "壁纸更换失败！");
                             super.onError(response);
                         }
@@ -258,9 +258,9 @@ public class ModelSettingFragment extends BaseLazyFragment {
                             super.downloadProgress(progress);
                         }
                     });
-				}else{
+                }else{
                     App.showToastShort(getContext(), "壁纸站点未配置！");
-				}
+                }
             }
         });
         findViewById(R.id.llWpRecovery).setOnClickListener(new View.OnClickListener() {
@@ -280,50 +280,50 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 FastClickCheckUtil.check(v);
                 List<SourceBean> sites = ApiConfig.get().getSwitchSourceBeanList();
                 if (!sites.isEmpty()){
-                int select = sites.indexOf(ApiConfig.get().getHomeSourceBean());
-                if (select < 0 || select >= sites.size()) select = 0;
-                if (mSiteSwitchDialog == null) {
-					mSiteSwitchDialog = new SelectDialog<>(mActivity);
-                    TvRecyclerView tvRecyclerView = mSiteSwitchDialog.findViewById(R.id.list);
-                    // 根据 sites 数量动态计算列数
-                    int spanCount = (int) Math.floor(sites.size() / 20.0);
-                    spanCount = Math.min(spanCount, 2);
-                    tvRecyclerView.setLayoutManager(new V7GridLayoutManager(mSiteSwitchDialog.getContext(), spanCount + 1));
-                    // 设置对话框宽度
-                    ConstraintLayout cl_root = mSiteSwitchDialog.findViewById(R.id.cl_root);
-                    ViewGroup.LayoutParams clp = cl_root.getLayoutParams();
-                    clp.width = AutoSizeUtils.mm2px(mSiteSwitchDialog.getContext(), 380 + 200 * spanCount);
-                    mSiteSwitchDialog.setTip("请选择首页数据源");
+                    int select = sites.indexOf(ApiConfig.get().getHomeSourceBean());
+                    if (select < 0 || select >= sites.size()) select = 0;
+                    if (mSiteSwitchDialog == null) {
+                        mSiteSwitchDialog = new SelectDialog<>(mActivity);
+                        TvRecyclerView tvRecyclerView = mSiteSwitchDialog.findViewById(R.id.list);
+                        // 根据 sites 数量动态计算列数
+                        int spanCount = (int) Math.floor(sites.size() / 20.0);
+                        spanCount = Math.min(spanCount, 2);
+                        tvRecyclerView.setLayoutManager(new V7GridLayoutManager(mSiteSwitchDialog.getContext(), spanCount + 1));
+                        // 设置对话框宽度
+                        ConstraintLayout cl_root = mSiteSwitchDialog.findViewById(R.id.cl_root);
+                        ViewGroup.LayoutParams clp = cl_root.getLayoutParams();
+                        clp.width = AutoSizeUtils.mm2px(mSiteSwitchDialog.getContext(), 380 + 200 * spanCount);
+                        mSiteSwitchDialog.setTip("请选择首页数据源");
+                    }
+                    mSiteSwitchDialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<SourceBean>() {
+                        @Override
+                        public void click(SourceBean value, int pos) {
+                            ApiConfig.get().setSourceBean(value);
+                            Intent intent =new Intent(mContext, HomeActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            Bundle bundle = new Bundle();
+                            bundle.putBoolean("useCache", true);
+                            intent.putExtras(bundle);
+                            startActivity(intent);
+                        }
+                        @Override
+                        public String getDisplay(SourceBean val) {
+                            return val.getName();
+                        }
+                    }, new DiffUtil.ItemCallback<SourceBean>() {
+                        @Override
+                        public boolean areItemsTheSame(@NonNull SourceBean oldItem, @NonNull SourceBean newItem) {
+                            return oldItem == newItem;
+                        }
+                        @Override
+                        public boolean areContentsTheSame(@NonNull SourceBean oldItem, @NonNull SourceBean newItem) {
+                            return oldItem.getKey().equals(newItem.getKey());
+                        }
+                    }, sites, select);
+                    mSiteSwitchDialog.show();
+                }else {
+                    App.showToastLong(getContext(), "主页暂无数据！联系许大师吧！");
                 }
-                mSiteSwitchDialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<SourceBean>() {
-                    @Override
-                    public void click(SourceBean value, int pos) {
-                        ApiConfig.get().setSourceBean(value);
-                        Intent intent =new Intent(mContext, HomeActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        Bundle bundle = new Bundle();
-                        bundle.putBoolean("useCache", true);
-                        intent.putExtras(bundle);
-                        startActivity(intent);
-                    }
-                    @Override
-                    public String getDisplay(SourceBean val) {
-                        return val.getName();
-                    }
-                }, new DiffUtil.ItemCallback<SourceBean>() {
-                    @Override
-                    public boolean areItemsTheSame(@NonNull SourceBean oldItem, @NonNull SourceBean newItem) {
-                        return oldItem == newItem;
-                    }
-                    @Override
-                    public boolean areContentsTheSame(@NonNull SourceBean oldItem, @NonNull SourceBean newItem) {
-                        return oldItem.getKey().equals(newItem.getKey());
-                    }
-                }, sites, select);
-                mSiteSwitchDialog.show();
-            }else {
-                App.showToastLong(getContext(), "主页暂无数据！联系许大师吧！");
-				}
             }
         });
         findViewById(R.id.llDns).setOnClickListener(new View.OnClickListener() {
@@ -623,7 +623,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
             }
         });
 
-		findViewById(R.id.llHomeLive).setOnClickListener(new View.OnClickListener() {       //xuameng
+        findViewById(R.id.llHomeLive).setOnClickListener(new View.OnClickListener() {       //xuameng
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
@@ -632,7 +632,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
             }
         });
 
-		// xuameng重置
+        // xuameng重置
         findViewById(R.id.llReset).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -666,7 +666,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 types.add(0);
                 types.add(1);
                 types.add(2);
-				types.add(3);
+                types.add(3);
                 SelectDialog<Integer> dialog = new SelectDialog<>(mActivity);
                 dialog.setTip("保留历史记录数量");
                 dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<Integer>() {
@@ -735,8 +735,8 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 FastClickCheckUtil.check(v);
                 // xuameng获取解码模式选项（模拟数据源）
                 List<Pair<String, Boolean>> decodeModes = new ArrayList<>();
-                decodeModes.add(new Pair<>("硬解码", false));
                 decodeModes.add(new Pair<>("软解码", true));
+                decodeModes.add(new Pair<>("硬解码", false));
                 // xuameng当前选中项
                 int defaultPos = 0;
                 for (int i = 0; i < decodeModes.size(); i++) {
@@ -876,10 +876,10 @@ public class ModelSettingFragment extends BaseLazyFragment {
         if (!cacheDir.exists() && !cspCacheDir.exists()) return;
         new Thread(() -> {
             try {
-				if(cacheDir.exists())FileUtils.cleanDirectory(cacheDir);
+                if(cacheDir.exists())FileUtils.cleanDirectory(cacheDir);
                 if(cspCacheDir.exists()){
                     FileUtils.cleanDirectory(cspCacheDir);
-					//ApiConfig.get().clearJarLoader();
+                    //ApiConfig.get().clearJarLoader();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
