@@ -266,6 +266,7 @@ public class ApiConfig {
         OkGo.<String>get(configUrl)
                 .headers("User-Agent", userAgent)
                 .headers("Accept", requestAccept)
+                .tag("loadUrl")           //xuameng打断加载
                 .execute(new AbsCallback<String>() {
                     @Override
                     public void onSuccess(Response<String> response) {
