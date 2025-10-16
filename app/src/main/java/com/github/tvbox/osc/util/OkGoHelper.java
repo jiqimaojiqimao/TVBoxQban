@@ -149,7 +149,7 @@ public class OkGoHelper {
                 JsonObject dnsConfig = jsonArray.get(i).getAsJsonObject();
                 String name = dnsConfig.has("name") ? dnsConfig.get("name").getAsString() : "Unknown Name";
                 dnsHttpsList.add(name);
-                if(dohSelector==i)ips = dnsConfig.has("ips") ? dnsConfig.getAsJsonArray("ips") : null;
+                if(dohSelector==i)ips = dnsConfig.has("ips") ? dnsConfig.getAsJsonArray("ips") : null;   //xuameng修复最后一项DNS选不上
             }
         } catch (Exception e) {
             e.printStackTrace();
