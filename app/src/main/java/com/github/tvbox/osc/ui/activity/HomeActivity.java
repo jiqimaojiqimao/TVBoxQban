@@ -500,7 +500,7 @@ public class HomeActivity extends BaseActivity {
                                     });
                                 }
                             });
-                        if (!dialog.isShowing() && !refreshEmpty){ 
+                        if (!dialog.isShowing() && !refreshEmpty){   //xuameng只要打断加载就不显示错误对话框
 							showSuccess();  //xuameng显示BUG
                             dialog.show();
 						}
