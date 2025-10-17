@@ -101,7 +101,13 @@ public class OkGoHelper {
         JsonArray jsonArray = JsonParser.parseString(json).getAsJsonArray();
         if (type >= 1 && type < dnsHttpsList.size()) {
             JsonObject dnsConfig = jsonArray.get(type - 1).getAsJsonObject();
-            return dnsConfig.get("url").getAsString();  // 获取对应的 URL
+if (dnsConfig.has("url")) {
+    return dnsConfig.get("url").getAsString();
+} else {
+    return ""; // 或返回默认DNS地址如 "https://1.1.1.1/dns-query"
+}
+
+    //        return dnsConfig.get("url").getAsString();  // 获取对应的 URL
         }
         return ""; //xuameng新增完
     }
