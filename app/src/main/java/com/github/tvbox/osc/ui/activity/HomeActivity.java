@@ -106,6 +106,7 @@ public class HomeActivity extends BaseActivity {
     private final List<BaseLazyFragment> fragments = new ArrayList<>();
     private boolean isDownOrUp = false;
     private boolean sortChange = false;
+    private boolean refreshEmpty = false;	//xuameng打断加载判断
     private int currentSelected = 0;
     private int sortFocused = 0;
 	private int PositionXu = 0;  //xuameng 分类筛选BUG修复变色问题
@@ -345,6 +346,7 @@ public class HomeActivity extends BaseActivity {
     private boolean jarInitOk = false;
 
     private void initData() {
+        refreshEmpty = false;	//xuameng打断加载判断
         SourceBean home = ApiConfig.get().getHomeSourceBean();
         if (home != null && home.getName() != null && !home.getName().isEmpty())
             tvName.setText(home.getName());
@@ -498,7 +500,7 @@ public class HomeActivity extends BaseActivity {
                                     });
                                 }
                             });
-                        if (!dialog.isShowing()){ 
+                        if (!dialog.isShowing() && !refreshEmpty){ 
 							showSuccess();  //xuameng显示BUG
                             dialog.show();
 						}
@@ -816,6 +818,7 @@ public class HomeActivity extends BaseActivity {
 		}
     }
     private void refreshEmpty(){   //xuameng打断加载优化
+        refreshEmpty = true;	//xuameng打断加载判断
         OkGo.getInstance().cancelTag("loadjar");    //xuameng打断加载
         OkGo.getInstance().cancelTag("loadUrl");    //xuameng打断加载
         jarInitOk = true;
