@@ -177,21 +177,9 @@ public class OkGoHelper {
         builder.cache(new Cache(new File(App.getInstance().getCacheDir().getAbsolutePath(), "dohcache"), 100 * 1024 * 1024));   //xuameng新增完
         OkHttpClient dohClient = builder.build();
         String dohUrl = getDohUrl(Hawk.get(HawkConfig.DOH_URL, 0));
-        if (!dohUrl.isEmpty()) is_doh = true;   //xuameng新增
-//        dnsOverHttps = new DnsOverHttps.Builder()
-//                .client(dohClient)
-//                .url(dohUrl.isEmpty() ? null : HttpUrl.get(dohUrl))
-//                .build();
-        DnsOverHttps.Builder dnsBuilder = new DnsOverHttps.Builder();
-        dnsBuilder.client(dohClient);
-        dnsBuilder.url(dohUrl.isEmpty() ? null : HttpUrl.get(dohUrl));
-        if (is_doh && ips!=null){
-            List<InetAddress> IPS=DohIps(ips);
-            dnsOverHttps = dnsBuilder.bootstrapDnsHosts(IPS).build();
-        }else {
-            dnsOverHttps = dnsBuilder.build();
-        }
 
+        dnsOverHttps = new DnsOverHttps.Builder().client(dohClient).url(dohUrl.isEmpty() ? null : HttpUrl.get(dohUrl)).bootstrapDnsHosts((ips!=null && !dohUrl.equals("https://doh.pub/dns-query"))?DohIps(ips):null).build();
+ 
     }
 
     // 自定义 DNS 解析器
