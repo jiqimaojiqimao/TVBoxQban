@@ -328,6 +328,11 @@ public class IjkTrackInfo implements ITrackInfo {
 				if(Language.contains(wuu)) {  //xuameng过滤字幕类型里application/字符串
 					Language = Language.replace(wuu, changewuu);  //xuameng过滤字幕类型里application/字符串
 				}
+				String ces = "ces";  //xuameng过滤字幕类型里application/字符串
+				String changeces = "捷克语";
+				if(Language.contains(ces)) {  //xuameng过滤字幕类型里application/字符串
+					Language = Language.replace(ces, changeces);  //xuameng过滤字幕类型里application/字符串
+				}
 				String mul = "mul";  //xuameng过滤字幕类型里application/字符串
 				String changemul = "多语言";
 				if(Language.contains(mul)) {  //xuameng过滤字幕类型里application/字符串
