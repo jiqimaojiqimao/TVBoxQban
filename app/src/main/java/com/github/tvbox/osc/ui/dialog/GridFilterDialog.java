@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import androidx.core.content.ContextCompat;    //xuameng新增
 
 import androidx.annotation.NonNull;
 
@@ -51,13 +52,17 @@ public class GridFilterDialog extends BaseDialog {
 
     public void setData(MovieSort.SortData sortData) {
         ArrayList<MovieSort.SortFilter> filters = sortData.filters;
+        Context context = getContext(); //xuameng新增 // 获取上下文
+        final int defaultColor = ContextCompat.getColor(context, R.color.color_FFFFFF); //xuameng新增
+        final int selectedColor = ContextCompat.getColor(context, R.color.color_02F8E1); //xuameng新增
         for (MovieSort.SortFilter filter : filters) {
             View line = LayoutInflater.from(getContext()).inflate(R.layout.item_grid_filter, null);
             ((TextView) line.findViewById(R.id.filterName)).setText(filter.name);
             TvRecyclerView gridView = line.findViewById(R.id.mFilterKv);
             gridView.setHasFixedSize(true);
             gridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false));
-            GridFilterKVAdapter filterKVAdapter = new GridFilterKVAdapter();
+       //     GridFilterKVAdapter filterKVAdapter = new GridFilterKVAdapter();
+            GridFilterKVAdapter filterKVAdapter = new GridFilterKVAdapter(defaultColor, selectedColor);   //xuameng新增
             gridView.setAdapter(filterKVAdapter);
             String key = filter.key;
             ArrayList<String> values = new ArrayList<>(filter.values.keySet());
