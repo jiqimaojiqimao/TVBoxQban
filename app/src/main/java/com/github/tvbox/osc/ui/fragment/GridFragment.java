@@ -91,7 +91,6 @@ public class GridFragment extends BaseLazyFragment {
 
     @Override
     protected void init() {
-        clearFilterSelect();     //xuameng换源，刷新页面过滤BUG
         initView();
         initViewModel();
         initData();
@@ -111,7 +110,7 @@ public class GridFragment extends BaseLazyFragment {
     public boolean isFolederMode(){ return (getUITag() =='1'); }
     // 获取当前页面UI的显示模式 ‘0’ 正常模式 '1' 文件夹模式 '2' 显示缩略图的文件夹模式
     public char getUITag(){
-		return (sortData == null || sortData.flag == null || sortData.flag.length() ==0 || style!=null) ?  '0' : sortData.flag.charAt(0);
+        return (sortData == null || sortData.flag == null || sortData.flag.length() ==0 || style!=null) ?  '0' : sortData.flag.charAt(0);
     }
     // 是否允许聚合搜索 sortData.flag的第二个字符为‘1’时允许聚搜
     public boolean enableFastSearch(){  return sortData.flag == null || sortData.flag.length() < 2 || (sortData.flag.charAt(1) == '1'); }
@@ -165,8 +164,8 @@ public class GridFragment extends BaseLazyFragment {
             mGridView.setVisibility(View.VISIBLE);
         }
         mGridView.setHasFixedSize(true);
-		style=ImgUtil.initStyle();
-         gridAdapter = new GridAdapter(isFolederMode(), style);
+        style=ImgUtil.initStyle();
+        gridAdapter = new GridAdapter(isFolederMode(), style);
         this.page =1;
         this.maxPage =1;
         this.isLoad = false;
@@ -246,7 +245,7 @@ public class GridFragment extends BaseLazyFragment {
                                 jumpActivity(SearchActivity.class, bundle);
                             }
                         }else {
-							bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
+                            bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
                             jumpActivity(DetailActivity.class, bundle);
                         }
                     }
@@ -355,7 +354,7 @@ public class GridFragment extends BaseLazyFragment {
             gridFilterDialog.show();
     }
 
-    private View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {     //xuameng焦点变大
+    private View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {     //xuameng触碰变大
         @Override
         public void onFocusChange(View v, boolean hasFocus) {
             if (hasFocus)
@@ -365,54 +364,56 @@ public class GridFragment extends BaseLazyFragment {
         }
     };
 
-    public void setFilterDialogData() {
+    public void setFilterDialogData() {        //xuameng修复分类筛选时同一行多个item被选中变色的问题
         Context context = getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
         assert context != null;
         final int defaultColor = ContextCompat.getColor(context, R.color.color_FFFFFF);
         final int selectedColor = ContextCompat.getColor(context, R.color.color_02F8E1);
+    
         // 遍历过滤条件数据
         for (MovieSort.SortFilter filter : sortData.filters) {
             View line = inflater.inflate(R.layout.item_grid_filter, gridFilterDialog.filterRoot, false);
             TextView filterNameTv = line.findViewById(R.id.filterName);
             filterNameTv.setText(filter.name);
             TvRecyclerView gridView = line.findViewById(R.id.mFilterKv);
+            gridView.setId(View.generateViewId());   //xuameng设置唯一ID
             gridView.setHasFixedSize(true);
             gridView.setLayoutManager(new V7LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false));
-            GridFilterKVAdapter adapter = new GridFilterKVAdapter();
-            gridView.setAdapter(adapter);
+        
             final String key = filter.key;
             final ArrayList<String> values = new ArrayList<>(filter.values.keySet());
             final ArrayList<String> keys = new ArrayList<>(filter.values.values());
+        
+            // 修正：传入颜色参数
+            GridFilterKVAdapter adapter = new GridFilterKVAdapter(defaultColor, selectedColor);    //xuameng 在GridFilterKVAdapter中传入颜色参数
+        
+            // 设置当前选中项
+            String currentSelected = sortData.filterSelect.get(key);
+            int selectedPosition = -1;
+            if (currentSelected != null) {
+                selectedPosition = keys.indexOf(currentSelected);
+            }
+            adapter.setSelectedPosition(selectedPosition);
+        
+            gridView.setAdapter(adapter);
             adapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
-                // 用于记录上一次选中的 view
-                View previousSelectedView = null;
                 @Override
                 public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                    GridFilterKVAdapter kvAdapter = (GridFilterKVAdapter) adapter;
                     String currentSelection = sortData.filterSelect.get(key);
                     String newSelection = keys.get(position);
+                
                     if (currentSelection == null || !currentSelection.equals(newSelection)) {
                         // 更新选中状态
                         sortData.filterSelect.put(key, newSelection);
-                        updateViewStyle(view, selectedColor, true);
-                        if (previousSelectedView != null) {
-                            updateViewStyle(previousSelectedView, defaultColor, false);
-                        }
-                        previousSelectedView = view;
+                        kvAdapter.setSelectedPosition(position);
                     } else {
                         // 取消选中
                         sortData.filterSelect.remove(key);
-                        if (previousSelectedView != null) {
-                            updateViewStyle(previousSelectedView, defaultColor, false);
-                        }
-                        previousSelectedView = null;
+                        kvAdapter.setSelectedPosition(-1);
                     }
                     forceRefresh();
-                }
-                private void updateViewStyle(View view, int color, boolean isBold) {
-                    TextView valueTv = view.findViewById(R.id.filterValue);
-                    valueTv.getPaint().setFakeBoldText(isBold);
-                    valueTv.setTextColor(color);
                 }
             });
             adapter.setNewData(values);
@@ -423,14 +424,5 @@ public class GridFragment extends BaseLazyFragment {
     public void forceRefresh() {
         page = 1;
         initData();
-    }
-
-    private void clearFilterSelect() {     //xuameng换源，刷新页面过滤BUG
-        if (sortData == null) return;
-        synchronized(sortData) {
-            if (sortData.filterSelect != null) {
-                sortData.filterSelect.clear(); 
-            }
-        }
     }
 }
