@@ -60,6 +60,7 @@ public class JarLoader {
         classLoaders.clear();
     }
 
+
     private boolean loadClassLoader(String jar, String key) {
         if (classLoaders.containsKey(key)){
             Log.i("JarLoader", "echo-loadClassLoader jar缓存: " + key);
@@ -77,19 +78,8 @@ public class JarLoader {
                     final Class<?> classInit = classLoader.loadClass("com.github.catvod.spider.Init");
                     if (classInit != null) {
                         final Method initMethod = classInit.getMethod("init", Context.class);
-                        // 在子线程中调用 init 方法，避免网络请求在主线程中执行
-                        Thread initThread = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    initMethod.invoke(null, App.getInstance());
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-                        initThread.start();
-                        initThread.join();
+                        // XUAMENG 直接在主线程调用method.invoke()，避免线程同步等待的开销 提高加载速度
+                        initMethod.invoke(null, App.getInstance());
                         Log.i("JarLoader", "echo-自定义爬虫代码加载成功!");
                         success = true;
                         try {
@@ -117,6 +107,7 @@ public class JarLoader {
         }
         return success;
     }
+
 
     private DexClassLoader loadJarInternal(String jar, String md5, String key) {
         if (classLoaders.containsKey(key)){
