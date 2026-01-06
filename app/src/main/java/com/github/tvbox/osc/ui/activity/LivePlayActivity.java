@@ -234,7 +234,7 @@ public class LivePlayActivity extends BaseActivity {
     protected void init() {
         context = this;
         epgStringAddress = Hawk.get(HawkConfig.EPG_URL, "");
-        if(epgStringAddress == null || epgStringAddress.length() < 5) epgStringAddress = "http://epg.51zmt.top:8000/api/diyp/";
+    //    if(epgStringAddress == null || epgStringAddress.length() < 5) epgStringAddress = "http://epg.51zmt.top:8000/api/diyp/";
         setLoadSir(findViewById(R.id.live_root));
         mVideoView = findViewById(R.id.mVideoView);
         tvLeftChannelListLayout = findViewById(R.id.tvLeftChannnelListLayout); //xuameng左边频道菜单
@@ -496,6 +496,10 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     public void getEpg(Date date) {
+        if (date == null) {
+            Log.e("EpgError", "Date parameter is null");
+            return; // 或者抛出自定义异常
+        }
         String channelName = channel_Name.getChannelName();
         SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd");
         timeFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
@@ -777,7 +781,7 @@ public class LivePlayActivity extends BaseActivity {
             } else {
                 int selectedIndex = liveEpgDateAdapter.getSelectedIndex();
                 if(selectedIndex < 0) getEpg(new Date());
-             //   else getEpg(liveEpgDateAdapter.getData().get(selectedIndex).getDateParamVal());
+                else getEpg(liveEpgDateAdapter.getData().get(selectedIndex).getDateParamVal());
             }
             HideBottomEpgTimer();  //隐藏底部菜单到计时
             backcontroller.setVisibility(View.GONE);    //xuameng 隐藏进度条
@@ -838,7 +842,7 @@ public class LivePlayActivity extends BaseActivity {
             } else {
                 int selectedIndex = liveEpgDateAdapter.getSelectedIndex();
                 if(selectedIndex < 0) getEpg(new Date());
-           //     else getEpg(liveEpgDateAdapter.getData().get(selectedIndex).getDateParamVal());
+                else getEpg(liveEpgDateAdapter.getData().get(selectedIndex).getDateParamVal());
             }
         }
     }
