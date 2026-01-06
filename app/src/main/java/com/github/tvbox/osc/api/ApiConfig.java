@@ -65,15 +65,15 @@ public class ApiConfig {
     private final LinkedHashMap<String, SourceBean> sourceBeanList;
     private SourceBean mHomeSource;
     private ParseBean mDefaultParse;
-	private final List<LiveChannelGroup> liveChannelGroupList;
-	private final List<ParseBean> parseBeanList;
+    private final List<LiveChannelGroup> liveChannelGroupList;
+    private final List<ParseBean> parseBeanList;
     private List<String> vipParseFlags;
     private Map<String,String> myHosts;
     private List<IJKCode> ijkCodes;
     private String spider = null;
     public String wallpaper = "";
-	public String musicwallpaper = "";   //xuameng音乐背景图
-	public String JvhuiWarning = "";   //xuameng版权提示
+    public String musicwallpaper = "";   //xuameng音乐背景图
+    public String JvhuiWarning = "";   //xuameng版权提示
 
     private final SourceBean emptyHome = new SourceBean();
 
@@ -87,14 +87,14 @@ public class ApiConfig {
 
     private String defaultLiveObjString="{\"lives\":[{\"name\":\"txt_m3u\",\"type\":0,\"url\":\"txt_m3u_url\"}]}";
     private ApiConfig() {
-		clearJarLoader();
-		LoadapiUrlXu();  //xuameng 如果点播源url为空，清除API_URL键值。回复内置接口
+        clearJarLoader();
+        LoadapiUrlXu();  //xuameng 如果点播源url为空，清除API_URL键值。回复内置接口
         sourceBeanList = new LinkedHashMap<>();
         liveChannelGroupList = new ArrayList<>();
         parseBeanList = new ArrayList<>();
-		searchSourceBeanList = new ArrayList<>();
+        searchSourceBeanList = new ArrayList<>();
         gson = new Gson();
-		Hawk.put(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
+        Hawk.put(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
         loadDefaultConfig();
     }
 
@@ -202,9 +202,9 @@ public class ApiConfig {
                                     } catch (Throwable th) {
                                         th.printStackTrace();
                                         callback.notice("聚汇影视提示您：解析直播配置失败！");
-					                    initLiveSettings();
-					                    Hawk.put(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
-					                    Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
+                                        initLiveSettings();
+                                        Hawk.put(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
+                                        Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
                                     }
                                 }
 
@@ -221,9 +221,9 @@ public class ApiConfig {
                                         }
                                     }
                                     callback.notice("聚汇影视提示您：直播配置拉取失败！");
-					                initLiveSettings();
-					                Hawk.put(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
-					                Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
+                                    initLiveSettings();
+                                    Hawk.put(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
+                                    Hawk.put(HawkConfig.LIVE_GROUP_INDEX,0);
                                 }
 
                                 public String convertResponse(okhttp3.Response response) throws Throwable {
@@ -333,10 +333,10 @@ public class ApiConfig {
             if (Boolean.parseBoolean(jarCache) && cache.exists() && !FileUtils.isWeekAgo(cache)) {
                 if (jarLoader.load(cache.getAbsolutePath())) {
                     callback.success();
-					return;
+                    return;
                 } 
             }
-		}
+        }
 
         boolean isJarInImg = jarUrl.startsWith("img+");
         jarUrl = jarUrl.replace("img+", "");
@@ -386,7 +386,7 @@ public class ApiConfig {
                         if (file != null && file.exists()) {
                             try {
                                 if (jarLoader.load(file.getAbsolutePath())) {
-									LOG.i("echo---load-jar-success");
+                                    LOG.i("echo---load-jar-success");
                                     callback.success();
                                 } else {
                                     LOG.e("echo---jar Loader returned false");
@@ -394,11 +394,11 @@ public class ApiConfig {
                                 }
                             } catch (Exception e) {
                                 LOG.e("echo---jar Loader threw exception: " + e.getMessage());
-                                callback.error("JAR加载异常");
+                                callback.error("JAR加载异常！");
                             }
                         } else {
                             LOG.e("echo---jar File not found");
-                            callback.error("JAR文件不存在");
+                            callback.error("JAR文件不存在！");
                         }
                     }
 
@@ -408,7 +408,7 @@ public class ApiConfig {
                         if (ex != null) {
                             LOG.i("echo---jar Request failed: " + ex.getMessage());
                         }
-						if(cache.exists())jarLoader.load(cache.getAbsolutePath());
+                        if(cache.exists())jarLoader.load(cache.getAbsolutePath());
                         callback.error("网络错误");
                     }
                 });
@@ -424,17 +424,17 @@ public class ApiConfig {
         bReader.close();
         parseJson(apiUrl, sb.toString());
     }
-	private static  String jarCache ="true";
+    private static String jarCache ="true";
     private void parseJson(String apiUrl, String jsonStr) {
 		LOG.i("echo-parseJson"+jsonStr);
         JsonObject infoJson = gson.fromJson(jsonStr, JsonObject.class);
         // spider
         spider = DefaultConfig.safeJsonString(infoJson, "spider", "");
-		jarCache = DefaultConfig.safeJsonString(infoJson, "jarCache", "true");
+        jarCache = DefaultConfig.safeJsonString(infoJson, "jarCache", "true");
         // wallpaper
         wallpaper = DefaultConfig.safeJsonString(infoJson, "wallpaper", "");
-		musicwallpaper = DefaultConfig.safeJsonString(infoJson, "musicwallpaper", "");    //xuameng音乐背景图
-		JvhuiWarning = DefaultConfig.safeJsonString(infoJson, "JvhuiWarning", "");  //xuameng警告
+        musicwallpaper = DefaultConfig.safeJsonString(infoJson, "musicwallpaper", "");    //xuameng音乐背景图
+        JvhuiWarning = DefaultConfig.safeJsonString(infoJson, "JvhuiWarning", "");  //xuameng警告
         // 远端站点源
         SourceBean firstSite = null;
         for (JsonElement opt : infoJson.get("sites").getAsJsonArray()) {
@@ -448,14 +448,14 @@ public class ApiConfig {
             sb.setApi(DefaultConfig.safeJsonString(obj, "api", "xuameng"));    //xuameng api选填默认值 xuameng 
             sb.setSearchable(DefaultConfig.safeJsonInt(obj, "searchable", 1));
             sb.setQuickSearch(DefaultConfig.safeJsonInt(obj, "quickSearch", 1));
-			sb.setFilterable(DefaultConfig.safeJsonInt(obj, "filterable", 1));
+            sb.setFilterable(DefaultConfig.safeJsonInt(obj, "filterable", 1));
             sb.setPlayerUrl(DefaultConfig.safeJsonString(obj, "playUrl", ""));
-			sb.setExt(DefaultConfig.safeJsonString(obj, "ext", ""));
+            sb.setExt(DefaultConfig.safeJsonString(obj, "ext", ""));
             sb.setJar(DefaultConfig.safeJsonString(obj, "jar", ""));
             sb.setPlayerType(DefaultConfig.safeJsonInt(obj, "playerType", -1));
             sb.setCategories(DefaultConfig.safeJsonStringList(obj, "categories"));
             sb.setClickSelector(DefaultConfig.safeJsonString(obj, "click", ""));
-			sb.setStyle(DefaultConfig.safeJsonString(obj, "style", ""));
+            sb.setStyle(DefaultConfig.safeJsonString(obj, "style", ""));
             if (firstSite == null && sb.getFilterable()==1)
                 firstSite = sb;
             sourceBeanList.put(siteKey, sb);
@@ -485,7 +485,7 @@ public class ApiConfig {
                 pb.setType(DefaultConfig.safeJsonInt(obj, "type", 0));
                 parseBeanList.add(pb);
             }
-			if(!parseBeanList.isEmpty())addSuperParse();
+            if(!parseBeanList.isEmpty())addSuperParse();
         }
         // 获取默认解析
         if (parseBeanList != null && parseBeanList.size() > 0) {
@@ -502,7 +502,7 @@ public class ApiConfig {
         // 直播源
         String live_api_url=Hawk.get(HawkConfig.LIVE_API_URL,"");
         if(live_api_url.isEmpty() || apiUrl.equals(live_api_url)){
-			initLiveSettings();
+            initLiveSettings();
             LOG.i("echo-load-config_live");
             if(infoJson.has("lives")){
                 JsonArray lives_groups=infoJson.get("lives").getAsJsonArray();
@@ -946,9 +946,9 @@ public class ApiConfig {
             if(livesOBJ.has("playerType")){
                 String livePlayType =livesOBJ.get("playerType").getAsString();
                 Hawk.put(HawkConfig.LIVE_PLAY_TYPE,livePlayType);
-				HawkConfig.intLIVEPLAYTYPE = true;   //xuameng是否有直播默认播放器
+                HawkConfig.intLIVEPLAYTYPE = true;   //xuameng是否有直播默认播放器
             }else{
-				HawkConfig.intLIVEPLAYTYPE = false;   //xuameng是否有直播默认播放器
+                HawkConfig.intLIVEPLAYTYPE = false;   //xuameng是否有直播默认播放器
 			}
             //xuameng设置UA信息
             if(livesOBJ.has("header")) {
@@ -1111,7 +1111,7 @@ public class ApiConfig {
 
     String fixContentPath(String url, String content) {
         if (content.contains("\"./")) {
-			url=url.replace("file://","clan://localhost/");
+            url=url.replace("file://","clan://localhost/");
             if(!url.startsWith("http") && !url.startsWith("clan://")){
                 url = "http://" + url;
             }
