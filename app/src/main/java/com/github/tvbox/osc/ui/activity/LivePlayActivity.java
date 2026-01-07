@@ -495,133 +495,168 @@ public class LivePlayActivity extends BaseActivity {
         } 
     }
 
-    public void getEpg(Date date) {
-        if (date == null) {
-            Log.e("EpgError", "Date parameter is null");
-            return; // 或者抛出自定义异常
-        }
-        String channelName = channel_Name.getChannelName();
-        SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd");
-        timeFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
-        String[] epgInfo = EpgUtil.getEpgInfo(channelName);
-        String epgTagName = channelName;
-        if(logoUrl == null || logoUrl.isEmpty()) {
-            updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]); //xuameng自带logo
-        } else if(logoUrl.equals("false")) {
-            updateChannelIcon(channelName, null);
-        } else {
-            String logo = logoUrl.replace("{name}", channelName); //xuameng支持logourl
-            updateChannelIcon(channelName, logo);
-        }
-        if(epgInfo != null && !epgInfo[1].isEmpty()) {   //xuameng自定义EPG对应表
-            epgTagName = epgInfo[1];
-        }
-        epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
-        //epgListAdapter.updateData(date, new ArrayList<>());
-		String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
-        if(hsEpg.containsKey(savedEpgKey)) {   //xuameng如果有缓存EPG
-           ArrayList<Epginfo> arrayListJudge = (ArrayList<Epginfo>) hsEpg.get(savedEpgKey);
-           String title = arrayListJudge.get(0).title;      //0中EPG第一行的名称
-           if (!title.contains("聚汇直播")) {   //xuameng再次判断如果缓存EPG中有聚汇直播字样说明是在线获取EPG失败则继续重试
-              showEpg(date, hsEpg.get(savedEpgKey));   //xuameng如果成功就直接显示缓存EPG   
-              showBottomEpgXU(); //xuameng测试EPG刷新 
-              return;
-           }
-        }
-        String url;
-        if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
-            url = epgStringAddress.replace("{name}", URLEncoder.encode(epgTagName)).replace("{date}", timeFormat.format(date));
-        } else {
-            url = epgStringAddress + "?ch=" + URLEncoder.encode(epgTagName) + "&date=" + timeFormat.format(date);
-        }
-        UrlHttpUtil.get(url, new CallBackUtil.CallBackString() {
-            public void onFailure(int i, String str) {    //xuameng如果EPG获取失败启动默认列表
-                ArrayList arrayList = new ArrayList();
-                Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);   //xuameng最后一项为pos id
-                Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 1);
-                Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 2);
-                Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 3);
-                Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 4);
-                Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 5);
-                Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 6);
-                Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 7);
-                Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 8);
-                Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 9);
-                Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 10);
-                Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 11);
-                arrayList.add(epgbcinfo);
-                arrayList.add(epgbcinfo1);
-                arrayList.add(epgbcinfo2);
-                arrayList.add(epgbcinfo3);
-                arrayList.add(epgbcinfo4);
-                arrayList.add(epgbcinfo5);
-                arrayList.add(epgbcinfo6);
-                arrayList.add(epgbcinfo7);
-                arrayList.add(epgbcinfo8);
-                arrayList.add(epgbcinfo9);
-                arrayList.add(epgbcinfo10);
-                arrayList.add(epgbcinfo11);
-                epgdata = arrayList;
-                epgListAdapter.setNewData(epgdata);
-                hsEpg.put(savedEpgKey, arrayList);   //xuameng默认列表存入缓存
-                showEpg(date, arrayList);
-                showBottomEpgXU(); //xuameng测试EPG刷新        
-            }
-            public void onResponse(String paramString) {
-                ArrayList arrayList = new ArrayList();
-             ////xuameng 空指针   Log.d("返回的EPG信息", paramString != null ? paramString : "暂无当前节目单，聚汇直播欢迎您的观看！");
-                try {
-                    if(paramString != null && paramString.contains("epg_data")) {  //xuameng 空指针
-                        final JSONArray jSONArray = new JSONObject(paramString).optJSONArray("epg_data");
-                        if(jSONArray != null)
-                            for(int b = 0; b < jSONArray.length(); b++) {
-                                JSONObject jSONObject = jSONArray.getJSONObject(b);
-                                Epginfo epgbcinfo = new Epginfo(date, jSONObject.optString("title"), date, jSONObject.optString("start"), jSONObject.optString("end"), b);
-                                arrayList.add(epgbcinfo);
-                             ////xuameng 空指针   Log.d("EPG信息:", day + "  " + jSONObject.optString("start") + " - " + jSONObject.optString("end") + "  " + jSONObject.optString("title"));
-                            }
-                    }
-                } catch (JSONException jSONException) {
-                    jSONException.printStackTrace();
-                }
-                if(arrayList != null && arrayList.size() > 0){
-                   hsEpg.put(savedEpgKey, arrayList);  //xuameng默认列表存入缓存
-                   showEpg(date, arrayList);
-                   showBottomEpgXU(); //xuameng测试EPG刷新
-                }else{
-                   Epginfo epgbcinfo = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "00:00", "01:59", 0);   //xuameng最后一项为pos id
-                   Epginfo epgbcinfo1 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "02:00", "03:59", 1);
-                   Epginfo epgbcinfo2 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "04:00", "05:59", 2);
-                   Epginfo epgbcinfo3 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "06:00", "07:59", 3);
-                   Epginfo epgbcinfo4 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "08:00", "09:59", 4);
-                   Epginfo epgbcinfo5 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "10:00", "11:59", 5);
-                   Epginfo epgbcinfo6 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "12:00", "13:59", 6);
-                   Epginfo epgbcinfo7 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "14:00", "15:59", 7);
-                   Epginfo epgbcinfo8 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "16:00", "17:59", 8);
-                   Epginfo epgbcinfo9 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "18:00", "19:59", 9);
-                   Epginfo epgbcinfo10 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "20:00", "21:59", 10);
-                   Epginfo epgbcinfo11 = new Epginfo(date, "聚汇直播提示您：暂无节目信息！", date, "22:00", "23:59", 11);
-                   arrayList.add(epgbcinfo);
-                   arrayList.add(epgbcinfo1);
-                   arrayList.add(epgbcinfo2);
-                   arrayList.add(epgbcinfo3);
-                   arrayList.add(epgbcinfo4);
-                   arrayList.add(epgbcinfo5);
-                   arrayList.add(epgbcinfo6);
-                   arrayList.add(epgbcinfo7);
-                   arrayList.add(epgbcinfo8);
-                   arrayList.add(epgbcinfo9);
-                   arrayList.add(epgbcinfo10);
-                   arrayList.add(epgbcinfo11);
-                   epgdata = arrayList;
-                   epgListAdapter.setNewData(epgdata);
-                   hsEpg.put(savedEpgKey, arrayList);   //xuameng默认列表存入缓存
-                   showEpg(date, arrayList);
-                   showBottomEpgXU(); //xuameng测试EPG刷新
-                }
-            }
-        });
+public void getEpg(Date date) {
+    String channelName = channel_Name.getChannelName();
+    SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd");
+    timeFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
+    String[] epgInfo = EpgUtil.getEpgInfo(channelName);
+    String epgTagName = channelName;
+    
+    // 处理频道图标
+    if(logoUrl == null || logoUrl.isEmpty()) {
+        updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]);
+    } else if(logoUrl.equals("false")) {
+        updateChannelIcon(channelName, null);
+    } else {
+        String logo = logoUrl.replace("{name}", channelName);
+        updateChannelIcon(channelName, logo);
     }
+    
+    // 处理EPG标签名
+    if(epgInfo != null && !epgInfo[1].isEmpty()) {
+        epgTagName = epgInfo[1];
+    }
+    
+    epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
+    
+    // 检查EPG缓存
+    String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
+    if(hsEpg.containsKey(savedEpgKey)) {
+        ArrayList<Epginfo> arrayListJudge = (ArrayList<Epginfo>) hsEpg.get(savedEpgKey);
+        String title = arrayListJudge.get(0).title;
+        if (!title.contains("聚汇直播")) {
+            showEpg(date, hsEpg.get(savedEpgKey));
+            showBottomEpgXU();
+            return;
+        }
+    }
+    
+    // 构建EPG请求URL
+    String url;
+    if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
+        url = epgStringAddress.replace("{name}", URLEncoder.encode(epgTagName)).replace("{date}", timeFormat.format(date));
+    } else {
+        url = epgStringAddress + "?ch=" + URLEncoder.encode(epgTagName) + "&date=" + timeFormat.format(date);
+    }
+    
+    UrlHttpUtil.get(url, new CallBackUtil.CallBackString() {
+        public void onFailure(int i, String str) {
+            // 网络请求失败时创建默认EPG数据
+            createDefaultEpgData(date, savedEpgKey);
+        }
+        
+        public void onResponse(String paramString) {
+            ArrayList<Epginfo> arrayList = new ArrayList<>();
+            
+            try {
+                if(paramString != null && paramString.contains("epg_data")) {
+                    final JSONArray jSONArray = new JSONObject(paramString).optJSONArray("epg_data");
+                    if(jSONArray != null) {
+                        for(int b = 0; b < jSONArray.length(); b++) {
+                            JSONObject jSONObject = jSONArray.getJSONObject(b);
+                            String startTime = jSONObject.optString("start", "");
+                            String endTime = jSONObject.optString("end", "");
+                            String title = jSONObject.optString("title", "暂无节目信息");
+                            
+                            // 关键修复：验证数据有效性
+                            if (date != null && !startTime.isEmpty() && !endTime.isEmpty()) {
+                                try {
+                                    Epginfo epgbcinfo = new Epginfo(date, title, date, startTime, endTime, b);
+                                    arrayList.add(epgbcinfo);
+                                } catch (Exception e) {
+                                    Log.e("EPG", "创建Epginfo对象失败: " + e.getMessage());
+                                    // 创建安全的默认条目
+                                    Epginfo safeEpg = createSafeEpgInfo(date, b);
+                                    arrayList.add(safeEpg);
+                                }
+                            } else {
+                                Log.w("EPG", "无效的EPG数据: date=" + date + 
+                                      ", start=" + startTime + ", end=" + endTime);
+                                // 创建安全的默认条目
+                                Epginfo safeEpg = createSafeEpgInfo(date, b);
+                                arrayList.add(safeEpg);
+                            }
+                        }
+                    }
+                }
+            } catch (JSONException jSONException) {
+                jSONException.printStackTrace();
+                Log.e("EPG", "JSON解析错误: " + jSONException.getMessage());
+            } catch (Exception e) {
+                Log.e("EPG", "EPG处理异常: " + e.getMessage());
+            }
+            
+            // 处理解析结果
+            if(arrayList != null && arrayList.size() > 0) {
+                hsEpg.put(savedEpgKey, arrayList);
+                showEpg(date, arrayList);
+                showBottomEpgXU();
+            } else {
+                // 没有有效数据时创建默认EPG
+                createDefaultEpgData(date, savedEpgKey);
+            }
+        }
+    });
+}
+
+// 辅助方法：创建安全的默认EPG信息
+private Epginfo createSafeEpgInfo(Date date, int position) {
+    try {
+        // 使用当前时间作为默认时间
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date != null ? date : new Date());
+        
+        // 生成默认时间（每2小时一个时段）
+        int hourOffset = position * 2;
+        cal.set(Calendar.HOUR_OF_DAY, hourOffset % 24);
+        cal.set(Calendar.MINUTE, 0);
+        Date startDate = cal.getTime();
+        
+        cal.add(Calendar.HOUR, 2);
+        Date endDate = cal.getTime();
+        
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+        String startStr = timeFormat.format(startDate);
+        String endStr = timeFormat.format(endDate);
+        
+        return new Epginfo(
+            date != null ? date : new Date(),
+            "聚汇直播提示您：节目信息获取异常",
+            date != null ? date : new Date(),
+            startStr,
+            endStr,
+            position
+        );
+    } catch (Exception e) {
+        // 终极后备方案
+        return new Epginfo(
+            new Date(),
+            "聚汇直播",
+            new Date(),
+            "00:00",
+            "23:59",
+            position
+        );
+    }
+}
+
+// 辅助方法：创建默认EPG数据
+private void createDefaultEpgData(Date date, String savedEpgKey) {
+    ArrayList<Epginfo> arrayList = new ArrayList<>();
+    
+    // 创建12个默认时段（每2小时一个）
+    for (int i = 0; i < 12; i++) {
+        Epginfo epgInfo = createSafeEpgInfo(date, i);
+        arrayList.add(epgInfo);
+    }
+    
+    epgdata = arrayList;
+    epgListAdapter.setNewData(epgdata);
+    hsEpg.put(savedEpgKey, arrayList);
+    showEpg(date, arrayList);
+    showBottomEpgXU();
+}
+
     public void getEpgxu(Date date) {
         String channelName = channel_NameXu.getChannelName();    //xuameng频道名称在移动item中选中
         SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd");
