@@ -495,6 +495,7 @@ public class LivePlayActivity extends BaseActivity {
         } 
     }
 
+
 public void getEpg(Date date) {
     String channelName = channel_Name.getChannelName();
     SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -558,7 +559,15 @@ public void getEpg(Date date) {
                             String endTime = jSONObject.optString("end", "");
                             String title = jSONObject.optString("title", "暂无节目信息");
                             
-                            // 关键修复：验证数据有效性
+                            // 关键修复：截取时间字符串的前5个字符（HH:mm）
+                            if(startTime.length() > 5) {
+                                startTime = startTime.substring(0, 5);
+                            }
+                            if(endTime.length() > 5) {
+                                endTime = endTime.substring(0, 5);
+                            }
+                            
+                            // 空值检查
                             if (date != null && !startTime.isEmpty() && !endTime.isEmpty()) {
                                 try {
                                     Epginfo epgbcinfo = new Epginfo(date, title, date, startTime, endTime, b);
@@ -566,15 +575,15 @@ public void getEpg(Date date) {
                                 } catch (Exception e) {
                                     Log.e("EPG", "创建Epginfo对象失败: " + e.getMessage());
                                     // 创建安全的默认条目
-                                  //  Epginfo safeEpg = createSafeEpgInfo(date, b);
-                                   // arrayList.add(safeEpg);
+                                 //   Epginfo safeEpg = createSafeEpgInfo(date, b);
+                                 //   arrayList.add(safeEpg);
                                 }
                             } else {
                                 Log.w("EPG", "无效的EPG数据: date=" + date + 
                                       ", start=" + startTime + ", end=" + endTime);
                                 // 创建安全的默认条目
-                               // Epginfo safeEpg = createSafeEpgInfo(date, b);
-                                //arrayList.add(safeEpg);
+                             //   Epginfo safeEpg = createSafeEpgInfo(date, b);
+                             //   arrayList.add(safeEpg);
                             }
                         }
                     }
@@ -602,22 +611,25 @@ public void getEpg(Date date) {
 // 辅助方法：创建安全的默认EPG信息
 private Epginfo createSafeEpgInfo(Date date, int position) {
     try {
-        // 使用当前时间作为默认时间
         Calendar cal = Calendar.getInstance();
         cal.setTime(date != null ? date : new Date());
-        
-        // 生成默认时间（每2小时一个时段）
         int hourOffset = position * 2;
         cal.set(Calendar.HOUR_OF_DAY, hourOffset % 24);
         cal.set(Calendar.MINUTE, 0);
         Date startDate = cal.getTime();
-        
         cal.add(Calendar.HOUR, 2);
         Date endDate = cal.getTime();
-        
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
         String startStr = timeFormat.format(startDate);
         String endStr = timeFormat.format(endDate);
+        
+        // 修复最后一行显示
+        if (hourOffset == 22) {
+            cal.set(Calendar.HOUR_OF_DAY, 23);
+            cal.set(Calendar.MINUTE, 59);
+            endDate = cal.getTime();
+            endStr = "23:59";
+        }
         
         return new Epginfo(
             date != null ? date : new Date(),
@@ -628,7 +640,6 @@ private Epginfo createSafeEpgInfo(Date date, int position) {
             position
         );
     } catch (Exception e) {
-        // 终极后备方案
         return new Epginfo(
             new Date(),
             "聚汇直播",
@@ -656,6 +667,7 @@ private void createDefaultEpgData(Date date, String savedEpgKey) {
     showEpg(date, arrayList);
     showBottomEpgXU();
 }
+
 
     public void getEpgxu(Date date) {
         String channelName = channel_NameXu.getChannelName();    //xuameng频道名称在移动item中选中
