@@ -6,10 +6,6 @@
     android:layout_height="fill_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <xyz.doikki.videoplayer.player.VideoView
-        android:id="@+id/mVideoView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"/>
     <ImageView
         android:enabled="true"
         android:id="@+id/xuamengMusic"
@@ -18,6 +14,10 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:scaleType="fitXY"/>
+    <xyz.doikki.videoplayer.player.VideoView
+        android:id="@+id/mVideoView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
     <com.github.tvbox.osc.ui.tv.widget.MusicVisualizerView
         android:id="@+id/visualizer_view"
         android:layout_width="400mm"
