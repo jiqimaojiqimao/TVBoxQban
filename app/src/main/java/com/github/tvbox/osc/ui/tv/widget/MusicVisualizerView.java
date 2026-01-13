@@ -10,12 +10,12 @@ import android.animation.ValueAnimator;
 xuameng
 音乐可视化视图组件（带振幅颜色渐变）
 新增特性：
-颜色随振幅大小变化
-保持原有动画平滑性
-完全兼容原有接口
-振幅随音量大小变化
-三种颜色随机变化
-新增音柱分段效果
+1，颜色随振幅大小变化
+2，保持原有动画平滑性
+3，完全兼容原有接口
+4，振幅随音量大小变化
+5，三种颜色随机变化
+6，新增音柱分段效果
 */
 public class MusicVisualizerView extends View {
     private static final int MAX_AMPLITUDE = 6222;
