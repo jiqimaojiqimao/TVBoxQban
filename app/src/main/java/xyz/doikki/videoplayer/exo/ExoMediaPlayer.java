@@ -312,7 +312,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         Log.e("EXOPLAYER", "" + error.errorCode);      //xuameng音频出错后尝试重播
         if (mPlayerEventListener != null) {
             memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
-            App.showToastShort(mAppContext, "解码出错！正在重试！");
             mPlayerEventListener.onError();
         }
     }
