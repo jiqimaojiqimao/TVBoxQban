@@ -105,9 +105,7 @@ public final class ExoMediaSourceHelper {
             setHeaders(headers);
         }
         if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-            MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
-            builder.setMimeType(MimeTypes.APPLICATION_M3U8);
-            return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(getMediaItem(uri, errorCode));
+return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
         }
         switch (contentType) {
             case C.TYPE_DASH:
