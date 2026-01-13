@@ -7,13 +7,9 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.animation.ValueAnimator;
 /**
-
 xuameng
-
 音乐可视化视图组件（带振幅颜色渐变）
-
 新增特性：
-
 颜色随振幅大小变化
 保持原有动画平滑性
 完全兼容原有接口
@@ -30,7 +26,7 @@ public class MusicVisualizerView extends View {
     // 新增音柱分段效果相关变量
     private boolean mShowStripes = true; // 是否显示分段效果
     private int mSegmentCount = 20; // 每个音柱的分段数
-    private float mSegmentSpacingFixed = 2.0f; // 段间距固定值（像素）
+    private float mSegmentSpacingFixed = 2.2f; // 段间距固定值（像素）
     // 新增颜色方案刷新方法
     private void refreshColorSchemes() {
         for(int i = 0; i < 3; i++) {
@@ -114,7 +110,7 @@ public class MusicVisualizerView extends View {
                 if(i < BAR_COUNT / 4) {
                     weight = 1.0f; //xuameng 超低频段(0-200Hz)增益
                 } else if(i < BAR_COUNT / 2) {
-                    weight = 2.0f; //xuameng 中低频段(200-800Hz)基准值增益
+                    weight = 2.5f; //xuameng 中低频段(200-800Hz)基准值增益
                 } else {
                     float freqFactor = (float) Math.pow(1.5, (i - BAR_COUNT / 2) / 2.0); //xuameng 高频段(800Hz+)指数增强
                     weight = 3.5f * freqFactor;
@@ -153,8 +149,8 @@ public class MusicVisualizerView extends View {
         final float barWidth = width / (float) BAR_COUNT;
         final float gap = barWidth * 0.2f;
         final float barUnitWidth = barWidth - gap;
-        // 新增：定义分段效果的最小高度阈值（例如2像素）
-        final float MIN_HEIGHT_FOR_STRIPES = 2.0f;
+        // 新增：定义分段效果的最小高度阈值（例如4像素）
+        final float MIN_HEIGHT_FOR_STRIPES = 4.2f;
         for(int i = 0; i < BAR_COUNT; i++) {
             float left = i * barWidth + gap / 2;
             float right = left + barUnitWidth;
