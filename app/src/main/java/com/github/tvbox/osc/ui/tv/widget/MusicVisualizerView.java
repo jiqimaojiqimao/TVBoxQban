@@ -115,11 +115,8 @@ public class MusicVisualizerView extends View {
                     float freqFactor = (float) Math.pow(1.5, (i - BAR_COUNT / 2) / 2.0); //xuameng 高频段(800Hz+)指数增强
                     weight = 3.5f * freqFactor;
                 }
-
-				// 对原始幅值应用非线性变换，增强强音表现
-                float enhancedMagnitude = (float) Math.pow(magnitude, 1.3); // 指数越大，强音越突出
                 mTargetHeights[i] = Math.min(
-                    (enhancedMagnitude * getHeight() * weight * volumeLevel) / MAX_AMPLITUDE, //xuameng判断音量大小
+                    (magnitude * getHeight() * weight * volumeLevel) / MAX_AMPLITUDE, //xuameng判断音量大小
                     getHeight() * 0.95f);
                 mAmplitudeLevels[i] = Math.min(magnitude / MAX_AMPLITUDE, 1.0f);
             }
@@ -153,7 +150,7 @@ public class MusicVisualizerView extends View {
         final float gap = barWidth * 0.2f;
         final float barUnitWidth = barWidth - gap;
         // 新增：定义分段效果的最小高度阈值（例如4像素）
-        final float MIN_HEIGHT_FOR_STRIPES = 10f;
+        final float MIN_HEIGHT_FOR_STRIPES = 20f;
         for(int i = 0; i < BAR_COUNT; i++) {
             float left = i * barWidth + gap / 2;
             float right = left + barUnitWidth;
