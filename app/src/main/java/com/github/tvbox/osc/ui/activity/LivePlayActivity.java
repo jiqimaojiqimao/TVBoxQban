@@ -236,7 +236,7 @@ public class LivePlayActivity extends BaseActivity {
         context = this;
         epgStringAddress = Hawk.get(HawkConfig.EPG_URL, "");
      //   if(epgStringAddress == null || epgStringAddress.length() < 5) epgStringAddress = "http://epg.51zmt.top:8000/api/diyp/";
-        if(epgStringAddress == null || epgStringAddress.length() < 5) epgStringAddress = "http://xuameng.vicp.net:2222";
+        if(epgStringAddress == null || epgStringAddress.length() < 5) epgStringAddress = "http://baidu.com";
         setLoadSir(findViewById(R.id.live_root));
         mVideoView = findViewById(R.id.mVideoView);
         tvLeftChannelListLayout = findViewById(R.id.tvLeftChannnelListLayout); //xuameng左边频道菜单
