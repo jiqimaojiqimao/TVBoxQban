@@ -49,6 +49,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 
     private int errorCode = -100;
+    private int mRetryCount = 0;  //xuameng播放出错重试十次
+    private static final int MAX_RETRIES = 3;  //xuameng播放出错重试3次
 
     public ExoMediaPlayer(Context context) {
         mAppContext = context.getApplicationContext();
@@ -90,7 +92,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
             .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
-            .setTunnelingEnabled(false));   //xuameng字幕、音轨默认选择中文
+            .setTunnelingEnabled(false));   //xuameng 关闭隧道模式提高兼容性
 
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
@@ -307,12 +309,40 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void onPlayerError(@NonNull PlaybackException error) {
-       String progressKey = Hawk.get(HawkConfig.EXO_PROGRESS_KEY, "");
+        String progressKey = Hawk.get(HawkConfig.EXO_PROGRESS_KEY, "");
         errorCode = error.errorCode;
         Log.e("EXOPLAYER", "" + error.errorCode);      //xuameng音频出错后尝试重播
-        if (mPlayerEventListener != null) {
-            memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
-            mPlayerEventListener.onError();
+        if (errorCode == 5001 && mRetryCount < MAX_RETRIES || errorCode == 5002 && mRetryCount < MAX_RETRIES || errorCode == 4001 && mRetryCount < MAX_RETRIES){
+            boolean exoDecodeXu = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
+            int exoSelectXu = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
+            if (exoSelectXu == 2 && mRetryCount < MAX_RETRIES) {
+                memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨  软解
+                App.showToastShort(mAppContext, "音轨解码出错！正在重试！");
+                mRetryCount++;  // 计数器加一    重试3次
+                prepareAsync();
+                start();
+                return;
+            }
+            if(exoSelectXu == 0 && mRetryCount < MAX_RETRIES) {
+                if(exoDecodeXu){
+                   memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨  软解
+                   mRetryCount++;  // 计数器加一    重试3次
+                   App.showToastShort(mAppContext, "音轨解码出错！正在重试！");
+                   prepareAsync();
+                   start();
+                   return;
+                }
+	        }
+            if (mPlayerEventListener != null) {
+                memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨  硬解
+                App.showToastShort(mAppContext, "音轨解码出错！可尝试软解码！");
+                mPlayerEventListener.onError();
+            }
+        }else{
+            mRetryCount = 0; // 重置计数器
+            if (mPlayerEventListener != null) {
+                mPlayerEventListener.onError();
+            }
         }
     }
 
