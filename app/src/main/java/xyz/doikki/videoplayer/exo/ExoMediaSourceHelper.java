@@ -105,9 +105,6 @@ public final class ExoMediaSourceHelper {
             setHeaders(headers);
         }
         if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-            if (uri.toLowerCase().contains("migu.")) {
-                return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
-            }
             MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
             builder.setMimeType(MimeTypes.APPLICATION_M3U8);
             return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(getMediaItem(uri, errorCode));
@@ -119,6 +116,9 @@ public final class ExoMediaSourceHelper {
                 return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
+            if (uri.toLowerCase().contains("migu") || uri.toLowerCase().contains(".m3u8")) {
+                return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+            }
                 return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
         }
     }
