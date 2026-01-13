@@ -86,37 +86,43 @@ public final class ExoMediaSourceHelper {
         return getMediaSource(uri, headers, isCache, -1);
     }
 
-    public MediaSource getMediaSource(String uri, Map<String, String> headers, boolean isCache, int errorCode) {
-        Uri contentUri = Uri.parse(uri);
-        if ("rtmp".equals(contentUri.getScheme())) {
-            return new ProgressiveMediaSource.Factory(new RtmpDataSource.Factory())
-                    .createMediaSource(MediaItem.fromUri(contentUri));
-        } else if ("rtsp".equals(contentUri.getScheme())) {
-            return new RtspMediaSource.Factory().createMediaSource(MediaItem.fromUri(contentUri));
-        }
-        int contentType = inferContentType(uri);
-        DataSource.Factory factory;
-        if (isCache) {
-            factory = getCacheDataSourceFactory();
-        } else {
-            factory = getDataSourceFactory();
-        }
-        if (mHttpDataSourceFactory != null) {
-            setHeaders(headers);
-        }
-        if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
-        }
-        switch (contentType) {
-            case C.TYPE_DASH:
-                return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
-            case C.TYPE_HLS:
-                return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
-            default:
-            case C.TYPE_OTHER:
-                return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
-        }
+public MediaSource getMediaSource(String uri, Map<String, String> headers, boolean isCache, int errorCode) {
+    Uri contentUri = Uri.parse(uri);
+    if ("rtmp".equals(contentUri.getScheme())) {
+        return new ProgressiveMediaSource.Factory(new RtmpDataSource.Factory())
+                .createMediaSource(MediaItem.fromUri(contentUri));
+    } else if ("rtsp".equals(contentUri.getScheme())) {
+        return new RtspMediaSource.Factory().createMediaSource(MediaItem.fromUri(contentUri));
     }
+    
+    int contentType = inferContentType(uri);
+    DataSource.Factory factory = isCache ? getCacheDataSourceFactory() : getDataSourceFactory();
+    
+    if (mHttpDataSourceFactory != null) {
+        setHeaders(headers);
+    }
+    
+    // 针对特定错误码或特定链接类型，强制使用 HlsMediaSource
+    if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED || 
+        uri.toLowerCase().contains(".m3u8")) {
+        return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+    }
+    
+    switch (contentType) {
+        case C.TYPE_DASH:
+            return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+        case C.TYPE_HLS:
+            return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+        default:
+        case C.TYPE_OTHER:
+            // 对于包含 .m3u8 的链接，即使被识别为 TYPE_OTHER，也使用 HlsMediaSource
+            if (uri.toLowerCase().contains(".m3u8")) {
+                return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+            }
+            return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+    }
+}
+
 
     private static MediaItem getMediaItem(String uri, int errorCode) {
         MediaItem.Builder builder = new MediaItem.Builder().setUri(Uri.parse(uri.trim().replace("\\", "")));
@@ -130,16 +136,18 @@ return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(c
 
     }
 
-    private int inferContentType(String fileName) {
-        fileName = fileName.toLowerCase();
-        if (fileName.contains(".mpd")) {
-            return C.TYPE_DASH;
-        } else if (fileName.contains(".m3u8")) {
-            return C.TYPE_HLS;
-        } else {
-            return C.TYPE_OTHER;
-        }
+private int inferContentType(String fileName) {
+    fileName = fileName.toLowerCase();
+    // 优先检查 .m3u8
+    if (fileName.contains(".m3u8")) {
+        return C.TYPE_HLS;
+    } else if (fileName.contains(".mpd")) {
+        return C.TYPE_DASH;
+    } else {
+        return C.TYPE_OTHER;
     }
+}
+
 
     private DataSource.Factory getCacheDataSourceFactory() {
         if (mCache == null) {
