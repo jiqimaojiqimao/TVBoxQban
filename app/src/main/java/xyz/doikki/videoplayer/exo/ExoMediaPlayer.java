@@ -27,6 +27,10 @@ import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
 import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
+import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory;
+import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON;
+import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;
+import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
 
 import java.util.Map;
 
@@ -75,15 +79,16 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (exoSelect > 0) {
             // 选择器优先
             rendererMode = (exoSelect == 1) 
-                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF    // 硬解
-                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
+                ? EXTENSION_RENDERER_MODE_ON    // 硬解
+                : EXTENSION_RENDERER_MODE_PREFER; // 软解
         } else {
             // 使用exoDecode配置
             rendererMode = exoDecode 
-                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
-                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
+                ? EXTENSION_RENDERER_MODE_PREFER // 软解
+                : EXTENSION_RENDERER_MODE_ON;   // 硬解
         }
-        mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+        mRenderersFactory = new NextRenderersFactory(mAppContext)
+            .setEnableDecoderFallback(true)
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
@@ -95,7 +100,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
             .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
-            .setTunnelingEnabled(false));   //xuameng 关闭隧道模式提高兼容性
+            .setTunnelingEnabled(true));   //xuameng字幕、音轨默认选择中文
 
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
