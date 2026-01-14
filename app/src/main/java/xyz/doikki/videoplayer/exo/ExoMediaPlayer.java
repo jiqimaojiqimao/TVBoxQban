@@ -24,8 +24,8 @@ import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.ui.PlayerView;
 // 正确的导入（根据AndroidX Media3结构）
-import androidx.media3.exoplayer.MediaCodecSelector;
-import androidx.media3.common.Renderer;
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
+import androidx.media3.exoplayer.Renderer;
 import androidx.media3.exoplayer.analytics.AnalyticsCollector;
 import androidx.media3.exoplayer.audio.AudioRendererEventListener;
 import androidx.media3.exoplayer.video.VideoRendererEventListener;
