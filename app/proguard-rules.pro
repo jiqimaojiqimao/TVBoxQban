@@ -186,6 +186,9 @@
 -dontwarn org.joda.time.**
 -dontwarn org.w3c.dom.**
 -dontwarn javax.xml.**
+-dontwarn org.codehaus.jettison.**
+-dontwarn org.dom4j.**
+
 
 
 #eventbus
