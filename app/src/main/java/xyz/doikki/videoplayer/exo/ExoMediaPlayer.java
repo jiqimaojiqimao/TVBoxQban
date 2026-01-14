@@ -65,51 +65,82 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     }
 
     @Override
-    public void initPlayer() {
-        // xuameng释放旧实例
-        if (mMediaPlayer != null) {
-            mMediaPlayer.release();
-            mMediaPlayer.removeListener(this);
-        }
-        // xuameng渲染器配置
-        boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
-        int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
-        // ExoPlayer2 解码模式选择逻辑
-        int rendererMode;
-        if (exoSelect > 0) {
-            // 选择器优先
-            rendererMode = (exoSelect == 1) 
-                ? EXTENSION_RENDERER_MODE_OFF    // 硬解
-                : EXTENSION_RENDERER_MODE_ON; // 软解
-        } else {
-            // 使用exoDecode配置
-            rendererMode = exoDecode 
-                ? EXTENSION_RENDERER_MODE_ON // 软解
-                : EXTENSION_RENDERER_MODE_OFF;   // 硬解
-        }
-        mRenderersFactory = new NextRenderersFactory(mAppContext)
-            .setEnableDecoderFallback(true)
-            .setExtensionRendererMode(rendererMode);
 
-        // xuameng轨道选择器配置
-        mTrackSelector = new DefaultTrackSelector(mAppContext);
-
-        //xuameng加载策略控制
-        mLoadControl = new DefaultLoadControl();
-
-		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
-            .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
-            .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
-            .setTunnelingEnabled(false));   //xuameng字幕、音轨默认选择中文
-
-        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
-                .setLoadControl(mLoadControl)
-                .setRenderersFactory(mRenderersFactory)
-                .setTrackSelector(mTrackSelector).build();
-
-        setOptions();
-        mMediaPlayer.addListener(this);
+public void initPlayer() {
+    // 释放旧实例
+    if (mMediaPlayer != null) {
+        mMediaPlayer.release();
+        mMediaPlayer.removeListener(this);
     }
+    
+    // 渲染器配置 - 优先硬解视频，软解音频
+    boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
+    int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
+    
+    // 解码模式选择逻辑
+    int rendererMode = EXTENSION_RENDERER_MODE_OFF; // 默认硬解优先
+    
+    if (exoSelect > 0) {
+        // 选择器优先
+        rendererMode = (exoSelect == 1) 
+            ? EXTENSION_RENDERER_MODE_OFF    // 硬解优先
+            : EXTENSION_RENDERER_MODE_PREFER;    // 软解优先
+    } else {
+        // 使用exoDecode配置 - 硬解优先
+        rendererMode = exoDecode 
+            ? EXTENSION_RENDERER_MODE_PREFER     // 软解优先
+            : EXTENSION_RENDERER_MODE_OFF;   // 硬解优先
+    }
+    
+    // 自定义渲染器工厂，分别配置音视频解码策略
+    mRenderersFactory = new NextRenderersFactory(mAppContext) {
+        @Override
+        protected void buildVideoRenderers(Context context, int extensionRendererMode,
+                MediaCodecSelector mediaCodecSelector,
+                boolean enableDecoderFallback, Handler eventHandler,
+                VideoRendererEventListener eventListener,
+                AnalyticsCollector analyticsCollector,
+                ArrayList<Renderer> out) {
+            // 视频优先使用硬解码器
+            addVideoRenderers(out, eventHandler, videoRendererEventListener, 
+                analyticsCollector, EXTENSION_RENDERER_MODE_OFF, mediaCodecSelector, enableDecoderFallback);
+        }
+
+        @Override
+        protected void buildAudioRenderers(Context context, int extensionRendererMode,
+                MediaCodecSelector mediaCodecSelector,
+                boolean enableDecoderFallback, Handler eventHandler,
+                AudioRendererEventListener eventListener,
+                AnalyticsCollector analyticsCollector,
+                ArrayList<Renderer> out) {
+            // 音频使用软解码器
+            addAudioRenderers(out, eventHandler, audioRendererEventListener,
+                analyticsCollector, EXTENSION_RENDERER_MODE_PREFER, mediaCodecSelector, enableDecoderFallback);
+        }
+    }
+    .setEnableDecoderFallback(true)
+    .setExtensionRendererMode(rendererMode);
+
+    // 轨道选择器配置
+    mTrackSelector = new DefaultTrackSelector(mAppContext);
+
+    // 加载策略控制
+    mLoadControl = new DefaultLoadControl();
+
+    mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
+        .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")    
+        .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")   
+        .setTunnelingEnabled(false));
+
+    mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+            .setLoadControl(mLoadControl)
+            .setRenderersFactory(mRenderersFactory)
+            .setTrackSelector(mTrackSelector).build();
+
+    setOptions();
+    mMediaPlayer.addListener(this);
+}
+
 
     public DefaultTrackSelector getTrackSelector() {
         return mTrackSelector;
