@@ -23,11 +23,13 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.ui.PlayerView;
-import androidx.media3.MediaCodecSelector;
-import androidx.media3.Renderer;
-import androidx.media3.analytics.AnalyticsCollector;
-import androidx.media3.audio.AudioRendererEventListener;
-import androidx.media3.video.VideoRendererEventListener;
+// 正确的导入（根据AndroidX Media3结构）
+import androidx.media3.exoplayer.MediaCodecSelector;
+import androidx.media3.common.Renderer;
+import androidx.media3.exoplayer.analytics.AnalyticsCollector;
+import androidx.media3.exoplayer.audio.AudioRendererEventListener;
+import androidx.media3.exoplayer.video.VideoRendererEventListener;
+
 import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON;
 import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;
 import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
