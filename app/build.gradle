@@ -147,5 +147,5 @@ dependencies {
     implementation 'androidx.media3:media3-exoplayer-smoothstreaming:1.8.0'
     implementation 'androidx.media3:media3-extractor:1.8.0'
     implementation 'androidx.media3:media3-ui:1.8.0'
-    implementation 'androidx.media3:media3-exoplayer-ffmpeg:1.8.0'
+    implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'
 }
