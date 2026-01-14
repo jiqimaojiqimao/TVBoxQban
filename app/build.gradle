@@ -58,12 +58,12 @@ android {
                 abiFilters 'armeabi-v7a'
             }
         }
-  //      arm64 {
-  //          dimension = "abi"
-  //          ndk {
-  //              abiFilters 'arm64-v8a'
-  //          }
-  //      }
+        arm64 {
+            dimension = "abi"
+            ndk {
+                abiFilters 'arm64-v8a'
+            }
+        }
     }
 
     compileOptions {
@@ -126,10 +126,10 @@ dependencies {
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
     implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
-        //支持http3
+    //支持http3
     implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
     implementation ('org.chromium.net:cronet-embedded:101.4951.41')
-      //工具类
+    //工具类
     implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     implementation 'com.blankj:utilcodex:1.31.0'
     //xuameng exo
@@ -148,3 +148,4 @@ dependencies {
     implementation 'androidx.media3:media3-extractor:1.8.0'
     implementation 'androidx.media3:media3-ui:1.8.0'
 }
+
