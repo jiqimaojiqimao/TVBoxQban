@@ -92,6 +92,7 @@ configurations.all {
     resolutionStrategy {
           force 'org.dom4j:dom4j:2.1.4'
     }
+exclude group: 'xpp3', module: 'xpp3'
 }
 dependencies {
     api fileTree(dir: "libs", include: ["*.jar"])
@@ -156,6 +157,7 @@ dependencies {
     implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'
     implementation 'org.dom4j:dom4j:2.1.4'
 }
+
 
 
 
