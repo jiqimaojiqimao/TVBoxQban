@@ -49,6 +49,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 
     private int errorCode = -100;
+    private String mLastUri;   //xuameng 上次播放地址
+    private Map<String, String> mLastHeaders;  //xuameng 上次头部
+    private int mRetryCount = 0; // xuameng当前重试次数
+    private static final int MAX_RETRY_COUNT = 3; // xuameng最大重试次数
 
     public ExoMediaPlayer(Context context) {
         mAppContext = context.getApplicationContext();
@@ -107,6 +111,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void setDataSource(String path, Map<String, String> headers) {
+        mLastUri = path;   //xuameng 记录上次播放地址
+        mLastHeaders = headers;  //xuameng 记录上次头部
         mMediaSource = mMediaSourceHelper.getMediaSource(path, headers, false, errorCode);
     }
 
@@ -307,11 +313,42 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void onPlayerError(@NonNull PlaybackException error) {
-       String progressKey = Hawk.get(HawkConfig.EXO_PROGRESS_KEY, "");
+        String progressKey = Hawk.get(HawkConfig.EXO_PROGRESS_KEY, "");
         errorCode = error.errorCode;
         Log.e("EXOPLAYER", "" + error.errorCode);      //xuameng音频出错后尝试重播
+        if (errorCode == 5001 || errorCode == 5002 || errorCode == 4001){
+            boolean exoDecodeXu = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
+            int exoSelectXu = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
+            if (exoSelectXu == 1) {
+                memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨  硬解
+            }
+            if (exoSelectXu == 0) {
+                if(!exoDecodeXu){
+                   memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨  硬解
+                }
+	        }
+        }
+
+        if (errorCode == 3003 || errorCode == 3001 || errorCode == 2000) {   //出现错误直播用M3U8方式解码
+            if (mRetryCount < MAX_RETRY_COUNT) {                // xuameng检查是否超过最大重试次数
+                mRetryCount++;                                  // xuameng未超过，执行重试 增加重试计数
+                if (mMediaPlayer != null) {                        // xuameng重置播放器状态
+                    mMediaPlayer.stop();
+                    mMediaPlayer.clearMediaItems();
+                    mIsPreparing = false;                       // xuameng可选：重置一些状态变量
+                }
+                // xuameng重新尝试播放
+                if (mLastUri != null) {
+                    setDataSource(mLastUri, mLastHeaders);
+                    prepareAsync();
+                    start();
+                    return; // 避免触发外层 onError 回调
+                }
+            } else {
+                mRetryCount = 0;    // 重置重试次数，避免影响下一次播放
+            }
+        }
         if (mPlayerEventListener != null) {
-            memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
             mPlayerEventListener.onError();
         }
     }
