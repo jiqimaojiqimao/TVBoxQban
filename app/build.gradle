@@ -88,6 +88,11 @@ repositories {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+          force 'org.dom4j:dom4j:2.1.4'
+    }
+}
 dependencies {
     api fileTree(dir: "libs", include: ["*.jar"])
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  //xuameng 启用Java 8脱糖
@@ -150,10 +155,6 @@ dependencies {
     implementation 'androidx.media3:media3-decoder-av1:1.8.0'
     implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'
     implementation 'org.dom4j:dom4j:2.1.4'
-
-    configurations.all {
-    resolutionStrategy {
-        force 'org.dom4j:dom4j:2.1.4'
-    }
 }
+
 
