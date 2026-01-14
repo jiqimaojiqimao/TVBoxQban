@@ -172,6 +172,23 @@
 -keep class com.thoughtworks.xstream.converters.extended.CharsetConverter { *; }
 -keep class com.thoughtworks.xstream.** { *; }
 
+# 保留原有规则
+-dontwarn java.beans.**
+-dontwarn javax.activation.**
+-dontwarn javax.xml.bind.**
+-dontwarn javax.xml.stream.**
+-dontwarn net.sf.cglib.**
+-dontwarn nu.xom.**
+
+# 新增规则（保留或移除 org.dom4j.**）
+-dontwarn org.jdom.**
+-dontwarn org.jdom2.**
+-dontwarn org.joda.time.**
+-dontwarn org.w3c.dom.**
+-dontwarn javax.xml.**
+-dontwarn org.codehaus.jettison.**
+# -dontwarn org.dom4j.**  # 可尝试移除此规则
+
 #eventbus
 -keepclassmembers class * {
     @org.greenrobot.eventbus.Subscribe <methods>;
