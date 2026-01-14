@@ -171,6 +171,14 @@
 -keep class com.thoughtworks.xstream.converters.extended.RegexPatternConverter { *; }
 -keep class com.thoughtworks.xstream.converters.extended.CharsetConverter { *; }
 -keep class com.thoughtworks.xstream.** { *; }
+# 添加缺失类的忽略规则
+-dontwarn java.beans.**
+-dontwarn javax.activation.**
+-dontwarn javax.xml.bind.**
+-dontwarn javax.xml.stream.**
+-dontwarn net.sf.cglib.**
+-dontwarn nu.xom.**
+
 #eventbus
 -keepclassmembers class * {
     @org.greenrobot.eventbus.Subscribe <methods>;
@@ -225,3 +233,4 @@
 -keep class org.chromium.net.**{*;}
 # Nano
 -keep class fi.iki.elonen.** { *; }
+
