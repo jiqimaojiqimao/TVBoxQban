@@ -316,17 +316,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         String progressKey = Hawk.get(HawkConfig.EXO_PROGRESS_KEY, "");
         errorCode = error.errorCode;
         Log.e("EXOPLAYER", "" + error.errorCode);      //xuameng音频出错后尝试重播
+
         if (errorCode == 5001 || errorCode == 5002 || errorCode == 4001){
-            boolean exoDecodeXu = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
-            int exoSelectXu = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
-            if (exoSelectXu == 1) {
-                memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨  硬解
-            }
-            if (exoSelectXu == 0) {
-                if(!exoDecodeXu){
-                   memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨  硬解
-                }
-	        }
+            memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
         }
 
         if (errorCode == 3003 || errorCode == 3001 || errorCode == 2000) {   //出现错误直播用M3U8方式解码
