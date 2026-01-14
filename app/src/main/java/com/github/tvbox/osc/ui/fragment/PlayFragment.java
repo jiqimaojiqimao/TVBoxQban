@@ -126,7 +126,7 @@ public class PlayFragment extends BaseLazyFragment {
     private SourceViewModel sourceViewModel;
     private Handler mHandler;
     private boolean isJianpian = false;  //xuameng判断视频是否为荐片
-
+    private boolean selectExoTrack = false;  //xuameng判断exo选择音轨
     private int mRetryCountExo = 0;  //xuameng播放出错计数器
     private int mRetryCountIjk = 0;  //xuameng播放出错计数器
     private int mRetryCountJP = 0;  //xuameng播放出错计数器
@@ -436,6 +436,7 @@ public class PlayFragment extends BaseLazyFragment {
                     }
                     if (mediaPlayer instanceof EXOmPlayer) {
                         ((EXOmPlayer) mediaPlayer).selectExoTrackAudio(value,progressKey);
+                        selectExoTrack = true;  //xuameng 选择音轨
                     }
                     new Handler().postDelayed(new Runnable() {
                         @Override
@@ -1038,6 +1039,12 @@ public class PlayFragment extends BaseLazyFragment {
         int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);  //xuameng exo解码动态选择
         long currentTime = System.currentTimeMillis();
         int playerType = 0;   //xuameng默认播放器类型
+        if (selectExoTrack){    //xuameng如果是EXO在选择音轨就重置次数
+            autoRetryCount = 0;
+            mRetryCountExo = 0;  //xuameng播放出错计数器重置
+            mRetryCountIjk = 0;
+            selectExoTrack = false;
+        }
         try {
             if (mVodPlayerCfg.has("pl")) {
                 playerType = mVodPlayerCfg.getInt("pl");     //xuameng 获取播放器类型
