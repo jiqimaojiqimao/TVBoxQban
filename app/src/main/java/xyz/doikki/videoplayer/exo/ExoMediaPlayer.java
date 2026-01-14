@@ -89,6 +89,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
         mRenderersFactory = new NextRenderersFactory(mAppContext)
 //            .setEnableDecoderFallback(true)
+		.setVideoPrefer(false)
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
