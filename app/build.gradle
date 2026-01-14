@@ -28,8 +28,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources = true
+            minifyEnabled false
+            shrinkResources = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
@@ -150,4 +150,5 @@ dependencies {
     implementation 'androidx.media3:media3-decoder-av1:1.8.0'
     implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'
 }
+
 
