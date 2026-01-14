@@ -28,8 +28,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources = false
+            minifyEnabled true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
@@ -148,5 +148,6 @@ dependencies {
     implementation 'androidx.media3:media3-extractor:1.8.0'
     implementation 'androidx.media3:media3-ui:1.8.0'
 }
+
 
 
