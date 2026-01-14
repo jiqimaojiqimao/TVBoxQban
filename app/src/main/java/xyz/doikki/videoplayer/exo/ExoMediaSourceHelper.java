@@ -104,6 +104,11 @@ public final class ExoMediaSourceHelper {
         if (mHttpDataSourceFactory != null) {
             setHeaders(headers);
         }
+
+        if (errorCode == 3003 || errorCode == 3001 || errorCode == 2000) {               // xuameng当错误码为3003时，强制使用 HLS 源进行播放
+            return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+        }
+
         if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
             MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
             builder.setMimeType(MimeTypes.APPLICATION_M3U8);
@@ -116,9 +121,6 @@ public final class ExoMediaSourceHelper {
                 return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
-                if (uri.toLowerCase().contains("188766.xyz") || uri.toLowerCase().contains(".m3u8")) {   //xuameng 修复错判类型
-                    return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
-                }
                 return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
         }
     }
