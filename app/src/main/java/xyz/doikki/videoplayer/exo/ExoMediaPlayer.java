@@ -80,15 +80,15 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             // 选择器优先
             rendererMode = (exoSelect == 1) 
                 ? EXTENSION_RENDERER_MODE_OFF    // 硬解
-                : EXTENSION_RENDERER_MODE_PREFER; // 软解
+                : EXTENSION_RENDERER_MODE_ON; // 软解
         } else {
             // 使用exoDecode配置
             rendererMode = exoDecode 
-                ? EXTENSION_RENDERER_MODE_PREFER // 软解
+                ? EXTENSION_RENDERER_MODE_ON // 软解
                 : EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
         mRenderersFactory = new NextRenderersFactory(mAppContext)
-//            .setEnableDecoderFallback(true)
+            .setEnableDecoderFallback(true)
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
