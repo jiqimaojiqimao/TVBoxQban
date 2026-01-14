@@ -189,8 +189,6 @@
 -dontwarn org.codehaus.jettison.**
 -dontwarn org.dom4j.**
 
-
-
 #eventbus
 -keepclassmembers class * {
     @org.greenrobot.eventbus.Subscribe <methods>;
