@@ -172,7 +172,7 @@
 -keep class com.thoughtworks.xstream.converters.extended.CharsetConverter { *; }
 -keep class com.thoughtworks.xstream.** { *; }
 
-# 添加缺失类的忽略规则（之前已添加的）
+# xuameng添加缺失类的忽略规则（之前已添加的）
 -dontwarn java.beans.**
 -dontwarn javax.activation.**
 -dontwarn javax.xml.bind.**
@@ -180,7 +180,7 @@
 -dontwarn net.sf.cglib.**
 -dontwarn nu.xom.**
 
-# 新增：忽略JDOM和Joda-Time缺失警告
+# xuameng新增：忽略JDOM和Joda-Time缺失警告
 -dontwarn org.jdom.**
 -dontwarn org.jdom2.**
 -dontwarn org.joda.time.**
