@@ -213,7 +213,7 @@
 -dontwarn androidx.media3.exoplayer.**
 
 # 实体类  xuameng懒得弄了，反正自己用
--keep class com.github.tvbox.osc.** { *; } 
+-keep class com.github.tvbox.osc.ui.activity.** { *; } 
 #CardView
 -keep class com.github.tvbox.osc.ui.tv.widget.card.**{*;}
 #ViewObj
