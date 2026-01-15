@@ -12,7 +12,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
-        versionName '20260114-2222'
+        versionName '20260115-2222'
         multiDexEnabled = true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -60,10 +60,10 @@ android {
         }
 //        arm64 {
 //            dimension = "abi"
- //           ndk {
- //               abiFilters 'arm64-v8a'
- //           }
-  //      }
+//            ndk {
+//                abiFilters 'arm64-v8a'
+//            }
+//        }
     }
 
     compileOptions {
@@ -88,12 +88,13 @@ repositories {
     }
 }
 
-configurations.all {
+configurations.all {            //xuameng新增解决编译
     resolutionStrategy {
           force 'org.dom4j:dom4j:2.1.4'
     }
-exclude group: 'xpp3', module: 'xpp3'
+    exclude group: 'xpp3', module: 'xpp3'
 }
+
 dependencies {
     api fileTree(dir: "libs", include: ["*.jar"])
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  //xuameng 启用Java 8脱糖
@@ -119,6 +120,7 @@ dependencies {
     implementation('com.thoughtworks.xstream:xstream:1.4.20') {
         exclude group: 'xmlpull', module: 'xmlpull'
     }
+    implementation 'org.dom4j:dom4j:2.1.4'   //xuameng新增解决编译
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'com.orhanobut:hawk:2.0.1'
 
@@ -132,34 +134,27 @@ dependencies {
     implementation 'commons-io:commons-io:2.11.0'
     implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
     implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
-        //支持http3
+    //支持http3
     implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
     implementation ('org.chromium.net:cronet-embedded:101.4951.41')
-      //工具类
+    //工具类
     implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     implementation 'com.blankj:utilcodex:1.31.0'
     //xuameng exo
-    implementation 'androidx.media3:media3-common:1.8.0'
-    implementation 'androidx.media3:media3-container:1.8.0'
-    implementation 'androidx.media3:media3-database:1.8.0'
-    implementation 'androidx.media3:media3-datasource:1.8.0'
-    implementation 'androidx.media3:media3-datasource-rtmp:1.8.0'
-    implementation 'androidx.media3:media3-decoder:1.8.0'
-    implementation 'androidx.media3:media3-effect:1.8.0'
-    implementation 'androidx.media3:media3-exoplayer:1.8.0'
-    implementation 'androidx.media3:media3-exoplayer-dash:1.8.0'
-    implementation 'androidx.media3:media3-exoplayer-hls:1.8.0'
-    implementation 'androidx.media3:media3-exoplayer-rtsp:1.8.0'
-    implementation 'androidx.media3:media3-exoplayer-smoothstreaming:1.8.0'
-    implementation 'androidx.media3:media3-extractor:1.8.0'
-    implementation 'androidx.media3:media3-ui:1.8.0'
- //   implementation 'androidx.media3:media3-decoder-av1:1.8.0'
-    implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'
-    implementation 'org.dom4j:dom4j:2.1.4'
+    def exoplayerVersion = "1.9.0"
+    implementation "androidx.media3:media3-common:$exoplayerVersion"
+    implementation "androidx.media3:media3-container:$exoplayerVersion"
+    implementation "androidx.media3:media3-database:$exoplayerVersion"
+    implementation "androidx.media3:media3-datasource:$exoplayerVersion"
+    implementation "androidx.media3:media3-datasource-rtmp:$exoplayerVersion"
+    implementation "androidx.media3:media3-decoder:$exoplayerVersion"
+    implementation "androidx.media3:media3-effect:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer-dash:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer-hls:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer-rtsp:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer-smoothstreaming:$exoplayerVersion"
+    implementation "androidx.media3:media3-extractor:$exoplayerVersion"
+    implementation "androidx.media3:media3-ui:$exoplayerVersion"
+    implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'    //xuameng ffmpeg扩展
 }
-
-
-
-
-
-
