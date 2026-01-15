@@ -213,14 +213,7 @@
 -dontwarn androidx.media3.exoplayer.**
 
 # 实体类  xuameng懒得弄了，反正自己用
--keep class com.github.tvbox.osc.ui.bean.** { *; } 
--keep class com.github.tvbox.osc.ui.viewmodel.** { *; } 
-#CardView
--keep class com.github.tvbox.osc.ui.tv.widget.card.**{*;}
-#ViewObj
--keep class com.github.tvbox.osc.ui.tv.widget.ViewObj{
-    <methods>;
-}
+-keep class com.github.tvbox.osc.ui.** { *; } 
 
 -keep class com.github.catvod.crawler.*{*;}
 # 迅雷下载模块
