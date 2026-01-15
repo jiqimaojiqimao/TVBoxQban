@@ -1,160 +1,248 @@
-plugins {
-    id 'com.android.application'
-    id 'kotlin-android'
+
+#############################################
+#
+# 对于一些基本指令的添加
+#
+#############################################
+-optimizationpasses 5
+-dontusemixedcaseclassnames
+-dontskipnonpubliclibraryclasses
+-dontskipnonpubliclibraryclassmembers
+-dontpreverify
+-verbose
+-printmapping proguardMapping.txt
+-optimizations !code/simplification/cast,!field/*,!class/merging/*
+-keepattributes *Annotation*,InnerClasses
+-keepattributes EnclosingMethod, InnerClasses
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# 重新包装所有重命名的包并放在给定的单一包中
+#R8冲突xuameng  -flattenpackagehierarchy androidx.base
+
+# 将包里的类混淆成n个再重新打包到一个统一的package中  会覆盖flattenpackagehierarchy选项
+-repackageclasses androidx.base
+
+# 把混淆类中的方法名也混淆了
+#R8冲突xuameng  -useuniqueclassmembernames
+#############################################
+#
+# Android开发中一些需要保留的公共部分
+#
+#############################################
+
+# 保留我们使用的四大组件，自定义的Application等等这些类不被混淆
+# 因为这些子类都有可能被外部调用
+-keep public class * extends android.app.Activity
+-keep public class * extends android.app.Application.**
+-keep public class * extends android.app.Service
+-keep public class * extends android.content.BroadcastReceiver
+-keep public class * extends android.content.ContentProvider
+-keep public class * extends android.app.backup.BackupAgentHelper
+-keep public class * extends android.preference.Preference
+-keep public class * extends android.view.View
+-keep public class com.android.vending.licensing.ILicensingService.**
+
+# 保留support下的所有类及其内部类
+-keep class android.support.** {*;}
+# 保留继承的
+-keep public class * extends android.support.v4.**
+-keep public class * extends android.support.v7.**
+-keep public class * extends android.support.annotation.**
+
+-keep class com.google.android.material.** { *; }
+-dontwarn com.google.android.material.**
+-dontnote com.google.android.material.**
+-dontwarn androidx.**
+-keep class androidx.** { *; }
+-keep interface androidx.** { *; }
+#-keep public class * extends androidx.**
+
+-keep class org.xmlpull.v1.** {*;}
+#r8 xuameng忽略kxml2解析器库的缺失警告
+-dontwarn org.kxml2.io.KXmlParser
+-dontwarn org.xmlpull.mxp1.**
+-dontwarn com.ctc.wstx.stax.**
+-keep class com.bea.xml.stream.**
+-dontwarn com.bea.xml.stream.**
+-dontwarn java.awt.**
+-dontwarn javax.swing.plaf.FontUIResource
+# 保留R下面的资源
+-keep class **.R$* {*;}
+
+# 保留本地native方法不被混淆
+-keepclasseswithmembernames class * {
+    native <methods>;
 }
 
-android {
-    compileSdkVersion 36
-
-    defaultConfig {
-        namespace = 'com.github.tvbox.osc'
-        applicationId 'com.jvhuiys.player'
-        minSdkVersion 24
-        targetSdkVersion 28
-        versionCode 1
-        versionName '20260115-2222'
-        multiDexEnabled = true
-        //设置room的Schema的位置
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
-            }
-        }
-    }
-
-    packagingOptions {
-        exclude 'META-INF/DEPENDENCIES'
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled true
-            shrinkResources = true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-
-        debug {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
-
-        }
-    }
-    
-    packagingOptions {
-        jniLibs {
-            useLegacyPackaging true
-        }
-        resources {
-            exclude 'META-INF/beans.xml'
-            exclude 'META-INF/versions/9/OSGI-INF/MANIFEST.MF'
-        }
-    }
-
-    flavorDimensions += ["abi"]
-    productFlavors {
-        armeabi {
-            dimension = "abi"
-            ndk {
-                abiFilters 'armeabi-v7a'
-            }
-        }
-//        arm64 {
-//            dimension = "abi"
-//            ndk {
-//                abiFilters 'arm64-v8a'
-//            }
-//        }
-    }
-
-    compileOptions {
-        coreLibraryDesugaringEnabled = true   //xuameng 启用Java 8脱糖
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
-    lintOptions {
-        checkReleaseBuilds = false
-        abortOnError = false
-    }
+# 保留在Activity中的方法参数是view的方法，
+# 这样以来我们在layout中写的onClick就不会被影响
+-keepclassmembers class * extends android.app.Activity{
+    public void *(android.view.View);
 }
 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
+# 保留枚举类不被混淆
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
 }
 
-configurations.all {            //xuameng新增解决编译
-    resolutionStrategy {
-          force 'org.dom4j:dom4j:2.1.4'
-    }
-    exclude group: 'xpp3', module: 'xpp3'
+# 保留我们自定义控件（继承自View）不被混淆
+-keep public class * extends android.view.View{
+    *** get*();
+    void set*(***);
+    public <init>(android.content.Context);
+    public <init>(android.content.Context, android.util.AttributeSet);
+    public <init>(android.content.Context, android.util.AttributeSet, int);
 }
 
-dependencies {
-    api fileTree(dir: "libs", include: ["*.jar"])
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  //xuameng 启用Java 8脱糖
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'org.nanohttpd:nanohttpd:2.3.1'
-    implementation 'com.google.zxing:core:3.3.0'
-    implementation 'androidx.appcompat:appcompat:1.3.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    implementation files('libs/thunder.jar')
-    implementation files('libs/commons-lang3-3.12.0.jar')
-    implementation 'com.squareup.okhttp3:okhttp:3.12.11'
-    annotationProcessor 'androidx.room:room-compiler:2.3.0'
-    implementation 'androidx.room:room-runtime:2.3.0'
-    implementation 'androidx.multidex:multidex:2.0.1'
-    implementation 'com.squareup.okio:okio:2.8.0'
-    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.45-androidx'
-    implementation 'com.kingja.loadsir:loadsir:1.3.8'
-    implementation 'com.google.code.gson:gson:2.8.7'
-    implementation 'com.squareup.picasso:picasso:2.71828'
-    implementation 'me.jessyan:autosize:1.2.1'
-    implementation('com.thoughtworks.xstream:xstream:1.4.20') {
-        exclude group: 'xmlpull', module: 'xmlpull'
-    }
-    implementation 'org.dom4j:dom4j:2.1.4'   //xuameng新增解决编译
-    implementation 'org.greenrobot:eventbus:3.2.0'
-    implementation 'com.orhanobut:hawk:2.0.1'
-
-    implementation project(":player")
-    implementation project(":quickjs")
-    implementation 'com.lzy.net:okgo:3.0.4'
-    implementation 'com.owen:tv-recyclerview:3.0.0'
-    implementation 'com.github.getActivity:XXPermissions:18.5'
-    implementation 'org.jsoup:jsoup:1.14.1'
-    implementation 'com.github.hedzr:android-file-chooser:v1.2.0-final'
-    implementation 'commons-io:commons-io:2.11.0'
-    implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
-    implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
-    //支持http3
-    implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
-    implementation ('org.chromium.net:cronet-embedded:101.4951.41')
-    //工具类
-    implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
-    implementation 'com.blankj:utilcodex:1.31.0'
-    //xuameng exo
-    def exoplayerVersion = "1.9.0"
-    implementation "androidx.media3:media3-common:$exoplayerVersion"
-    implementation "androidx.media3:media3-container:$exoplayerVersion"
-    implementation "androidx.media3:media3-database:$exoplayerVersion"
-    implementation "androidx.media3:media3-datasource:$exoplayerVersion"
-    implementation "androidx.media3:media3-datasource-rtmp:$exoplayerVersion"
-    implementation "androidx.media3:media3-decoder:$exoplayerVersion"
-    implementation "androidx.media3:media3-effect:$exoplayerVersion"
-    implementation "androidx.media3:media3-exoplayer:$exoplayerVersion"
-    implementation "androidx.media3:media3-exoplayer-dash:$exoplayerVersion"
-    implementation "androidx.media3:media3-exoplayer-hls:$exoplayerVersion"
-    implementation "androidx.media3:media3-exoplayer-rtsp:$exoplayerVersion"
-    implementation "androidx.media3:media3-exoplayer-smoothstreaming:$exoplayerVersion"
-    implementation "androidx.media3:media3-extractor:$exoplayerVersion"
-    implementation "androidx.media3:media3-ui:$exoplayerVersion"
-    implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'    //xuameng ffmpeg扩展
+-keep public class * extends androidx.recyclerview.widget.RecyclerView$LayoutManager{
+    *** get*();
+    void set*(***);
+    public <init>(android.content.Context);
+    public <init>(android.content.Context, android.util.AttributeSet);
+    public <init>(android.content.Context, android.util.AttributeSet, int);
 }
+
+-keep class com.orhanobut.hawk.** { *; }
+
+# 保留Parcelable序列化类不被混淆
+-keep class * implements android.os.Parcelable {
+    public static final android.os.Parcelable$Creator *;
+}
+
+# 保留Serializable序列化的类不被混淆
+-keepclassmembers class * implements java.io.Serializable {
+    static final long serialVersionUID;
+    private static final java.io.ObjectStreamField[] serialPersistentFields;
+    !static !transient <fields>;
+    !private <fields>;
+    !private <methods>;
+    private void writeObject(java.io.ObjectOutputStream);
+    private void readObject(java.io.ObjectInputStream);
+    java.lang.Object writeReplace();
+    java.lang.Object readResolve();
+}
+
+# 对于带有回调函数的onXXEvent、**On*Listener的，不能被混淆
+-keepclassmembers class * {
+    void *(**On*Event);
+    void *(**On*Listener);
+}
+#xwalk
+-keep class org.xwalk.core.** { *; }
+-keep class org.crosswalk.engine.** { *; }
+-keep class org.chromium.** { *; }
+-dontwarn android.view.**
+-dontwarn android.media.**
+-dontwarn org.chromium.**
+#okhttp
+-dontwarn okhttp3.**
+-keep class okhttp3.**{*;}
+#okio
+-dontwarn okio.**
+-keep class okio.**{*;}
+#loadsir
+-dontwarn com.kingja.loadsir.**
+-keep class com.kingja.loadsir.** {*;}
+#gson
+# Gson specific classes
+-dontwarn sun.misc.**
+#-keep class com.google.gson.stream.** { *; }
+# Application classes that will be serialized/deserialized over Gson
+-keep class com.google.gson.examples.android.model.** { <fields>; }
+# Prevent proguard from stripping interface information from TypeAdapter, TypeAdapterFactory,
+# JsonSerializer, JsonDeserializer instances (so they can be used in @JsonAdapter)
+-keep class * extends com.google.gson.TypeAdapter
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+# Prevent R8 from leaving Data object members always null
+-keepclassmembers,allowobfuscation class * {
+  @com.google.gson.annotations.SerializedName <fields>;
+}
+#xstream
+-keep class com.thoughtworks.xstream.converters.extended.SubjectConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.ThrowableConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.StackTraceElementConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.CurrencyConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.RegexPatternConverter { *; }
+-keep class com.thoughtworks.xstream.converters.extended.CharsetConverter { *; }
+-keep class com.thoughtworks.xstream.** { *; }
+
+# xuameng新增规则 忽略缺失警告
+#-dontwarn javax.xml.bind.**
+#-dontwarn javax.xml.stream.**
+#-dontwarn javax.xml.**
+
+#-dontwarn java.beans.**
+#-dontwarn javax.activation.**
+
+-dontwarn net.sf.cglib.**
+-dontwarn nu.xom.**
+-dontwarn org.jdom.**
+-dontwarn org.jdom2.**
+-dontwarn org.joda.time.**
+-dontwarn org.w3c.dom.**
+
+-dontwarn org.codehaus.jettison.**
+
+
+#eventbus
+-keepclassmembers class * {
+    @org.greenrobot.eventbus.Subscribe <methods>;
+}
+-keep enum org.greenrobot.eventbus.ThreadMode { *; }
+# And if you use AsyncExecutor:
+-keepclassmembers class * extends org.greenrobot.eventbus.util.ThrowableFailureEvent {
+    <init>(java.lang.Throwable);
+}
+#bugly
+-dontwarn com.tencent.bugly.**
+-keep public class com.tencent.bugly.**{*;}
+-keep class android.support.**{*;}
+
+#dkplayer
+-keep class com.dueeeke.videoplayer.** { *; }
+-dontwarn com.dueeeke.videoplayer.**
+
+# IjkPlayer
+-keep class tv.danmaku.ijk.** { *; }
+-dontwarn tv.danmaku.ijk.**
+
+# ExoPlayer
+-keep class com.google.androidx.media3.exoplayer.** { *; }
+-dontwarn com.google.androidx.media3.exoplayer.**
+-keep class androidx.media3.exoplayer.** { *; }
+-dontwarn androidx.media3.exoplayer.**
+
+# 实体类
+#-keep class com.github.tvbox.osc.** { *; }
+#CardView
+-keep class com.github.tvbox.osc.ui.tv.widget.card.**{*;}
+#ViewObj
+-keep class com.github.tvbox.osc.ui.tv.widget.ViewObj{
+    <methods>;
+}
+
+-keep class com.github.catvod.crawler.*{*;}
+# 迅雷下载模块
+-keep class com.xunlei.downloadlib.** {*;}
+# quickjs引擎
+#-keep class com.github.tvbox.quickjs.** {*;}
+-keep class com.whl.quickjs.** {*;}
+# 支持影视的ali相关的jar
+-keep class com.google.gson.**{*;}
+# Zxing
+-keep class com.google.zxing.**{*;}
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+# Cronet支持http3
+-keep class com.google.net.cronet.**{*;}
+-keep class org.chromium.net.**{*;}
+# Nano
+-keep class fi.iki.elonen.** { *; }
