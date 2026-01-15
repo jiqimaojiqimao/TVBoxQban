@@ -173,6 +173,15 @@
 -keep class com.thoughtworks.xstream.** { *; }
 
 # xuameng新增规则 忽略缺失警告
+-dontwarn java.beans.**
+-dontwarn javax.activation.**
+-dontwarn net.sf.cglib.**
+-dontwarn nu.xom.**
+-dontwarn org.jdom.**
+-dontwarn org.jdom2.**
+-dontwarn org.joda.time.**
+-dontwarn org.w3c.dom.**
+-dontwarn org.codehaus.jettison.**
 
 
 #eventbus
@@ -204,7 +213,8 @@
 -dontwarn androidx.media3.exoplayer.**
 
 # 实体类  xuameng懒得弄了，反正自己用
-#-keep class com.github.tvbox.osc.** { *; } 
+#-keep class com.github.tvbox.osc.bean.** { *; }
+-keep class com.github.tvbox.osc.ui.fragment.homes.**{*;}
 #CardView
 -keep class com.github.tvbox.osc.ui.tv.widget.card.**{*;}
 #ViewObj
