@@ -99,47 +99,47 @@ dependencies {
     api fileTree(dir: "libs", include: ["*.jar"])
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3'  //xuameng 启用Java 8脱糖
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'org.nanohttpd:nanohttpd:2.3.1'
-    implementation 'com.google.zxing:core:3.5.1'    //xuameng 二维码
-    implementation 'androidx.appcompat:appcompat:1.7.0'    //xuameng UI 组件
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'          //xuameng http服务器
+    implementation 'com.google.zxing:core:3.5.1'            //xuameng 二维码
+    implementation 'androidx.appcompat:appcompat:1.7.0'     //xuameng UI 组件
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'   //xuameng响应布局
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'   //xuameng生命周期管理
-    implementation 'androidx.recyclerview:recyclerview:1.3.2'    //xuaemng列表展示
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'      //xuaemng列表展示
     implementation files('libs/thunder.jar')
     implementation files('libs/commons-lang3-3.12.0.jar')
-    implementation 'com.squareup.okhttp3:okhttp:3.12.11'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.11'       //xuameng okhttp
     annotationProcessor 'androidx.room:room-compiler:2.6.1'    //xuameng注释
     implementation 'androidx.room:room-runtime:2.6.1'      //xuameng数据库
-    implementation 'androidx.multidex:multidex:2.0.1'
-    implementation 'com.squareup.okio:okio:3.3.0'
-    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.49-androidx'
-    implementation 'com.kingja.loadsir:loadsir:1.3.8'
-    implementation 'com.google.code.gson:gson:2.10.1'
-    implementation 'com.squareup.picasso:picasso:2.71828'
-    implementation 'me.jessyan:autosize:1.2.1'
-    implementation('com.thoughtworks.xstream:xstream:1.4.20') {
+    implementation 'androidx.multidex:multidex:2.0.1'      //xuameng多Dex支持库
+    implementation 'com.squareup.okio:okio:3.3.0'          //xuameng数据处理
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.49-androidx'    //xuameng RecyclerView 的适配器
+    implementation 'com.kingja.loadsir:loadsir:1.3.8'    //xuameng 页面加载   
+    implementation 'com.google.code.gson:gson:2.10.1'    //xuameng json序列化
+    implementation 'com.squareup.picasso:picasso:2.71828'  //xuameng 图片加载
+    implementation 'me.jessyan:autosize:1.2.1'      //xuameng自动适配屏幕尺寸
+    implementation('com.thoughtworks.xstream:xstream:1.4.20') {      //xuameng xml json互转
         exclude group: 'xmlpull', module: 'xmlpull'
     }
-    implementation 'org.dom4j:dom4j:2.1.4'   //xuameng新增解决编译
-    implementation 'org.greenrobot:eventbus:3.3.1'
-    implementation 'com.orhanobut:hawk:2.0.1'
+    implementation 'org.dom4j:dom4j:2.1.4'   //xuameng新增解决编译  Java XML
+    implementation 'org.greenrobot:eventbus:3.3.1'   //xuameng订阅事件
+    implementation 'com.orhanobut:hawk:2.0.1'    //xuameng 简单存储
 
     implementation project(":player")
     implementation project(":quickjs")
     implementation 'com.lzy.net:okgo:3.0.4'
-    implementation 'com.owen:tv-recyclerview:3.0.0'
-    implementation 'com.github.getActivity:XXPermissions:18.5'
-    implementation 'org.jsoup:jsoup:1.16.1'
-    implementation 'com.github.hedzr:android-file-chooser:v1.2.0-final'
-    implementation 'commons-io:commons-io:2.13.0'
-    implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
+    implementation 'com.owen:tv-recyclerview:3.0.0'   //xuameng  recyclerview
+    implementation 'com.github.getActivity:XXPermissions:18.5'     //xuameng权限
+    implementation 'org.jsoup:jsoup:1.16.1'  //xuameng 解析html
+    implementation 'com.github.hedzr:android-file-chooser:v1.2.0-final'   //xuameng 文件选择
+    implementation 'commons-io:commons-io:2.13.0'   //xuameng 文件类FileUtils
+    implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'    //xuameng 文件编码
+    implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
     //支持http3
     implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
     implementation ('org.chromium.net:cronet-embedded:101.4951.41')
-    //工具类
-    implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
-    implementation 'com.blankj:utilcodex:1.31.0'
+    //安卓工具类
+    implementation 'com.blankj:utilcodex:1.31.0'   
     //xuameng exo
     def exoplayerVersion = "1.9.0"
     implementation "androidx.media3:media3-common:$exoplayerVersion"
