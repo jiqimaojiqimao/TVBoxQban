@@ -10,6 +10,7 @@ buildscript {
         maven { url = "https://maven.aliyun.com/repository/public" }
         maven { url = "https://storage.googleapis.com/r8-releases/raw" }
     }
+
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
