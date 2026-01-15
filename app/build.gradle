@@ -58,12 +58,12 @@ android {
                 abiFilters 'armeabi-v7a'
             }
         }
-        arm64 {
-            dimension = "abi"
-            ndk {
-                abiFilters 'arm64-v8a'
-            }
-        }
+//        arm64 {
+//            dimension = "abi"
+ //           ndk {
+ //               abiFilters 'arm64-v8a'
+ //           }
+  //      }
     }
 
     compileOptions {
@@ -157,6 +157,7 @@ dependencies {
     implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'
     implementation 'org.dom4j:dom4j:2.1.4'
 }
+
 
 
 
