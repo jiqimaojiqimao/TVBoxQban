@@ -175,15 +175,12 @@
 # xuameng新增规则 忽略缺失警告
 -dontwarn java.beans.**
 -dontwarn javax.activation.**
--dontwarn javax.xml.bind.**
--dontwarn javax.xml.stream.**
 -dontwarn net.sf.cglib.**
 -dontwarn nu.xom.**
 -dontwarn org.jdom.**
 -dontwarn org.jdom2.**
 -dontwarn org.joda.time.**
 -dontwarn org.w3c.dom.**
--dontwarn javax.xml.**
 -dontwarn org.codehaus.jettison.**
 
 
@@ -216,7 +213,7 @@
 -dontwarn androidx.media3.exoplayer.**
 
 # 实体类
--keep class com.github.tvbox.osc.** { *; }
+-keep class com.github.tvbox.osc.viewmodel.** { *; }
 #CardView
 -keep class com.github.tvbox.osc.ui.tv.widget.card.**{*;}
 #ViewObj
