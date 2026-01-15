@@ -58,12 +58,12 @@ android {
                 abiFilters 'armeabi-v7a'
             }
         }
- //       arm64 {
- //           dimension = "abi"
- //           ndk {
- //               abiFilters 'arm64-v8a'
- //           }
- //       }
+        arm64 {
+            dimension = "abi"
+            ndk {
+                abiFilters 'arm64-v8a'
+            }
+        }
     }
 
     compileOptions {
@@ -88,12 +88,6 @@ repositories {
     }
 }
 
-configurations.all {            //xuameng新增解决编译
-    resolutionStrategy {
-          force 'org.dom4j:dom4j:2.1.4'
-    }
-    exclude group: 'xpp3', module: 'xpp3'
-}
 
 dependencies {
     api fileTree(dir: "libs", include: ["*.jar"])
@@ -120,7 +114,7 @@ dependencies {
     implementation('com.thoughtworks.xstream:xstream:1.4.20') {      //xuameng xml json互转
         exclude group: 'xmlpull', module: 'xmlpull'
     }
-    implementation 'org.dom4j:dom4j:2.1.4'   //xuameng新增解决编译  Java XML
+
     implementation 'org.greenrobot:eventbus:3.3.1'   //xuameng订阅事件
     implementation 'com.orhanobut:hawk:2.0.1'    //xuameng 简单存储
 
@@ -157,5 +151,9 @@ dependencies {
     implementation "androidx.media3:media3-extractor:$exoplayerVersion"
     implementation "androidx.media3:media3-ui:$exoplayerVersion"
     implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'    //xuameng ffmpeg扩展
+    configurations {
+        configureEach {
+            exclude group: 'xpp3', module: 'xpp3'
+        }
+    }
 }
-
