@@ -32,11 +32,11 @@ public class ExoTrackNameProvider {
         } else if (trackType == C.TRACK_TYPE_AUDIO) {
             trackName =
                     joinWithSeparator(
-                            buildLanguageOrLabelString(format),
+                            buildLanguageOrLabelStringAudio(format),
                             buildAudioChannelString(format),
                             buildBitrateString(format));
         } else {
-            trackName = buildLanguageOrLabelString(format);
+            trackName = buildLanguageOrLabelStringSubtitle(format);
         }
         return trackName.length() == 0 ? resources.getString(R.string.exo_track_unknown) : trackName;
     }
@@ -73,17 +73,22 @@ public class ExoTrackNameProvider {
         }
     }
 
+    private String buildLanguageOrLabelStringAudio(Format format) {   //xuameng 音轨显示简单语言
+        String languageAndRole =
+                joinWithSeparator(buildLanguageString(format), buildRoleString(format));
+        return TextUtils.isEmpty(languageAndRole) ? buildLabelString(format) : languageAndRole;
+    }
 
-private String buildLanguageOrLabelString(Format format) {
-  // 先尝试直接使用 label，因为它通常包含更友好的描述
-  String labelString = buildLabelString(format);
-  if (!TextUtils.isEmpty(labelString)) {
-    return labelString;
-  }
-  // 如果 label 为空，再降级到语言 + 角色的组合
-  String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
-  return languageAndRole;
-}
+    private String buildLanguageOrLabelStringSubtitle(Format format) {  //xuameng 字幕显示详细语言（简繁中文）
+      // 先尝试直接使用 label，因为它通常包含更友好的描述
+      String labelString = buildLabelString(format);
+      if (!TextUtils.isEmpty(labelString)) {    //xuameng 优先显示详细语言信息
+        return labelString;
+      }
+      // 如果 label 为空，再降级到语言 + 角色的组合
+      String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
+      return languageAndRole;
+    }
 
 
     private String buildLabelString(Format format) {
