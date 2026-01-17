@@ -79,14 +79,14 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							if (TextUtils.isEmpty(formatCodecs)){    //xuameng formatCodecs这是文件类型当audioCodecs返回空是用formatCodecs代替
 								formatCodecs = "";
 							}
-							String text1 = ".40.2";  //xuameng过滤音轨类型里application/字符串
+							String text1 = ".40.2";  //xuameng过滤formatCodecs类型里application/字符串
 							String textString1 = "";
-							if(formatCodecs.contains(text1)) {  //xuameng过滤音轨类型里application/字符串
+							if(formatCodecs.contains(text1)) {  //xuameng过滤formatCodecs类型里application/字符串
 								formatCodecs = formatCodecs.replace(text1, textString1);  //xuameng过滤音轨类型里application/字符串
 							}
-							String mp4a = ".40.5";  //xuameng过滤音轨类型里application/字符串
+							String mp4a = ".40.5";  //xuameng过滤formatCodecs类型里application/字符串
 							String mp4aString = "";
-							if(formatCodecs.contains(mp4a)) {  //xuameng过滤音轨类型里application/字符串
+							if(formatCodecs.contains(mp4a)) {  //xuameng过滤formatCodecs类型里application/字符串
 								formatCodecs = formatCodecs.replace(mp4a, mp4aString);  //xuameng过滤音轨类型里application/字符串
 							}
 
@@ -100,7 +100,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
                             t.renderId = groupArrayIndex;
                             data.addAudio(t);
                         } else if (MimeTypes.isText(format.sampleMimeType)) {
-							String originalString = format.sampleMimeType;   //xuameng显示字幕类型
+							String originalString = format.codecs;   //xuameng显示字幕类型
 							String stringToReplace = "application/";  //xuameng过滤字幕类型里application/字符串
 							String replacementString = "";
 							if(originalString.contains(stringToReplace)) {  //xuameng过滤字幕类型里application/字符串
