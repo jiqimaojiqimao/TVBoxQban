@@ -84,8 +84,8 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							if(formatCodecs.contains(mp4a)) {  //xuameng过滤音轨类型里application/字符串
 								formatCodecs = formatCodecs.replace(mp4a, mp4aString);  //xuameng过滤音轨类型里application/字符串
 							}
-							String dtshd = "dts.hd";  //xuameng过滤音轨类型里application/字符串
-							String dtshdString = "dts";
+							String dtshd = ".hd";  //xuameng过滤音轨类型里application/字符串
+							String dtshdString = "";
 							if(formatCodecs.contains(dtshd)) {  //xuameng过滤音轨类型里application/字符串
 								formatCodecs = formatCodecs.replace(dtshd, dtshdString);  //xuameng过滤音轨类型里application/字符串
 							}
