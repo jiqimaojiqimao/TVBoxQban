@@ -89,13 +89,25 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							if(formatCodecs.contains(mp4a)) {  //xuameng过滤formatCodecs类型里application/字符串
 								formatCodecs = formatCodecs.replace(mp4a, mp4aString);  //xuameng过滤音轨类型里application/字符串
 							}
+							String mp3 = "mpeg";  //xuameng过滤音轨类型里application/字符串
+							String mp3String = "mp3";
+							if(formatCodecs.contains(mp3)) {  //xuameng过滤音轨类型里application/字符串
+								formatCodecs = formatCodecs.replace(mp3, mp3String);  //xuameng过滤音轨类型里application/字符串
+							}
 
                             String trackName = (data.getAudio().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + (TextUtils.isEmpty(format.codecs)?audioCodecs:formatCodecs) + "]";
 							TrackInfoBean t = new TrackInfoBean();
                             t.name = trackName;
                             t.language = "";
                             t.trackId = formatIndex;
-                            t.selected = !StringUtils.isEmpty(audioId) && audioId.equals(format.id);
+   // 修改这里：增加MP3格式的特殊处理
+    if (format.codecs.contains("mp3")) {
+        // 对于MP3格式，强制设置为选中状态
+        t.selected = true;
+    } else {
+        // 原有逻辑保持不变
+        t.selected = !StringUtils.isEmpty(audioId) && audioId.equals(format.id);
+    }
                             t.trackGroupId = groupIndex;
                             t.renderId = groupArrayIndex;
                             data.addAudio(t);
@@ -171,14 +183,23 @@ public class EXOmPlayer extends ExoMediaPlayer {
     public void selectExoTrack(@Nullable TrackInfoBean videoTrackBean) {
         MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
         if (trackInfo != null) {
-
+            if (videoTrackBean == null) {
+                for (int renderIndex = 0; renderIndex < trackInfo.getRendererCount(); renderIndex++) {
+                    if (trackInfo.getRendererType(renderIndex) == C.TRACK_TYPE_TEXT) {
+                        DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().getParameters().buildUpon();
+                        parametersBuilder.setRendererDisabled(renderIndex, true);
+                        getTrackSelector().setParameters(parametersBuilder);
+                        break;
+                    }
+                }
+            } else {
                 TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(videoTrackBean.renderId);
                 @SuppressLint("UnsafeOptInUsageError") DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(videoTrackBean.trackGroupId, videoTrackBean.trackId);
                 DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().buildUponParameters();
                 parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
                 parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
                 getTrackSelector().setParameters(parametersBuilder);
-
+            }
         }
     }
 
