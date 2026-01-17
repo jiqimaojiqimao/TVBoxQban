@@ -71,7 +71,12 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							if(audioCodecs.contains(tex5)) {  //xuameng过滤音轨类型里application/字符串
 								audioCodecs = audioCodecs.replace(tex5, textString5);  //xuameng过滤音轨类型里application/字符串
 							}
-							if (TextUtils.isEmpty(formatCodecs)){
+							String dtshd = ".hd";  //xuameng过滤音轨类型里application/字符串
+							String dtshdString = "";
+							if(audioCodecs.contains(dtshd)) {  //xuameng过滤音轨类型里application/字符串
+								audioCodecs = audioCodecs.replace(dtshd, dtshdString);  //xuameng过滤音轨类型里application/字符串
+							}
+							if (TextUtils.isEmpty(formatCodecs)){    //xuameng formatCodecs这是文件类型当audioCodecs返回空是用formatCodecs代替
 								formatCodecs = "";
 							}
 							String text1 = ".40.2";  //xuameng过滤音轨类型里application/字符串
@@ -83,11 +88,6 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							String mp4aString = "";
 							if(formatCodecs.contains(mp4a)) {  //xuameng过滤音轨类型里application/字符串
 								formatCodecs = formatCodecs.replace(mp4a, mp4aString);  //xuameng过滤音轨类型里application/字符串
-							}
-							String dtshd = ".hd";  //xuameng过滤音轨类型里application/字符串
-							String dtshdString = "";
-							if(formatCodecs.contains(dtshd)) {  //xuameng过滤音轨类型里application/字符串
-								formatCodecs = formatCodecs.replace(dtshd, dtshdString);  //xuameng过滤音轨类型里application/字符串
 							}
 
                             String trackName = (data.getAudio().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + (TextUtils.isEmpty(format.codecs)?audioCodecs:formatCodecs) + "]";
