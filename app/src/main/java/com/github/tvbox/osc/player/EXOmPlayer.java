@@ -49,7 +49,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							String audioCodecs = format.sampleMimeType;
 							String formatCodecs = format.codecs;
 							if (TextUtils.isEmpty(audioCodecs)){
-								audioCodecs = "";
+								audioCodecs = "未知";
 							}
 							String text = "audio/";  //xuameng过滤音轨类型里application/字符串
 							String textString = "";
@@ -77,7 +77,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
 								audioCodecs = audioCodecs.replace(dtshd, dtshdString);  //xuameng过滤音轨类型里application/字符串
 							}
 							if (TextUtils.isEmpty(formatCodecs)){    //xuameng formatCodecs这是文件类型当audioCodecs返回空是用formatCodecs代替
-								formatCodecs = "";
+								formatCodecs = "未知";
 							}
 							String text1 = ".40.2";  //xuameng过滤formatCodecs类型里application/字符串
 							String textString1 = "";
