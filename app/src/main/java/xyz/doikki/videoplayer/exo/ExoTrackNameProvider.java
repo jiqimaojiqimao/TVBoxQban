@@ -72,11 +72,20 @@ public class ExoTrackNameProvider {
                 return resources.getString(R.string.exo_track_surround);
         }
     }
-    private String buildLanguageOrLabelString(Format format) {
-        String languageAndRole =
-                joinWithSeparator(buildLanguageString(format), buildRoleString(format));
-        return TextUtils.isEmpty(languageAndRole) ? buildLabelString(format) : languageAndRole;
-    }
+
+
+private String buildLanguageOrLabelString(Format format) {
+  // 先尝试直接使用 label，因为它通常包含更友好的描述
+  String labelString = buildLabelString(format);
+  if (!TextUtils.isEmpty(labelString)) {
+    return labelString;
+  }
+  // 如果 label 为空，再降级到语言 + 角色的组合
+  String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
+  return languageAndRole;
+}
+
+
     private String buildLabelString(Format format) {
         return TextUtils.isEmpty(format.label) ? "" : format.label;
     }
