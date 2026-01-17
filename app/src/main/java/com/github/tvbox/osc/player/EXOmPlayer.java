@@ -104,6 +104,10 @@ public class EXOmPlayer extends ExoMediaPlayer {
     if (format.codecs.contains("mp3")) {
         // 对于MP3格式，强制设置为选中状态
         t.selected = true;
+        // 同时更新audioId，确保后续选择逻辑能正常工作
+        if (audioId == null || audioId.isEmpty()) {
+            audioId = format.id != null ? format.id : "mp3_audio_track";
+        }
     } else {
         // 原有逻辑保持不变
         t.selected = !StringUtils.isEmpty(audioId) && audioId.equals(format.id);
