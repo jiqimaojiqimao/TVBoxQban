@@ -100,7 +100,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
                             t.renderId = groupArrayIndex;
                             data.addAudio(t);
                         } else if (MimeTypes.isText(format.sampleMimeType)) {
-							String originalString = format.codecs;   //xuameng显示字幕类型
+							String originalString = format.codecs;   //xuameng显示字幕类型  sampleMimeType改成codecs  media3升级后真正类型在codecs里sampleMimeType显示的是media3-cues
 							String stringToReplace = "application/";  //xuameng过滤字幕类型里application/字符串
 							String replacementString = "";
 							if(originalString.contains(stringToReplace)) {  //xuameng过滤字幕类型里application/字符串
@@ -110,6 +110,11 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							String textString = "";
 							if(originalString.contains(text)) {  //xuameng过滤字幕类型里application/字符串
 							originalString = originalString.replace(text, textString);  //xuameng过滤字幕类型里application/字符串
+							}
+							String textvtt = "text/vtt";  //xuameng过滤字幕类型里application/字符串
+							String textvttString = "vtt";
+							if(originalString.contains(textvtt)) {  //xuameng过滤字幕类型里application/字符串
+							originalString = originalString.replace(textvtt, textvttString);  //xuameng过滤字幕类型里application/字符串
 							}
 							String text1 = "x-";  //xuameng过滤字幕类型里application/字符串
 							String textString1 = "";
@@ -125,11 +130,6 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							String textString3 = "";
 							if(originalString.contains(text3)) {  //xuameng过滤字幕类型里application/字符串
 							originalString = originalString.replace(text3, textString3);  //xuameng过滤字幕类型里application/字符串
-							}
-							String media3cues = "media3-cues";  //xuameng过滤字幕类型里application/字符串
-							String media3String = "pgs";
-							if(originalString.contains(media3cues)) {  //xuameng过滤字幕类型里application/字符串
-							originalString = originalString.replace(media3cues, media3String);  //xuameng过滤字幕类型里application/字符串
 							}
                             String trackName = "";  //xuameng显示字幕类型
                             TrackInfoBean t = new TrackInfoBean();
