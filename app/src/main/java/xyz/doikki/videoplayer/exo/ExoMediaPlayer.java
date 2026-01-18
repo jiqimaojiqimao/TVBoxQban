@@ -111,7 +111,11 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
 
-
+    // 添加字幕视图绑定
+    if (mExoSubtitleView != null) {
+        mMediaPlayer.addTextOutput(mExoSubtitleView);
+    }
+    
         setOptions();
         mMediaPlayer.addListener(this);
     }
