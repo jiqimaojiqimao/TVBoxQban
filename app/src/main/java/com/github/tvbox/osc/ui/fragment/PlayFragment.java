@@ -1215,11 +1215,6 @@ public class PlayFragment extends BaseLazyFragment {
     public void play(boolean reset) {
         if(mVodInfo==null)return;
         isJianpian = false;
-        mController.mSubtitleView.setVisibility(View.GONE);
-        mController.mSubtitleView.destroy();
-        mController.mSubtitleView.clearSubtitleCache();
-        mController.mSubtitleView.setVisibility(View.VISIBLE);
-
         VodInfo.VodSeries vs = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodInfo.playIndex));
         setTip("正在获取播放信息", true, false);
