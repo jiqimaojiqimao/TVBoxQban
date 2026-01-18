@@ -683,7 +683,7 @@ public class PlayFragment extends BaseLazyFragment {
         }
 
      if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
-		 ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);
+		 ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);    // 用于显示ExoPlayer内置字幕
             trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
                 mController.mSubtitleView.hasInternal = true;
@@ -1215,6 +1215,11 @@ public class PlayFragment extends BaseLazyFragment {
     public void play(boolean reset) {
         if(mVodInfo==null)return;
         isJianpian = false;
+        mController.mSubtitleView.setVisibility(View.GONE);
+        mController.mSubtitleView.destroy();
+        mController.mSubtitleView.clearSubtitleCache();
+        mController.mSubtitleView.setVisibility(View.VISIBLE);
+
         VodInfo.VodSeries vs = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodInfo.playIndex));
         setTip("正在获取播放信息", true, false);
