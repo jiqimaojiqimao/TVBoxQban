@@ -24,7 +24,15 @@ public class TrackInfo {
         return getSelected(subtitle, track);
     }
 
-    public int getSelected(List<TrackInfoBean> list, boolean track) {
+
+    public int getSelected(List<TrackInfoBean> list, boolean track) {     
+        // xuameng如果列表只有一个音轨，直接返回该元素的相应ID
+        if (list.size() == 1) {  
+            TrackInfoBean singleTrack = list.get(0);
+            return track ? singleTrack.trackId : 0;
+        }
+    
+        // 多个元素时保持原有逻辑
         int i = 0;
         for (TrackInfoBean trackInfoBean : list) {
             if (trackInfoBean.selected) return track ? trackInfoBean.trackId : i;
@@ -32,6 +40,7 @@ public class TrackInfo {
         }
         return 99999;
     }
+
 
     public void addAudio(TrackInfoBean audio) {
         this.audio.add(audio);
