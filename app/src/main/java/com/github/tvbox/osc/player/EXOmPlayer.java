@@ -51,6 +51,16 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							if (TextUtils.isEmpty(audioCodecs)){
 								audioCodecs = "未知";
 							}
+							String mp3 = "audio/mpeg";  //xuameng过滤音轨类型里application/字符串
+							String mp3String = "mp3";
+							if(audioCodecs.contains(mp3)) {  //xuameng过滤音轨类型里application/字符串
+								audioCodecs = audioCodecs.replace(mp3, mp3String);  //xuameng过滤音轨类型里application/字符串
+							}
+							String tex5 = "audio/mpeg-L2";  //xuameng过滤音轨类型里application/字符串
+							String textString5 = "mp2";
+							if(audioCodecs.contains(tex5)) {  //xuameng过滤音轨类型里application/字符串
+								audioCodecs = audioCodecs.replace(tex5, textString5);  //xuameng过滤音轨类型里application/字符串
+							}
 							String text = "audio/";  //xuameng过滤音轨类型里application/字符串
 							String textString = "";
 							if(audioCodecs.contains(text)) {  //xuameng过滤音轨类型里application/字符串
@@ -65,11 +75,6 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							String textString4 = "TrueHD";
 							if(audioCodecs.contains(tex4)) {  //xuameng过滤音轨类型里application/字符串
 								audioCodecs = audioCodecs.replace(tex4, textString4);  //xuameng过滤音轨类型里application/字符串
-							}
-							String tex5 = "-L2";  //xuameng过滤音轨类型里application/字符串
-							String textString5 = "";
-							if(audioCodecs.contains(tex5)) {  //xuameng过滤音轨类型里application/字符串
-								audioCodecs = audioCodecs.replace(tex5, textString5);  //xuameng过滤音轨类型里application/字符串
 							}
 							String dtshd = ".hd";  //xuameng过滤音轨类型里application/字符串
 							String dtshdString = "";
