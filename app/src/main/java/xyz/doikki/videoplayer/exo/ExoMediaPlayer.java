@@ -111,11 +111,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
 
-    // 添加字幕视图绑定
-    if (mExoSubtitleView != null) {
-        mMediaPlayer.addTextOutput(mExoSubtitleView);
+    if (mExoSubtitleView != null && mMediaPlayer != null) {
+        // 将ExoPlayer的字幕输出连接到SubtitleView
+        mExoSubtitleView.setPlayer(mMediaPlayer);
     }
-    
         setOptions();
         mMediaPlayer.addListener(this);
     }
@@ -372,6 +371,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
 public void setSubtitleView(SubtitleView subtitleView) {
     this.mExoSubtitleView = subtitleView;
+    if (mExoSubtitleView != null && mMediaPlayer != null) {
+        // 将ExoPlayer的字幕输出连接到SubtitleView
+        mExoSubtitleView.setPlayer(mMediaPlayer);
+    }
 }
 
 }
