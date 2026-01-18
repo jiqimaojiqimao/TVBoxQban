@@ -1629,11 +1629,7 @@ public class VodController extends BaseController {
 				releaseVisualizer();  //xuameng播放音乐背景
                 isVideoplaying = false;
                 isVideoPlay = false;
-                mSubtitleView.setVisibility(View.GONE);
-                mSubtitleView.destroy();
-                mSubtitleView.clearSubtitleCache();
-		        mSubtitleView.onSubtitleChanged(null);
-                mSubtitleView.setVisibility(View.VISIBLE);
+                clearSubtitleCache();  //xuameng清除字幕缓存
                 break;
             case VideoView.STATE_PLAYING:
                 initLandscapePortraitBtnInfo();
@@ -2305,6 +2301,14 @@ public class VodController extends BaseController {
         Thunder.stop(false); //停止磁力下载
         Jianpian.finish(); //停止p2p下载
         App.getInstance().setDashData(null);
+    }
+
+    public void clearSubtitleCache(){ //xuameng清除字幕缓存
+        mSubtitleView.setVisibility(View.GONE);
+        mSubtitleView.destroy();
+        mSubtitleView.clearSubtitleCache();
+        mSubtitleView.onSubtitleChanged(null);
+        mSubtitleView.setVisibility(View.VISIBLE);
     }
 
     private void initVisualizer() {   //xuameng播放音乐柱状图
