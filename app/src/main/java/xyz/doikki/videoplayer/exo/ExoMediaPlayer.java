@@ -371,12 +371,12 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     // 设置字幕样式，添加黑色边框效果
     if (subtitleView != null) {
         CaptionStyleCompat style = new CaptionStyleCompat(
-            Color.WHITE, // 文字颜色
-            Color.TRANSPARENT, // 背景颜色（透明）
-            Color.BLACK, // 窗口颜色（边框颜色）
-            CaptionStyleCompat.EDGE_TYPE_OUTLINE, // 边缘类型为轮廓效果
-            Color.BLACK, // 边缘颜色
-            null // 字体族
+    Color.WHITE,        // 文字颜色
+    Color.TRANSPARENT,  // 背景颜色（透明）
+    Color.TRANSPARENT,  // 窗口颜色（也设为透明）
+    CaptionStyleCompat.EDGE_TYPE_OUTLINE, // 边缘类型为轮廓
+    Color.BLACK,        // 边缘颜色（黑色边框）
+    null                // 字体族
         );
         subtitleView.setStyle(style);
     }
