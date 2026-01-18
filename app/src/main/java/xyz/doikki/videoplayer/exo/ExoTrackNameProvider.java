@@ -51,7 +51,7 @@ public class ExoTrackNameProvider {
         int bitrate = format.bitrate;
         return bitrate == Format.NO_VALUE
                 ? ""
-                : resources.getString(R.string.exo_track_bitrate, bitrate / 1000000f);
+                : resources.getString(R.string.exo_track_bitrate, bitrate / 1000000f);   //xuameng Mbps
     }
     private String buildAudioChannelString(Format format) {
         int channelCount = format.channelCount;
