@@ -31,6 +31,9 @@ import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 
+import androidx.media3.ui.SubtitleView;
+
+
 import java.util.Map;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
@@ -51,6 +54,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private DefaultRenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
+
+	private SubtitleView mExoSubtitleView; // 用于显示ExoPlayer内置字幕
 
     private int errorCode = -100;
     private String mLastUri;   //xuameng 上次播放地址
@@ -87,7 +92,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 : EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
         mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-            .setEnableDecoderFallback(true)
+            .setEnableDecoderFallback(true)   //xuameng回退机制
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
@@ -99,12 +104,17 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
             .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
-            .setTunnelingEnabled(false));   //xuameng字幕、音轨默认选择中文
+            .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
 
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
+
+    // 新增：如果已经有SubtitleView实例，就进行绑定
+    if (mExoSubtitleView != null) {
+        mExoSubtitleView.setPlayer(mMediaPlayer);
+    }
 
         setOptions();
         mMediaPlayer.addListener(this);
@@ -195,6 +205,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void release() {
+    if (mExoSubtitleView != null) {
+        mExoSubtitleView.setPlayer(null); // 解除绑定
+        mExoSubtitleView = null;
+    }
         if (mMediaPlayer != null) {
             mMediaPlayer.removeListener(this);
             mMediaPlayer.release();
@@ -359,4 +373,13 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             }
         }
     }
+
+public void setSubtitleView(SubtitleView subtitleView) {
+    this.mExoSubtitleView = subtitleView;
+    if (mExoSubtitleView != null && mMediaPlayer != null) {
+        // 将ExoPlayer的字幕输出连接到SubtitleView
+        mExoSubtitleView.setPlayer(mMediaPlayer);
+    }
+}
+
 }
