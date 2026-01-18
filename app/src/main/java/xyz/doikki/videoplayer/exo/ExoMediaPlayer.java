@@ -111,10 +111,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
 
-    // 新增：如果已经有SubtitleView实例，就进行绑定
-    if (mExoSubtitleView != null) {
-        mExoSubtitleView.setPlayer(mMediaPlayer);
-    }
 
         setOptions();
         mMediaPlayer.addListener(this);
@@ -205,10 +201,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void release() {
-    if (mExoSubtitleView != null) {
-        mExoSubtitleView.setPlayer(null); // 解除绑定
-        mExoSubtitleView = null;
-    }
         if (mMediaPlayer != null) {
             mMediaPlayer.removeListener(this);
             mMediaPlayer.release();
@@ -376,10 +368,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
 public void setSubtitleView(SubtitleView subtitleView) {
     this.mExoSubtitleView = subtitleView;
-    if (mExoSubtitleView != null && mMediaPlayer != null) {
-        // 将ExoPlayer的字幕输出连接到SubtitleView
-        mExoSubtitleView.setPlayer(mMediaPlayer);
-    }
 }
 
 }
