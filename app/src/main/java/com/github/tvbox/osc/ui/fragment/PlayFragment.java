@@ -513,10 +513,26 @@ public class PlayFragment extends BaseLazyFragment {
                             }
                         }, 300);
                     }
+
+					// 判断选中的字幕是否为 PGS 格式
+        boolean isPgsSubtitle = value.name != null && value.language.toLowerCase().contains("pgs");
                     if (mediaPlayer instanceof EXOmPlayer) {
-                        mController.mSubtitleView.destroy();
-                        mController.mSubtitleView.clearSubtitleCache();
-                        mController.mSubtitleView.isInternal = true;
+            if (isPgsSubtitle) {
+                // 选中的是 PGS 字幕：使用 ExoPlayer 内置视图
+                mController.mExoSubtitleView.setVisibility(View.VISIBLE);
+                mController.mSubtitleView.setVisibility(View.GONE);
+                mController.mSubtitleView.destroy();
+                mController.mSubtitleView.clearSubtitleCache();
+                mController.mSubtitleView.onSubtitleChanged(null);
+                mController.mSubtitleView.hasInternal = false; // 外部视图不处理
+            } else {
+                // 选中的是其他字幕：使用外部视图
+                mController.mExoSubtitleView.setVisibility(View.GONE);
+                mController.mSubtitleView.setVisibility(View.VISIBLE);
+                mController.mSubtitleView.destroy();
+                mController.mSubtitleView.clearSubtitleCache();
+                mController.mSubtitleView.isInternal = true; // 外部视图处理
+            }
                         ((EXOmPlayer)mediaPlayer).selectExoTrack(value);
                         new Handler().postDelayed(new Runnable() {
                             @Override
@@ -683,13 +699,40 @@ public class PlayFragment extends BaseLazyFragment {
         }
 
      if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
-		 ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);    // 用于显示ExoPlayer内置字幕
-            trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
-            if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
-                mController.mSubtitleView.hasInternal = true;
-            }else{
-                mController.mSubtitleView.hasInternal = false;  //xuameng修复切换播放器内置字幕不刷新
+    ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);
+    trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
+    
+    if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
+        mController.mSubtitleView.hasInternal = true;
+
+        // 获取当前选中的字幕轨道
+        TrackInfoBean selectedSubtitleTrack = null;
+        for (TrackInfoBean subtitleTrack : trackInfo.getSubtitle()) {
+            if (subtitleTrack.selected) {
+                selectedSubtitleTrack = subtitleTrack;
+                break;
             }
+        }
+
+        // 判断当前选中的字幕是否为 PGS
+        boolean isPgsSelected = selectedSubtitleTrack != null &&
+                selectedSubtitleTrack.language != null &&
+                selectedSubtitleTrack.language.toLowerCase().contains("pgs");
+
+        if (isPgsSelected) {
+            // 当前选中的是 PGS 字幕，使用 ExoPlayer 内置视图
+            mController.mExoSubtitleView.setVisibility(View.VISIBLE);
+            mController.mSubtitleView.setVisibility(View.GONE);
+            mController.mSubtitleView.hasInternal = false; // 防止外部视图处理
+        } else {
+            // 当前选中的是其他格式字幕，使用外部视图
+            mController.mExoSubtitleView.setVisibility(View.GONE);
+            mController.mSubtitleView.setVisibility(View.VISIBLE);
+        }
+    } else {
+        mController.mSubtitleView.hasInternal = false;
+        mController.mExoSubtitleView.setVisibility(View.GONE);
+    }
             final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
             Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
             if (selectedIdExo != 99999) { // xuameng99999表示未选中
