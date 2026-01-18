@@ -79,6 +79,8 @@ import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
 import android.media.AudioManager;  //xuameng音乐播放动画
 
+import androidx.media3.ui.SubtitleView;
+
 import android.os.Build;
 import android.webkit.WebView;
 import com.github.tvbox.osc.bean.SourceBean;
@@ -299,6 +301,8 @@ public class VodController extends BaseController {
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
     private boolean musicAnimation = Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false);     //xuameng 音柱动画 加载设置
+
+	public SubtitleView mExoSubtitleView;
 	
 	private static final String TAG = "VodController";  //xuameng音乐播放动画
     Handler myHandle;
@@ -513,6 +517,9 @@ public class VodController extends BaseController {
         mxuPlay = findViewById(R.id.mxuplay); //xuameng  低菜单播放
         mPlayrender = findViewById(R.id.play_render);   //xuameng渲染方式
         mPlayanimation = findViewById(R.id.play_animation);  //xuameng音柱动画
+
+		mExoSubtitleView = findViewById(R.id.exo_subtitle_view); // 新增
+
         //xuameng音乐播放时图标
         ObjectAnimator animator20 = ObjectAnimator.ofFloat(iv_circle_bg, "rotation", 360.0f);
         animator20.setDuration(10000);
