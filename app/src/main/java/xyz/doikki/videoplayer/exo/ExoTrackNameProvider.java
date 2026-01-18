@@ -82,12 +82,16 @@ public class ExoTrackNameProvider {
     private String buildLanguageOrLabelStringSubtitle(Format format) {  //xuameng 字幕显示详细语言（简繁中文）
       // 先尝试直接使用 label，因为它通常包含更友好的描述
       String labelString = buildLabelString(format);
-      if (!TextUtils.isEmpty(labelString)) {    //xuameng 优先显示详细语言信息
-        return labelString;
-      }
-      // 如果 label 为空，再降级到语言 + 角色的组合
-      String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
-      return languageAndRole;
+// 2. 判断label是否包含中文字符
+if (!TextUtils.isEmpty(labelString) && containsChinese(labelString)) {
+    // 如果label非空且包含中文，直接返回label
+    return labelString;
+}
+
+// 3. 否则使用语言+角色组合（自动本地化）
+String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
+return languageAndRole;
+
     }
 
     private String buildLabelString(Format format) {
