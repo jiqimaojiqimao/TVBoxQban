@@ -32,7 +32,7 @@ import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 
 import androidx.media3.ui.SubtitleView;
-import androidx.media3.common.Cue;
+import androidx.media3.common.text.Cue;
 
 
 import java.util.Map;
