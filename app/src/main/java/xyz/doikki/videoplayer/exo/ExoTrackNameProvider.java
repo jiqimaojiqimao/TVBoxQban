@@ -13,6 +13,7 @@ import androidx.media3.common.MimeTypes;
 import androidx.media3.common.util.Assertions;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.common.util.Util;
+import java.util.regex.Pattern;
 
 public class ExoTrackNameProvider {
     private final Resources resources;
@@ -169,5 +170,13 @@ return languageAndRole;
         }
         return C.TRACK_TYPE_UNKNOWN;
     }
+
+private static final Pattern CHINESE_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]");
+
+private boolean containsChinese(String str) {
+    if (str == null) return false;
+    return CHINESE_PATTERN.matcher(str).find();
+}
+
 }
 
