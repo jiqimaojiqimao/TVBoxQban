@@ -79,7 +79,7 @@ import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
 import android.media.AudioManager;  //xuameng音乐播放动画
 
-import androidx.media3.ui.SubtitleView;
+import androidx.media3.ui.SubtitleView;   // 用于显示ExoPlayer内置字幕
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -301,8 +301,7 @@ public class VodController extends BaseController {
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
     private boolean musicAnimation = Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false);     //xuameng 音柱动画 加载设置
-
-	public SubtitleView mExoSubtitleView;
+	public SubtitleView mExoSubtitleView;   // 用于显示ExoPlayer内置字幕
 	
 	private static final String TAG = "VodController";  //xuameng音乐播放动画
     Handler myHandle;
@@ -517,8 +516,7 @@ public class VodController extends BaseController {
         mxuPlay = findViewById(R.id.mxuplay); //xuameng  低菜单播放
         mPlayrender = findViewById(R.id.play_render);   //xuameng渲染方式
         mPlayanimation = findViewById(R.id.play_animation);  //xuameng音柱动画
-
-		mExoSubtitleView = findViewById(R.id.exo_subtitle_view); // 新增
+		mExoSubtitleView = findViewById(R.id.exo_subtitle_view); // 用于显示ExoPlayer内置字幕
 
         //xuameng音乐播放时图标
         ObjectAnimator animator20 = ObjectAnimator.ofFloat(iv_circle_bg, "rotation", 360.0f);
@@ -1631,6 +1629,10 @@ public class VodController extends BaseController {
 				releaseVisualizer();  //xuameng播放音乐背景
                 isVideoplaying = false;
                 isVideoPlay = false;
+                mSubtitleView.setVisibility(View.GONE);    //xuameng释放字幕
+                mSubtitleView.destroy();
+                mSubtitleView.clearSubtitleCache();
+                mSubtitleView.isInternal = false;
                 break;
             case VideoView.STATE_PLAYING:
                 initLandscapePortraitBtnInfo();
