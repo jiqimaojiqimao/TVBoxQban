@@ -32,6 +32,7 @@ import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 
 import androidx.media3.ui.SubtitleView;
+import androidx.media3.common.Cue;
 
 
 import java.util.Map;
@@ -111,10 +112,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 .setRenderersFactory(mRenderersFactory)
                 .setTrackSelector(mTrackSelector).build();
 
-    if (mExoSubtitleView != null && mMediaPlayer != null) {
-        // 将ExoPlayer的字幕输出连接到SubtitleView
-        mExoSubtitleView.setPlayer(mMediaPlayer);
-    }
         setOptions();
         mMediaPlayer.addListener(this);
     }
@@ -371,10 +368,11 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
 public void setSubtitleView(SubtitleView subtitleView) {
     this.mExoSubtitleView = subtitleView;
-    if (mExoSubtitleView != null && mMediaPlayer != null) {
-        // 将ExoPlayer的字幕输出连接到SubtitleView
-        mExoSubtitleView.setPlayer(mMediaPlayer);
+}
+@Override
+public void onCues(@NonNull List<Cue> cues) {
+    if (mExoSubtitleView != null) {
+        mExoSubtitleView.onCues(cues);
     }
 }
-
 }
