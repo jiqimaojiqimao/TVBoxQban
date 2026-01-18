@@ -370,10 +370,13 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 public void setSubtitleView(SubtitleView subtitleView) {
     this.mExoSubtitleView = subtitleView;
 }
+
+
 @Override
 public void onCues(@NonNull List<Cue> cues) {
     if (mExoSubtitleView != null) {
-        mExoSubtitleView.onCues(cues);
+        mExoSubtitleView.setCues(cues); // 修改这里
     }
 }
+
 }
