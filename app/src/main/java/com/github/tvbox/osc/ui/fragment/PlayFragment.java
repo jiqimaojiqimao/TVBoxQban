@@ -695,23 +695,7 @@ public class PlayFragment extends BaseLazyFragment {
             if (selectedIdExo != 99999) { // xuameng99999表示未选中
                ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
-            ((EXOmPlayer) (mVideoView.getMediaPlayer())).setOnTimedTextListener(new Player.Listener() {
-                @Override
-                public void onCues(@NonNull List<Cue> cues) {
-                    if (cues.size() > 0) {
-                        CharSequence ss = cues.get(0).text;
-                        if (ss != null && mController.mSubtitleView.isInternal) {
-                            com.github.tvbox.osc.subtitle.model.Subtitle subtitle = new com.github.tvbox.osc.subtitle.model.Subtitle();
-                            subtitle.content = ss.toString();
-                            mController.mSubtitleView.onSubtitleChanged(subtitle);
-                        }
-                    }else{
-                        com.github.tvbox.osc.subtitle.model.Subtitle subtitle = new com.github.tvbox.osc.subtitle.model.Subtitle();
-                        subtitle.content = "";
-                        mController.mSubtitleView.onSubtitleChanged(subtitle);
-                    }
-                }
-            });
+
         }
 
         mController.mSubtitleView.bindToMediaPlayer(mVideoView.getMediaPlayer());
