@@ -1629,6 +1629,11 @@ public class VodController extends BaseController {
 				releaseVisualizer();  //xuameng播放音乐背景
                 isVideoplaying = false;
                 isVideoPlay = false;
+                mSubtitleView.setVisibility(View.GONE);
+                mSubtitleView.destroy();
+                mSubtitleView.clearSubtitleCache();
+		        mSubtitleView.onSubtitleChanged(null);
+                mSubtitleView.setVisibility(View.VISIBLE);
                 break;
             case VideoView.STATE_PLAYING:
                 initLandscapePortraitBtnInfo();
