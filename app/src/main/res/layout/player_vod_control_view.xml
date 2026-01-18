@@ -133,9 +133,7 @@
     android:paddingRight="@dimen/vs_20"
     android:paddingBottom="@dimen/vs_15"
     android:visibility="visible"
-    app:subtitleTextSize="16sp"
-    app:subtitleTextColor="#FFFFFFFF"
-    app:subtitleBackgroundColor="#80000000" />
+android:textSize="16.0sp" />
     <LinearLayout
         android:gravity="center_vertical"
         android:layout_gravity="bottom"
