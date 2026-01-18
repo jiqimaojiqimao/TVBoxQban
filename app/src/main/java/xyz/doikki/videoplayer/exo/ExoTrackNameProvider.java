@@ -29,14 +29,14 @@ public class ExoTrackNameProvider {
             trackName =
                     joinWithSeparator(
                             buildRoleString(format), buildResolutionString(format), buildBitrateString(format));
-        } else if (trackType == C.TRACK_TYPE_AUDIO) {
+        } else if (trackType == C.TRACK_TYPE_AUDIO) {     //xuameng 显示音频轨道信息
             trackName =
                     joinWithSeparator(
                             buildLanguageOrLabelStringAudio(format),
                             buildAudioChannelString(format),
                             buildBitrateString(format));
         } else {
-            trackName = buildLanguageOrLabelStringSubtitle(format);
+            trackName = buildLanguageOrLabelStringSubtitle(format);   //xuameng显示字幕信息
         }
         return trackName.length() == 0 ? resources.getString(R.string.exo_track_unknown) : trackName;
     }
@@ -90,14 +90,13 @@ public class ExoTrackNameProvider {
       return languageAndRole;
     }
 
-
     private String buildLabelString(Format format) {
         return TextUtils.isEmpty(format.label) ? "" : format.label;
     }
     private String buildLanguageString(Format format) {
         @Nullable String language = format.language;
         if (TextUtils.isEmpty(language) || C.LANGUAGE_UNDETERMINED.equals(language)) {
-            return "未知";
+            return "未知";  //xuameng language为空
         }
         Locale languageLocale =
                 Util.SDK_INT >= 21 ? Locale.forLanguageTag(language) : new Locale(language);
@@ -105,7 +104,7 @@ public class ExoTrackNameProvider {
                 Util.SDK_INT >= 24 ? Locale.getDefault(Locale.Category.DISPLAY) : Locale.getDefault();
         String languageName = languageLocale.getDisplayName(displayLocale);
         if (TextUtils.isEmpty(languageName)) {
-            return "未知";
+            return "未知";   //xuameng language为空
         }
         try {
             // Capitalize the first letter. See: https://github.com/google/ExoPlayer/issues/9452.
