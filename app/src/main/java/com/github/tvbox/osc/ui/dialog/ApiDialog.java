@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import androidx.annotation.NonNull;
 
@@ -113,6 +114,7 @@ public class ApiDialog extends BaseDialog {
             public void onClick(View v) {
                 ArrayList<String> history = Hawk.get(HawkConfig.LIVE_API_HISTORY, new ArrayList<String>());
                 if (history.isEmpty()){
+                    App.showToastShort(getContext(), "直播历史为空！");
                     return;
                 }
                 String current = Hawk.get(HawkConfig.LIVE_API_URL, "");
@@ -142,8 +144,10 @@ public class ApiDialog extends BaseDialog {
             @Override
             public void onClick(View v) {
                 ArrayList<String> history = Hawk.get(HawkConfig.API_HISTORY, new ArrayList<String>());
-                if (history.isEmpty())
+                if (history.isEmpty()){
+                    App.showToastShort(getContext(), "点播历史为空！");
                     return;
+                }
                 String current = Hawk.get(HawkConfig.API_URL, "");
                 int idx = 0;
                 if (history.contains(current))
