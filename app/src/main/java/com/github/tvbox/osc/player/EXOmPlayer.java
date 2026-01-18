@@ -51,15 +51,15 @@ public class EXOmPlayer extends ExoMediaPlayer {
 							if (TextUtils.isEmpty(audioCodecs)){
 								audioCodecs = "未知";
 							}
-							String mp3 = "audio/mpeg";  //xuameng过滤音轨类型里application/字符串
-							String mp3String = "mp3";
-							if(audioCodecs.contains(mp3)) {  //xuameng过滤音轨类型里application/字符串
-								audioCodecs = audioCodecs.replace(mp3, mp3String);  //xuameng过滤音轨类型里application/字符串
-							}
 							String tex5 = "audio/mpeg-L2";  //xuameng过滤音轨类型里application/字符串
 							String textString5 = "mp2";
 							if(audioCodecs.contains(tex5)) {  //xuameng过滤音轨类型里application/字符串
 								audioCodecs = audioCodecs.replace(tex5, textString5);  //xuameng过滤音轨类型里application/字符串
+							}
+							String mp3 = "audio/mpeg";  //xuameng过滤音轨类型里application/字符串
+							String mp3String = "mp3";
+							if(audioCodecs.contains(mp3)) {  //xuameng过滤音轨类型里application/字符串
+								audioCodecs = audioCodecs.replace(mp3, mp3String);  //xuameng过滤音轨类型里application/字符串
 							}
 							String text = "audio/";  //xuameng过滤音轨类型里application/字符串
 							String textString = "";
