@@ -152,6 +152,7 @@ public class PlayFragment extends BaseLazyFragment {
         initViewModel();
         initData();
         Hawk.put(HawkConfig.PLAYER_IS_LIVE,false);  //xuameng新增
+        HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
     }
 
     public long getSavedProgress(String url) {
@@ -526,6 +527,7 @@ public class PlayFragment extends BaseLazyFragment {
                             mController.mSubtitleView.clearSubtitleCache();
                             mController.mSubtitleView.onSubtitleChanged(null);
                             mController.mSubtitleView.isInternal = true; // 外部视图处理
+                            HawkConfig.exoSubtitle = true;  //xuameng 判断当前是否播放EXO内置字幕
                         } else {
                             // xuameng选中的是其他字幕：使用外部视图
                             mController.mExoSubtitleView.setVisibility(View.GONE);
@@ -533,6 +535,7 @@ public class PlayFragment extends BaseLazyFragment {
                             mController.mSubtitleView.destroy();
                             mController.mSubtitleView.clearSubtitleCache();
                             mController.mSubtitleView.isInternal = true; // 外部视图处理
+                            HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
                         }
 
                         ((EXOmPlayer)mediaPlayer).selectExoTrack(value);
@@ -725,10 +728,12 @@ public class PlayFragment extends BaseLazyFragment {
                     ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);   //xuameng绑定Exo字幕视图
                     mController.mExoSubtitleView.setVisibility(View.VISIBLE);
                     mController.mSubtitleView.setVisibility(View.GONE);
+                    HawkConfig.exoSubtitle = true;  //xuameng 判断当前是否播放EXO内置字幕
                 } else {
                     // 当前选中的是其他格式字幕，使用外部视图
                     mController.mExoSubtitleView.setVisibility(View.GONE);
                     mController.mSubtitleView.setVisibility(View.VISIBLE);
+                    HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
                 }
             } else {
                 mController.mSubtitleView.hasInternal = false;
