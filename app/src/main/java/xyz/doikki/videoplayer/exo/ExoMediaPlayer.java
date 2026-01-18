@@ -368,18 +368,18 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     public void setSubtitleView(SubtitleView subtitleView) {       // 用于显示ExoPlayer内置字幕
         this.mExoSubtitleView = subtitleView;
-    // 设置字幕样式，添加黑色边框效果
-    if (subtitleView != null) {
-        CaptionStyleCompat style = new CaptionStyleCompat(
-    Color.WHITE,        // 文字颜色
-    Color.TRANSPARENT,  // 背景颜色（透明）
-    Color.TRANSPARENT,  // 窗口颜色（也设为透明）
-    CaptionStyleCompat.EDGE_TYPE_OUTLINE, // 边缘类型为轮廓
-    Color.BLACK,        // 边缘颜色（黑色边框）
-    null                // 字体族
-        );
-        subtitleView.setStyle(style);
-    }
+        // 设置字幕样式，添加黑色边框效果
+        if (subtitleView != null) {
+            CaptionStyleCompat style = new CaptionStyleCompat(
+            Color.WHITE,        // 文字颜色
+            Color.TRANSPARENT,  // 背景颜色（透明）
+            Color.TRANSPARENT,  // 窗口颜色（也设为透明）
+            CaptionStyleCompat.EDGE_TYPE_OUTLINE, // 边缘类型为轮廓
+            Color.BLACK,        // 边缘颜色（黑色边框）
+            null                // 字体族
+            );
+            subtitleView.setStyle(style);
+        }
     }
 
 
