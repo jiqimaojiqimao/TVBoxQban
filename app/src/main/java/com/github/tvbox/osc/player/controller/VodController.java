@@ -1206,7 +1206,24 @@ public class VodController extends BaseController {
             public boolean onLongClick(View view) {
                 FastClickCheckUtil.check(view); //xuameng 防播放打断动画
                 isLongClick = true;
-                if(mSubtitleView.getVisibility() == View.GONE) {
+                if (HawkConfig.exoSubtitle){      //xuameng 打开关闭exo内置方法字幕
+                    if(mExoSubtitleView.getVisibility() == View.GONE) {
+                        if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
+                            hideBottom();
+                        }
+                        mExoSubtitleView.setVisibility(VISIBLE);
+                        App.showToastShort(getContext(), "字幕已开启！");
+                    } else if(mExoSubtitleView.getVisibility() == View.VISIBLE) {
+                        if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
+                            hideBottom();
+                        }
+                        mExoSubtitleView.setVisibility(View.GONE);
+                        App.showToastShort(getContext(), "字幕已关闭！");
+                    }
+                    return true;
+                }
+
+                if(mSubtitleView.getVisibility() == View.GONE) {  //xuameng 打开关闭外置方法字幕
                     if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
                         hideBottom();
                     }
@@ -2304,11 +2321,12 @@ public class VodController extends BaseController {
     }
 
     public void clearSubtitleCache(){ //xuameng清除字幕缓存
-        mSubtitleView.setVisibility(View.GONE);
+        mSubtitleView.setVisibility(View.GONE); //xuameng 外部方法字幕
         mSubtitleView.destroy();
         mSubtitleView.clearSubtitleCache();
         mSubtitleView.onSubtitleChanged(null);
         mSubtitleView.setVisibility(View.VISIBLE);
+		mExoSubtitleView.setVisibility(View.GONE);    //xuameng EXO内置字幕
     }
 
     private void initVisualizer() {   //xuameng播放音乐柱状图
