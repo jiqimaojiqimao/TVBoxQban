@@ -301,13 +301,13 @@ public class VodController extends BaseController {
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
     private boolean musicAnimation = Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false);     //xuameng 音柱动画 加载设置
-	public SubtitleView mExoSubtitleView;   // 用于显示ExoPlayer内置字幕
-	
-	private static final String TAG = "VodController";  //xuameng音乐播放动画
+    public SubtitleView mExoSubtitleView;   // 用于显示ExoPlayer内置字幕
+    private static final String TAG = "VodController";  //xuameng音乐播放动画
     Handler myHandle;
     Runnable myRunnable;
     int myHandleSeconds = 50000; //闲置多少毫秒秒关闭底栏  默认100秒
     int videoPlayState = 0;
+
     private Runnable myRunnable2 = new Runnable() {
         @Override
         public void run() {
@@ -516,7 +516,7 @@ public class VodController extends BaseController {
         mxuPlay = findViewById(R.id.mxuplay); //xuameng  低菜单播放
         mPlayrender = findViewById(R.id.play_render);   //xuameng渲染方式
         mPlayanimation = findViewById(R.id.play_animation);  //xuameng音柱动画
-		mExoSubtitleView = findViewById(R.id.exo_subtitle_view); // 用于显示ExoPlayer内置字幕
+        mExoSubtitleView = findViewById(R.id.exo_subtitle_view); // 用于显示ExoPlayer内置字幕
 
         //xuameng音乐播放时图标
         ObjectAnimator animator20 = ObjectAnimator.ofFloat(iv_circle_bg, "rotation", 360.0f);
@@ -821,7 +821,7 @@ public class VodController extends BaseController {
                 }
                 DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();
                 try {
-					musicAnimation = mPlayerConfig.getBoolean("music");   //xuameng音乐播放动画获取设置
+                    musicAnimation = mPlayerConfig.getBoolean("music");   //xuameng音乐播放动画获取设置
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -1362,7 +1362,7 @@ public class VodController extends BaseController {
     }
     void updatePlayerCfgView() {
         try {
-			musicAnimation = mPlayerConfig.getBoolean("music");   //xuameng音乐播放动画设置
+            musicAnimation = mPlayerConfig.getBoolean("music");   //xuameng音乐播放动画设置
             Hawk.put(HawkConfig.EXO_PLAY_SELECTCODE, 0);  // xuameng exo动态解码 大于0为选择 EXO解码恢复默认值
             boolean exoCode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false); //xuameng EXO默认设置解码
             int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);  //xuameng exo解码动态选择
@@ -1643,7 +1643,7 @@ public class VodController extends BaseController {
                 if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                     customVisualizer.setVisibility(GONE);
                 }
-				releaseVisualizer();  //xuameng播放音乐背景
+                releaseVisualizer();  //xuameng播放音乐背景
                 isVideoplaying = false;
                 isVideoPlay = false;
                 clearSubtitleCache();  //xuameng清除字幕缓存
@@ -1701,7 +1701,7 @@ public class VodController extends BaseController {
                 mVideoSize.setText("[ " + width + " X " + height + " ]");
                 isVideoPlay = false;
                 try {
-					musicAnimation = mPlayerConfig.getBoolean("music");  //xuameng音乐播放动画获取设置
+                    musicAnimation = mPlayerConfig.getBoolean("music");  //xuameng音乐播放动画获取设置
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -2326,7 +2326,7 @@ public class VodController extends BaseController {
         mSubtitleView.clearSubtitleCache();
         mSubtitleView.onSubtitleChanged(null);
         mSubtitleView.setVisibility(View.VISIBLE);
-		mExoSubtitleView.setVisibility(View.GONE);    //xuameng EXO内置字幕
+        mExoSubtitleView.setVisibility(View.GONE);    //xuameng EXO内置字幕
     }
 
     private void initVisualizer() {   //xuameng播放音乐柱状图
