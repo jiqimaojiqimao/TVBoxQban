@@ -106,6 +106,9 @@ public class EXOmPlayer extends ExoMediaPlayer {
                             data.addAudio(t);
                         } else if (MimeTypes.isText(format.sampleMimeType)) {
 							String originalString = format.codecs;   //xuameng显示字幕类型  sampleMimeType改成codecs  media3升级后真正类型在codecs里sampleMimeType显示的是media3-cues
+                            if (TextUtils.isEmpty(originalString)) {
+                                originalString = "未知";
+                            }
 							String stringToReplace = "application/";  //xuameng过滤字幕类型里application/字符串
 							String replacementString = "";
 							if(originalString.contains(stringToReplace)) {  //xuameng过滤字幕类型里application/字符串
