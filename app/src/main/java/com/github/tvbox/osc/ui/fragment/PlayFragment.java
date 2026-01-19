@@ -352,6 +352,10 @@ public class PlayFragment extends BaseLazyFragment {
                                 String zimuUrl = subtitle.getUrl();
                                 LOG.i("echo-Remote Subtitle Url: " + zimuUrl);
                                 setSubtitle(zimuUrl);//设置字幕
+                                if (mController.mExoSubtitleView.getVisibility() == View.VISIBLE){  //xuameng 使用搜索字幕隐藏EXO PGS字幕
+                                    mController.mExoSubtitleView.setVisibility(View.GONE);
+                                }
+                                HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕 
                                 if (searchSubtitleDialog != null) {
                                     searchSubtitleDialog.dismiss();
                                 }
@@ -379,6 +383,10 @@ public class PlayFragment extends BaseLazyFragment {
                             public void onChoosePath(String path, File pathFile) {
                                 LOG.i("echo-Local Subtitle Path: " + path);
                                 setSubtitle(path);//设置字幕
+                                if (mController.mExoSubtitleView.getVisibility() == View.VISIBLE){  //xuameng 使用搜索字幕隐藏EXO PGS字幕
+                                    mController.mExoSubtitleView.setVisibility(View.GONE);
+                                }
+                                HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
                             }
                         })
                         .build()
