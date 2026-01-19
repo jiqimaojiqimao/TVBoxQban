@@ -3,7 +3,6 @@ import android.annotation.SuppressLint;
 import android.content.res.Resources;
 import android.text.TextUtils;
 import androidx.annotation.Nullable;
-import java.util.Locale;
 
 import com.github.tvbox.osc.player.R;
 
@@ -14,6 +13,7 @@ import androidx.media3.common.util.Assertions;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.common.util.Util;
 
+import java.util.Locale;
 import java.util.regex.Pattern;   //xuameng 判断字幕中是否含有中文
 
 public class ExoTrackNameProvider {
