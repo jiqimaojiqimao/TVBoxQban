@@ -708,9 +708,6 @@ public class PlayFragment extends BaseLazyFragment {
     
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
                 mController.mSubtitleView.hasInternal = true;
-            } else {
-                mController.mSubtitleView.hasInternal = false;
-            }
 
                 // 获取当前选中的字幕轨道
                 TrackInfoBean selectedSubtitleTrack = null;
@@ -722,9 +719,15 @@ public class PlayFragment extends BaseLazyFragment {
                 }
 
                 // 判断当前选中的字幕是否为 PGS
-                boolean isPgsSelected = selectedSubtitleTrack != null &&
-                        selectedSubtitleTrack.language != null &&
-                        selectedSubtitleTrack.language.toLowerCase().contains("pgs");
+                boolean isPgsSelected = false;
+                if (selectedSubtitleTrack != null && selectedSubtitleTrack.language != null) {
+                    try {
+                        isPgsSelected = selectedSubtitleTrack.language.toLowerCase().contains("pgs");
+                    } catch (Exception e) {
+                    // 处理可能的异常情况
+                        isPgsSelected = false;
+                    }
+                }
 
                 if (isPgsSelected) {
                     // 当前选中的是 PGS 字幕，使用 ExoPlayer 内置视图
@@ -738,7 +741,9 @@ public class PlayFragment extends BaseLazyFragment {
                     mController.mSubtitleView.setVisibility(View.VISIBLE);
                     HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
                 }
-
+            } else {
+                mController.mSubtitleView.hasInternal = false;
+            }
 
             final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
             Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
