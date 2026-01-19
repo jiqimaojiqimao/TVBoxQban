@@ -12,7 +12,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
-        versionName '20260118-2222'
+        versionName '20260119-2222'
         multiDexEnabled = true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -158,4 +158,5 @@ dependencies {
     implementation "androidx.media3:media3-ui:$exoplayerVersion"
     implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'    //xuameng ffmpeg扩展
 }
+
 
