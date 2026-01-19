@@ -503,7 +503,7 @@ public class PlayActivity extends BaseActivity {
                     }
 
 					// xuameng判断选中的字幕是否为 PGS 格式
-                    boolean isPgsSubtitle = value.name != null && value.language.toLowerCase().contains("pgs");
+                    boolean isPgsSubtitle = value.language != null && value.language.toLowerCase().contains("pgs");
                     if (mediaPlayer instanceof EXOmPlayer) {
 
                         if (isPgsSubtitle) {
@@ -702,9 +702,15 @@ public class PlayActivity extends BaseActivity {
                 }
 
                 // 判断当前选中的字幕是否为 PGS
-                boolean isPgsSelected = selectedSubtitleTrack != null &&
-                        selectedSubtitleTrack.language != null &&
-                        selectedSubtitleTrack.language.toLowerCase().contains("pgs");
+                boolean isPgsSelected = false;
+                if (selectedSubtitleTrack != null && selectedSubtitleTrack.language != null) {
+                    try {
+                        isPgsSelected = selectedSubtitleTrack.language.toLowerCase().contains("pgs");
+                    } catch (Exception e) {
+                    // 处理可能的异常情况
+                        isPgsSelected = false;
+                    }
+                }
 
                 if (isPgsSelected) {
                     // 当前选中的是 PGS 字幕，使用 ExoPlayer 内置视图
