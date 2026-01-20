@@ -38,8 +38,7 @@ public class ExoTrackNameProvider {
                             buildAudioChannelString(format),
                             buildBitrateString(format));
         } else {
-			trackName = buildLanguageOrLabelStringSubtitleXu(format) + "(" + buildLanguageOrLabelStringSubtitle(format) + ")"; //xuameng显示字幕信息
-
+            trackName = buildLanguageOrLabelStringSubtitle(format);   //xuameng显示字幕信息
         }
         return trackName.length() == 0 ? resources.getString(R.string.exo_track_unknown) : trackName;
     }
@@ -89,25 +88,41 @@ public class ExoTrackNameProvider {
         return CHINESE_PATTERN.matcher(str).find();
     }
 
+
+private static final Pattern CHINESE_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]");    //xuameng 判断字幕中是否含有中文
+
+    private boolean containsChinese(String str) {   //xuameng 判断字幕中是否含有中文
+        if (str == null) return false;
+        return CHINESE_PATTERN.matcher(str).find();
+    }
+
     private String buildLanguageOrLabelStringSubtitle(Format format) {  //xuameng 字幕显示详细语言（简繁中文）
         // 先尝试直接使用 label，因为它通常包含更友好的描述
         String labelString = buildLabelString(format);
-        // 2. 判断label是否包含中文字符
-        if (!TextUtils.isEmpty(labelString)) {  //xuameng 有中文就显示（简繁中文）友好的描述
-            // 如果label非空且包含中文，直接返回label
-            return labelString;
+        
+        // 增强中文检测逻辑：优先检查是否包含中文字符或中文标识
+        if (!TextUtils.isEmpty(labelString)) {
+            // 检查是否包含中文字符
+            if (containsChinese(labelString)) {
+                return labelString;
+            }
+            
+            // 检查是否包含常见的中文标识（不区分大小写）
+            String lowerLabel = labelString.toLowerCase(Locale.ENGLISH);
+            if (lowerLabel.contains("chs") || lowerLabel.contains("chi") ||
+                lowerLabel.contains("simplified") || lowerLabel.contains("简体") || lowerLabel.contains("简繁") ||
+                lowerLabel.contains("cht") || lowerLabel.contains("zhi") || lowerLabel.contains("zho")|| lowerLabel.contains("chi") ||
+                lowerLabel.contains("traditional") || lowerLabel.contains("繁体") ||
+                lowerLabel.contains("chinese") || lowerLabel.contains("中文")) {
+                return labelString;
+            }
         }
-        // 3. 否则使用语言+角色组合（自动本地化）  用buildLanguageString把各国语言变化为中文
+        
+        // 否则使用语言+角色组合（自动本地化）  用buildLanguageString把各国语言变化为中文
         String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
         return languageAndRole;
     }
 
-    private String buildLanguageOrLabelStringSubtitleXu(Format format) {  //xuameng 字幕显示详细语言（简繁中文）
-        // 先尝试直接使用 label，因为它通常包含更友好的描述
-        // 3. 否则使用语言+角色组合（自动本地化）  用buildLanguageString把各国语言变化为中文
-        String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
-        return languageAndRole;
-    }
 
     private String buildLabelString(Format format) {
         return TextUtils.isEmpty(format.label) ? "" : format.label;
