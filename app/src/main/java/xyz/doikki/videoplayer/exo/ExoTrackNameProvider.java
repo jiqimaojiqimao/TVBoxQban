@@ -38,7 +38,8 @@ public class ExoTrackNameProvider {
                             buildAudioChannelString(format),
                             buildBitrateString(format));
         } else {
-            trackName = buildLanguageOrLabelStringSubtitleXu(format) + "(" buildLanguageOrLabelStringSubtitle(format) + ")";   //xuameng显示字幕信息
+			trackName = buildLanguageOrLabelStringSubtitleXu(format) + "(" + buildLanguageOrLabelStringSubtitle(format) + ")"; //xuameng显示字幕信息
+
         }
         return trackName.length() == 0 ? resources.getString(R.string.exo_track_unknown) : trackName;
     }
