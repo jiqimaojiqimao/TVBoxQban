@@ -73,8 +73,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     public void initPlayer() {
         // xuameng释放旧实例
         if (mMediaPlayer != null) {
-            mMediaPlayer.release();
             mMediaPlayer.removeListener(this);
+            mMediaPlayer.release();
         }
         // xuameng渲染器配置
         boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
