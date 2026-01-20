@@ -369,7 +369,7 @@ public class SearchActivity extends BaseActivity {
         });
     }
 
-    private void refreshSearchHistory(String keyword2) {         //xuameng 搜索历史
+    private void refreshSearchHistory(String keyword2) {         //xuameng 更新搜索历史记录
         if (!this.searchPresenter.keywordsExist(keyword2)) {
             this.searchPresenter.addKeyWordsTodb(keyword2);
             initSearchHistory();
@@ -379,6 +379,8 @@ public class SearchActivity extends BaseActivity {
     private void initSearchHistory() {
         ArrayList<SearchHistory> searchHistory = this.searchPresenter.getSearchHistory();
         List<String> historyList = new ArrayList<>();
+        // xuameng保留原始数据列表的引用，以便通过索引获取对应的 SearchHistory 对象（如果删除需要ID）
+        final List<SearchHistory> originalHistoryList = new ArrayList<>(searchHistory);   //xuameng 用于长按删除
         for (SearchHistory history : searchHistory) {
             historyList.add(history.searchKeyWords);
         }
@@ -397,6 +399,57 @@ public class SearchActivity extends BaseActivity {
                 }
             }
         });
+        // 仅在 Android 5.0 以下版本应用焦点修复       xuameng修复安卓4搜索历史获取不到焦点问题
+ /*       if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < tv_history.getChildCount(); i++) {
+                        View child = tv_history.getChildAt(i);
+                        // 关键修复：设置焦点属性，解决 Android 4.x 点击问题
+                        child.setFocusable(true);
+                       // child.setFocusableInTouchMode(true);
+                    }
+                }
+            });
+        }    
+*/
+
+		// ========== xuameng新增：为每个历史标签添加长按直接删除功能 ==========
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // 遍历 FlowLayout 中的所有子视图（即每个历史标签）
+                for (int i = 0; i < tv_history.getChildCount(); i++) {
+                    final View child = tv_history.getChildAt(i);
+                    // 根据视图的索引，从已反转的列表中获取对应的关键词和数据对象
+                    final String keywordToDelete = historyList.get(i);
+                    final SearchHistory historyItemToDelete = originalHistoryList.get(i);
+
+                    // 设置长按监听器
+                    child.setOnLongClickListener(new View.OnLongClickListener() {
+                        @Override
+                        public boolean onLongClick(View v) {
+                            // 直接执行删除操作，不弹出对话框
+                            // 1. 从数据库删除数据
+                            boolean success = searchPresenter.deleteKeyWordsFromDb(keywordToDelete);
+
+                            if (success) {
+                                // 2. 从界面移除该标签
+                                tv_history.removeView(child);
+                                // 3. 显示操作成功的 Toast 提示
+                                App.showToastShort(SearchActivity.this, "已删除: " + keywordToDelete);
+                            } else {
+                                App.showToastShort(SearchActivity.this, "删除失败");
+                            }
+                            // 返回 true 表示已消费该长按事件，防止触发其他可能的后续事件
+                            return true;
+                        }
+                    });
+                }
+            }
+        });
+
     }               //xuameng 搜索历史
 
     private void initViewModel() {
