@@ -89,12 +89,6 @@ public class ExoTrackNameProvider {
     }
 
 
-private static final Pattern CHINESE_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]");    //xuameng 判断字幕中是否含有中文
-
-    private boolean containsChinese(String str) {   //xuameng 判断字幕中是否含有中文
-        if (str == null) return false;
-        return CHINESE_PATTERN.matcher(str).find();
-    }
 
     private String buildLanguageOrLabelStringSubtitle(Format format) {  //xuameng 字幕显示详细语言（简繁中文）
         // 先尝试直接使用 label，因为它通常包含更友好的描述
