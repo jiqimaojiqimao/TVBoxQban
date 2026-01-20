@@ -38,7 +38,7 @@ public class ExoTrackNameProvider {
                             buildAudioChannelString(format),
                             buildBitrateString(format));
         } else {
-            trackName = buildLanguageOrLabelStringSubtitle(format);   //xuameng显示字幕信息
+            trackName = buildLanguageOrLabelStringSubtitleXu(format) + "(" buildLanguageOrLabelStringSubtitle(format) + ")";   //xuameng显示字幕信息
         }
         return trackName.length() == 0 ? resources.getString(R.string.exo_track_unknown) : trackName;
     }
@@ -92,10 +92,17 @@ public class ExoTrackNameProvider {
         // 先尝试直接使用 label，因为它通常包含更友好的描述
         String labelString = buildLabelString(format);
         // 2. 判断label是否包含中文字符
-        if (!TextUtils.isEmpty(labelString) && containsChinese(labelString)) {  //xuameng 有中文就显示（简繁中文）友好的描述
+        if (!TextUtils.isEmpty(labelString)) {  //xuameng 有中文就显示（简繁中文）友好的描述
             // 如果label非空且包含中文，直接返回label
             return labelString;
         }
+        // 3. 否则使用语言+角色组合（自动本地化）  用buildLanguageString把各国语言变化为中文
+        String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
+        return languageAndRole;
+    }
+
+    private String buildLanguageOrLabelStringSubtitleXu(Format format) {  //xuameng 字幕显示详细语言（简繁中文）
+        // 先尝试直接使用 label，因为它通常包含更友好的描述
         // 3. 否则使用语言+角色组合（自动本地化）  用buildLanguageString把各国语言变化为中文
         String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
         return languageAndRole;
