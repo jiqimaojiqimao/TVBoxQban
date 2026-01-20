@@ -1,9 +1,10 @@
-package com.github.tvbox.osc.data;
 
+package com.github.tvbox.osc.data;
 
 import com.github.tvbox.osc.cache.SearchHistory;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * creator huangyong
@@ -44,6 +45,25 @@ public class DbHelper {
             for (SearchHistory history : allHistory) {
                 AppDataManager.get().getSearchDao().delete(history);
             }
+        }
+    }
+    
+    /**xuameng
+     * 根据关键词获取搜索历史记录列表
+     * @param keyword 搜索关键词
+     * @return 匹配的搜索历史记录列表
+     */
+    public static List<SearchHistory> getByKeywords(String keyword) {
+        return AppDataManager.get().getSearchDao().getByKeywords(keyword);
+    }
+    
+    /**
+     * 删除单个搜索历史记录
+     * @param history 要删除的搜索历史记录对象
+     */
+    public static void deleteSingleHistory(SearchHistory history) {
+        if (history != null) {
+            AppDataManager.get().getSearchDao().delete(history);
         }
     }
 }
