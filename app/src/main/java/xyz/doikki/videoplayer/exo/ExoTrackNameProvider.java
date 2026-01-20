@@ -88,8 +88,6 @@ public class ExoTrackNameProvider {
         return CHINESE_PATTERN.matcher(str).find();
     }
 
-
-
     private String buildLanguageOrLabelStringSubtitle(Format format) {  //xuameng 字幕显示详细语言（简繁中文）
         // 先尝试直接使用 label，因为它通常包含更友好的描述
         String labelString = buildLabelString(format);
@@ -103,11 +101,19 @@ public class ExoTrackNameProvider {
             
             // 检查是否包含常见的中文标识（不区分大小写）
             String lowerLabel = labelString.toLowerCase(Locale.ENGLISH);
-            if (lowerLabel.contains("chs") || lowerLabel.contains("chi") ||
-                lowerLabel.contains("simplified") || lowerLabel.contains("简体") || lowerLabel.contains("简繁") ||
-                lowerLabel.contains("cht") || lowerLabel.contains("zhi") || lowerLabel.contains("zho")|| lowerLabel.contains("chi") ||
-                lowerLabel.contains("traditional") || lowerLabel.contains("繁体") ||
-                lowerLabel.contains("chinese") || lowerLabel.contains("中文")) {
+            if (lowerLabel.contains("simplified") || lowerLabel.contains("traditional") || 
+                lowerLabel.contains("chinese")) {
+                // 如果包含 traditional，直接返回"繁体中文"
+                if (lowerLabel.contains("traditional")) {
+                    return "繁体中文";
+                }
+                if (lowerLabel.contains("simplified")) {
+                    return "简体中文";
+                }
+                if (lowerLabel.contains("chinese")) {
+                    return "中文";
+                }
+                // 其他中文标识返回原始 label
                 return labelString;
             }
         }
@@ -116,7 +122,6 @@ public class ExoTrackNameProvider {
         String languageAndRole = joinWithSeparator(buildLanguageString(format), buildRoleString(format));
         return languageAndRole;
     }
-
 
     private String buildLabelString(Format format) {
         return TextUtils.isEmpty(format.label) ? "" : format.label;
