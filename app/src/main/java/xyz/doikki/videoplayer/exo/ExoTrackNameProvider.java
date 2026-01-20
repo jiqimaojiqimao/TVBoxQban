@@ -34,11 +34,11 @@ public class ExoTrackNameProvider {
         } else if (trackType == C.TRACK_TYPE_AUDIO) {     //xuameng 显示音频轨道信息
             trackName =
                     joinWithSeparator(
-                            buildLanguageOrLabelStringSubtitle(format),   //xuameng 显示音频轨道信息
+                            buildLanguageOrLabelString(format),   //xuameng 显示音频轨道信息
                             buildAudioChannelString(format),
                             buildBitrateString(format));
         } else {
-            trackName = buildLanguageOrLabelStringSubtitle(format);   //xuameng显示字幕信息
+            trackName = buildLanguageOrLabelString(format);   //xuameng显示字幕信息
         }
         return trackName.length() == 0 ? resources.getString(R.string.exo_track_unknown) : trackName;
     }
@@ -75,20 +75,14 @@ public class ExoTrackNameProvider {
         }
     }
 
-    private String buildLanguageOrLabelStringAudio(Format format) {   //xuameng 音轨显示简单语言
-        String languageAndRole =
-                joinWithSeparator(buildLanguageString(format), buildRoleString(format));
-        return TextUtils.isEmpty(languageAndRole) ? buildLabelString(format) : languageAndRole;
-    }
+    private static final Pattern CHINESE_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]");    //xuameng 判断字幕或音轨中是否含有中文
 
-    private static final Pattern CHINESE_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]");    //xuameng 判断字幕中是否含有中文
-
-    private boolean containsChinese(String str) {   //xuameng 判断字幕中是否含有中文
+    private boolean containsChinese(String str) {   //xuameng 判断字幕或音轨中是否含有中文
         if (str == null) return false;
         return CHINESE_PATTERN.matcher(str).find();
     }
 
-    private String buildLanguageOrLabelStringSubtitle(Format format) {  //xuameng 字幕显示详细语言（简繁中文）
+    private String buildLanguageOrLabelString(Format format) {  //xuameng 字幕或音轨显示详细语言（简繁中文）
         // 先尝试直接使用 label，因为它通常包含更友好的描述
         String labelString = buildLabelString(format);
         
