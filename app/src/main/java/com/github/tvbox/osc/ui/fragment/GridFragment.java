@@ -225,6 +225,12 @@ public class GridFragment extends BaseLazyFragment {
                 FastClickCheckUtil.check(view);
                 Movie.Video video = gridAdapter.getData().get(position);
                 if (video != null) {
+            // 判断是否为 Java 代码
+            boolean isJava = isJavaCode(video.id) || isJavaCode(video.sourceKey);
+            if (isJava) {
+                // 如果是 Java 代码（如 DIALOG 或其他类名），直接返回，不进行跳转
+                return;
+            }
                     Bundle bundle = new Bundle();
                     bundle.putString("id", video.id);
                     bundle.putString("sourceKey", video.sourceKey);
@@ -425,4 +431,27 @@ public class GridFragment extends BaseLazyFragment {
         page = 1;
         initData();
     }
+
+private boolean isJavaCode(String str) {
+    if (str == null || str.trim().isEmpty()) return false;
+    String s = str.trim();
+    
+    // 常见Java/Android类名和组件
+    String[] javaKeywords = {"DIALOG", "TOAST", "ACTIVITY", "FRAGMENT", "VIEW", "BUTTON", 
+                            "TEXTVIEW", "RECYCLERVIEW", "ADAPTER", "BUNDLE", "INTENT"};
+    
+    for (String keyword : javaKeywords) {
+        if (s.equalsIgnoreCase(keyword)) {
+            return true;
+        }
+    }
+    
+    // 原有其他判断逻辑保持不变
+    return s.matches("^([A-Za-z_$][A-Za-z\\d_$]*\\.)*[A-Za-z_$][A-Za-z\\d_$]*(\\.)?[A-Za-z_$][A-Za-z\\d_$]*")
+           || s.startsWith("new ")
+           || (s.contains("(") && s.contains(")"))
+           || s.endsWith(".java")
+           || (s.matches("[A-Z][A-Za-z\\d_$]*$") && Character.isUpperCase(s.charAt(0)));
+}
+
 }
