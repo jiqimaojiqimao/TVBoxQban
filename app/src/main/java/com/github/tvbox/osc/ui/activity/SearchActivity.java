@@ -226,6 +226,7 @@ public class SearchActivity extends BaseActivity {
                             pauseRunnable = searchExecutorService.shutdownNow();
                             searchExecutorService = null;
                             JsLoader.stopAll();
+                            System.gc();
                         }
                     } catch (Throwable th) {
                         th.printStackTrace();
@@ -754,9 +755,13 @@ public class SearchActivity extends BaseActivity {
         cancel();
         try {
             if (searchExecutorService != null) {
+                if (searchExecutorService instanceof ThreadPoolExecutor) {
+                    ((ThreadPoolExecutor) searchExecutorService).getQueue().clear();
+                }
                 searchExecutorService.shutdownNow();
                 searchExecutorService = null;
                 JsLoader.stopAll();
+                System.gc();
             }
         } catch (Throwable th) {
             th.printStackTrace();
