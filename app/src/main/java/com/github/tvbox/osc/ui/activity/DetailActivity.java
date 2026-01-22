@@ -1370,23 +1370,15 @@ private boolean isJavaCode(String str) {
     if (str == null || str.trim().isEmpty()) return false;
     String s = str.trim();
     
-    // 1. 明确检测纯Java关键字
-    String[] javaKeywords = {"DIALOG", "TOAST"};
-    
-    // 精确匹配关键词（全大写或全小写）
-    for (String keyword : javaKeywords) {
-        if (s.equals(keyword) || s.equals(keyword.toLowerCase())) {
-            return true;
-        }
-    }
-    
-    // 2. 检测明显的Java代码特征
-    // 包含.java扩展名
-    if (s.endsWith(".java")) {
+    // 只检测非常明确的Java代码特征
+    // 1. 完全匹配特定关键词（区分大小写）
+    if (s.equals("DIALOG") || s.equals("TOAST") || 
+        s.equals("dialog") || s.equals("toast")) {
         return true;
     }
     
     return false;
 }
+
 
 }
