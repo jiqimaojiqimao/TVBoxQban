@@ -219,40 +219,56 @@ public class GridFragment extends BaseLazyFragment {
                 return false;
             }
         });
-        gridAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
-            @Override
-            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                FastClickCheckUtil.check(view);
-                Movie.Video video = gridAdapter.getData().get(position);
-                if (video != null) {
-                    Bundle bundle = new Bundle();
-                    bundle.putString("id", video.id);
-                    bundle.putString("sourceKey", video.sourceKey);
-                    bundle.putString("title", video.name);
-                    if( video.tag !=null && (video.tag.equals("folder") || video.tag.equals("cover"))){
-                        focusedView = view;
-                        if(("12".indexOf(getUITag()) != -1)){
-                            changeView(video.id,video.tag.equals("folder"));
-                        }else {
-                            changeView(video.id,false);
-                        }
-                    }
-                    else{
-                        if(video.id == null || video.id.isEmpty() ){
-                            if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) && enableFastSearch()){
-                                jumpActivity(FastSearchActivity.class, bundle);
-                            }else {
-                                jumpActivity(SearchActivity.class, bundle);
-                            }
-                        }else {
-                            bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
-                            jumpActivity(DetailActivity.class, bundle);
-                        }
-                    }
+gridAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+    @Override
+    public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+        FastClickCheckUtil.check(view);
+        Movie.Video video = gridAdapter.getData().get(position);
+        if (video != null) {
+            // --- 新增判断逻辑开始 ---
+            // 判断是否为需要显示提示的类型
+            if (video.tag != null && (video.tag.equals("dialog") || video.tag.equals("toast"))) {
+                // 显示Dialog或Toast
+                if (video.tag.equals("dialog")) {
+                    // 显示自定义Dialog，这里用示例代码
+                    // new AlertDialog.Builder(mContext).setMessage("提示信息").show();
+                    App.showToastShort(getContext(), "触发Dialog逻辑: " + video.name);
+                } else {
+                    // 显示Toast
+                    App.showToastShort(getContext(), video.name);
+                }
+                return; // 关键：直接返回，不执行后续的跳转逻辑
+            }
+            // --- 新增判断逻辑结束 ---
 
+            Bundle bundle = new Bundle();
+            bundle.putString("id", video.id);
+            bundle.putString("sourceKey", video.sourceKey);
+            bundle.putString("title", video.name);
+            if( video.tag !=null && (video.tag.equals("folder") || video.tag.equals("cover"))){
+                focusedView = view;
+                if(("12".indexOf(getUITag()) != -1)){
+                    changeView(video.id,video.tag.equals("folder"));
+                }else {
+                    changeView(video.id,false);
                 }
             }
-        });
+            else{
+                if(video.id == null || video.id.isEmpty() || video.id.startsWith("msearch:")){
+                    if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) && enableFastSearch()){
+                        jumpActivity(FastSearchActivity.class, bundle);
+                    }else {
+                        jumpActivity(SearchActivity.class, bundle);
+                    }
+                }else {
+                    bundle.putString("picture", video.pic);
+                    jumpActivity(DetailActivity.class, bundle);
+                }
+            }
+        }
+    }
+});
+
         gridAdapter.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
