@@ -848,6 +848,7 @@ public class DetailActivity extends BaseActivity {
                     // 如果是 Java 代码，执行相应Java逻辑
                     // 这里可以根据需要添加具体处理逻辑
                     // 例如：显示提示、跳过后续处理等
+					App.showToastShort(DetailActivity.this, "检测到Java代码，但继续处理");
                     return;
                 }
                 // ========== 新增代码结束 ==========
