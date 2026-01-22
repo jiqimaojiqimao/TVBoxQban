@@ -247,19 +247,9 @@ try {
     // 3. 建议GC（保持不变）
     System.gc();
 
-    // 【修改点2】：将未完成的任务交给Activity的统一恢复机制
-    // 这里有两种策略，推荐策略A，更符合原始设计
     // 策略A：赋值给成员变量 pauseRunnable，由 onResume() 统一恢复
     pauseRunnable = pendingTasks;
 
-    // 策略B：如果希望点击后立即在后台悄悄恢复，可以在这里新建线程池执行（不推荐，可能影响播放）
-    // if (pendingTasks != null && !pendingTasks.isEmpty()) {
-    //     ExecutorService quickResumeService = new ThreadPoolExecutor(...);
-    //     for (Runnable r : pendingTasks) {
-    //         quickResumeService.execute(r);
-    //     }
-    //     quickResumeService.shutdown(); // 执行完关闭
-    // }
 
 } catch (Throwable th) {
     th.printStackTrace();
@@ -789,9 +779,13 @@ try {
         cancel();
         try {
             if (searchExecutorService != null) {
+                if (searchExecutorService instanceof ThreadPoolExecutor) {
+                    ((ThreadPoolExecutor) searchExecutorService).getQueue().clear();
+                }
                 searchExecutorService.shutdownNow();
                 searchExecutorService = null;
                 JsLoader.stopAll();
+                System.gc();
             }
         } catch (Throwable th) {
             th.printStackTrace();
