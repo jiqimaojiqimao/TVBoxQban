@@ -840,6 +840,17 @@ public class DetailActivity extends BaseActivity {
                     mVideo = absXml.movie.videoList.get(0);
                     mVideo.id = vodId;
                     if (TextUtils.isEmpty(mVideo.name))mVideo.name = "🥇聚汇影视";
+
+                // ========== 新增代码开始 ==========
+                // 判断是否为 Java 代码
+                boolean isJava = isJavaCode(mVideo.id) || isJavaCode(mVideo.sourceKey);
+                if (isJava) {
+                    // 如果是 Java 代码，执行相应Java逻辑
+                    // 这里可以根据需要添加具体处理逻辑
+                    // 例如：显示提示、跳过后续处理等
+                    return;
+                }
+                // ========== 新增代码结束 ==========
                     vodInfo = new VodInfo();
                     if((mVideo.pic==null || mVideo.pic.isEmpty()) && !vod_picture.isEmpty()){    //xuameng某些网站图片部显示
                         mVideo.pic=vod_picture;
@@ -977,27 +988,14 @@ public class DetailActivity extends BaseActivity {
     }
 
     private String  vod_picture="";
-
-
-private void initData() {
-    Intent intent = getIntent();
-    if (intent != null && intent.getExtras() != null) {
-        Bundle bundle = intent.getExtras();
-        vod_picture = bundle.getString("picture", "");
-        
-        // 获取视频ID和sourceKey
-        String videoId = bundle.getString("id", null);
-        String sourceKey = bundle.getString("sourceKey", "");
-        
-        // 判断是否为 Java 代码
-        boolean isJava = isJavaCode(videoId) || isJavaCode(sourceKey);
-        if (isJava) {
-            return; // 不执行后续的加载详情逻辑
+    private void initData() {
+        Intent intent = getIntent();
+        if (intent != null && intent.getExtras() != null) {
+            Bundle bundle = intent.getExtras();
+			vod_picture=bundle.getString("picture", "");
+            loadDetail(bundle.getString("id", null), bundle.getString("sourceKey", ""));
         }
-        
-        loadDetail(videoId, sourceKey);
     }
-}
 
     private void loadDetail(String vid, String key) {
         if (vid != null) {
@@ -1368,7 +1366,7 @@ private void initData() {
       setTextShow(tvPlayUrl, "播放地址：", url);
     }
 
-	private boolean isJavaCode(String str) {
+private boolean isJavaCode(String str) {
     if (str == null || str.trim().isEmpty()) return false;
     String s = str.trim();
     
