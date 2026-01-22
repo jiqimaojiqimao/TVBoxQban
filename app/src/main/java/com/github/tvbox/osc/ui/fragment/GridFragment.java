@@ -48,9 +48,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
-import androidx.appcompat.app.AlertDialog;
-
 /**
  * @author pj567
  * @date :2020/12/21
@@ -228,7 +225,6 @@ public class GridFragment extends BaseLazyFragment {
                 FastClickCheckUtil.check(view);
                 Movie.Video video = gridAdapter.getData().get(position);
                 if (video != null) {
-
                     Bundle bundle = new Bundle();
                     bundle.putString("id", video.id);
                     bundle.putString("sourceKey", video.sourceKey);
@@ -249,14 +245,8 @@ public class GridFragment extends BaseLazyFragment {
                                 jumpActivity(SearchActivity.class, bundle);
                             }
                         }else {
-            // 判断是否为 Java 代码
-                    boolean isJava = isJavaCode(video.id) || isJavaCode(video.sourceKey);
-                    if (isJava) {
-                        // 如果是 Java 代码，执行相应Java逻辑
-                        return;
-                    }
                             bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
-                            jumpActivity(DetailActivity.class, bundle);
+                        //    jumpActivity(DetailActivity.class, bundle);
                         }
                     }
 
@@ -435,52 +425,4 @@ public class GridFragment extends BaseLazyFragment {
         page = 1;
         initData();
     }
-
-private boolean isJavaCode(String str) {
-    if (str == null || str.trim().isEmpty()) return false;
-    String s = str.trim();
-    
-    // 常见Java/Android类名和组件
-    String[] javaKeywords = {"DIALOG", "TOAST", "ACTIVITY", "FRAGMENT", "VIEW", "BUTTON", 
-                            "TEXTVIEW", "RECYCLERVIEW", "ADAPTER", "BUNDLE", "INTENT"};
-    
-    for (String keyword : javaKeywords) {
-        if (s.equalsIgnoreCase(keyword)) {
-            return true;
-        }
-    }
-    
-    // 原有其他判断逻辑保持不变
-    return s.matches("^([A-Za-z_$][A-Za-z\\d_$]*\\.)*[A-Za-z_$][A-Za-z\\d_$]*(\\.)?[A-Za-z_$][A-Za-z\\d_$]*")
-           || s.startsWith("new ")
-           || (s.contains("(") && s.contains(")"))
-           || s.endsWith(".java")
-           || (s.matches("[A-Z][A-Za-z\\d_$]*$") && Character.isUpperCase(s.charAt(0)));
-}
-
-// 新增的Java代码执行方法
-private void executeJavaCodeLogic(String javaCode) {
-    if (javaCode == null) return;
-    
-    String code = javaCode.trim().toUpperCase();
-    switch (code) {
-        case "TOAST":
-            // 执行Toast显示
-
-            break;
-        case "DIALOG":
-            // 执行Dialog显示
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-            builder.setTitle("Java代码执行")
-                   .setMessage("执行Dialog显示")
-                   .setPositiveButton("确定", null)
-                   .show();
-            break;
-        default:
-            // 其他Java代码处理
-            Log.d("JavaCode", "执行Java代码: " + javaCode);
-            break;
-    }
-}
-
 }
