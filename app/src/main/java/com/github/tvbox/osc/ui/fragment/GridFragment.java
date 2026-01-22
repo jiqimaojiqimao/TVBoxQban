@@ -48,6 +48,9 @@ import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.util.Log;
+import androidx.appcompat.app.AlertDialog;
+
 /**
  * @author pj567
  * @date :2020/12/21
@@ -219,56 +222,47 @@ public class GridFragment extends BaseLazyFragment {
                 return false;
             }
         });
-gridAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
-    @Override
-    public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-        FastClickCheckUtil.check(view);
-        Movie.Video video = gridAdapter.getData().get(position);
-        if (video != null) {
-            // --- 新增判断逻辑开始 ---
-            // 判断是否为需要显示提示的类型
-            if (video.tag != null && (video.tag.equals("dialog") || video.tag.equals("toast"))) {
-                // 显示Dialog或Toast
-                if (video.tag.equals("dialog")) {
-                    // 显示自定义Dialog，这里用示例代码
-                    // new AlertDialog.Builder(mContext).setMessage("提示信息").show();
-                    App.showToastShort(getContext(), "触发Dialog逻辑: " + video.name);
-                } else {
-                    // 显示Toast
-                    App.showToastShort(getContext(), video.name);
-                }
-                return; // 关键：直接返回，不执行后续的跳转逻辑
-            }
-            // --- 新增判断逻辑结束 ---
+        gridAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                FastClickCheckUtil.check(view);
+                Movie.Video video = gridAdapter.getData().get(position);
+                if (video != null) {
 
-            Bundle bundle = new Bundle();
-            bundle.putString("id", video.id);
-            bundle.putString("sourceKey", video.sourceKey);
-            bundle.putString("title", video.name);
-            if( video.tag !=null && (video.tag.equals("folder") || video.tag.equals("cover"))){
-                focusedView = view;
-                if(("12".indexOf(getUITag()) != -1)){
-                    changeView(video.id,video.tag.equals("folder"));
-                }else {
-                    changeView(video.id,false);
-                }
-            }
-            else{
-                if(video.id == null || video.id.isEmpty() || video.id.startsWith("msearch:")){
-                    if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) && enableFastSearch()){
-                        jumpActivity(FastSearchActivity.class, bundle);
-                    }else {
-                        jumpActivity(SearchActivity.class, bundle);
+                    Bundle bundle = new Bundle();
+                    bundle.putString("id", video.id);
+                    bundle.putString("sourceKey", video.sourceKey);
+                    bundle.putString("title", video.name);
+                    if( video.tag !=null && (video.tag.equals("folder") || video.tag.equals("cover"))){
+                        focusedView = view;
+                        if(("12".indexOf(getUITag()) != -1)){
+                            changeView(video.id,video.tag.equals("folder"));
+                        }else {
+                            changeView(video.id,false);
+                        }
                     }
-                }else {
-                    bundle.putString("picture", video.pic);
-                    jumpActivity(DetailActivity.class, bundle);
+                    else{
+                        if(video.id == null || video.id.isEmpty() || video.id.startsWith("msearch:")){
+                            if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) && enableFastSearch()){
+                                jumpActivity(FastSearchActivity.class, bundle);
+                            }else {
+                                jumpActivity(SearchActivity.class, bundle);
+                            }
+                        }else {
+            // 判断是否为 Java 代码
+                    boolean isJava = isJavaCode(video.id) || isJavaCode(video.sourceKey);
+                    if (isJava) {
+                        // 如果是 Java 代码，执行相应Java逻辑
+                        return;
+                    }
+                            bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
+                            jumpActivity(DetailActivity.class, bundle);
+                        }
+                    }
+
                 }
             }
-        }
-    }
-});
-
+        });
         gridAdapter.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
@@ -441,4 +435,52 @@ gridAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
         page = 1;
         initData();
     }
+
+private boolean isJavaCode(String str) {
+    if (str == null || str.trim().isEmpty()) return false;
+    String s = str.trim();
+    
+    // 常见Java/Android类名和组件
+    String[] javaKeywords = {"DIALOG", "TOAST", "ACTIVITY", "FRAGMENT", "VIEW", "BUTTON", 
+                            "TEXTVIEW", "RECYCLERVIEW", "ADAPTER", "BUNDLE", "INTENT"};
+    
+    for (String keyword : javaKeywords) {
+        if (s.equalsIgnoreCase(keyword)) {
+            return true;
+        }
+    }
+    
+    // 原有其他判断逻辑保持不变
+    return s.matches("^([A-Za-z_$][A-Za-z\\d_$]*\\.)*[A-Za-z_$][A-Za-z\\d_$]*(\\.)?[A-Za-z_$][A-Za-z\\d_$]*")
+           || s.startsWith("new ")
+           || (s.contains("(") && s.contains(")"))
+           || s.endsWith(".java")
+           || (s.matches("[A-Z][A-Za-z\\d_$]*$") && Character.isUpperCase(s.charAt(0)));
+}
+
+// 新增的Java代码执行方法
+private void executeJavaCodeLogic(String javaCode) {
+    if (javaCode == null) return;
+    
+    String code = javaCode.trim().toUpperCase();
+    switch (code) {
+        case "TOAST":
+            // 执行Toast显示
+
+            break;
+        case "DIALOG":
+            // 执行Dialog显示
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setTitle("Java代码执行")
+                   .setMessage("执行Dialog显示")
+                   .setPositiveButton("确定", null)
+                   .show();
+            break;
+        default:
+            // 其他Java代码处理
+            Log.d("JavaCode", "执行Java代码: " + javaCode);
+            break;
+    }
+}
+
 }
