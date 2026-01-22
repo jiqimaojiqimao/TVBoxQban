@@ -263,7 +263,6 @@ try {
 
 } catch (Throwable th) {
     th.printStackTrace();
-    LOG.e("SearchActivity", "预清理资源时发生异常: " + th.getMessage());
 }
 
                     hasKeyBoard = false;
