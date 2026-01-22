@@ -840,18 +840,6 @@ public class DetailActivity extends BaseActivity {
                     mVideo = absXml.movie.videoList.get(0);
                     mVideo.id = vodId;
                     if (TextUtils.isEmpty(mVideo.name))mVideo.name = "🥇聚汇影视";
-
-                // ========== 新增代码开始 ==========
-                // 判断是否为 Java 代码
-                boolean isJava = isJavaCode(mVideo.id) || isJavaCode(mVideo.sourceKey);
-                if (isJava) {
-                    // 如果是 Java 代码，执行相应Java逻辑
-                    // 这里可以根据需要添加具体处理逻辑
-                    // 例如：显示提示、跳过后续处理等
-					App.showToastShort(DetailActivity.this, "检测到Java代码，但继续处理");
-                    return;
-                }
-                // ========== 新增代码结束 ==========
                     vodInfo = new VodInfo();
                     if((mVideo.pic==null || mVideo.pic.isEmpty()) && !vod_picture.isEmpty()){    //xuameng某些网站图片部显示
                         mVideo.pic=vod_picture;
@@ -958,10 +946,22 @@ public class DetailActivity extends BaseActivity {
 			//			llPlayerFragmentContainerBlock.setNextFocusUpId(R.id.mGridView); 
 
                         if (showPreview) {
+                // 检查是否为Java代码
+                boolean isJava = isJavaCode(mVideo.id);
+                if (isJava) {
+                    // 如果是Java代码，显示提示但不执行跳转
+                    App.showToastShort(DetailActivity.this, "检测到Java代码，显示提示但继续处理");
+                    // 不return，让后续逻辑继续执行，但可以控制是否跳转
+                    // 通过标志位控制跳转逻辑
+                    handleJavaCodeExecution();
+                } else {
+                    // 正常情况下的跳转逻辑
                             jumpToPlay();
                             llPlayerFragmentContainer.setVisibility(View.VISIBLE);
                             llPlayerFragmentContainerBlock.setVisibility(View.VISIBLE);
                             toggleSubtitleTextSize();
+                }
+
                         }
                         // startQuickSearch();
                     } else {
@@ -1381,5 +1381,12 @@ private boolean isJavaCode(String str) {
     return false;
 }
 
+private void handleJavaCodeExecution() {
+    // Java代码的特殊处理逻辑
+    // 可以在这里添加Java代码的特定处理
+    // 但不执行jumpToPlay方法
+    Log.d("JavaCode", "处理Java代码逻辑，但不跳转播放页面");
+    // 可以显示特殊UI或提示信息
+}
 
 }
