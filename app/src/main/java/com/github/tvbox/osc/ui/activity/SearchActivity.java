@@ -226,35 +226,11 @@ public class SearchActivity extends BaseActivity {
                             pauseRunnable = searchExecutorService.shutdownNow();
                             searchExecutorService = null;
                             JsLoader.stopAll();
+                            System.gc();
                         }
                     } catch (Throwable th) {
                         th.printStackTrace();
                     }
-
-try {
-    // 【修改点1】：在停止线程池前，先保存未完成的任务
-    List<Runnable> pendingTasks = null;
-    if (searchExecutorService != null) {
-        pendingTasks = searchExecutorService.shutdownNow(); // 保存返回的列表
-        if (searchExecutorService instanceof ThreadPoolExecutor) {
-            ((ThreadPoolExecutor) searchExecutorService).getQueue().clear();
-        }
-        searchExecutorService = null;
-    }
-
-    // 2. 彻底停止所有Js脚本加载器（保持不变）
-    JsLoader.stopAll();
-    // 3. 建议GC（保持不变）
-    System.gc();
-
-    // 策略A：赋值给成员变量 pauseRunnable，由 onResume() 统一恢复
-    pauseRunnable = pendingTasks;
-
-
-} catch (Throwable th) {
-    th.printStackTrace();
-}
-
                     hasKeyBoard = false;
                     isSearchBack = true;
                     Bundle bundle = new Bundle();
