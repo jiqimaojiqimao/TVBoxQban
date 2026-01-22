@@ -461,7 +461,7 @@ private void executeJavaCodeLogic(String javaCode) {
                 // 在GridFragment中直接显示Toast
                 android.widget.Toast.makeText(getContext(), "执行Toast显示", android.widget.Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
-                LOG.e("JavaCode", "Toast执行异常: " + e.getMessage());
+                LOG.e("JavaCode: Toast执行异常: " + e.getMessage());
             }
             break;
         case "DIALOG":
@@ -473,13 +473,14 @@ private void executeJavaCodeLogic(String javaCode) {
                        .setPositiveButton("确定", null)
                        .show();
             } catch (Exception e) {
-                LOG.e("JavaCode", "Dialog执行异常: " + e.getMessage());
+                LOG.e("JavaCode: Dialog执行异常: " + e.getMessage());
             }
             break;
         default:
-            LOG.d("JavaCode", "执行Java代码: " + javaCode);
+            LOG.d("JavaCode: 执行Java代码: " + javaCode);
             break;
     }
 }
+
 
 }
