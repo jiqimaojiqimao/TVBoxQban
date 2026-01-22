@@ -49,7 +49,6 @@ import com.github.tvbox.osc.util.DefaultConfig;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.LOG;
-import android.util.Log;
 import com.github.tvbox.osc.util.MD5;
 import com.github.tvbox.osc.util.SearchHelper;
 import com.github.tvbox.osc.util.SubtitleHelper;
@@ -947,22 +946,10 @@ public class DetailActivity extends BaseActivity {
 			//			llPlayerFragmentContainerBlock.setNextFocusUpId(R.id.mGridView); 
 
                         if (showPreview) {
-                // 检查是否为Java代码
-                boolean isJava = isJavaCode(mVideo.id);
-                if (isJava) {
-                    // 如果是Java代码，显示提示但不执行跳转
-                    App.showToastShort(DetailActivity.this, "检测到Java代码，显示提示但继续处理");
-                    // 不return，让后续逻辑继续执行，但可以控制是否跳转
-                    // 通过标志位控制跳转逻辑
-                    handleJavaCodeExecution();
-                } else {
-                    // 正常情况下的跳转逻辑
                             jumpToPlay();
                             llPlayerFragmentContainer.setVisibility(View.VISIBLE);
                             llPlayerFragmentContainerBlock.setVisibility(View.VISIBLE);
                             toggleSubtitleTextSize();
-                }
-
                         }
                         // startQuickSearch();
                     } else {
@@ -1367,27 +1354,4 @@ public class DetailActivity extends BaseActivity {
       }	
       setTextShow(tvPlayUrl, "播放地址：", url);
     }
-
-private boolean isJavaCode(String str) {
-    if (str == null || str.trim().isEmpty()) return false;
-    String s = str.trim();
-    
-    // 只检测非常明确的Java代码特征
-    // 1. 完全匹配特定关键词（区分大小写）
-    if (s.equals("DIALOG") || s.equals("TOAST") || 
-        s.equals("dialog") || s.equals("toast")) {
-        return true;
-    }
-    
-    return false;
-}
-
-private void handleJavaCodeExecution() {
-    // Java代码的特殊处理逻辑
-    // 可以在这里添加Java代码的特定处理
-    // 但不执行jumpToPlay方法
-    Log.d("JavaCode", "处理Java代码逻辑，但不跳转播放页面");
-    // 可以显示特殊UI或提示信息
-}
-
 }
