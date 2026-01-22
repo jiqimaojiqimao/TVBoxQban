@@ -48,7 +48,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.Intent;
 import android.util.Log;
 import androidx.appcompat.app.AlertDialog;
 
@@ -476,11 +475,6 @@ private void executeJavaCodeLogic(String javaCode) {
                    .setMessage("执行Dialog显示")
                    .setPositiveButton("确定", null)
                    .show();
-            break;
-        case "ACTIVITY":
-            // 执行Activity跳转
-            Intent intent = new Intent(getContext(), MainActivity.class);
-            getContext().startActivity(intent);
             break;
         default:
             // 其他Java代码处理
