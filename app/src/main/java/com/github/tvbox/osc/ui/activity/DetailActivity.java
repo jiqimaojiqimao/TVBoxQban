@@ -1370,21 +1370,23 @@ private boolean isJavaCode(String str) {
     if (str == null || str.trim().isEmpty()) return false;
     String s = str.trim();
     
-    // 常见Java/Android类名和组件
-    String[] javaKeywords = {"DIALOG", "TOAST", "ACTIVITY", "FRAGMENT", "VIEW", "BUTTON", 
-                            "TEXTVIEW", "RECYCLERVIEW", "ADAPTER", "BUNDLE", "INTENT"};
+    // 1. 明确检测纯Java关键字
+    String[] javaKeywords = {"DIALOG", "TOAST"};
     
+    // 精确匹配关键词（全大写或全小写）
     for (String keyword : javaKeywords) {
-        if (s.equalsIgnoreCase(keyword)) {
+        if (s.equals(keyword) || s.equals(keyword.toLowerCase())) {
             return true;
         }
     }
     
-    // 原有其他判断逻辑保持不变
-    return s.matches("^([A-Za-z_$][A-Za-z\\d_$]*\\.)*[A-Za-z_$][A-Za-z\\d_$]*(\\.)?[A-Za-z_$][A-Za-z\\d_$]*")
-           || s.startsWith("new ")
-           || (s.contains("(") && s.contains(")"))
-           || s.endsWith(".java")
-           || (s.matches("[A-Z][A-Za-z\\d_$]*$") && Character.isUpperCase(s.charAt(0)));
+    // 2. 检测明显的Java代码特征
+    // 包含.java扩展名
+    if (s.endsWith(".java")) {
+        return true;
+    }
+    
+    return false;
 }
+
 }
