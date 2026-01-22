@@ -477,7 +477,7 @@ private void executeJavaCodeLogic(String javaCode) {
             }
             break;
         default:
-            LOG.d("JavaCode: 执行Java代码: " + javaCode);
+            LOG.e("JavaCode: 执行Java代码: " + javaCode);
             break;
     }
 }
