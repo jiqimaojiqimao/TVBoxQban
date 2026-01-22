@@ -63,6 +63,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private Map<String, String> mLastHeaders;  //xuameng 上次头部
     private int mRetryCount = 0; // xuameng当前重试次数
     private static final int MAX_RETRY_COUNT = 3; // xuameng最大重试次数
+private long lastCleanTime = 0;  // 声明变量并初始化为0
 
     public ExoMediaPlayer(Context context) {
         mAppContext = context.getApplicationContext();
