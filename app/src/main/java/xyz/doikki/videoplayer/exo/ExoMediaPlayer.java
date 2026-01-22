@@ -100,18 +100,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mTrackSelector = new DefaultTrackSelector(mAppContext);
 
         //xuameng加载策略控制
-
-// 替换 DefaultLoadControl 为自定义配置
-mLoadControl = new DefaultLoadControl.Builder()
-    .setBufferDurationsMs(
-        50000,  // minBufferMs - 最小缓冲时间（毫秒）
-        100000, // maxBufferMs - 最大缓冲时间
-        2500,   // bufferForPlaybackMs - 播放开始前缓冲
-        5000    // bufferForPlaybackAfterRebufferMs - 重新缓冲后缓冲
-    )
-    .setTargetBufferBytes(-1)  // 使用时间而非字节数
-    .setPrioritizeTimeOverSizeThresholds(true)
-    .build();
+        mLoadControl = new DefaultLoadControl();
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
