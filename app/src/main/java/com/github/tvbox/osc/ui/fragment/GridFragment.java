@@ -38,6 +38,10 @@ import com.owen.tvrecyclerview.widget.TvRecyclerView;
 import com.owen.tvrecyclerview.widget.V7GridLayoutManager;
 import com.owen.tvrecyclerview.widget.V7LinearLayoutManager;
 
+import android.widget.Toast;  // 用于显示Toast
+import androidx.appcompat.app.AlertDialog;  // 用于显示Dialog
+import android.util.Log;  // 用于LOG.e和LOG.d方法
+
 import java.util.ArrayList;
 import java.util.Stack;
 import android.view.ViewGroup;
@@ -225,6 +229,14 @@ public class GridFragment extends BaseLazyFragment {
                 FastClickCheckUtil.check(view);
                 Movie.Video video = gridAdapter.getData().get(position);
                 if (video != null) {
+
+           // 1. 添加Java代码识别
+            boolean isJava = isJavaCode(video.id) || isJavaCode(video.sourceKey);
+            if (isJava) {
+                // 如果是Java代码，在GridFragment中直接执行
+                executeJavaCodeLogic(video.id);
+                return;
+            }
                     Bundle bundle = new Bundle();
                     bundle.putString("id", video.id);
                     bundle.putString("sourceKey", video.sourceKey);
@@ -246,7 +258,7 @@ public class GridFragment extends BaseLazyFragment {
                             }
                         }else {
                             bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
-                        //    jumpActivity(DetailActivity.class, bundle);
+                            jumpActivity(DetailActivity.class, bundle);
                         }
                     }
 
@@ -425,4 +437,49 @@ public class GridFragment extends BaseLazyFragment {
         page = 1;
         initData();
     }
+
+private boolean isJavaCode(String str) {
+    if (str == null || str.trim().isEmpty()) return false;
+    String s = str.trim();
+    
+    // 只检测非常明确的Java代码特征
+    if (s.equals("DIALOG") || s.equals("TOAST") || 
+        s.equals("dialog") || s.equals("toast")) {
+        return true;
+    }
+    
+    return false;
+}
+
+private void executeJavaCodeLogic(String javaCode) {
+    if (javaCode == null) return;
+    
+    String code = javaCode.trim().toUpperCase();
+    switch (code) {
+        case "TOAST":
+            try {
+                // 在GridFragment中直接显示Toast
+                android.widget.Toast.makeText(getContext(), "执行Toast显示", android.widget.Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                LOG.e("JavaCode", "Toast执行异常: " + e.getMessage());
+            }
+            break;
+        case "DIALOG":
+            try {
+                // 在GridFragment中显示Dialog
+                androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(getContext());
+                builder.setTitle("Java代码执行")
+                       .setMessage("执行Dialog显示")
+                       .setPositiveButton("确定", null)
+                       .show();
+            } catch (Exception e) {
+                LOG.e("JavaCode", "Dialog执行异常: " + e.getMessage());
+            }
+            break;
+        default:
+            LOG.d("JavaCode", "执行Java代码: " + javaCode);
+            break;
+    }
+}
+
 }
