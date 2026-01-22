@@ -986,6 +986,26 @@ public class DetailActivity extends BaseActivity {
         }
     }
 
+private void initData() {
+    Intent intent = getIntent();
+    if (intent != null && intent.getExtras() != null) {
+        Bundle bundle = intent.getExtras();
+        vod_picture = bundle.getString("picture", "");
+        
+        // 获取视频ID和sourceKey
+        String videoId = bundle.getString("id", null);
+        String sourceKey = bundle.getString("sourceKey", "");
+        
+        // 判断是否为 Java 代码
+        boolean isJava = isJavaCode(videoId) || isJavaCode(sourceKey);
+        if (isJava) {
+            return; // 不执行后续的加载详情逻辑
+        }
+        
+        loadDetail(videoId, sourceKey);
+    }
+}
+
     private void loadDetail(String vid, String key) {
         if (vid != null) {
             vodId = vid;
@@ -1354,4 +1374,26 @@ public class DetailActivity extends BaseActivity {
       }	
       setTextShow(tvPlayUrl, "播放地址：", url);
     }
+
+	private boolean isJavaCode(String str) {
+    if (str == null || str.trim().isEmpty()) return false;
+    String s = str.trim();
+    
+    // 常见Java/Android类名和组件
+    String[] javaKeywords = {"DIALOG", "TOAST", "ACTIVITY", "FRAGMENT", "VIEW", "BUTTON", 
+                            "TEXTVIEW", "RECYCLERVIEW", "ADAPTER", "BUNDLE", "INTENT"};
+    
+    for (String keyword : javaKeywords) {
+        if (s.equalsIgnoreCase(keyword)) {
+            return true;
+        }
+    }
+    
+    // 原有其他判断逻辑保持不变
+    return s.matches("^([A-Za-z_$][A-Za-z\\d_$]*\\.)*[A-Za-z_$][A-Za-z\\d_$]*(\\.)?[A-Za-z_$][A-Za-z\\d_$]*")
+           || s.startsWith("new ")
+           || (s.contains("(") && s.contains(")"))
+           || s.endsWith(".java")
+           || (s.matches("[A-Z][A-Za-z\\d_$]*$") && Character.isUpperCase(s.charAt(0)));
+}
 }
