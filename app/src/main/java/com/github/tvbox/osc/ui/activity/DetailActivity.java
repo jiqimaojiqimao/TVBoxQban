@@ -977,14 +977,7 @@ public class DetailActivity extends BaseActivity {
     }
 
     private String  vod_picture="";
-    private void initData() {
-        Intent intent = getIntent();
-        if (intent != null && intent.getExtras() != null) {
-            Bundle bundle = intent.getExtras();
-			vod_picture=bundle.getString("picture", "");
-            loadDetail(bundle.getString("id", null), bundle.getString("sourceKey", ""));
-        }
-    }
+
 
 private void initData() {
     Intent intent = getIntent();
