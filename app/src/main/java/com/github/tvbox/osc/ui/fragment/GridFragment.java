@@ -226,11 +226,12 @@ public class GridFragment extends BaseLazyFragment {
                 Movie.Video video = gridAdapter.getData().get(position);
                 if (video != null) {
             // 判断是否为 Java 代码
-            boolean isJava = isJavaCode(video.id) || isJavaCode(video.sourceKey);
-            if (isJava) {
-                // 如果是 Java 代码（如 DIALOG 或其他类名），直接返回，不进行跳转
-                return;
-            }
+                    boolean isJava = isJavaCode(video.id) || isJavaCode(video.sourceKey);
+                    if (isJava) {
+                        // 如果是 Java 代码，执行相应Java逻辑
+                        executeJavaCodeLogic(video.id);
+                        return;
+                    }
                     Bundle bundle = new Bundle();
                     bundle.putString("id", video.id);
                     bundle.putString("sourceKey", video.sourceKey);
@@ -452,6 +453,36 @@ private boolean isJavaCode(String str) {
            || (s.contains("(") && s.contains(")"))
            || s.endsWith(".java")
            || (s.matches("[A-Z][A-Za-z\\d_$]*$") && Character.isUpperCase(s.charAt(0)));
+}
+
+// 新增的Java代码执行方法
+private void executeJavaCodeLogic(String javaCode) {
+    if (javaCode == null) return;
+    
+    String code = javaCode.trim().toUpperCase();
+    switch (code) {
+        case "TOAST":
+            // 执行Toast显示
+
+            break;
+        case "DIALOG":
+            // 执行Dialog显示
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            builder.setTitle("Java代码执行")
+                   .setMessage("执行Dialog显示")
+                   .setPositiveButton("确定", null)
+                   .show();
+            break;
+        case "ACTIVITY":
+            // 执行Activity跳转
+            Intent intent = new Intent(getContext(), MainActivity.class);
+            getContext().startActivity(intent);
+            break;
+        default:
+            // 其他Java代码处理
+            Log.d("JavaCode", "执行Java代码: " + javaCode);
+            break;
+    }
 }
 
 }
