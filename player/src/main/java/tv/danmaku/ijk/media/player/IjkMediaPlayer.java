@@ -198,19 +198,14 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
 //                    libLoader.loadLibrary("exoffmpeg");
 //                    libLoader.loadLibrary("ijksdl");
 //                    libLoader.loadLibrary("ijkplayer");
-                    mIsLibLoaded = true; // <-- 重要！将成功标记放在try块内！
-                    Log.i(TAG, "IJK Player native libraries loaded successfully.");
-                } catch (Throwable e) {
-                    // 修改点：将`ignored`更改为捕获异常对象`e`，并打印错误日志
-                    Log.e(TAG, "Failed to load native IJK libraries: " + e.getMessage(), e);
-                    // 可以选择重新抛出异常，彻底阻止后续操作
-                    // throw new RuntimeException("Failed to load IJK native libraries", e);
+                } catch (Throwable ignored) {
+
                 }
-                // 注意：旧的 mIsLibLoaded = true 被移入了try块成功部分
+
+                mIsLibLoaded = true;
             }
         }
     }
-
 
     private static volatile boolean mIsNativeInitialized = false;
 
