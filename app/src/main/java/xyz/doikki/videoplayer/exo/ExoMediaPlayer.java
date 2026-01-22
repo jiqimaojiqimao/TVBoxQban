@@ -299,6 +299,18 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     @Override
     public void onPlaybackStateChanged(int playbackState) {
         if (mPlayerEventListener == null) return;
+    // 每5分钟清理一次内存（在任何播放状态下）
+    if (System.currentTimeMillis() - lastCleanTime > 10000) {
+        // 检查内存使用情况
+        long usedMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        long maxMemory = Runtime.getRuntime().maxMemory();
+        
+        if (usedMemory > maxMemory * 0.7) {
+            // 内存使用超过70%，执行清理
+            System.gc();
+        }
+        lastCleanTime = System.currentTimeMillis();
+    }
         if (mIsPreparing) {
             if (playbackState == Player.STATE_READY) {
                 mPlayerEventListener.onPrepared();
