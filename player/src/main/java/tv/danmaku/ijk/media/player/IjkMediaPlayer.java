@@ -205,17 +205,21 @@ public static void loadLibrariesOnce(IjkLibLoader libLoader) {
     private static volatile boolean mIsNativeInitialized = false;
 
 
-	private static void initNativeOnce() {
+
+private static void initNativeOnce() {
     synchronized (IjkMediaPlayer.class) {
         if (!mIsNativeInitialized) {
-            // 确保库已加载
-            loadLibrariesOnce(null);
+            // 关键修改：确保库已加载
+            if (!mIsLibLoaded) {
+                loadLibrariesOnce(null);
+            }
             native_init();
             IjkMediaPlayer.native_setDot(dotOpen ? dotPort : 0);
             mIsNativeInitialized = true;
         }
     }
 }
+
 
     /**
      * Default constructor. Consider using one of the create() methods for
