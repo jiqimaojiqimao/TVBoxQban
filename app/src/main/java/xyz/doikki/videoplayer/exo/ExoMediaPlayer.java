@@ -103,7 +103,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         //xuameng加载策略控制
 
-        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager activityManager = (ActivityManager) mAppContext.getSystemService(Context.ACTIVITY_SERVICE);
         int memoryClass = activityManager.getMemoryClass();
         
         // 判断内存大小
