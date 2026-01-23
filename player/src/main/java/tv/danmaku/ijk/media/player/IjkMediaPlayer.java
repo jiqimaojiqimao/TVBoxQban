@@ -207,17 +207,38 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
         }
     }
 
-    private static volatile boolean mIsNativeInitialized = false;
-
-    private static void initNativeOnce() {
-        synchronized (IjkMediaPlayer.class) {
-            if (!mIsNativeInitialized) {
-                native_init();
-                IjkMediaPlayer.native_setDot(dotOpen ? dotPort : 0);
-                mIsNativeInitialized = true;
+public static void loadLibrariesOnce(IjkLibLoader libLoader) {
+    synchronized (IjkMediaPlayer.class) {
+        if (!mIsLibLoaded) {
+            if (libLoader == null)
+                libLoader = sLocalLibLoader;
+            try {
+                // 加载库，确保与第一个版本一致
+                libLoader.loadLibrary("ijkffmpeg");
+                libLoader.loadLibrary("ijksdl");
+                libLoader.loadLibrary("ijkplayer");
+            } catch (Throwable ignored) {
+                // 处理异常，但不要抛出
             }
+            mIsLibLoaded = true;
         }
     }
+}
+
+    private static volatile boolean mIsNativeInitialized = false;
+
+
+	private static void initNativeOnce() {
+    synchronized (IjkMediaPlayer.class) {
+        if (!mIsNativeInitialized) {
+            // 确保库已加载
+            loadLibrariesOnce(null);
+            native_init();
+            IjkMediaPlayer.native_setDot(dotOpen ? dotPort : 0);
+            mIsNativeInitialized = true;
+        }
+    }
+}
 
     /**
      * Default constructor. Consider using one of the create() methods for
