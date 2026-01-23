@@ -52,10 +52,6 @@ public class FastSearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
            // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
 			ivThumb.setImageDrawable(ImgUtilXufa.createTextDrawable(item.name));
         }
-    }
 
-    public static void clearMemoryCacheFast() {   //xuameng清理图片缓存
-        // 清空所有内存缓存
-        Picasso.get().invalidate((String) null);
     }
 }
