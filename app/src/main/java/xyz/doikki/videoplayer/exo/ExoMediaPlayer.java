@@ -101,17 +101,20 @@ private long lastCleanTime = 0;  // 声明变量并初始化为0
         mTrackSelector = new DefaultTrackSelector(mAppContext);
 
         //xuameng加载策略控制
-// 替换 DefaultLoadControl 为自定义配置
-mLoadControl = new DefaultLoadControl.Builder()
+
+
+DefaultLoadControl mLoadControl = new DefaultLoadControl.Builder()
     .setBufferDurationsMs(
-        10000,   // minBufferMs - 减小最小缓冲时间
-        15000,   // maxBufferMs - 减小最大缓冲时间
-        2000,    // bufferForPlaybackMs
-        3000     // bufferForPlaybackAfterRebufferMs
+        15000,   // minBufferMs - 适当增加最小缓冲时间
+        30000,   // maxBufferMs - 适当增加最大缓冲时间
+        5000,    // bufferForPlaybackMs - 增加播放前缓冲时间
+        10000    // bufferForPlaybackAfterRebufferMs - 增加重新缓冲后缓冲时间
     )
-    .setTargetBufferBytes(-1)
-    .setPrioritizeTimeOverSizeThresholds(true)
+    .setTargetBufferBytes(100 * 1024 * 1024)  // 设置目标缓冲字节数为100MB
+    .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑大小阈值
     .build();
+
+
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
