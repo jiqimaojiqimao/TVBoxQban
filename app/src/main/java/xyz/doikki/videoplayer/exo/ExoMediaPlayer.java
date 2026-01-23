@@ -6,6 +6,7 @@ import android.net.TrafficStats;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+import android.app.ActivityManager;  //xuameng加载策略控制
 
 import androidx.annotation.NonNull;
 
@@ -37,8 +38,6 @@ import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 
 import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
-
-import android.app.ActivityManager;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.util.PlayerUtils;
@@ -102,7 +101,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mTrackSelector = new DefaultTrackSelector(mAppContext);
 
         //xuameng加载策略控制
-
         ActivityManager activityManager = (ActivityManager) mAppContext.getSystemService(Context.ACTIVITY_SERVICE);
         int memoryClass = activityManager.getMemoryClass();
         
@@ -111,12 +109,12 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             // 内存小于等于2G时使用低内存策略
             mLoadControl = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
-                    30000,    // minBufferMs - 减小最小缓冲时间
-                    60000,   // maxBufferMs - 减小最大缓冲时间
+                    15000,    // minBufferMs - 减小最小缓冲时间
+                    30000,   // maxBufferMs - 减小最大缓冲时间
                     3000,    // bufferForPlaybackMs - 减小播放前缓冲时间
                     5000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
                 )
-                .setTargetBufferBytes(10 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
+                .setTargetBufferBytes(30 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
                 .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
                 .build();
         } else {
