@@ -131,6 +131,7 @@ public class PlayFragment extends BaseLazyFragment {
     private int mRetryCountIjk = 0;  //xuameng播放出错计数器
     private int mRetryCountJP = 0;  //xuameng播放出错计数器
     private static final int MAX_RETRIES = 2;  //xuameng播放出错切换2次
+    private boolean isChineseSubtitle = false;   //xuameng 判断中文字幕
 
     private final long videoDuration = -1;
 
@@ -795,7 +796,7 @@ public class PlayFragment extends BaseLazyFragment {
                         boolean hasCh =false;
                         for(TrackInfoBean subtitleTrackInfoBean : subtitleTrackList) {
                             String lowerLang = subtitleTrackInfoBean.language.toLowerCase();
-                            if (lowerLang.contains("zh") || lowerLang.contains("ch") || lowerLang.contains("中文") || lowerLang.contains("简体") || lowerLang.contains("国语") || lowerLang.contains("国配")){    //xuameng修复EXO播放器也可以默认选择中文字幕
+                            if (isChineseSubtitle(subtitleTrackInfoBean)){    //xuameng修复EXO播放器也可以默认选择中文字幕
                                 hasCh=true;                               
                                     if (mVideoView.getMediaPlayer() instanceof IjkMediaPlayer){
                                         if (selectedIndex != subtitleTrackInfoBean.trackId) {
@@ -818,6 +819,30 @@ public class PlayFragment extends BaseLazyFragment {
                 }
             }
         }
+    }
+
+    public boolean isChineseSubtitle(TrackInfoBean subtitleTrackInfoBean) {   //xuameng判断中文字幕
+       if (subtitleTrackInfoBean == null || subtitleTrackInfoBean.language == null) {
+            return false;
+        }
+    
+        String lowerLang = subtitleTrackInfoBean.language.toLowerCase();
+    
+        // 检测顺序很重要，先检测更具体的标识
+        if (lowerLang.contains("中英")) {
+            return true;
+        }
+    
+        // 其他中文标识检测
+        if (lowerLang.contains("简体") || lowerLang.contains("中文") || 
+            lowerLang.contains("国语") || lowerLang.contains("国配") ||
+            lowerLang.contains("普通") || lowerLang.contains("粤语") || 
+            lowerLang.contains("双语") || lowerLang.contains("繁体") ||
+            lowerLang.contains("zh") || lowerLang.contains("ch")) {
+            return true;
+        }
+    
+        return false;
     }
 
     private void initViewModel() {
