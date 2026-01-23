@@ -38,6 +38,8 @@ import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
 
+import android.app.ActivityManager;
+
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 
@@ -63,7 +65,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private Map<String, String> mLastHeaders;  //xuameng 上次头部
     private int mRetryCount = 0; // xuameng当前重试次数
     private static final int MAX_RETRY_COUNT = 3; // xuameng最大重试次数
-private long lastCleanTime = 0;  // 声明变量并初始化为0
 
     public ExoMediaPlayer(Context context) {
         mAppContext = context.getApplicationContext();
@@ -94,6 +95,7 @@ private long lastCleanTime = 0;  // 声明变量并初始化为0
                 : EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
         mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+            .setEnableDecoderFallback(true)   //xuameng回退机制
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
@@ -101,21 +103,25 @@ private long lastCleanTime = 0;  // 声明变量并初始化为0
 
         //xuameng加载策略控制
 
-
-
-DefaultLoadControl mLoadControl = new DefaultLoadControl.Builder()
-    .setBufferDurationsMs(
-        30000,    // minBufferMs - 减小最小缓冲时间
-        60000,   // maxBufferMs - 减小最大缓冲时间
-        3000,    // bufferForPlaybackMs - 减小播放前缓冲时间
-        5000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
-    )
-    .setTargetBufferBytes(50 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
-    .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
-    .build();
-
-
-
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        int memoryClass = activityManager.getMemoryClass();
+        
+        // 判断内存大小
+        if (memoryClass <= 2048) { // 2G = 2048MB
+            // 内存小于等于2G时使用低内存策略
+            mLoadControl = new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    30000,    // minBufferMs - 减小最小缓冲时间
+                    60000,   // maxBufferMs - 减小最大缓冲时间
+                    3000,    // bufferForPlaybackMs - 减小播放前缓冲时间
+                    5000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
+                )
+                .setTargetBufferBytes(10 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
+                .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
+                .build();
+        } else {
+            mLoadControl = new DefaultLoadControl();
+        }
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
@@ -314,18 +320,6 @@ DefaultLoadControl mLoadControl = new DefaultLoadControl.Builder()
     @Override
     public void onPlaybackStateChanged(int playbackState) {
         if (mPlayerEventListener == null) return;
-    // 每5分钟清理一次内存（在任何播放状态下）
-    if (System.currentTimeMillis() - lastCleanTime > 10000) {
-        // 检查内存使用情况
-        long usedMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        long maxMemory = Runtime.getRuntime().maxMemory();
-        
-        if (usedMemory > maxMemory * 0.7) {
-            // 内存使用超过70%，执行清理
-            System.gc();
-        }
-        lastCleanTime = System.currentTimeMillis();
-    }
         if (mIsPreparing) {
             if (playbackState == Player.STATE_READY) {
                 mPlayerEventListener.onPrepared();
