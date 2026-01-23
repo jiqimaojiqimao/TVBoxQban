@@ -236,7 +236,6 @@ public class SearchActivity extends BaseActivity {
                     bundle.putString("id", video.id);
 					bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
                     bundle.putString("sourceKey", video.sourceKey);
-                    searchAdapter.clearMemoryCache();   //xuameng清理图片缓存
                     jumpActivity(DetailActivity.class, bundle);
                 }
             }
@@ -400,8 +399,8 @@ public class SearchActivity extends BaseActivity {
                 }
             }
         });
-/*        // 仅在 Android 5.0 以下版本应用焦点修复       xuameng修复安卓4搜索历史获取不到焦点问题
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+        // 仅在 Android 5.0 以下版本应用焦点修复       xuameng修复安卓4搜索历史获取不到焦点问题
+ /*       if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -413,7 +412,7 @@ public class SearchActivity extends BaseActivity {
                     }
                 }
             });
-        }
+        }    
 */
 
 		// ========== xuameng新增：为每个历史标签添加长按直接删除功能 ==========
@@ -745,7 +744,6 @@ public class SearchActivity extends BaseActivity {
         } catch (Throwable th) {
             th.printStackTrace();
         }
-        searchAdapter.clearMemoryCache();   //xuameng清理图片缓存
         EventBus.getDefault().unregister(this);
     }
 
@@ -763,7 +761,6 @@ public class SearchActivity extends BaseActivity {
         } catch (Throwable th) {
             th.printStackTrace();
         }
-        searchAdapter.clearMemoryCache();  //xuameng清理图片缓存
         super.onBackPressed();
     }
 
