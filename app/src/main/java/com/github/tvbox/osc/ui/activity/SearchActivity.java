@@ -400,7 +400,7 @@ public class SearchActivity extends BaseActivity {
                 }
             }
         });
-        // 仅在 Android 5.0 以下版本应用焦点修复       xuameng修复安卓4搜索历史获取不到焦点问题
+/*        // 仅在 Android 5.0 以下版本应用焦点修复       xuameng修复安卓4搜索历史获取不到焦点问题
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -414,6 +414,7 @@ public class SearchActivity extends BaseActivity {
                 }
             });
         }
+*/
 
 		// ========== xuameng新增：为每个历史标签添加长按直接删除功能 ==========
         runOnUiThread(new Runnable() {
