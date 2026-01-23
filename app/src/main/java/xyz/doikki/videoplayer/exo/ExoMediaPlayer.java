@@ -102,16 +102,18 @@ private long lastCleanTime = 0;  // 声明变量并初始化为0
         //xuameng加载策略控制
 
 
+
 DefaultLoadControl mLoadControl = new DefaultLoadControl.Builder()
     .setBufferDurationsMs(
-        10000,   // minBufferMs - 适当增加最小缓冲时间
-        15000,   // maxBufferMs - 适当增加最大缓冲时间
-        5000,    // bufferForPlaybackMs - 增加播放前缓冲时间
-        10000    // bufferForPlaybackAfterRebufferMs - 增加重新缓冲后缓冲时间
+        5000,    // minBufferMs - 减小最小缓冲时间
+        10000,   // maxBufferMs - 减小最大缓冲时间
+        2000,    // bufferForPlaybackMs - 减小播放前缓冲时间
+        3000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
     )
-    .setTargetBufferBytes(50 * 1024 * 1024)  // 设置目标缓冲字节数为100MB
-    .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑大小阈值
+    .setTargetBufferBytes(30 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
+    .setPrioritizeTimeOverSizeThresholds(true)  // 优先考虑时间阈值
     .build();
+
 
 
 
