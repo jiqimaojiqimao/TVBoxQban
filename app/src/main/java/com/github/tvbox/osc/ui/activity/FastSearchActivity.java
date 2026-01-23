@@ -219,6 +219,7 @@ public class FastSearchActivity extends BaseActivity {
                     bundle.putString("id", video.id);
                     bundle.putString("sourceKey", video.sourceKey);
 					bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
+                    FastSearchAdapter.clearMemoryCacheFast();   //xuameng清理图片缓存
                     jumpActivity(DetailActivity.class, bundle);
                 }
             }
@@ -586,6 +587,7 @@ public class FastSearchActivity extends BaseActivity {
         } catch (Throwable th) {
             th.printStackTrace();
         }
+        FastSearchAdapter.clearMemoryCacheFast();   //xuameng清理图片缓存
         EventBus.getDefault().unregister(this);
     }
 
@@ -603,6 +605,7 @@ public class FastSearchActivity extends BaseActivity {
         } catch (Throwable th) {
             th.printStackTrace();
         }
+        FastSearchAdapter.clearMemoryCacheFast();   //xuameng清理图片缓存
         super.onBackPressed();
     }
 }
