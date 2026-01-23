@@ -56,4 +56,10 @@ public class SearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder>
             }
         }
     }
+
+    public static void clearMemoryCache() {   //xuameng清理图片缓存
+        // 清空所有内存缓存
+        Picasso.get().invalidate((String) null);
+    }
+
 }
