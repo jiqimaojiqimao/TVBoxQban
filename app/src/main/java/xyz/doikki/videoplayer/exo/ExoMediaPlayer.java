@@ -94,7 +94,6 @@ private long lastCleanTime = 0;  // 声明变量并初始化为0
                 : EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
         mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-            .setEnableDecoderFallback(true)   //xuameng回退机制
             .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
@@ -105,12 +104,12 @@ private long lastCleanTime = 0;  // 声明变量并初始化为0
 
 DefaultLoadControl mLoadControl = new DefaultLoadControl.Builder()
     .setBufferDurationsMs(
-        15000,   // minBufferMs - 适当增加最小缓冲时间
-        30000,   // maxBufferMs - 适当增加最大缓冲时间
+        10000,   // minBufferMs - 适当增加最小缓冲时间
+        15000,   // maxBufferMs - 适当增加最大缓冲时间
         5000,    // bufferForPlaybackMs - 增加播放前缓冲时间
         10000    // bufferForPlaybackAfterRebufferMs - 增加重新缓冲后缓冲时间
     )
-    .setTargetBufferBytes(100 * 1024 * 1024)  // 设置目标缓冲字节数为100MB
+    .setTargetBufferBytes(50 * 1024 * 1024)  // 设置目标缓冲字节数为100MB
     .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑大小阈值
     .build();
 
