@@ -104,8 +104,8 @@ private long lastCleanTime = 0;  // 声明变量并初始化为0
 // 替换 DefaultLoadControl 为自定义配置
 mLoadControl = new DefaultLoadControl.Builder()
     .setBufferDurationsMs(
-        30000,   // minBufferMs - 减小最小缓冲时间
-        60000,   // maxBufferMs - 减小最大缓冲时间
+        10000,   // minBufferMs - 减小最小缓冲时间
+        15000,   // maxBufferMs - 减小最大缓冲时间
         2000,    // bufferForPlaybackMs
         3000     // bufferForPlaybackAfterRebufferMs
     )
