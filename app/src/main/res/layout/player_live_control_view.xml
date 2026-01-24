@@ -48,7 +48,6 @@
     <ProgressBar
         android:layout_gravity="center"
         android:tag="vod_control_loading"
-        android:id="@+id/loading"
         android:visibility="gone"
         android:layout_width="@dimen/vs_50"
         android:layout_height="@dimen/vs_50"
@@ -64,4 +63,16 @@
         android:layout_width="@dimen/vs_80"
         android:layout_height="@dimen/vs_80"
         android:src="@drawable/app_icon"/>
+    <LinearLayout
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:id="@+id/tv_progress_container"
+        android:tag="progress_root"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:visibility="gone"
+		android:layout_width="@dimen/vs_200"
+        android:layout_height="@dimen/vs_100">
+    </LinearLayout>
 </FrameLayout>
