@@ -351,6 +351,21 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
         }
 
+        // ====== xuameng 新增：处理 BehindLiveWindowException 错误======
+        if (errorCode == 1002) {
+            // 将播放器定位到直播窗口的默认（实时）位置
+            if (mMediaPlayer != null) {
+                mMediaPlayer.seekToDefaultPosition();
+                // 可选：重新准备并开始播放
+                mMediaPlayer.prepare();
+                mMediaPlayer.setPlayWhenReady(true);
+            }
+            // 重置通用重试计数器，避免与下面的重试逻辑冲突
+            mRetryCount = 0;
+            return; // 直接返回，不触发外层的 onError 回调
+        }
+        // ====== 新增结束 ======
+
         if (errorCode == 3003 || errorCode == 3001 || errorCode == 2000) {   //出现错误直播用M3U8方式解码
             if (mRetryCount < MAX_RETRY_COUNT) {                // xuameng检查是否超过最大重试次数
                 mRetryCount++;                                  // xuameng未超过，执行重试 增加重试计数
