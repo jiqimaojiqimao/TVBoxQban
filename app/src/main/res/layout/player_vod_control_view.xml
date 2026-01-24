@@ -626,6 +626,7 @@
         android:layout_gravity="center"
         android:orientation="vertical"
         android:id="@+id/tv_progress_container"
+        android:tag="progress_root"
         android:background="@drawable/shape_user_focus"
         android:focusable="false"
         android:focusableInTouchMode="false"
