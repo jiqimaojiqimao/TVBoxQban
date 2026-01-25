@@ -97,10 +97,7 @@ public class VodController extends BaseController {
                         if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐播放时图标
                             iv_circle_bg.setVisibility(GONE);
                         }
-                        if(tv_slide_progress_text.getVisibility() == View.VISIBLE) { //xuameng亮度图标
-                            tv_slide_progress_text.setVisibility(View.GONE);
-                        }
-                        if(mPlayLoadNetSpeed.getVisibility() == View.VISIBLE) { //xuameng亮度图标
+                        if(mPlayLoadNetSpeed.getVisibility() == View.VISIBLE) { //xuameng网速
                             mPlayLoadNetSpeed.setVisibility(View.GONE);
                         }
                         if(XuLoading.getVisibility() == View.VISIBLE) { //xuameng loading
@@ -272,7 +269,7 @@ public class VodController extends BaseController {
     TextView mPlayanimation; //xuameng音柱动画
     private ImageView iv_circle_bg; //xuameng音乐播放时图标
     private FrameLayout play_speed_3; //xuameng倍速播放
-    private TextView tv_slide_progress_text;
+    private TextView tv_slide_progress_text;  //xuameng 旧的亮度调节框已作废
     ImageView MxuamengMusic; //xuameng播放音乐背景
     private ProgressBar XuLoading; //xuameng  loading
     public TextView mPlayerTimeStartEndText;
@@ -401,7 +398,7 @@ public class VodController extends BaseController {
                     if(MxuamengMusic.getVisibility() == View.GONE && isVideoplaying) { //xuameng播放音乐背景
                         MxuamengMusic.setVisibility(VISIBLE);
                     }
-                    if(mProgressRoot.getVisibility() == View.VISIBLE || mPlayLoadNetSpeed.getVisibility() == View.VISIBLE || tv_slide_progress_text.getVisibility() == View.VISIBLE || play_speed_3.getVisibility() == View.VISIBLE) {
+                    if(mProgressRoot.getVisibility() == View.VISIBLE || mPlayLoadNetSpeed.getVisibility() == View.VISIBLE || XuLoading.getVisibility() == View.VISIBLE || play_speed_3.getVisibility() == View.VISIBLE) {
                         if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐播放时图标
                             iv_circle_bg.setVisibility(GONE);
                         }
@@ -510,7 +507,7 @@ public class VodController extends BaseController {
         play_speed_3 = findViewById(R.id.play_speed_3_container); //xuameng倍速播放
         XuLoading = findViewWithTag("vod_control_loading"); //xuameng  loading 
         customVisualizer = findViewById(R.id.visualizer_view);  //xuameng播放音乐柱状图
-        tv_slide_progress_text = findViewById(R.id.tv_slide_progress_text);
+        tv_slide_progress_text = findViewById(R.id.tv_slide_progress_text);   //xuameng 旧的亮度调节框已作废
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
         mSubtitleView = findViewById(R.id.subtitle_view);
@@ -1897,9 +1894,6 @@ public class VodController extends BaseController {
                 updatePlayerCfgView();
                 listener.updatePlayerCfg();
                 mControlWrapper.setSpeed(speed);
-                if(tv_slide_progress_text.getVisibility() == View.VISIBLE) { //xuameng亮度图标
-                    tv_slide_progress_text.setVisibility(View.GONE);
-                }
                 if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐播放时图标
                     iv_circle_bg.setVisibility(GONE);
                 }
