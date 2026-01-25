@@ -1590,4 +1590,18 @@
 		<item name="android:paddingRight">24.0sp</item>
     </style>
 <!-- xuameng选择器文件路径文字颜色样式结束   -->
+
+    <!-- xuameng Volume / Brightness Bar -->
+    <style name="video_vertical_progressBar">
+        <item name="android:maxWidth">12dp</item>
+        <item name="android:indeterminateOnly">false</item>
+        <item name="android:indeterminateDrawable">
+            @android:drawable/progress_indeterminate_horizontal
+        </item>
+        <item name="android:progressDrawable">@drawable/play_progress_vertical</item>
+        <item name="android:indeterminateDuration">3500</item>
+        <item name="android:indeterminateBehavior">repeat</item>
+        <item name="android:minWidth">1dp</item>
+    </style>
+
 </resources>
