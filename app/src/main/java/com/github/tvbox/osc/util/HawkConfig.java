@@ -60,7 +60,6 @@ public class HawkConfig {
 	public static final String VOD_SWITCHDECODE = "vod_switchdecode";  //xuameng解码切换
 	public static final String VOD_SWITCHPLAYER = "vod_switchplayer";  //xuameng播放器切换
 
-	public static boolean MSLIDEINFO = false;  //xuameng调节亮度声音
 	public static boolean intLIVEPLAYTYPE = false;  //xuameng是否有直播默认播放器
 	public static boolean intSYSplayer = false;  //xuameng是否进入系统播放器
 	public static boolean intVod = false;  //xuameng判断是否进入VOD界面
