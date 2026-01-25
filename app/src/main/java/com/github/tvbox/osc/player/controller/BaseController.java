@@ -70,16 +70,26 @@ public abstract class BaseController extends BaseVideoController implements Gest
                     case 100: { // 亮度+音量调整
                         mSlideInfo.setVisibility(VISIBLE);
                         mSlideInfo.setText(msg.obj.toString());
-                        if (music_iv_circle_bg.getVisibility() == View.VISIBLE){  //xuameng音乐播放时图标
-                            music_iv_circle_bg.setVisibility(GONE);
-                        }
-                        HawkConfig.MSLIDEINFO = true;  //xuameng判断滑动
                         break;
                     }
-
                     case 101: { // 亮度+音量调整 关闭
                         mSlideInfo.setVisibility(GONE);
-                        HawkConfig.MSLIDEINFO = false;  //xuameng判断滑动
+                        break;
+                    }
+                    case 201: { // Show Volume Dialog
+                        mDialogVolume.setVisibility(VISIBLE);
+                        break;
+                    }
+                    case 202: { // Hide Volume Dialog
+                        mDialogVolume.setVisibility(GONE);
+                        break;
+                    }
+                    case 203: { // Show Volume Dialog
+                        mDialogBrightness.setVisibility(VISIBLE);
+                        break;
+                    }
+                    case 204: { // Hide Volume Dialog
+                        mDialogBrightness.setVisibility(GONE);
                         break;
                     }
                     default: {
@@ -108,6 +118,11 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private ImageView music_iv_circle_bg;  //xuameng音乐播放时图标
     private LinearLayout mProgressroot;  //xuameng 显示进程
 
+    private LinearLayout mDialogVolume;   //xuameng 新增音量亮度条
+    private LinearLayout mDialogBrightness;  //xuameng 新增音量亮度条
+    private ProgressBar mDialogVolumeProgressBar;  //xuameng 新增音量亮度条
+    private ProgressBar mDialogBrightnessProgressBar;  //xuameng 新增音量亮度条
+
     @Override
     protected void initView() {
         super.initView();
@@ -120,6 +135,11 @@ public abstract class BaseController extends BaseVideoController implements Gest
         mPauseTime = findViewWithTag("vod_control_pause_t");
         mProgressroot = findViewWithTag("progress_root");    //xuameng 显示进程
         music_iv_circle_bg = findViewWithTag("music_iv_circle_bg");  //xuameng音乐播放时图标
+
+        mDialogVolume = findViewWithTag("dialog_volume");  //xuameng 新增音量亮度条
+        mDialogBrightness = findViewWithTag("dialog_brightness");  //xuameng 新增音量亮度条
+        mDialogVolumeProgressBar = findViewWithTag("progressbar_volume");  //xuameng 新增音量亮度条
+        mDialogBrightnessProgressBar = findViewWithTag("progressbar_brightness");  //xuameng 新增音量亮度条
     }
 
     @Override
@@ -338,18 +358,24 @@ public abstract class BaseController extends BaseVideoController implements Gest
 
     }
 
-    protected void slideToChangeBrightness(float deltaY) {
+    protected void slideToChangeBrightness(float deltaY) {  //xuameng 新增音量亮度条
         Activity activity = PlayerUtils.scanForActivity(getContext());
         if (activity == null) return;
         Window window = activity.getWindow();
         WindowManager.LayoutParams attributes = window.getAttributes();
         int height = getMeasuredHeight();
-        if (mBrightness == -1.0f) mBrightness = 0.5f;
-        float brightness = deltaY * 2 / height * 1.0f + mBrightness;
-        if (brightness < 0) {
-            brightness = 0f;
+//        if (mBrightness == -1.0f) mBrightness = 0.5f;
+        if (mBrightness <= 0.00f) {
+            mBrightness = 0.50f;
+        } else if (mBrightness < 0.01f) {
+            mBrightness = 0.01f;
         }
-        if (brightness > 1.0f) brightness = 1.0f;
+        float brightness = deltaY * 2 / height * 1.0f + mBrightness;
+        if (brightness > 1.0f) {
+            brightness = 1.0f;
+        } else if (brightness < 0.01f) {
+            brightness = 0.01f;
+        }
         int percent = (int) (brightness * 100);
         attributes.screenBrightness = brightness;
         window.setAttributes(attributes);
@@ -359,15 +385,16 @@ public abstract class BaseController extends BaseVideoController implements Gest
                 ((IGestureComponent) component).onBrightnessChange(percent);
             }
         }
+        mDialogBrightnessProgressBar.setProgress(percent);
         Message msg = Message.obtain();
-        msg.what = 100;
-        msg.obj = "亮度" + percent + "%";
+        msg.what = 203;
+        msg.obj = "亮度 " + percent + "%";
         mHandler.sendMessage(msg);
-        mHandler.removeMessages(101);
-        mHandler.sendEmptyMessageDelayed(101, 1000);
+        mHandler.removeMessages(204);
+        mHandler.sendEmptyMessageDelayed(204, 600);
     }
 
-    protected void slideToChangeVolume(float deltaY) {
+    protected void slideToChangeVolume(float deltaY) {  //xuameng 新增音量亮度条
         int streamMaxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         int height = getMeasuredHeight();
         float deltaV = deltaY * 2 / height * streamMaxVolume;
@@ -382,12 +409,13 @@ public abstract class BaseController extends BaseVideoController implements Gest
                 ((IGestureComponent) component).onVolumeChange(percent);
             }
         }
+        mDialogVolumeProgressBar.setProgress(percent);
         Message msg = Message.obtain();
-        msg.what = 100;
-        msg.obj = "音量" + percent + "%";
+        msg.what = 201;
+        msg.obj = "音量 " + percent + "%";
         mHandler.sendMessage(msg);
-        mHandler.removeMessages(101);
-        mHandler.sendEmptyMessageDelayed(101, 1000);
+        mHandler.removeMessages(202);
+        mHandler.sendEmptyMessageDelayed(202, 600);
     }
 
     @Override
