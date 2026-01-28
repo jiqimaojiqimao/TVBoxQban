@@ -24,6 +24,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearSmoothScroller;   //xuameng 精确滚动
+import android.graphics.PointF;  //xuameng 精确滚动
+import android.util.DisplayMetrics;  //xuameng 精确滚动
 import android.graphics.Color; //xuameng获取颜色值
 import android.util.TypedValue; //xuameng TypedValue依赖
 import android.view.LayoutInflater; //xuameng LayoutInflater依赖
@@ -227,6 +230,8 @@ public class LivePlayActivity extends BaseActivity {
     private TextView iv_playpause;
     private View iv_play;
     private boolean show = false;
+    private V7LinearLayoutManager mRightEpgListLayoutMgr;   //xuameng 精确滚动
+    private LinearSmoothScroller smoothScrollerEpg;   //xuameng 精确滚动
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_live_play;
@@ -455,14 +460,11 @@ public class LivePlayActivity extends BaseActivity {
             if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
                 epgListAdapter.notifyDataSetChanged();
                 final int targetPos = i; // 使用final保证线程安全
-                mRightEpgList.removeCallbacks(null);
-           //些方法有滚动效果会产生焦点乱跳         mRightEpgList.setSelectedPosition(targetPos);  
+                //这些方法有滚动效果会产生焦点乱跳         mRightEpgList.setSelectedPosition(targetPos);  
                 epgListAdapter.setSelectedEpgIndex(targetPos);
                 if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-                   mRightEpgList.post(() -> {
-                   mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                        //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-                   });
+                    // xuameng使用优化后的滚动方法
+                    customEpgScrollPos(targetPos);;
                 }
             }
         } 
@@ -484,14 +486,11 @@ public class LivePlayActivity extends BaseActivity {
             if(i >= 0 && new Date().compareTo(epgdata.get(i).enddateTime) <= 0) {
                 epgListAdapter.notifyDataSetChanged();
                 final int targetPos = i; // 使用final保证线程安全
-                mRightEpgList.removeCallbacks(null);
                  //些方法有滚动效果会产生焦点乱跳   mRightEpgList.setSelectedPosition(targetPos);
                 epgListAdapter.setSelectedEpgIndex(targetPos);
                 if(targetPos >= 0 && targetPos < epgListAdapter.getItemCount()) {
-                   mRightEpgList.post(() -> {
-                   mRightEpgList.scrollToPositionWithOffset(targetPos, 0);
-                        //xuameng防止跳焦点                 mRightEpgList.setSelection(finalI);
-                   });
+                    // xuameng使用优化后的滚动方法
+                    customEpgScrollPos(targetPos);
                 }
             }
         } 
@@ -571,13 +570,14 @@ public class LivePlayActivity extends BaseActivity {
                 try {
                     if(paramString != null && paramString.contains("epg_data")) {  //xuameng 空指针
                         final JSONArray jSONArray = new JSONObject(paramString).optJSONArray("epg_data");
-                        if(jSONArray != null)
+                        if(jSONArray != null){
                             for(int b = 0; b < jSONArray.length(); b++) {
                                 JSONObject jSONObject = jSONArray.getJSONObject(b);
                                 Epginfo epgbcinfo = new Epginfo(date, jSONObject.optString("title"), date, jSONObject.optString("start"), jSONObject.optString("end"), b);
                                 arrayList.add(epgbcinfo);
                              ////xuameng 空指针   Log.d("EPG信息:", day + "  " + jSONObject.optString("start") + " - " + jSONObject.optString("end") + "  " + jSONObject.optString("title"));
                             }
+                        }
                     }
                 } catch (JSONException jSONException) {
                     jSONException.printStackTrace();
@@ -684,13 +684,14 @@ public class LivePlayActivity extends BaseActivity {
                 try {
                     if(paramString != null && paramString.contains("epg_data")) {   //xuameng 空指针
                         final JSONArray jSONArray = new JSONObject(paramString).optJSONArray("epg_data");
-                        if(jSONArray != null)
+                        if(jSONArray != null){
                             for(int b = 0; b < jSONArray.length(); b++) {
                                 JSONObject jSONObject = jSONArray.getJSONObject(b);
                                 Epginfo epgbcinfo = new Epginfo(date, jSONObject.optString("title"), date, jSONObject.optString("start"), jSONObject.optString("end"), b);
                                 arrayList.add(epgbcinfo);
                              ////xuameng 空指针   Log.d("EPG信息:", day + "  " + jSONObject.optString("start") + " - " + jSONObject.optString("end") + "  " + jSONObject.optString("title"));
                             }
+                        }
                     }
                 } catch (JSONException jSONException) {
                     jSONException.printStackTrace();
@@ -883,11 +884,8 @@ public class LivePlayActivity extends BaseActivity {
         divLoadEpgleft.setVisibility(View.VISIBLE);
         int SelectedIndexEpg = epgListAdapter.getSelectedIndex(); //xuameng当前选中的EPG
         if (SelectedIndexEpg >= 0  && SelectedIndexEpg < epgListAdapter.getItemCount()){  //xuameng不等于-1代表已有选中的EPG，防空指针
-            mRightEpgList.removeCallbacks(null);
-	        mRightEpgList.post(() -> {
-            mRightEpgList.scrollToPositionWithOffset(SelectedIndexEpg, 0);
-            epgListAdapter.getSelectedIndex(); //xuamengEPG打开菜单自动变颜色
-            }); 
+            // xuameng使用优化后的滚动方法
+            customEpgScrollPos(SelectedIndexEpg);
         }
     }
     //频道列表
@@ -1611,6 +1609,23 @@ public class LivePlayActivity extends BaseActivity {
         mRightEpgList.setHasFixedSize(true);
         mRightEpgList.setItemAnimator(null);   //xuameng禁用TVRecyclerView动画
         mRightEpgList.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+        // xuameng获取 LayoutManager 并初始化平滑滚动器  开始
+        mRightEpgListLayoutMgr = (V7LinearLayoutManager) mRightEpgList.getLayoutManager();
+        // xuameng初始化平滑滚动器
+        smoothScrollerEpg = new LinearSmoothScroller(this) {
+            @Override
+            protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
+                return 50f / displayMetrics.densityDpi; // 控制滚动速度   数越小越快
+            }
+        
+            @Override
+            public PointF computeScrollVectorForPosition(int targetPosition) {
+                if (mRightEpgListLayoutMgr != null) {
+                    return mRightEpgListLayoutMgr.computeScrollVectorForPosition(targetPosition);
+                }
+                return null;
+            }
+        };   // xuameng获取 LayoutManager 并初始化平滑滚动器  结束
         epgListAdapter = new LiveEpgAdapter();
         mRightEpgList.setAdapter(epgListAdapter);
         mRightEpgList.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -1618,7 +1633,17 @@ public class LivePlayActivity extends BaseActivity {
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
                 mHideChannelListRunXu();
-                if(newState == mRightEpgList.SCROLL_STATE_IDLE) {
+                // xuameng新增：根据滚动状态控制焦点  防止TV端EPG焦点乱跳
+                switch (newState) {
+                    case RecyclerView.SCROLL_STATE_DRAGGING: // 用户拖动开始
+                    case RecyclerView.SCROLL_STATE_SETTLING: // 自动滚动开始
+                        // 滚动中，禁用整个列表的焦点获取能力
+                        mRightEpgList.setFocusable(false);
+                        break;
+                    case RecyclerView.SCROLL_STATE_IDLE: // 滚动停止
+                        // 滚动结束，恢复整个列表的焦点获取能力
+                        mRightEpgList.setFocusable(true);
+                        break;
                 }
             }
         });
@@ -3413,4 +3438,35 @@ public class LivePlayActivity extends BaseActivity {
         // 保留两位小数
         return (float) Math.round(volumePercent * 100) / 100.0f;
     }
+
+    /**
+     * xuameng确保 EPG 列表一定滚动的核心方法
+     * 参考 DetailActivity.java 中的 customSeriesScrollPos 实现
+     */
+    private void customEpgScrollPos(int targetPos) {    // xuameng使用优化后的滚动方法
+        // 如果 LayoutManager 为空，延迟重试
+        if (mRightEpgListLayoutMgr == null || mRightEpgList == null) {
+            mRightEpgList.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    customEpgScrollPos(targetPos);
+                }
+            }, 100); // 延迟100ms重试
+            return;
+        }
+    
+        // 正常执行滚动逻辑
+        // 先快速滚动到目标位置附近（留出10个item的缓冲）
+        mRightEpgListLayoutMgr.scrollToPositionWithOffset(targetPos > 5 ? targetPos - 5 : 0, 0);   //xuameng 数越小越近
+    
+        // 延迟执行平滑滚动到精确位置
+        mRightEpgList.postDelayed(() -> {
+            if (mRightEpgListLayoutMgr != null && smoothScrollerEpg != null) {
+                smoothScrollerEpg.setTargetPosition(targetPos);
+                mRightEpgListLayoutMgr.startSmoothScroll(smoothScrollerEpg);
+                mRightEpgList.smoothScrollToPosition(targetPos);
+            }
+        }, 50);
+    }
+
 }
