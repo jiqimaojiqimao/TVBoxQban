@@ -45,13 +45,13 @@ public class SeriesAdapter extends BaseQuickAdapter<VodInfo.VodSeries, BaseViewH
             helper.itemView.setNextFocusUpId(R.id.mSeriesGroupView);
         }
 
-        int spanCount = mGridLayoutManager.getSpanCount();
-        int position = helper.getLayoutPosition();
-        int totalCount = getData().size();
-        int remainder = totalCount % spanCount;
-        int lastRowStart = remainder == 0 ? totalCount - spanCount : totalCount - remainder;
-        if (position >= lastRowStart) {
-            helper.itemView.setNextFocusDownId(R.id.tvPlay);
-        }
+ //xuameng DetailActivity.java 剧集列表选择到最后自动跳到 播放按钮上      int spanCount = mGridLayoutManager.getSpanCount();
+ //       int position = helper.getLayoutPosition();
+ //       int totalCount = getData().size();
+ //       int remainder = totalCount % spanCount;
+ //       int lastRowStart = remainder == 0 ? totalCount - spanCount : totalCount - remainder;
+ //       if (position >= lastRowStart) {
+ //           helper.itemView.setNextFocusDownId(R.id.tvPlay);
+ //       }
     }
 }
