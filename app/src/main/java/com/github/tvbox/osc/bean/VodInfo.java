@@ -51,8 +51,13 @@ public class VodInfo implements Serializable {
     public String sourceKey;
     public String playerCfg = "";
     public boolean reverseSort = false;
+    // 新增：记录当前播放的源和剧集索引（用于切换源时恢复位置）
+    public String currentPlayFlag = null; // 当前播放的源（flag）
+    public int currentPlayIndex = 0;      // 当前播放的剧集索引
+	public Movie.Video video; // xuameng添加video字段存储
 
     public void setVideo(Movie.Video video) {
+        this.video = video; // xuameng存储video对象
         last = video.last;
         id = video.id;
         tid = video.tid;
@@ -92,6 +97,11 @@ public class VodInfo implements Serializable {
                 seriesMap.put(flag.name, list);
             }
         }
+    }
+
+    // xuameng存储video对象在VodInfo类中添加getVideo()方法
+    public Movie.Video getVideo() {
+        return null; 
     }
 
     private int extractNumber(String name) {
