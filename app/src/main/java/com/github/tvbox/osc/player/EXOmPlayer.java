@@ -84,14 +84,49 @@ public class EXOmPlayer extends ExoMediaPlayer {
                             if (TextUtils.isEmpty(formatCodecs)) {    //xuameng formatCodecs这是文件类型当audioCodecs返回空是用formatCodecs代替
                                 formatCodecs = "未知";
                             }
-                            String text1 = ".40.2";  //xuameng过滤formatCodecs类型里application/字符串
-                            String textString1 = "";
-                            if (formatCodecs.contains(text1)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(text1, textString1);  //xuameng过滤音轨类型里application/字符串
+                            String mp4a9 = "mp4a.40.2";  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4aString9 = "aac";
+                            if(formatCodecs.contains(mp4a9)) {  //xuameng过滤formatCodecs类型里application/字符串
+                                formatCodecs = formatCodecs.replace(mp4a9, mp4aString9);  //xuameng过滤音轨类型里application/字符串
                             }
-                            String mp4a = ".40.5";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString = "";
-                            if (formatCodecs.contains(mp4a)) {  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4a10 = "mp4a.40.5";  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4aString10 = "aac";
+                            if(formatCodecs.contains(mp4a10)) {  //xuameng过滤formatCodecs类型里application/字符串
+                                formatCodecs = formatCodecs.replace(mp4a10, mp4aString10);  //xuameng过滤音轨类型里application/字符串
+                            }
+                            String mp4a3 = "mp4a.40.02";  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4aString3 = "aac";
+                            if(formatCodecs.contains(mp4a3)) {  //xuameng过滤formatCodecs类型里application/字符串
+                                formatCodecs = formatCodecs.replace(mp4a3, mp4aString3);  //xuameng过滤音轨类型里application/字符串
+                            }
+                            String mp4a4 = "mp4a.40.05";  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4aString4 = "aac";
+                            if(formatCodecs.contains(mp4a4)) {  //xuameng过滤formatCodecs类型里application/字符串
+                                formatCodecs = formatCodecs.replace(mp4a4, mp4aString4);  //xuameng过滤音轨类型里application/字符串
+                            }
+                            String mp4a5 = "mp4a.40.29";  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4aString5 = "aac";
+                            if(formatCodecs.contains(mp4a5)) {  //xuameng过滤formatCodecs类型里application/字符串
+                                formatCodecs = formatCodecs.replace(mp4a5, mp4aString5);  //xuameng过滤音轨类型里application/字符串
+                            }
+                            String mp4a6 = "mp4a.66";  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4aString6 = "aac";
+                            if(formatCodecs.contains(mp4a6)) {  //xuameng过滤formatCodecs类型里application/字符串
+                                formatCodecs = formatCodecs.replace(mp4a6, mp4aString6);  //xuameng过滤音轨类型里application/字符串
+                            }
+                            String mp4a7 = "mp4a.67";  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4aString7 = "aac";
+                            if(formatCodecs.contains(mp4a7)) {  //xuameng过滤formatCodecs类型里application/字符串
+                                formatCodecs = formatCodecs.replace(mp4a7, mp4aString7);  //xuameng过滤音轨类型里application/字符串
+                            }
+                            String mp4a8 = "mp4a.68";  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4aString8 = "aac";
+                            if(formatCodecs.contains(mp4a8)) {  //xuameng过滤formatCodecs类型里application/字符串
+                                formatCodecs = formatCodecs.replace(mp4a8, mp4aString8);  //xuameng过滤音轨类型里application/字符串
+                            }
+                            String mp4a = "mp4a";  //xuameng过滤formatCodecs类型里application/字符串
+                            String mp4aString = "aac";
+                            if(formatCodecs.contains(mp4a)) {  //xuameng过滤formatCodecs类型里application/字符串
                                 formatCodecs = formatCodecs.replace(mp4a, mp4aString);  //xuameng过滤音轨类型里application/字符串
                             }
 
