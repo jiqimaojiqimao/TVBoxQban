@@ -15,6 +15,8 @@ import com.orhanobut.hawk.Hawk;
 import com.squareup.picasso.Picasso;
 import com.github.tvbox.osc.util.ImgUtilXufa;   //xuamengBASE64图片
 import com.github.tvbox.osc.util.ImgUtil;   //xuamengBASE64图片
+import com.squareup.picasso.MemoryPolicy; //xuameng禁用缓存
+import com.squareup.picasso.NetworkPolicy; //xuameng禁用缓存
 
 import java.util.ArrayList;
 
@@ -47,6 +49,8 @@ public class FastSearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
                     .noFade()
                    // .error(R.drawable.img_loading_placeholder)
 					.error(ImgUtilXufa.createTextDrawable(item.name))
+                    .memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)  //xuameng禁用缓存
+                    .networkPolicy(NetworkPolicy.NO_CACHE)   //xuameng禁用缓存
                     .into(ivThumb);
         } else {
            // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
