@@ -219,7 +219,7 @@ public class LivePlayActivity extends BaseActivity {
     private CountDownTimer countDownTimer22;  //xuameng显示设置菜单用
     private Visualizer mVisualizer;  //xuameng音乐播放动画
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
-    private boolean musicAnimation = false;     ////xuameng 音柱动画 加载设置
+    private boolean musicAnimation = false;       //xuameng 音柱动画 加载设置
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
 	private static final String TAG = "LivePlayActivity";  //xuameng音乐播放动画
     private final int videoWidth = 1920;
@@ -517,13 +517,13 @@ public class LivePlayActivity extends BaseActivity {
         //epgListAdapter.updateData(date, new ArrayList<>());
 		String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
         if(hsEpg.containsKey(savedEpgKey)) {   //xuameng如果有缓存EPG
-           ArrayList<Epginfo> arrayListJudge = (ArrayList<Epginfo>) hsEpg.get(savedEpgKey);
-           String title = arrayListJudge.get(0).title;      //0中EPG第一行的名称
-           if (!title.contains("聚汇直播")) {   //xuameng再次判断如果缓存EPG中有聚汇直播字样说明是在线获取EPG失败则继续重试
+   //        ArrayList<Epginfo> arrayListJudge = (ArrayList<Epginfo>) hsEpg.get(savedEpgKey);
+   //        String title = arrayListJudge.get(0).title;      //0中EPG第一行的名称
+   //        if (!title.contains("聚汇直播")) {   //xuameng再次判断如果缓存EPG中有聚汇直播字样说明是在线获取EPG失败则继续重试
               showEpg(date, hsEpg.get(savedEpgKey));   //xuameng如果成功就直接显示缓存EPG   
               showBottomEpgXU(); //xuameng测试EPG刷新 
               return;
-           }
+   //        }
         }
         String url;
         if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
@@ -566,7 +566,7 @@ public class LivePlayActivity extends BaseActivity {
             }
             public void onResponse(String paramString) {
                 ArrayList arrayList = new ArrayList();
-             ////xuameng 空指针   Log.d("返回的EPG信息", paramString != null ? paramString : "暂无当前节目单，聚汇直播欢迎您的观看！");
+                //xuameng 空指针   Log.d("返回的EPG信息", paramString != null ? paramString : "暂无当前节目单，聚汇直播欢迎您的观看！");
                 try {
                     if(paramString != null && paramString.contains("epg_data")) {  //xuameng 空指针
                         final JSONArray jSONArray = new JSONObject(paramString).optJSONArray("epg_data");
@@ -575,7 +575,7 @@ public class LivePlayActivity extends BaseActivity {
                                 JSONObject jSONObject = jSONArray.getJSONObject(b);
                                 Epginfo epgbcinfo = new Epginfo(date, jSONObject.optString("title"), date, jSONObject.optString("start"), jSONObject.optString("end"), b);
                                 arrayList.add(epgbcinfo);
-                             ////xuameng 空指针   Log.d("EPG信息:", day + "  " + jSONObject.optString("start") + " - " + jSONObject.optString("end") + "  " + jSONObject.optString("title"));
+                                //xuameng 空指针   Log.d("EPG信息:", day + "  " + jSONObject.optString("start") + " - " + jSONObject.optString("end") + "  " + jSONObject.optString("title"));
                             }
                         }
                     }
@@ -633,12 +633,12 @@ public class LivePlayActivity extends BaseActivity {
         //epgListAdapter.updateData(date, new ArrayList<>());
 		String savedEpgKey = channelName + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
         if(hsEpg.containsKey(savedEpgKey)) {   //xuameng如果有缓存EPG
-           ArrayList<Epginfo> arrayListJudge = (ArrayList<Epginfo>) hsEpg.get(savedEpgKey);
-           String title = arrayListJudge.get(0).title;   //0中EPG第一行的名称
-           if (!title.contains("聚汇直播")) {   //xuameng再次判断如果缓存EPG中有聚汇直播字样说明是在线获取EPG失败则继续重试
+      //     ArrayList<Epginfo> arrayListJudge = (ArrayList<Epginfo>) hsEpg.get(savedEpgKey);
+      //     String title = arrayListJudge.get(0).title;   //0中EPG第一行的名称
+      //     if (!title.contains("聚汇直播")) {   //xuameng再次判断如果缓存EPG中有聚汇直播字样说明是在线获取EPG失败则继续重试
               showEpgxu(date, hsEpg.get(savedEpgKey));     //xuameng如果成功就直接显示缓存EPG   
               return;
-           }
+      //     }
         }
         String url;
         if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
@@ -680,7 +680,7 @@ public class LivePlayActivity extends BaseActivity {
             }
             public void onResponse(String paramString) {
                 ArrayList arrayList = new ArrayList();
-			////xuameng 空指针 	Log.d("返回的EPG信息", paramString != null ? paramString : "暂无当前节目单，聚汇直播欢迎您的观看！");
+			    //xuameng 空指针 	Log.d("返回的EPG信息", paramString != null ? paramString : "暂无当前节目单，聚汇直播欢迎您的观看！");
                 try {
                     if(paramString != null && paramString.contains("epg_data")) {   //xuameng 空指针
                         final JSONArray jSONArray = new JSONObject(paramString).optJSONArray("epg_data");
@@ -689,7 +689,7 @@ public class LivePlayActivity extends BaseActivity {
                                 JSONObject jSONObject = jSONArray.getJSONObject(b);
                                 Epginfo epgbcinfo = new Epginfo(date, jSONObject.optString("title"), date, jSONObject.optString("start"), jSONObject.optString("end"), b);
                                 arrayList.add(epgbcinfo);
-                             ////xuameng 空指针   Log.d("EPG信息:", day + "  " + jSONObject.optString("start") + " - " + jSONObject.optString("end") + "  " + jSONObject.optString("title"));
+                                //xuameng 空指针   Log.d("EPG信息:", day + "  " + jSONObject.optString("start") + " - " + jSONObject.optString("end") + "  " + jSONObject.optString("title"));
                             }
                         }
                     }
@@ -743,11 +743,9 @@ public class LivePlayActivity extends BaseActivity {
         if(channel_Name.getChannelName() != null) {
             ((TextView) findViewById(R.id.tv_channel_bar_name)).setText(channel_Name.getChannelName());
             ((TextView) findViewById(R.id.tv_channel_bottom_number)).setText("" + channel_Name.getChannelNum());
-            tip_epg1.setText("");
-            tip_epg1.setText("暂无当前节目单，聚汇直播欢迎您的观看！");
+            ((TextView) findViewById(R.id.tv_current_program_time)).setText("暂无当前节目单，聚汇直播欢迎您的观看！");
             ((TextView) findViewById(R.id.tv_current_program_name)).setText("");
-            tip_epg2.setText("");
-            tip_epg2.setText("许大师开发制作，请勿商用以及播放违法内容！");
+            ((TextView) findViewById(R.id.tv_next_program_time)).setText("许大师开发制作，请勿商用以及播放违法内容！");
             ((TextView) findViewById(R.id.tv_next_program_name)).setText("");
             String savedEpgKey = channel_Name.getChannelName() + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
@@ -765,12 +763,12 @@ public class LivePlayActivity extends BaseActivity {
                     int size = arrayList.size() - 1;
                     while(size >= 0) {
                         if(new Date().compareTo(((Epginfo) arrayList.get(size)).startdateTime) >= 0) {
-                            tip_epg1.setText("");
-                            tip_epg1.setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);
+                            //tip_epg1.setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);
+                            ((TextView) findViewById(R.id.tv_current_program_time)).setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);   //xuameng修复EPG 重复显示
                             ((TextView) findViewById(R.id.tv_current_program_name)).setText(((Epginfo) arrayList.get(size)).title);
                             if(size != arrayList.size() - 1) {
-                                tip_epg2.setText("");
-                                tip_epg2.setText(((Epginfo) arrayList.get(size + 1)).start + "--" + ((Epginfo) arrayList.get(size + 1)).end); //xuameng修复EPG低菜单下一个节目结束的时间
+                                //tip_epg2.setText(((Epginfo) arrayList.get(size + 1)).start + "--" + ((Epginfo) arrayList.get(size + 1)).end); //xuameng修复EPG低菜单下一个节目结束的时间
+                                ((TextView) findViewById(R.id.tv_next_program_time)).setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);   //xuameng修复EPG 重复显示
                                 ((TextView) findViewById(R.id.tv_next_program_name)).setText(((Epginfo) arrayList.get(size + 1)).title);
                             }
                             break;
@@ -781,11 +779,7 @@ public class LivePlayActivity extends BaseActivity {
                 }
                 epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
                 epgListAdapter.setNewData(arrayList);
-            } else {
-                int selectedIndex = liveEpgDateAdapter.getSelectedIndex();
-                if(selectedIndex < 0) getEpg(new Date());
-                else getEpg(liveEpgDateAdapter.getData().get(selectedIndex).getDateParamVal());
-            }
+            }           
             HideBottomEpgTimer();  //隐藏底部菜单到计时
             backcontroller.setVisibility(View.GONE);    //xuameng 隐藏进度条
             Mtv_left_top_xu.setVisibility(View.GONE); //xuameng直播时隐藏回看左上图标
@@ -828,12 +822,12 @@ public class LivePlayActivity extends BaseActivity {
                     int size = arrayList.size() - 1;
                     while(size >= 0) {
                         if(new Date().compareTo(((Epginfo) arrayList.get(size)).startdateTime) >= 0) {
-                            tip_epg1.setText("");
-                            tip_epg1.setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);
+                            //tip_epg1.setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);    用这个方式EPG会重复显示
+                            ((TextView) findViewById(R.id.tv_current_program_time)).setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);   //xuameng修复EPG 重复显示
                             ((TextView) findViewById(R.id.tv_current_program_name)).setText(((Epginfo) arrayList.get(size)).title);
                             if(size != arrayList.size() - 1) {
-                                tip_epg2.setText("");
-                                tip_epg2.setText(((Epginfo) arrayList.get(size + 1)).start + "--" + ((Epginfo) arrayList.get(size + 1)).end); //xuameng修复EPG低菜单下一个节目结束的时间
+                                //tip_epg2.setText(((Epginfo) arrayList.get(size + 1)).start + "--" + ((Epginfo) arrayList.get(size + 1)).end); //xuameng修复EPG低菜单下一个节目结束的时间
+                                ((TextView) findViewById(R.id.tv_next_program_time)).setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);   //xuameng修复EPG 重复显示
                                 ((TextView) findViewById(R.id.tv_next_program_name)).setText(((Epginfo) arrayList.get(size + 1)).title);
                             }
                             break;
@@ -844,10 +838,6 @@ public class LivePlayActivity extends BaseActivity {
                 }
                 epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
                 epgListAdapter.setNewData(arrayList);
-            } else {
-                int selectedIndex = liveEpgDateAdapter.getSelectedIndex();
-                if(selectedIndex < 0) getEpg(new Date());
-                else getEpg(liveEpgDateAdapter.getData().get(selectedIndex).getDateParamVal());
             }
         }
     }
@@ -908,24 +898,21 @@ public class LivePlayActivity extends BaseActivity {
             mHandler.removeCallbacks(mUpdateVodImageXu);
             mHandler.removeCallbacks(mUpdateTimeRun);
             mHandler.removeCallbacks(mUpdateTimeRunXu);
-            iv_circle_bg_xu.setVisibility(View.GONE); //xuameng音乐播放时图标
-            MxuamengMusic.setVisibility(View.GONE); //xuameng播放音乐背景
-            customVisualizer.setVisibility(View.GONE);  //xuameng播放音乐柱状图
             if(mHandler != null) {
                 mHandler.removeCallbacksAndMessages(null);
             }
-            OkGo.getInstance().cancelTag("xuameng");
-            if(countDownTimer != null) {
-               countDownTimer.cancel();
-               countDownTimer = null;
-            }
-           if(mVideoView != null) {
-               mVideoView.release();
-               mVideoView = null;
-           }
+            iv_circle_bg_xu.setVisibility(View.GONE); //xuameng音乐播放时图标
+            MxuamengMusic.setVisibility(View.GONE); //xuameng播放音乐背景
+            customVisualizer.setVisibility(View.GONE);  //xuameng播放音乐柱状图
             releaseVisualizer();  //xuameng音乐播放动画
             App.HideToast();  //xuameng HideToast
             cancelxToast();
+            OkGo.getInstance().cancelTag("xuameng");
+            cleanupAllTimers();
+            if(mVideoView != null) {
+                mVideoView.release();
+                mVideoView = null;
+            }
             super.onBackPressed();
         } else {
             mExitTime = System.currentTimeMillis();
@@ -978,23 +965,21 @@ public class LivePlayActivity extends BaseActivity {
         mHandler.removeCallbacks(mUpdateVodImageXu);
         mHandler.removeCallbacks(mUpdateTimeRun);
         mHandler.removeCallbacks(mUpdateTimeRunXu);
-        iv_circle_bg_xu.setVisibility(View.GONE); //xuameng音乐播放时图标
-        MxuamengMusic.setVisibility(View.GONE); //xuameng播放音乐背景
         if(mHandler != null) {
             mHandler.removeCallbacksAndMessages(null);
         }
+        iv_circle_bg_xu.setVisibility(View.GONE); //xuameng音乐播放时图标
+        MxuamengMusic.setVisibility(View.GONE); //xuameng播放音乐背景
+        customVisualizer.setVisibility(View.GONE);  //xuameng播放音乐柱状图
+        releaseVisualizer();  //xuameng音乐播放动画
+        App.HideToast();  //xuameng HideToast
+        cancelxToast();
         OkGo.getInstance().cancelTag("xuameng");
-        if(countDownTimer != null) {
-           countDownTimer.cancel();
-           countDownTimer = null;
-        }
+        cleanupAllTimers();
         if(mVideoView != null) {
             mVideoView.release();
             mVideoView = null;
         }
-        releaseVisualizer();  //xuameng音乐播放动画
-        App.HideToast();  //xuameng HideToast
-        cancelxToast();
         super.onBackPressed();
     }
     private final Runnable mPlaySelectedChannel = new Runnable() {
@@ -1242,18 +1227,31 @@ public class LivePlayActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);
+        mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBack);
+        mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBuffer);
+        mHandler.removeCallbacks(mUpdateNetSpeedRun);
+        mHandler.removeCallbacks(mUpdateNetSpeedRunXu);
+        mHandler.removeCallbacks(mUpdateVodProgressXu);
+        mHandler.removeCallbacks(myRunnableMusic);
+        mHandler.removeCallbacks(mUpdateVodImageXu);
+        mHandler.removeCallbacks(mUpdateTimeRun);
+        mHandler.removeCallbacks(mUpdateTimeRunXu);
+        if(mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
+        iv_circle_bg_xu.setVisibility(View.GONE); //xuameng音乐播放时图标
+        MxuamengMusic.setVisibility(View.GONE); //xuameng播放音乐背景
+        customVisualizer.setVisibility(View.GONE);  //xuameng播放音乐柱状图
+        releaseVisualizer();  //xuameng音乐播放动画
+        App.HideToast();  //xuameng HideToast
+        cancelxToast();
+        OkGo.getInstance().cancelTag("xuameng");
+        cleanupAllTimers();
         if(mVideoView != null) {
             mVideoView.release();
             mVideoView = null;
         }
-        if(countDownTimer != null) {
-           countDownTimer.cancel();
-           countDownTimer = null;
-        }
-        if(mHandler != null) {
-            mHandler.removeCallbacksAndMessages(null);
-        }
-        OkGo.getInstance().cancelTag("xuameng");
     }
     private void showChannelList() {
         if(liveChannelGroupList.isEmpty()) return; //xuameng新增
@@ -1357,7 +1355,6 @@ public class LivePlayActivity extends BaseActivity {
         }
         if(!isCurrentLiveChannelValidXu()) return;    //xuameng 空指针修复
         liveEpgDateAdapter.setSelectedIndex(1);   //xuameng频道EPG日期自动选今天
-        getEpg(new Date());
     }
     private void mHideChannelListRunXu() { //xuameng左侧菜单延时5秒隐藏
         if(countDownTimer7 != null) {
@@ -2517,19 +2514,12 @@ public class LivePlayActivity extends BaseActivity {
                 if(position == Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0)) break;
                 JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
                 JsonObject livesOBJ = live_groups.get(position).getAsJsonObject();
-                // xuameng读取新线路的 EPG 地址
-                if (livesOBJ.has("epg")) {
-                    String newEpgUrl = livesOBJ.get("epg").getAsString();
-                    Hawk.put(HawkConfig.EPG_URL, newEpgUrl);
-                    epgStringAddress = newEpgUrl; // xuameng更新当前 Activity 的变量
-                }
                 liveSettingItemAdapter.selectItem(position, true, true);
                 Hawk.put(HawkConfig.LIVE_GROUP_INDEX, position);
                 ApiConfig.get().loadLiveApi(livesOBJ);
                 mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);  //xuameng BUG
                 mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBack);  //xuameng BUG
                 mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBuffer);  //xuameng BUG
-                hsEpg.clear();   //xuameng 清空EPG缓存
                 recreate();
                 return;
             case 6: //xuameng渲染方式
@@ -3533,4 +3523,28 @@ public class LivePlayActivity extends BaseActivity {
         mRightEpgList.postDelayed(delayedScrollTask, 50);
     }
 
+    private void cleanupAllTimers() {   // xuameng清理所有 CountDownTimer 实例
+        CountDownTimer[] timers = {
+            countDownTimer, countDownTimer5, countDownTimer6, countDownTimer7,
+            countDownTimer8, countDownTimer10, countDownTimer20, countDownTimer21,
+            countDownTimer22
+        };
+    
+        for (CountDownTimer timer : timers) {
+            if (timer != null) {
+                timer.cancel();
+            }
+        }
+    
+        // 置空所有引用
+        countDownTimer = null;
+        countDownTimer5 = null;
+        countDownTimer6 = null;
+        countDownTimer7 = null;
+        countDownTimer8 = null;
+        countDownTimer10 = null;
+        countDownTimer20 = null;
+        countDownTimer21 = null;
+        countDownTimer22 = null;
+    }
 }
