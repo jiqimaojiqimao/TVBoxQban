@@ -114,7 +114,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                     3000,    // bufferForPlaybackMs - 减小播放前缓冲时间
                     5000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
                 )
-                .setTargetBufferBytes(50 * 1024 * 1024)  // 设置目标缓冲字节数为50MB
+                .setTargetBufferBytes(30 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
                 .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
                 .build();
         } else {
