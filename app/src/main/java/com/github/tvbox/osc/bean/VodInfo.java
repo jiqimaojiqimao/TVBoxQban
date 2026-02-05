@@ -51,50 +51,28 @@ public class VodInfo implements Serializable {
     public String sourceKey;
     public String playerCfg = "";
     public boolean reverseSort = false;
-    // xuameng新增：记录当前播放的源和剧集索引（用于切换源时恢复位置）
-    public String currentPlayFlag = null; // xuameng当前播放的源（flag）
-    public int currentPlayIndex = 0;      // xuameng当前播放的剧集索引
-    public Movie.Video video; // xuameng添加video字段存储
+    // 新增：记录当前播放的源和剧集索引（用于切换源时恢复位置）
+    public String currentPlayFlag = null; // 当前播放的源（flag）
+    public int currentPlayIndex = 0;      // 当前播放的剧集索引
+	public Movie.Video video; // xuameng添加video字段存储
 
     public void setVideo(Movie.Video video) {
-        if (video == null) {
-            // xuameng处理空值情况
-            this.video = null;   // xuameng存储video对象
-            last = "";
-            id = "";
-            tid = 0;
-            name = "";
-            type = "";
-            pic = "";
-            lang = "";
-            area = "";
-            year = 0;
-            state = "";
-            note = "";
-            actor = "";
-            director = "";
-            des = "";
-            seriesFlags = new ArrayList<>();
-            seriesMap = new LinkedHashMap<>();
-            return;
-        }
-    
         this.video = video; // xuameng存储video对象
-        last = video.last != null ? video.last : "";
-        id = video.id != null ? video.id : "";
+        last = video.last;
+        id = video.id;
         tid = video.tid;
-        name = video.name != null ? video.name : "";
-        type = video.type != null ? video.type : "";
-        pic = video.pic != null ? video.pic : "";
-        lang = video.lang != null ? video.lang : "";
-        area = video.area != null ? video.area : "";
+        name = video.name;
+        type = video.type;
+        // dt = video.dt;
+        pic = video.pic;
+        lang = video.lang;
+        area = video.area;
         year = video.year;
-        state = video.state != null ? video.state : "";
-        note = video.note != null ? video.note : "";
-        actor = video.actor != null ? video.actor : "";
-        director = video.director != null ? video.director : "";
-        des = video.des != null ? video.des : "";
-
+        state = video.state;
+        note = video.note;
+        actor = video.actor;
+        director = video.director;
+        des = video.des;
         if (video.urlBean != null && video.urlBean.infoList != null && video.urlBean.infoList.size() > 0) {
             LinkedHashMap<String, List<VodSeries>> tempSeriesMap = new LinkedHashMap<>();
             seriesFlags = new ArrayList<>();
@@ -118,9 +96,6 @@ public class VodInfo implements Serializable {
                 }
                 seriesMap.put(flag.name, list);
             }
-        }else {    // xuameng处理空值情况
-            seriesFlags = new ArrayList<>();
-            seriesMap = new LinkedHashMap<>();
         }
     }
 
