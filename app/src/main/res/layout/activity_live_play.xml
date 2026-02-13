@@ -434,7 +434,7 @@
                 android:layout_marginLeft="@dimen/vs_0"
                 android:layout_marginTop="@dimen/vs_0"
                 android:layout_marginRight="@dimen/vs_0"
-                android:text="密码频道"
+                android:text="聚汇直播"
                 android:singleLine="true"
                 android:layout_alignParentBottom="true"/>
         </LinearLayout>
@@ -471,7 +471,7 @@
                 android:clipToPadding="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="请输入当前频道密码，聚汇直播欢迎您的观看！"
+                android:text="暂无当前节目单，聚汇直播欢迎您的观看！"
                 android:singleLine="true"
                 android:shadowColor="#cc000000"
                 android:shadowDx="5.0"
@@ -691,7 +691,7 @@
                     android:paddingBottom="5.0mm"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="密码频道"
+                    android:text="聚汇直播"
                     android:singleLine="true"
                     android:layout_toRightOf="@+id/iv_circle_bg"
                     android:marqueeRepeatLimit="marquee_forever"/>
