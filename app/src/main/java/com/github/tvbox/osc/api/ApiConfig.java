@@ -516,9 +516,9 @@ public class ApiConfig {
 						ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
 						for (int i=0; i< lives_groups.size();i++) {
 							JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
-							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"聚汇影视"+(i+1);
+							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"聚汇直播";
 							if(name == null || name.isEmpty()){
-								name = "聚汇影视";
+								name = "聚汇直播";
 							}
 							LiveSettingItem liveSettingItem = new LiveSettingItem();
 							liveSettingItem.setItemIndex(i);
@@ -540,9 +540,9 @@ public class ApiConfig {
 							ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
 							for (int i=0; i< lives_groups.size();i++) {
 							JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
-							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"聚汇影视"+(i+1);
+							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"聚汇直播";
 							if(name == null || name.isEmpty()){
-								name = "聚汇影视";
+								name = "聚汇直播";
 							}
 							LiveSettingItem liveSettingItem = new LiveSettingItem();
 							liveSettingItem.setItemIndex(i);
@@ -737,9 +737,9 @@ public class ApiConfig {
 						ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
 						for (int i=0; i< lives_groups.size();i++) {
 							JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
-							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"聚汇影视"+(i+1);
+							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"聚汇直播";
 							if(name == null || name.isEmpty()){
-								name = "聚汇影视";
+								name = "聚汇直播";
 							}
 							LiveSettingItem liveSettingItem = new LiveSettingItem();
 							liveSettingItem.setItemIndex(i);
@@ -761,9 +761,9 @@ public class ApiConfig {
 						ArrayList<LiveSettingItem> liveSettingItemList = new ArrayList<>();
 						for (int i=0; i< lives_groups.size();i++) {
 							JsonObject jsonObject = lives_groups.get(i).getAsJsonObject();
-							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"聚汇影视"+(i+1);
+							String name = jsonObject.has("name")?jsonObject.get("name").getAsString():"聚汇直播";
 							if(name == null || name.isEmpty()){
-								name = "聚汇影视";
+								name = "聚汇直播";
 							}
 							LiveSettingItem liveSettingItem = new LiveSettingItem();
 							liveSettingItem.setItemIndex(i);
@@ -812,7 +812,7 @@ public class ApiConfig {
         ArrayList < String > playerDecoderItems = new ArrayList < > (Arrays.asList("系统解码", "IJK  硬解", "IJK  软解", "EXO硬解", "EXO软解"));   //xuameng增加exo软硬解
         ArrayList < String > timeoutItems = new ArrayList < > (Arrays.asList("超时05秒", "超时10秒", "超时15秒", "超时20秒", "超时25秒", "超时30秒"));
         ArrayList < String > personalSettingItems = new ArrayList < > (Arrays.asList("显示时间", "显示网速", "换台反转", "跨选分类"));
-        ArrayList<String> yumItems = new ArrayList<>();   //xuameng新增 换源
+        ArrayList < String > yumItems = new ArrayList<>(Arrays.asList("聚汇直播"));   //xuameng新增 换源
         ArrayList < String > PlayrenderSettingItems = new ArrayList < > (Arrays.asList("Texture渲染", "Surface渲染"));   //xuameng渲染方式
         ArrayList < String > LiveMusicAnimationItems = new ArrayList < > (Arrays.asList("音柱开启", "音柱关闭"));   //xuameng音柱动画
         ArrayList < String > ExitSettingItems = new ArrayList < > (Arrays.asList("确认退出"));   //xuameng退出直播
@@ -853,6 +853,12 @@ public class ApiConfig {
         int groupIndex = 0;
         int channelIndex = 0;
         int channelNum = 0;
+        // ========== xuameng：新增首先添加"我的收藏"频道组 ==========
+        // 创建收藏频道组（始终放在第一个位置）
+        LiveChannelGroup favoriteGroup = LiveChannelItem.createFavoriteChannelGroup();
+        favoriteGroup.setGroupIndex(groupIndex++);
+        liveChannelGroupList.add(favoriteGroup);
+        // ========== xuameng：新增"我的收藏"结束 ==========
         for (JsonElement groupElement : livesArray) {
             LiveChannelGroup liveChannelGroup = new LiveChannelGroup();
             liveChannelGroup.setLiveChannels(new ArrayList<LiveChannelItem>());
@@ -1144,5 +1150,133 @@ public class ApiConfig {
                Hawk.delete(HawkConfig.API_URL); // 安全删除
            }
         }
+    }
+
+	 /**xuameng
+     * 创建默认设置组（覆盖原业务中所有9个组，接口失败时兜底）
+     */
+    public List<LiveSettingGroup> createDefaultLiveSettingGroupList() {
+        List<LiveSettingGroup> defaultList = new ArrayList<>();
+
+        // ==================== 1. 线路选择（索引0） ====================
+        LiveSettingGroup lineGroup = new LiveSettingGroup();
+        lineGroup.setGroupIndex(0);
+        lineGroup.setGroupName("线路选择");
+        lineGroup.setLiveSettingItems(new ArrayList<>()); // 已经是ArrayList，无需转换
+
+        // ==================== 2. 画面比例（索引1） ====================
+        LiveSettingGroup scaleGroup = new LiveSettingGroup();
+        scaleGroup.setGroupIndex(1);
+        scaleGroup.setGroupName("画面比例");
+        List<LiveSettingItem> scaleItems = new ArrayList<>();
+        scaleItems.add(createLiveSettingItem(0, "默认比例"));
+        scaleItems.add(createLiveSettingItem(1, "16:9比例"));
+        scaleItems.add(createLiveSettingItem(2, "4:3 比例"));
+        scaleItems.add(createLiveSettingItem(3, "填充比例"));
+        scaleItems.add(createLiveSettingItem(4, "原始比例"));
+        scaleItems.add(createLiveSettingItem(5, "裁剪比例"));
+        // 关键修改：强制转换为ArrayList
+        scaleGroup.setLiveSettingItems((ArrayList<LiveSettingItem>) (List<?>) scaleItems);
+
+        // ==================== 3. 播放解码（索引2） ====================
+        LiveSettingGroup decoderGroup = new LiveSettingGroup();
+        decoderGroup.setGroupIndex(2);
+        decoderGroup.setGroupName("播放解码");
+        List<LiveSettingItem> decoderItems = new ArrayList<>();
+        decoderItems.add(createLiveSettingItem(0, "系统解码"));
+        decoderItems.add(createLiveSettingItem(1, "IJK  硬解"));
+        decoderItems.add(createLiveSettingItem(2, "IJK  软解"));
+        decoderItems.add(createLiveSettingItem(3, "EXO硬解"));
+        decoderItems.add(createLiveSettingItem(4, "EXO软解"));
+        // 关键修改：强制转换
+        decoderGroup.setLiveSettingItems((ArrayList<LiveSettingItem>) (List<?>) decoderItems);
+
+        // ==================== 4. 超时换源（索引3） ====================
+        LiveSettingGroup timeoutGroup = new LiveSettingGroup();
+        timeoutGroup.setGroupIndex(3);
+        timeoutGroup.setGroupName("超时换源");
+        List<LiveSettingItem> timeoutItems = new ArrayList<>();
+        timeoutItems.add(createLiveSettingItem(0, "超时05秒"));
+        timeoutItems.add(createLiveSettingItem(1, "超时10秒"));
+        timeoutItems.add(createLiveSettingItem(2, "超时15秒"));
+        timeoutItems.add(createLiveSettingItem(3, "超时20秒"));
+        timeoutItems.add(createLiveSettingItem(4, "超时25秒"));
+        timeoutItems.add(createLiveSettingItem(5, "超时30秒"));
+        // 关键修改：强制转换
+        timeoutGroup.setLiveSettingItems((ArrayList<LiveSettingItem>) (List<?>) timeoutItems);
+
+        // ==================== 5. 偏好设置（索引4） ====================
+        LiveSettingGroup personalGroup = new LiveSettingGroup();
+        personalGroup.setGroupIndex(4);
+        personalGroup.setGroupName("偏好设置");
+        List<LiveSettingItem> personalItems = new ArrayList<>();
+        personalItems.add(createLiveSettingItem(0, "显示时间"));
+        personalItems.add(createLiveSettingItem(1, "显示网速"));
+        personalItems.add(createLiveSettingItem(2, "换台反转"));
+        personalItems.add(createLiveSettingItem(3, "跨选分类"));
+        // 关键修改：强制转换
+        personalGroup.setLiveSettingItems((ArrayList<LiveSettingItem>) (List<?>) personalItems);
+
+        // ==================== 6. 多源切换（索引5） ====================
+        LiveSettingGroup yumGroup = new LiveSettingGroup();
+        yumGroup.setGroupIndex(5);
+        yumGroup.setGroupName("多源切换");
+        List<LiveSettingItem> yumItems = new ArrayList<>();
+        yumItems.add(createLiveSettingItem(0, "聚汇直播"));
+        // 关键修改：强制转换
+        yumGroup.setLiveSettingItems((ArrayList<LiveSettingItem>) (List<?>) yumItems);
+
+        // ==================== 7. 渲染方式（索引6） ====================
+        LiveSettingGroup renderGroup = new LiveSettingGroup();
+        renderGroup.setGroupIndex(6);
+        renderGroup.setGroupName("渲染方式");
+        List<LiveSettingItem> renderItems = new ArrayList<>();
+        renderItems.add(createLiveSettingItem(0, "Texture渲染"));
+        renderItems.add(createLiveSettingItem(1, "Surface渲染"));
+        // 关键修改：强制转换
+        renderGroup.setLiveSettingItems((ArrayList<LiveSettingItem>) (List<?>) renderItems);
+
+        // ==================== 8. 音柱动画（索引7） ====================
+        LiveSettingGroup musicGroup = new LiveSettingGroup();
+        musicGroup.setGroupIndex(7);
+        musicGroup.setGroupName("直播音柱");
+        List<LiveSettingItem> musicItems = new ArrayList<>();
+        musicItems.add(createLiveSettingItem(0, "音柱开启"));
+        musicItems.add(createLiveSettingItem(1, "音柱关闭"));
+        // 关键修改：强制转换
+        musicGroup.setLiveSettingItems((ArrayList<LiveSettingItem>) (List<?>) musicItems);
+
+        // ==================== 9. 退出直播（索引8） ====================
+        LiveSettingGroup exitGroup = new LiveSettingGroup();
+        exitGroup.setGroupIndex(8);
+        exitGroup.setGroupName("退出直播");
+        List<LiveSettingItem> exitItems = new ArrayList<>();
+        exitItems.add(createLiveSettingItem(0, "确认退出"));
+        // 关键修改：强制转换
+        exitGroup.setLiveSettingItems((ArrayList<LiveSettingItem>) (List<?>) exitItems);
+
+        // ==================== 将所有组加入默认列表 ====================
+        defaultList.add(lineGroup);     // 索引0
+        defaultList.add(scaleGroup);   // 索引1
+        defaultList.add(decoderGroup);  // 索引2
+        defaultList.add(timeoutGroup);  // 索引3
+        defaultList.add(personalGroup); // 索引4
+        defaultList.add(yumGroup);     // 索引5
+        defaultList.add(renderGroup);  // 索引6
+        defaultList.add(musicGroup);   // 索引7
+        defaultList.add(exitGroup);    // 索引8
+
+        return defaultList;
+    }
+
+    /**xuameng
+     * 辅助方法：创建LiveSettingItem（保持不变）
+     */
+    private LiveSettingItem createLiveSettingItem(int index, String name) {
+        LiveSettingItem item = new LiveSettingItem();
+        item.setItemIndex(index);
+        item.setItemName(name);
+        item.setItemSelected(false);
+        return item;
     }
 }
