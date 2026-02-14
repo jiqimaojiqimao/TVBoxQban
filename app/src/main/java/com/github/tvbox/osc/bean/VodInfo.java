@@ -101,7 +101,7 @@ public class VodInfo implements Serializable {
 
     // xuameng存储video对象在VodInfo类中添加getVideo()方法
     public Movie.Video getVideo() {
-        return null; 
+        return this.video;
     }
 
     private int extractNumber(String name) {
