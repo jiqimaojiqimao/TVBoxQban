@@ -1554,7 +1554,6 @@ public class LivePlayActivity extends BaseActivity {
             return;
         }
         currentLiveChannelItem.preSource();
-        liveSettingGroupAdapter.setSelectedGroupIndex(-1); //xuameng右菜单BUG修复
         playChannel(currentChannelGroupIndex, currentLiveChannelIndex, true);
     }
     public void playNextSource() {
@@ -1566,7 +1565,6 @@ public class LivePlayActivity extends BaseActivity {
             return;
         }
         currentLiveChannelItem.nextSource();
-        liveSettingGroupAdapter.setSelectedGroupIndex(-1); //xuameng右菜单BUG修复
         playChannel(currentChannelGroupIndex, currentLiveChannelIndex, true);
     }
     public void playXuSource() {
@@ -2228,6 +2226,7 @@ public class LivePlayActivity extends BaseActivity {
                     }
                 } else {
                     playNextSource();
+                    liveSettingGroupAdapter.setSelectedGroupIndex(-1); //xuameng右菜单BUG修复
                 } else if(direction < 0)
                     if(isBack) { //xuameng手机换源和隐藏时移控制栏
                         if(backcontroller.getVisibility() == View.VISIBLE) {
@@ -2243,6 +2242,7 @@ public class LivePlayActivity extends BaseActivity {
                     }
                 } else {
                     playPreSource();
+                    liveSettingGroupAdapter.setSelectedGroupIndex(-1); //xuameng右菜单BUG修复
                 }
             }
         });
