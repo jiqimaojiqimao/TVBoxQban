@@ -195,7 +195,7 @@ public class OkGoHelper {
         } catch (Throwable th) {
             th.printStackTrace();
         }
-        builder.cache(new Cache(new File(App.getInstance().getCacheDir().getAbsolutePath(), "dohcache"), 10 * 1024 * 1024));
+        builder.cache(new Cache(new File(App.getInstance().getCacheDir().getAbsolutePath(), "dohcache"), 100 * 1024 * 1024));
         OkHttpClient dohClient = builder.build();
         String dohUrl = getDohUrl(Hawk.get(HawkConfig.DOH_URL, 0));
         if (!dohUrl.isEmpty()) is_doh = true;
@@ -213,7 +213,7 @@ public class OkGoHelper {
     // 自定义 DNS 解析器 - 修复线程泄漏问题
     static class CustomDns implements Dns {
         private ConcurrentHashMap<String, List<InetAddress>> map;
-        private static final long DNS_TIMEOUT_MS = 3000; // 3秒超时
+        private static final long DNS_TIMEOUT_MS = 5000; // 3秒超时
         private final String excludeIps = "2409:8087:6c02:14:100::14,2409:8087:6c02:14:100::18,39.134.108.253,39.134.108.245";
 
         // 使用线程池管理DNS查询，避免线程泄漏
