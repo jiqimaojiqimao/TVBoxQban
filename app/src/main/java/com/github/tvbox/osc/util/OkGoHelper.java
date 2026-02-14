@@ -207,14 +207,21 @@ public class OkGoHelper {
             if (myHosts == null){
                 myHosts = ApiConfig.get().getMyHost(); //确保只获取一次减少消耗
             }
-            if(!myHosts.isEmpty() && myHosts.containsKey(hostname)) {
-                hostname=myHosts.get(hostname);
+            // 如果有自定义 hosts 映射，优先使用 xuameng   myHosts != null 防止 hosts为null报错，如为null就用系统DNS
+            if (myHosts != null && !myHosts.isEmpty() && myHosts.containsKey(hostname)) {
+                hostname = myHosts.get(hostname);
             }
             assert hostname != null;
-            if (isValidIpAddress(hostname)) {
+            if (isValidIpAddress(hostname)) {   //xuamegn IP 是直接用
                 return Collections.singletonList(InetAddress.getByName(hostname));
             }else {
-                return  dnsOverHttps.lookup(hostname);
+                // xuameng如果是域名，如果dnsOverHttps为null，回退到系统默认DNS
+                DnsOverHttps localDns = dnsOverHttps;
+                if (localDns != null) {
+                    return localDns.lookup(hostname);
+                } else {
+                    return Dns.SYSTEM.lookup(hostname);  
+                }
             }
         }
 
