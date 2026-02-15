@@ -46,6 +46,11 @@ import okhttp3.dnsoverhttps.DnsOverHttps;
 import okhttp3.internal.Version;
 import xyz.doikki.videoplayer.exo.ExoMediaSourceHelper;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+
 /**
  * @author xuameng
  * @date :2026/2/12
@@ -202,28 +207,49 @@ public class OkGoHelper {
         private  ConcurrentHashMap<String, List<InetAddress>> map;
         private final String excludeIps = "2409:8087:6c02:14:100::14,2409:8087:6c02:14:100::18,39.134.108.253,39.134.108.245";
         @NonNull
-        @Override
-        public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
-            if (myHosts == null){
-                myHosts = ApiConfig.get().getMyHost(); //确保只获取一次减少消耗
-            }
-            // 如果有自定义 hosts 映射，优先使用 xuameng   myHosts != null 防止 hosts为null报错，如为null就用系统DNS
-            if (myHosts != null && !myHosts.isEmpty() && myHosts.containsKey(hostname)) {
-                hostname = myHosts.get(hostname);
-            }
-            assert hostname != null;
-            if (isValidIpAddress(hostname)) {   //xuamegn IP 是直接用
-                return Collections.singletonList(InetAddress.getByName(hostname));
-            }else {
-                // xuameng如果是域名，如果dnsOverHttps为null，回退到系统默认DNS
-                DnsOverHttps localDns = dnsOverHttps;
-                if (localDns != null) {
-                    return localDns.lookup(hostname);
-                } else {
-                    return Dns.SYSTEM.lookup(hostname);  
-                }
-            }
+@Override
+public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
+    if (myHosts == null) {
+        myHosts = ApiConfig.get().getMyHost();
+    }
+
+    // 1. 自定义 hosts 优先
+    if (myHosts != null && !myHosts.isEmpty() && myHosts.containsKey(hostname)) {
+        String mapped = myHosts.get(hostname);
+        if (mapped != null && isValidIpAddress(mapped)) {
+            return Collections.singletonList(InetAddress.getByName(mapped));
         }
+        // 如果映射的是域名，继续走下面逻辑解析
+        hostname = mapped;
+    }
+
+    // 2. 如果是 IP，直接返回
+    if (isValidIpAddress(hostname)) {
+        return Collections.singletonList(InetAddress.getByName(hostname));
+    }
+
+    // 3. 尝试 DoH（带 5 秒超时）
+    DnsOverHttps localDns = dnsOverHttps;
+    if (localDns != null && is_doh) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<List<InetAddress>> future = executor.submit(() -> localDns.lookup(hostname));
+
+        try {
+            // 等待最多 5 秒
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (TimeoutException | ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            // fallback 到系统 DNS
+            System.out.println("DoH timeout or error for " + hostname + ", falling back to system DNS");
+        } finally {
+            future.cancel(true); // 取消任务
+            executor.shutdownNow(); // 立即关闭线程池
+        }
+    }
+
+    // 4. fallback 到系统 DNS
+    return Dns.SYSTEM.lookup(hostname);
+}
 
         public synchronized void mapHosts(Map<String,String> hosts) throws UnknownHostException {   //xuameng新增
             map=new ConcurrentHashMap<>();
