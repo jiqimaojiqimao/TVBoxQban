@@ -217,16 +217,16 @@ public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostExce
         myHosts = ApiConfig.get().getMyHost();
     }
 
-    String targetHost = hostname;
-
-    // 1. 自定义 hosts 优先
-    if (myHosts != null && !myHosts.isEmpty() && myHosts.containsKey(targetHost)) {
-        String mapped = myHosts.get(targetHost);
+    // 👇 关键：在声明时就确定最终值，只赋值一次
+    final String targetHost;
+    if (myHosts != null && !myHosts.isEmpty() && myHosts.containsKey(hostname)) {
+        String mapped = myHosts.get(hostname);
         if (mapped != null && isValidIpAddress(mapped)) {
             return Collections.singletonList(InetAddress.getByName(mapped));
         }
-        // 如果映射的是域名，继续走下面逻辑解析
-        targetHost = mapped;
+        targetHost = mapped; // ← 唯一赋值点
+    } else {
+        targetHost = hostname; // ← 唯一赋值点
     }
 
     // 2. 如果是 IP，直接返回
@@ -239,7 +239,7 @@ public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostExce
         final DnsOverHttps doh = dnsOverHttps;
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
-            Future<List<InetAddress>> future = executor.submit(() -> doh.lookup(targetHost));
+            Future<List<InetAddress>> future = executor.submit(() -> doh.lookup(targetHost)); // ✅ 现在 targetHost 是 final
             return future.get(5, TimeUnit.SECONDS);
         } catch (TimeoutException | ExecutionException | InterruptedException e) {
             // fallback
