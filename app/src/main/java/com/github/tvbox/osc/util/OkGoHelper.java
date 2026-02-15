@@ -217,28 +217,29 @@ public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostExce
         myHosts = ApiConfig.get().getMyHost();
     }
 
+    String targetHost = hostname;
+
     // 1. 自定义 hosts 优先
-    if (myHosts != null && !myHosts.isEmpty() && myHosts.containsKey(hostname)) {
-        String mapped = myHosts.get(hostname);
+    if (myHosts != null && !myHosts.isEmpty() && myHosts.containsKey(targetHost)) {
+        String mapped = myHosts.get(targetHost);
         if (mapped != null && isValidIpAddress(mapped)) {
             return Collections.singletonList(InetAddress.getByName(mapped));
         }
         // 如果映射的是域名，继续走下面逻辑解析
-        hostname = mapped;
+        targetHost = mapped;
     }
 
     // 2. 如果是 IP，直接返回
-    if (isValidIpAddress(hostname)) {
-        return Collections.singletonList(InetAddress.getByName(hostname));
+    if (isValidIpAddress(targetHost)) {
+        return Collections.singletonList(InetAddress.getByName(targetHost));
     }
 
     // 3. 尝试 DoH（带 5 秒超时）
-    DnsOverHttps localDns = dnsOverHttps;
     if (is_doh && dnsOverHttps != null) {
-        DnsOverHttps doh = dnsOverHttps; // effectively final
+        final DnsOverHttps doh = dnsOverHttps;
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
-            Future<List<InetAddress>> future = executor.submit(() -> doh.lookup(hostname));
+            Future<List<InetAddress>> future = executor.submit(() -> doh.lookup(targetHost));
             return future.get(5, TimeUnit.SECONDS);
         } catch (TimeoutException | ExecutionException | InterruptedException e) {
             // fallback
@@ -246,8 +247,9 @@ public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostExce
             executor.shutdownNow();
         }
     }
+
     // 4. fallback 到系统 DNS
-    return Dns.SYSTEM.lookup(hostname);
+    return Dns.SYSTEM.lookup(targetHost);
 }
 
         public synchronized void mapHosts(Map<String,String> hosts) throws UnknownHostException {   //xuameng新增
