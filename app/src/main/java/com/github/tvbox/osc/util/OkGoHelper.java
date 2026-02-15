@@ -46,15 +46,6 @@ import okhttp3.dnsoverhttps.DnsOverHttps;
 import okhttp3.internal.Version;
 import xyz.doikki.videoplayer.exo.ExoMediaSourceHelper;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import android.util.Log; 
-import java.util.concurrent.Callable;
-
 /**
  * @author xuameng
  * @date :2026/2/12
@@ -211,46 +202,28 @@ public class OkGoHelper {
         private  ConcurrentHashMap<String, List<InetAddress>> map;
         private final String excludeIps = "2409:8087:6c02:14:100::14,2409:8087:6c02:14:100::18,39.134.108.253,39.134.108.245";
         @NonNull
-@Override
-public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
-    if (myHosts == null) {
-        myHosts = ApiConfig.get().getMyHost();
-    }
-
-    // 👇 关键：在声明时就确定最终值，只赋值一次
-    final String targetHost;
-    if (myHosts != null && !myHosts.isEmpty() && myHosts.containsKey(hostname)) {
-        String mapped = myHosts.get(hostname);
-        if (mapped != null && isValidIpAddress(mapped)) {
-            return Collections.singletonList(InetAddress.getByName(mapped));
+        @Override
+        public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
+            if (myHosts == null){
+                myHosts = ApiConfig.get().getMyHost(); //确保只获取一次减少消耗
+            }
+            // 如果有自定义 hosts 映射，优先使用 xuameng   myHosts != null 防止 hosts为null报错，如为null就用系统DNS
+            if (myHosts != null && !myHosts.isEmpty() && myHosts.containsKey(hostname)) {
+                hostname = myHosts.get(hostname);
+            }
+            assert hostname != null;
+            if (isValidIpAddress(hostname)) {   //xuamegn IP 是直接用
+                return Collections.singletonList(InetAddress.getByName(hostname));
+            }else {
+                // xuameng如果是域名，如果dnsOverHttps为null，回退到系统默认DNS
+                DnsOverHttps localDns = dnsOverHttps;
+                if (localDns != null) {
+                    return localDns.lookup(hostname);
+                } else {
+                    return Dns.SYSTEM.lookup(hostname);  
+                }
+            }
         }
-        targetHost = mapped; // ← 唯一赋值点
-    } else {
-        targetHost = hostname; // ← 唯一赋值点
-    }
-
-    // 2. 如果是 IP，直接返回
-    if (isValidIpAddress(targetHost)) {
-        return Collections.singletonList(InetAddress.getByName(targetHost));
-    }
-
-    // 3. 尝试 DoH（带 5 秒超时）
-    if (is_doh && dnsOverHttps != null) {
-        final DnsOverHttps doh = dnsOverHttps;
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
-            Future<List<InetAddress>> future = executor.submit(() -> doh.lookup(targetHost)); // ✅ 现在 targetHost 是 final
-            return future.get(5, TimeUnit.SECONDS);
-        } catch (TimeoutException | ExecutionException | InterruptedException e) {
-            // fallback
-        } finally {
-            executor.shutdownNow();
-        }
-    }
-
-    // 4. fallback 到系统 DNS
-    return Dns.SYSTEM.lookup(targetHost);
-}
 
         public synchronized void mapHosts(Map<String,String> hosts) throws UnknownHostException {   //xuameng新增
             map=new ConcurrentHashMap<>();
