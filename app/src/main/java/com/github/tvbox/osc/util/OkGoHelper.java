@@ -52,6 +52,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import android.util.Log; 
 
 /**
  * @author xuameng
@@ -232,22 +233,27 @@ public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostExce
 
     // 3. 尝试 DoH（带 5 秒超时）
     DnsOverHttps localDns = dnsOverHttps;
-    if (localDns != null && is_doh) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<List<InetAddress>> future = executor.submit(() -> localDns.lookup(hostname));
+if (is_doh && dnsOverHttps != null) {
+    final DnsOverHttps dohRef = dnsOverHttps;  // effectively final 局部变量
+    final String targetHost = hostname;
 
-        try {
-            // 等待最多 5 秒
-            return future.get(5, TimeUnit.SECONDS);
-        } catch (TimeoutException | ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            // fallback 到系统 DNS
-            System.out.println("DoH timeout or error for " + hostname + ", falling back to system DNS");
-        } finally {
-            future.cancel(true); // 取消任务
-            executor.shutdownNow(); // 立即关闭线程池
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<List<InetAddress>> future = executor.submit(new Callable<List<InetAddress>>() {
+        @Override
+        public List<InetAddress> call() throws Exception {
+            return dohRef.lookup(targetHost);
         }
+    });
+
+    try {
+        return future.get(5, TimeUnit.SECONDS);
+    } catch (TimeoutException | ExecutionException | InterruptedException e) {
+        Log.w("CustomDns", "DoH failed for " + hostname, e);
+    } finally {
+        future.cancel(true);
+        executor.shutdownNow();
     }
+}
 
     // 4. fallback 到系统 DNS
     return Dns.SYSTEM.lookup(hostname);
