@@ -168,20 +168,20 @@ public class ExoTrackNameProvider {
         return roles;
     }
 
-
-private String joinWithSeparator(String... items) {
-    String itemList = "";
-    for (String item : items) {
-        if (item.length() > 0) {
-            if (TextUtils.isEmpty(itemList)) {
-                itemList = item;
-            } else {
-                itemList = itemList + "," + item; // 直接拼接半角逗号
+    private String joinWithSeparator(String... items) {   //xuameng 音频信息中间的逗号改成半角
+        String itemList = "";
+        for (String item : items) {
+            if (item.length() > 0) {
+                if (TextUtils.isEmpty(itemList)) {
+                    itemList = item;
+                } else {
+                    itemList = itemList + "," + item; // xuameng直接拼接半角逗号
+                }
             }
         }
+        return itemList;
     }
-    return itemList;
-}
+
     private static int inferPrimaryTrackType(Format format) {
         int trackType = MimeTypes.getTrackType(format.sampleMimeType);
         if (trackType != C.TRACK_TYPE_UNKNOWN) {
