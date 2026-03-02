@@ -19,19 +19,48 @@ public class GridFilterKVAdapter extends BaseQuickAdapter<String, BaseViewHolder
         this.selectedColor = selectedColor;
     }
 
-    @Override
-    protected void convert(BaseViewHolder helper, String item) {
-        helper.setText(R.id.filterValue, item);
-        
-        TextView valueTv = helper.getView(R.id.filterValue);
-        if (helper.getAdapterPosition() == selectedPosition) {         //xuameng新增方法修正多个高亮BUG
-            valueTv.getPaint().setFakeBoldText(true);
-            valueTv.setTextColor(selectedColor);
-        } else {
-            valueTv.getPaint().setFakeBoldText(false);           //xuameng新增方法修正多个高亮BUG
-            valueTv.setTextColor(defaultColor);
-        }
+@Override
+protected void convert(BaseViewHolder helper, String item) {
+    TextView valueTv = helper.getView(R.id.filterValue);
+    helper.setText(R.id.filterValue, item);
+    
+    // 初始状态设置
+    int position = helper.getAdapterPosition();
+    boolean isSelected = (position == selectedPosition);
+    
+    if (isSelected) {
+        valueTv.getPaint().setFakeBoldText(true);
+        // 默认选中但未焦点时为绿色
+        valueTv.setTextColor(selectedColor); // selectedColor 原为绿色
+    } else {
+        valueTv.getPaint().setFakeBoldText(false);
+        valueTv.setTextColor(defaultColor); // defaultColor 原为白色
     }
+    
+    // 设置焦点变化监听
+    valueTv.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        @Override
+        public void onFocusChange(View v, boolean hasFocus) {
+            TextView tv = (TextView) v;
+            if (position == selectedPosition) {
+                if (hasFocus) {
+                    // 选中且获取焦点：白色加粗
+                    tv.setTextColor(defaultColor); // defaultColor 为白色
+                    tv.getPaint().setFakeBoldText(true);
+                } else {
+                    // 选中但未获取焦点：绿色加粗
+                    tv.setTextColor(selectedColor); // selectedColor 为绿色
+                    tv.getPaint().setFakeBoldText(true);
+                }
+            } else {
+                // 未选中项：恢复默认
+                tv.getPaint().setFakeBoldText(false);
+                tv.setTextColor(defaultColor);
+            }
+        }
+    });
+}
+
     
     public void setSelectedPosition(int position) {    //xuameng新增方法修正多个高亮BUG
         // 记录上一次选中的位置
