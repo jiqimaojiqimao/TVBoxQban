@@ -1,321 +1,460 @@
-package com.github.tvbox.osc.player;
+/*
+ * Copyright (C) 2015 Bilibili
+ * Copyright (C) 2015 Zhang Rui <bbcallen@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import android.annotation.SuppressLint;
-import android.content.Context;
+package tv.danmaku.ijk.media.player.misc;
+
 import android.text.TextUtils;
-import androidx.annotation.Nullable;
 
-import androidx.media3.common.C;
-import androidx.media3.common.Format;
-import androidx.media3.common.MimeTypes;
-import androidx.media3.common.Player;
-import androidx.media3.common.TrackGroup;
-import androidx.media3.common.Tracks;
-import androidx.media3.exoplayer.source.TrackGroupArray;
-import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
-import androidx.media3.exoplayer.trackselection.MappingTrackSelector;
+import tv.danmaku.ijk.media.player.IjkMediaMeta;
 
-import xyz.doikki.videoplayer.exo.ExoMediaPlayer;
+public class IjkTrackInfo implements ITrackInfo {
+    private int mTrackType = MEDIA_TRACK_TYPE_UNKNOWN;
+    private IjkMediaMeta.IjkStreamMeta mStreamMeta;
 
-import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
-import com.github.tvbox.osc.util.StringUtils;
-
-import android.util.Pair;  //xuameng记忆选择音轨
-import java.util.Map;  //xuameng记忆选择音轨
-
-public class EXOmPlayer extends ExoMediaPlayer {
-    private String audioId = "";
-    private String subtitleId = "";
-    private static AudioTrackMemory memory;    //xuameng记忆选择音轨
-
-    public EXOmPlayer(Context context) {
-        super(context);
-        memory = AudioTrackMemory.getInstance(context);  //xuameng记忆选择音轨
+    public IjkTrackInfo(IjkMediaMeta.IjkStreamMeta streamMeta) {
+        mStreamMeta = streamMeta;
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
-    public TrackInfo getTrackInfo() {
-        TrackInfo data = new TrackInfo();
-        MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
-        if (trackInfo != null) {
-            getExoSelectedTrack();
-            for (int groupArrayIndex = 0; groupArrayIndex < trackInfo.getRendererCount(); groupArrayIndex++) {
-                TrackGroupArray groupArray = trackInfo.getTrackGroups(groupArrayIndex);
-                for (int groupIndex = 0; groupIndex < groupArray.length; groupIndex++) {
-                    TrackGroup group = groupArray.get(groupIndex);
-                    for (int formatIndex = 0; formatIndex < group.length; formatIndex++) {
-                        Format format = group.getFormat(formatIndex);
-                        if (MimeTypes.isAudio(format.sampleMimeType)) {
-                            String audioCodecs = format.sampleMimeType;
-                            String formatCodecs = format.codecs;
-                            if (TextUtils.isEmpty(audioCodecs)) {
-                                audioCodecs = "未知";
-                            }
-                            String tex5 = "audio/mpeg-L2";  //xuameng过滤音轨类型里application/字符串
-                            String textString5 = "mp2";
-                            if (audioCodecs.contains(tex5)) {  //xuameng过滤音轨类型里application/字符串
-                                audioCodecs = audioCodecs.replace(tex5, textString5);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String mp3 = "audio/mpeg";  //xuameng过滤音轨类型里application/字符串
-                            String mp3String = "mp3";
-                            if (audioCodecs.contains(mp3)) {  //xuameng过滤音轨类型里application/字符串
-                                audioCodecs = audioCodecs.replace(mp3, mp3String);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String text = "audio/";  //xuameng过滤音轨类型里application/字符串
-                            String textString = "";
-                            if (audioCodecs.contains(text)) {  //xuameng过滤音轨类型里application/字符串
-                                audioCodecs = audioCodecs.replace(text, textString);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String tex3 = "vnd.";  //xuameng过滤音轨类型里application/字符串
-                            String textString3 = "";
-                            if (audioCodecs.contains(tex3)) {  //xuameng过滤音轨类型里application/字符串
-                                audioCodecs = audioCodecs.replace(tex3, textString3);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String tex4 = "true-hd";  //xuameng过滤音轨类型里application/字符串
-                            String textString4 = "TrueHD";
-                            if (audioCodecs.contains(tex4)) {  //xuameng过滤音轨类型里application/字符串
-                                audioCodecs = audioCodecs.replace(tex4, textString4);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String dtshd = ".hd";  //xuameng过滤音轨类型里application/字符串
-                            String dtshdString = "";
-                            if (audioCodecs.contains(dtshd)) {  //xuameng过滤音轨类型里application/字符串
-                                audioCodecs = audioCodecs.replace(dtshd, dtshdString);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            if (TextUtils.isEmpty(formatCodecs)) {    //xuameng formatCodecs这是文件类型当audioCodecs返回空是用formatCodecs代替
-                                formatCodecs = "未知";
-                            }
-                            String mp4a9 = "mp4a.40.2";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString9 = "aac";
-                            if(formatCodecs.contains(mp4a9)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(mp4a9, mp4aString9);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String mp4a10 = "mp4a.40.5";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString10 = "aac";
-                            if(formatCodecs.contains(mp4a10)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(mp4a10, mp4aString10);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String mp4a3 = "mp4a.40.02";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString3 = "aac";
-                            if(formatCodecs.contains(mp4a3)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(mp4a3, mp4aString3);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String mp4a4 = "mp4a.40.05";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString4 = "aac";
-                            if(formatCodecs.contains(mp4a4)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(mp4a4, mp4aString4);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String mp4a5 = "mp4a.40.29";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString5 = "aac";
-                            if(formatCodecs.contains(mp4a5)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(mp4a5, mp4aString5);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String mp4a6 = "mp4a.66";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString6 = "aac";
-                            if(formatCodecs.contains(mp4a6)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(mp4a6, mp4aString6);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String mp4a7 = "mp4a.67";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString7 = "aac";
-                            if(formatCodecs.contains(mp4a7)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(mp4a7, mp4aString7);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String mp4a8 = "mp4a.68";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString8 = "aac";
-                            if(formatCodecs.contains(mp4a8)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(mp4a8, mp4aString8);  //xuameng过滤音轨类型里application/字符串
-                            }
-                            String mp4a = "mp4a";  //xuameng过滤formatCodecs类型里application/字符串
-                            String mp4aString = "aac";
-                            if(formatCodecs.contains(mp4a)) {  //xuameng过滤formatCodecs类型里application/字符串
-                                formatCodecs = formatCodecs.replace(mp4a, mp4aString);  //xuameng过滤音轨类型里application/字符串
-                            }
+    public void setMediaMeta(IjkMediaMeta.IjkStreamMeta streamMeta) {
+        mStreamMeta = streamMeta;
+    }
 
-                            String trackNameResult = trackNameProvider.getTrackName(format); //xuameng 音轨名称为Aud就显示未知
-                            if ("Aud".equals(trackNameResult)) {
-                                trackNameResult = "未知";
-                            }
-                            String trackName = (data.getAudio().size() + 1) + "：" + trackNameResult + "[" + (TextUtils.isEmpty(format.codecs) ? audioCodecs : formatCodecs) + "音轨]";
-                         //   String trackName = (data.getAudio().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + (TextUtils.isEmpty(format.codecs) ? audioCodecs : formatCodecs) + "音轨]";
-                            TrackInfoBean t = new TrackInfoBean();
-                            t.name = trackName;
-                            t.language = "";
-                            t.trackId = formatIndex;
-                            t.selected = !StringUtils.isEmpty(audioId) && audioId.equals(format.id);
-                            t.trackGroupId = groupIndex;
-                            t.renderId = groupArrayIndex;
-                            data.addAudio(t);
-                        } else if (MimeTypes.isText(format.sampleMimeType)) {
-                            String originalString = format.codecs;   //xuameng显示字幕类型  sampleMimeType改成codecs  media3升级后真正类型在codecs里sampleMimeType显示的是media3-cues
-                            if (TextUtils.isEmpty(originalString)) {
-                                originalString = "cea";
-                            }
-                            String stringToReplace = "application/";  //xuameng过滤字幕类型里application/字符串
-                            String replacementString = "";
-                            if (originalString.contains(stringToReplace)) {  //xuameng过滤字幕类型里application/字符串
-                                originalString = originalString.replace(stringToReplace, replacementString);  //xuameng过滤字幕类型里application/字符串
-                            }
-                            String text = "text/x-";  //xuameng过滤字幕类型里application/字符串
-                            String textString = "";
-                            if (originalString.contains(text)) {  //xuameng过滤字幕类型里application/字符串
-                                originalString = originalString.replace(text, textString);  //xuameng过滤字幕类型里application/字符串
-                            }
-                            String textvtt = "text/vtt";  //xuameng过滤字幕类型里application/字符串
-                            String textvttString = "vtt";
-                            if (originalString.contains(textvtt)) {  //xuameng过滤字幕类型里application/字符串
-                                originalString = originalString.replace(textvtt, textvttString);  //xuameng过滤字幕类型里application/字符串
-                            }
-                            String text1 = "x-";  //xuameng过滤字幕类型里application/字符串
-                            String textString1 = "";
-                            if (originalString.contains(text1)) {  //xuameng过滤字幕类型里application/字符串
-                                originalString = originalString.replace(text1, textString1);  //xuameng过滤字幕类型里application/字符串
-                            }
-                            String text2 = "quicktime-";  //xuameng过滤字幕类型里application/字符串
-                            String textString2 = "";
-                            if (originalString.contains(text2)) {  //xuameng过滤字幕类型里application/字符串
-                                originalString = originalString.replace(text2, textString2);  //xuameng过滤字幕类型里application/字符串
-                            }
-                            String text3 = "-608";  //xuameng过滤字幕类型里application/字符串
-                            String textString3 = "";
-                            if (originalString.contains(text3)) {  //xuameng过滤字幕类型里application/字符串
-                                originalString = originalString.replace(text3, textString3);  //xuameng过滤字幕类型里application/字符串
-                            }
-                            String trackName = "";  //xuameng显示字幕类型
-                            TrackInfoBean t = new TrackInfoBean();
-                            t.name = trackName;
-                            t.language = (data.getSubtitle().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + originalString + "字幕]";  //xuameng显示字幕类型
-                            t.trackId = formatIndex;
-                            t.selected = !StringUtils.isEmpty(subtitleId) && subtitleId.equals(format.id);
-                            t.trackGroupId = groupIndex;
-                            t.renderId = groupArrayIndex;
-                            data.addSubtitle(t);
-                        }
-                    }
-                }
-            }
+    @Override
+    public IMediaFormat getFormat() {
+        return new IjkMediaFormat(mStreamMeta);
+    }
+
+    @Override
+    public String getLanguage() {
+        String Language = mStreamMeta.mLanguage;   //xuameng显示字幕类型
+        if (Language == null || TextUtils.isEmpty(Language))
+            return "未知";
+        String ch = "chi";  //xuameng过滤字幕类型里application/字符串
+        String change = "中文";
+        if (Language.contains(ch)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(ch, change);  //xuameng过滤字幕类型里application/字符串
         }
-        return data;
+        String zhi = "zhi";  //xuameng过滤字幕类型里application/字符串
+        String changezhi = "中文";
+        if (Language.contains(zhi)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(zhi, changezhi);  //xuameng过滤字幕类型里application/字符串
+        }
+        String zho = "zho";  //xuameng过滤字幕类型里application/字符串
+        String changezho = "中文";
+        if (Language.contains(zho)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(zho, changezho);  //xuameng过滤字幕类型里application/字符串
+        }
+        String eng = "eng";  //xuameng过滤字幕类型里application/字符串
+        String changeeng = "英语";
+        if (Language.contains(eng)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(eng, changeeng);  //xuameng过滤字幕类型里application/字符串
+        }
+        String ara = "ara";  //xuameng过滤字幕类型里application/字符串
+        String changeara = "阿拉伯语";
+        if (Language.contains(ara)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(ara, changeara);  //xuameng过滤字幕类型里application/字符串
+        }
+        String bul = "bul";  //xuameng过滤字幕类型里application/字符串
+        String changebul = "保加利亚语";
+        if (Language.contains(bul)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(bul, changebul);  //xuameng过滤字幕类型里application/字符串
+        }
+        String cze = "cze";  //xuameng过滤字幕类型里application/字符串
+        String changecze = "捷克语";
+        if (Language.contains(cze)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(cze, changecze);  //xuameng过滤字幕类型里application/字符串
+        }
+        String dan = "dan";  //xuameng过滤字幕类型里application/字符串
+        String changedan = "丹麦语";
+        if (Language.contains(dan)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(dan, changedan);  //xuameng过滤字幕类型里application/字符串
+        }
+        String ger = "ger";  //xuameng过滤字幕类型里application/字符串
+        String changeger = "德语";
+        if (Language.contains(ger)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(ger, changeger);  //xuameng过滤字幕类型里application/字符串
+        }
+        String gre = "gre";  //xuameng过滤字幕类型里application/字符串
+        String changegre = "希腊语";
+        if (Language.contains(gre)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(gre, changegre);  //xuameng过滤字幕类型里application/字符串
+        }
+        String spa = "spa";  //xuameng过滤字幕类型里application/字符串
+        String changespa = "西班牙语";
+        if (Language.contains(spa)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(spa, changespa);  //xuameng过滤字幕类型里application/字符串
+        }
+        String est = "est";  //xuameng过滤字幕类型里application/字符串
+        String changeest = "爱沙尼亚语";
+        if (Language.contains(est)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(est, changeest);  //xuameng过滤字幕类型里application/字符串
+        }
+        String fin = "fin";  //xuameng过滤字幕类型里application/字符串
+        String changefin = "芬兰语";
+        if (Language.contains(fin)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(fin, changefin);  //xuameng过滤字幕类型里application/字符串
+        }
+        String fre = "fre";  //xuameng过滤字幕类型里application/字符串
+        String changefre = "法语";
+        if (Language.contains(fre)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(fre, changefre);  //xuameng过滤字幕类型里application/字符串
+        }
+        String fra = "fra";  //xuameng过滤字幕类型里application/字符串
+        String changefra = "法语";
+        if (Language.contains(fra)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(fra, changefra);  //xuameng过滤字幕类型里application/字符串
+        }
+        String hrv = "hrv";  //xuameng过滤字幕类型里application/字符串
+        String changehrv = "克罗地亚语";
+        if (Language.contains(hrv)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(hrv, changehrv);  //xuameng过滤字幕类型里application/字符串
+        }
+        String ell = "ell";  //xuameng过滤字幕类型里application/字符串
+        String changeell = "爱沙尼亚语";
+        if (Language.contains(ell)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(ell, changeell);  //xuameng过滤字幕类型里application/字符串
+        }
+        String deu = "deu";  //xuameng过滤字幕类型里application/字符串
+        String changedeu = "德语";
+        if (Language.contains(deu)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(deu, changedeu);  //xuameng过滤字幕类型里application/字符串
+        }
+        String nld = "nld";  //xuameng过滤字幕类型里application/字符串
+        String changenld = "荷兰语";
+        if (Language.contains(nld)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(nld, changenld);  //xuameng过滤字幕类型里application/字符串
+        }
+        String ron = "ron";  //xuameng过滤字幕类型里application/字符串
+        String changeron = "罗马尼亚语";
+        if (Language.contains(ron)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(ron, changeron);  //xuameng过滤字幕类型里application/字符串
+        }
+        String heb = "heb";  //xuameng过滤字幕类型里application/字符串
+        String changeheb = "希伯来语";
+        if (Language.contains(heb)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(heb, changeheb);  //xuameng过滤字幕类型里application/字符串
+        }
+        String hin = "hin";  //xuameng过滤字幕类型里application/字符串
+        String changehin = "印地语";
+        if (Language.contains(hin)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(hin, changehin);  //xuameng过滤字幕类型里application/字符串
+        }
+        String hun = "hun";  //xuameng过滤字幕类型里application/字符串
+        String changehun = "匈牙利语";
+        if (Language.contains(hun)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(hun, changehun);  //xuameng过滤字幕类型里application/字符串
+        }
+        String ind = "ind";  //xuameng过滤字幕类型里application/字符串
+        String changeind = "印度尼西亚语";
+        if (Language.contains(ind)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(ind, changeind);  //xuameng过滤字幕类型里application/字符串
+        }
+        String ita = "ita";  //xuameng过滤字幕类型里application/字符串
+        String changeita = "意大利语";
+        if (Language.contains(ita)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(ita, changeita);  //xuameng过滤字幕类型里application/字符串
+        }
+        String jpn = "jpn";  //xuameng过滤字幕类型里application/字符串
+        String changejpn = "日语";
+        if (Language.contains(jpn)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(jpn, changejpn);  //xuameng过滤字幕类型里application/字符串
+        }
+        String kor = "kor";  //xuameng过滤字幕类型里application/字符串
+        String changekor = "韩语";
+        if (Language.contains(kor)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(kor, changekor);  //xuameng过滤字幕类型里application/字符串
+        }
+        String lit = "lit";  //xuameng过滤字幕类型里application/字符串
+        String changelit = "立陶宛语";
+        if (Language.contains(lit)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(lit, changelit);  //xuameng过滤字幕类型里application/字符串
+        }
+        String lav = "lav";  //xuameng过滤字幕类型里application/字符串
+        String changelav = "拉脱维亚语";
+        if (Language.contains(lav)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(lav, changelav);  //xuameng过滤字幕类型里application/字符串
+        }
+        String may = "may";  //xuameng过滤字幕类型里application/字符串
+        String changemay = "马来语";
+        if (Language.contains(may)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(may, changemay);  //xuameng过滤字幕类型里application/字符串
+        }
+        String dut = "dut";  //xuameng过滤字幕类型里application/字符串
+        String changedut = "荷兰语";
+        if (Language.contains(dut)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(dut, changedut);  //xuameng过滤字幕类型里application/字符串
+        }
+        String nor = "nor";  //xuameng过滤字幕类型里application/字符串
+        String changenor = "挪威语";
+        if (Language.contains(nor)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(nor, changenor);  //xuameng过滤字幕类型里application/字符串
+        }
+        String pol = "pol";  //xuameng过滤字幕类型里application/字符串
+        String changepol = "波兰语";
+        if (Language.contains(pol)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(pol, changepol);  //xuameng过滤字幕类型里application/字符串
+        }
+        String por = "por";  //xuameng过滤字幕类型里application/字符串
+        String changepor = "葡萄牙语";
+        if (Language.contains(por)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(por, changepor);  //xuameng过滤字幕类型里application/字符串
+        }
+        String rus = "rus";  //xuameng过滤字幕类型里application/字符串
+        String changerus = "俄语";
+        if (Language.contains(rus)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(rus, changerus);  //xuameng过滤字幕类型里application/字符串
+        }
+        String slo = "slo";  //xuameng过滤字幕类型里application/字符串
+        String changeslo = "斯洛伐克语";
+        if (Language.contains(slo)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(slo, changeslo);  //xuameng过滤字幕类型里application/字符串
+        }
+        String slv = "slv";  //xuameng过滤字幕类型里application/字符串
+        String changeslv = "斯洛文尼亚语";
+        if (Language.contains(slv)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(slv, changeslv);  //xuameng过滤字幕类型里application/字符串
+        }
+        String swe = "swe";  //xuameng过滤字幕类型里application/字符串
+        String changeswe = "瑞典语";
+        if (Language.contains(swe)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(swe, changeswe);  //xuameng过滤字幕类型里application/字符串
+        }
+        String tam = "tam";  //xuameng过滤字幕类型里application/字符串
+        String changetam = "泰米尔语";
+        if (Language.contains(tam)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(tam, changetam);  //xuameng过滤字幕类型里application/字符串
+        }
+        String tel = "tel";  //xuameng过滤字幕类型里application/字符串
+        String changetel = "泰卢固语";
+        if (Language.contains(tel)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(tel, changetel);  //xuameng过滤字幕类型里application/字符串
+        }
+        String tha = "tha";  //xuameng过滤字幕类型里application/字符串
+        String changetha = "泰语";
+        if (Language.contains(tha)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(tha, changetha);  //xuameng过滤字幕类型里application/字符串
+        }
+        String ukr = "ukr";  //xuameng过滤字幕类型里application/字符串
+        String changeukr = "乌克兰语";
+        if (Language.contains(ukr)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(ukr, changeukr);  //xuameng过滤字幕类型里application/字符串
+        }
+        String vie = "vie";  //xuameng过滤字幕类型里application/字符串
+        String changevie = "越南语";
+        if (Language.contains(vie)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(vie, changevie);  //xuameng过滤字幕类型里application/字符串
+        }
+        String tur = "tur";  //xuameng过滤字幕类型里application/字符串
+        String changetur = "土耳其语";
+        if (Language.contains(tur)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(tur, changetur);  //xuameng过滤字幕类型里application/字符串
+        }
+        String cat = "cat";  //xuameng过滤字幕类型里application/字符串
+        String changecat = "泰加罗尼亚语";
+        if (Language.contains(cat)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(cat, changecat);  //xuameng过滤字幕类型里application/字符串
+        }
+        String baq = "baq";  //xuameng过滤字幕类型里application/字符串
+        String changebaq = "巴基斯坦语";
+        if (Language.contains(baq)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(baq, changebaq);  //xuameng过滤字幕类型里application/字符串
+        }
+        String fil = "fil";  //xuameng过滤字幕类型里application/字符串
+        String changefil = "菲律宾语";
+        if (Language.contains(fil)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(fil, changefil);  //xuameng过滤字幕类型里application/字符串
+        }
+        String glg = "glg";  //xuameng过滤字幕类型里application/字符串
+        String changeglg = "加利西亚语";
+        if (Language.contains(glg)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(glg, changeglg);  //xuameng过滤字幕类型里application/字符串
+        }
+        String kan = "kan";  //xuameng过滤字幕类型里application/字符串
+        String changekan = "卡纳达语";
+        if (Language.contains(kan)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(kan, changekan);  //xuameng过滤字幕类型里application/字符串
+        }
+        String mal = "mal";  //xuameng过滤字幕类型里application/字符串
+        String changemal = "马拉雅拉姆语";
+        if (Language.contains(mal)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(mal, changemal);  //xuameng过滤字幕类型里application/字符串
+        }
+        String nob = "nob";  //xuameng过滤字幕类型里application/字符串
+        String changenob = "书面挪威语";
+        if (Language.contains(nob)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(nob, changenob);  //xuameng过滤字幕类型里application/字符串
+        }
+        String rum = "rum";  //xuameng过滤字幕类型里application/字符串
+        String changerum = "罗马尼亚语";
+        if (Language.contains(rum)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(rum, changerum);  //xuameng过滤字幕类型里application/字符串
+        }
+        String aka = "aka";  //xuameng过滤字幕类型里application/字符串
+        String changeaka = "阿坎语";
+        if (Language.contains(aka)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(aka, changeaka);  //xuameng过滤字幕类型里application/字符串
+        }
+        String aym = "aym";  //xuameng过滤字幕类型里application/字符串
+        String changeaym = "艾马拉语";
+        if (Language.contains(aym)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(aym, changeaym);  //xuameng过滤字幕类型里application/字符串
+        }
+        String aze = "aze";  //xuameng过滤字幕类型里application/字符串
+        String changeaze = "阿塞拜疆语";
+        if (Language.contains(aze)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(aze, changeaze);  //xuameng过滤字幕类型里application/字符串
+        }
+        String mon = "mon";  //xuameng过滤字幕类型里application/字符串
+        String changemon = "蒙古语";
+        if (Language.contains(mon)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(mon, changemon);  //xuameng过滤字幕类型里application/字符串
+        }
+        String wuu = "wuu";  //xuameng过滤字幕类型里application/字符串
+        String changewuu = "吴语";
+        if (Language.contains(wuu)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(wuu, changewuu);  //xuameng过滤字幕类型里application/字符串
+        }
+        String ces = "ces";  //xuameng过滤字幕类型里application/字符串
+        String changeces = "捷克语";
+        if (Language.contains(ces)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(ces, changeces);  //xuameng过滤字幕类型里application/字符串
+        }
+        String mul = "mul";  //xuameng过滤字幕类型里application/字符串
+        String changemul = "多语言";
+        if (Language.contains(mul)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(mul, changemul);  //xuameng过滤字幕类型里application/字符串
+        }
+        String und = "und";  //xuameng过滤字幕类型里application/字符串
+        String changeund = "未知";
+        if (Language.contains(und)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(und, changeund);  //xuameng过滤字幕类型里application/字符串
+        }
+        String Aud = "Aud";  //xuameng过滤字幕类型里application/字符串
+        String changeAud = "未知";
+        if (Language.contains(Aud)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(Aud, changeAud);  //xuameng过滤字幕类型里application/字符串
+        }
+        String aud = "aud";  //xuameng过滤字幕类型里application/字符串
+        String changeaud = "未知";
+        if (Language.contains(aud)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(aud, changeaud);  //xuameng过滤字幕类型里application/字符串
+        }
+        return Language;
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
-    private void getExoSelectedTrack() {
-        audioId = "";
-        subtitleId = "";
-        for (Tracks.Group group : mMediaPlayer.getCurrentTracks().getGroups()) {
-            if (!group.isSelected()) continue;
-            for (int trackIndex = 0; trackIndex < group.length; trackIndex++) {
-                if (!group.isTrackSelected(trackIndex)) continue;
-                Format format = group.getTrackFormat(trackIndex);
-                if (MimeTypes.isAudio(format.sampleMimeType)) {
-                    audioId = format.id;
-                }
-                if (MimeTypes.isText(format.sampleMimeType)) {
-                    subtitleId = format.id;
-                }
-            }
+    public String getCodecName() {
+        if (!TextUtils.isEmpty(mStreamMeta.mCodecLongName)) {
+            return mStreamMeta.mCodecLongName;
+        } else if (!TextUtils.isEmpty(mStreamMeta.mCodecName)) {
+            return mStreamMeta.mCodecName;
+        } else {
+            return "null";
         }
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
-    public void selectExoTrack(@Nullable TrackInfoBean videoTrackBean) {
-        MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
-        if (trackInfo != null) {
-            if (videoTrackBean == null) {
-                for (int renderIndex = 0; renderIndex < trackInfo.getRendererCount(); renderIndex++) {
-                    if (trackInfo.getRendererType(renderIndex) == C.TRACK_TYPE_TEXT) {
-                        DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().getParameters().buildUpon();
-                        parametersBuilder.setRendererDisabled(renderIndex, true);
-                        getTrackSelector().setParameters(parametersBuilder);
-                        break;
-                    }
-                }
-            } else {
-                TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(videoTrackBean.renderId);
-                @SuppressLint("UnsafeOptInUsageError") DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(videoTrackBean.trackGroupId, videoTrackBean.trackId);
-                DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().buildUponParameters();
-                parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
-                parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
-                getTrackSelector().setParameters(parametersBuilder);
-            }
+    public String getMCodecName() {
+        if (getCodecName() == null || TextUtils.isEmpty(getCodecName()))
+            return "未知";
+        String zimuCodecs = mStreamMeta.mCodecName;   //xuameng显示字幕类型
+        String text = "hdmv_pgs_subtitle";  //xuameng过滤字幕类型里application/字符串
+        String textString = "pgs";
+        if (zimuCodecs.contains(text)) {  //xuameng过滤字幕类型里application/字符串
+            zimuCodecs = zimuCodecs.replace(text, textString);  //xuameng过滤字幕类型里application/字符串
         }
-    }
-
-    @SuppressLint("UnsafeOptInUsageError")
-    public void selectExoTrackAudio(@Nullable TrackInfoBean videoTrackBean, String playKey) {
-        MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
-        if (trackInfo != null) {
-            if (videoTrackBean == null) {
-                for (int renderIndex = 0; renderIndex < trackInfo.getRendererCount(); renderIndex++) {
-                    if (trackInfo.getRendererType(renderIndex) == C.TRACK_TYPE_TEXT) {
-                        DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().getParameters().buildUpon();
-                        parametersBuilder.setRendererDisabled(renderIndex, true);
-                        getTrackSelector().setParameters(parametersBuilder);
-                        break;
-                    }
-                }
-            } else {
-                TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(videoTrackBean.renderId);
-                @SuppressLint("UnsafeOptInUsageError") DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(videoTrackBean.trackGroupId, videoTrackBean.trackId);
-                DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().buildUponParameters();
-                parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
-                parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
-                getTrackSelector().setParameters(parametersBuilder);
-                //xuameng记忆选择音轨
-                if (!playKey.isEmpty()) {
-                    memory.save(playKey, videoTrackBean.trackGroupId, videoTrackBean.trackId);
-                }
-            }
+        String text1 = "mov_text";  //xuameng过滤字幕类型里application/字符串
+        String textString1 = "tx3g";
+        if (zimuCodecs.contains(text1)) {  //xuameng过滤字幕类型里application/字符串
+            zimuCodecs = zimuCodecs.replace(text1, textString1);  //xuameng过滤字幕类型里application/字符串
         }
-    }
-
-    //xuameng记忆选择音轨
-    public void loadDefaultTrack(String playKey) {
-        Pair<Integer, Integer> pair = memory.exoLoad(playKey);
-        if (pair == null) return;
-
-        MappingTrackSelector.MappedTrackInfo mappedInfo = getTrackSelector().getCurrentMappedTrackInfo();
-        if (mappedInfo == null) return;
-
-        int audioRendererIndex = findAudioRendererIndex(mappedInfo);
-        if (audioRendererIndex == C.INDEX_UNSET) return;
-
-        TrackGroupArray audioGroups = mappedInfo.getTrackGroups(audioRendererIndex);
-        int groupIndex = pair.first;
-        int trackIndex = pair.second;
-        if (!isTrackIndexValid(audioGroups, groupIndex, trackIndex)) return;
-
-        DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(groupIndex, trackIndex);
-        DefaultTrackSelector.Parameters.Builder builder = getTrackSelector().buildUponParameters();
-        builder.clearSelectionOverrides(audioRendererIndex);
-        builder.setSelectionOverride(audioRendererIndex, audioGroups, override);
-        getTrackSelector().setParameters(builder.build());
-    }
-
-    /**
-     * 查找音频渲染器索引    //xuameng记忆选择音轨
-     */
-    private int findAudioRendererIndex(MappingTrackSelector.MappedTrackInfo mappedInfo) {
-        for (int i = 0; i < mappedInfo.getRendererCount(); i++) {
-            if (mappedInfo.getRendererType(i) == C.TRACK_TYPE_AUDIO) {
-                return i;
-            }
+        String text2 = "dvd_subtitle";  //xuameng过滤字幕类型里application/字符串
+        String textString2 = "vobsub";
+        if (zimuCodecs.contains(text2)) {  //xuameng过滤字幕类型里application/字符串
+            zimuCodecs = zimuCodecs.replace(text2, textString2);  //xuameng过滤字幕类型里application/字符串
         }
-        return C.INDEX_UNSET;
-    }
-
-    /**
-     * 验证音轨索引是否有效   //xuameng记忆选择音轨
-     */
-    private boolean isTrackIndexValid(TrackGroupArray groups, int groupIndex, int trackIndex) {
-        if (groupIndex < 0 || groupIndex >= groups.length) {
-            return false;
+        String text3 = "truehd";  //xuameng过滤字幕类型里application/字符串
+        String textString3 = "TrueHD";
+        if (zimuCodecs.contains(text3)) {  //xuameng过滤字幕类型里application/字符串
+            zimuCodecs = zimuCodecs.replace(text3, textString3);  //xuameng过滤字幕类型里application/字符串
         }
-
-        TrackGroup group = groups.get(groupIndex);
-        return trackIndex >= 0 && trackIndex < group.length;
+        String text4 = "-608";  //xuameng过滤字幕类型里application/字符串
+        String textString4 = "";
+        if (zimuCodecs.contains(text4)) {  //xuameng过滤字幕类型里application/字符串
+            zimuCodecs = zimuCodecs.replace(text4, textString4);  //xuameng过滤字幕类型里application/字符串
+        }
+        String text5 = "_s24le";  //xuameng过滤字幕类型里application/字符串
+        String textString5 = "";
+        if (zimuCodecs.contains(text5)) {  //xuameng过滤字幕类型里application/字符串
+            zimuCodecs = zimuCodecs.replace(text5, textString5);  //xuameng过滤字幕类型里application/字符串
+        }
+        return zimuCodecs;
     }
 
-    public void setOnTimedTextListener(Player.Listener listener) {
-        mMediaPlayer.addListener(listener);
+    @Override
+    public int getTrackType() {
+        return mTrackType;
     }
 
+    public void setTrackType(int trackType) {
+        mTrackType = trackType;
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + '{' + getInfoInline() + "}";
+    }
+
+    @Override
+    public String getInfoInline() {
+        StringBuilder out = new StringBuilder(128);
+        switch (mTrackType) {
+            case MEDIA_TRACK_TYPE_VIDEO:
+                out.append("VIDEO");
+                out.append(", ");
+                out.append(mStreamMeta.getCodecShortNameInline());
+                out.append(", ");
+                out.append(mStreamMeta.getBitrateInline());
+                out.append(", ");
+                out.append(mStreamMeta.getResolutionInline());
+                break;
+            case MEDIA_TRACK_TYPE_AUDIO:
+                out.append(getLanguage());  //xuameng显示语言
+                out.append(", ");
+                out.append(mStreamMeta.getBitrateInline());   //xuameng音频比特率
+                out.append(", ");
+                out.append(mStreamMeta.getSampleRateInline());  //XUAMENG显示K赫兹
+                out.append("[");
+                out.append(getMCodecName()); //xuameng编码
+                out.append("音轨]");
+                break;
+            case MEDIA_TRACK_TYPE_TIMEDTEXT:
+                out.append(getLanguage());
+                //              out.append(mStreamMeta.mLanguage);  //xuameng显示语言
+                //              out.append(", ");        //xuameng 多了个逗号
+                out.append("[");
+                out.append(getMCodecName()); //xuameng编码
+                out.append("字幕]");
+                break;
+            case MEDIA_TRACK_TYPE_SUBTITLE:
+                out.append("SUBTITLE");
+                break;
+            default:
+                out.append("UNKNOWN");
+                break;
+        }
+        return out.toString();
+    }
 }
