@@ -19,6 +19,6 @@
     <string name="exo_track_role_commentary">旁白</string>
     <string name="exo_track_role_closed_captions">字幕</string>
     <string name="exo_track_bitrate">%1$.2f Mbps</string>
-    <string name="exo_item_list">%1$s,%2$s</string>
+    <string name="exo_item_list">%1$s，%2$s</string>
 
 </resources>
