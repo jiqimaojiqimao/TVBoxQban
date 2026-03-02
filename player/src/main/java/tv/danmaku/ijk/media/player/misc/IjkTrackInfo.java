@@ -348,6 +348,11 @@ public class IjkTrackInfo implements ITrackInfo {
         if (Language.contains(Aud)) {  //xuameng过滤字幕类型里application/字符串
             Language = Language.replace(Aud, changeAud);  //xuameng过滤字幕类型里application/字符串
         }
+        String aud = "aud";  //xuameng过滤字幕类型里application/字符串
+        String changeaud = "未知";
+        if (Language.contains(aud)) {  //xuameng过滤字幕类型里application/字符串
+            Language = Language.replace(aud, changeaud);  //xuameng过滤字幕类型里application/字符串
+        }
         return Language;
     }
 
@@ -433,7 +438,7 @@ public class IjkTrackInfo implements ITrackInfo {
                 out.append(mStreamMeta.getSampleRateInline());  //XUAMENG显示K赫兹
                 out.append("[");
                 out.append(getMCodecName()); //xuameng编码
-                out.append("]");
+                out.append("音轨]");
                 break;
             case MEDIA_TRACK_TYPE_TIMEDTEXT:
                 out.append(getLanguage());
