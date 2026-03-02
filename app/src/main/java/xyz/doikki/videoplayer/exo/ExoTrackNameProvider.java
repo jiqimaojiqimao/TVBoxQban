@@ -75,12 +75,12 @@ public class ExoTrackNameProvider {
         }
     }
 
-private String buildLanguageOrLabelStringAudio(Format format) {   //xuameng 音轨显示简单语言
-    String languageAndRole =
+    private String buildLanguageOrLabelStringAudio(Format format) {   //xuameng 音轨显示简单语言
+        String languageAndRole =
             joinWithSeparator(buildLanguageString(format), buildRoleString(format));
-    String result = TextUtils.isEmpty(languageAndRole) ? buildLabelString(format) : languageAndRole;
-    return "Aud".equals(result) ? "未知" : result;
-}
+        String result = TextUtils.isEmpty(languageAndRole) ? buildLabelString(format) : languageAndRole;
+        return "Aud".equals(result) ? "未知" : result;   //xuameng 如果语言为and返回未知
+    }
 
     private static final Pattern CHINESE_PATTERN = Pattern.compile("[\\u4e00-\\u9fa5]");    //xuameng 判断字幕中是否含有中文
 
