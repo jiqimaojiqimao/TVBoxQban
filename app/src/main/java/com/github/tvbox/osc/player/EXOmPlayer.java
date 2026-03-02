@@ -130,7 +130,12 @@ public class EXOmPlayer extends ExoMediaPlayer {
                                 formatCodecs = formatCodecs.replace(mp4a, mp4aString);  //xuameng过滤音轨类型里application/字符串
                             }
 
-                            String trackName = (data.getAudio().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + (TextUtils.isEmpty(format.codecs) ? audioCodecs : formatCodecs) + "音轨]";
+                            String trackNameResult = trackNameProvider.getTrackName(format); //xuameng 音轨名称为Aud就显示未知
+                            if ("Aud".equals(trackNameResult)) {
+                                trackNameResult = "未知";
+                            }
+                            String trackName = (data.getAudio().size() + 1) + "：" + trackNameResult + "[" + (TextUtils.isEmpty(format.codecs) ? audioCodecs : formatCodecs) + "音轨]";
+                         //   String trackName = (data.getAudio().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + (TextUtils.isEmpty(format.codecs) ? audioCodecs : formatCodecs) + "音轨]";
                             TrackInfoBean t = new TrackInfoBean();
                             t.name = trackName;
                             t.language = "";
