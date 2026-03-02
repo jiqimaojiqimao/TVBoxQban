@@ -4015,6 +4015,14 @@ public class LivePlayActivity extends BaseActivity {
             // 如果当前选中的是收藏组，需要处理焦点逻辑
             int selectedGroupIndex = liveChannelGroupAdapter.getSelectedGroupIndex();
             if (selectedGroupIndex == favoriteGroupIndex && liveChannelItemAdapter != null) {
+
+                //xuameng判断收藏组如果只有占位符 暂无收藏 就清空右侧EPG列表
+                if (isFavoriteGroupOnlyHasPlaceholder(favoriteGroupIndex)){
+	                // 清空右侧EPG列表
+                    if (epgListAdapter != null) {
+                        epgListAdapter.setNewData(new ArrayList<Epginfo>());
+                    }
+                }
             
                 // 保存当前播放频道信息（如果当前就在收藏组中播放）
                 String currentChannelName = null;
@@ -4079,6 +4087,20 @@ public class LivePlayActivity extends BaseActivity {
             }
         }
     }
+
+    private boolean isFavoriteGroupOnlyHasPlaceholder(int favoriteGroupIndex) {     //xuameng判断收藏组是否只有 占位符 暂无收藏了
+        ArrayList<LiveChannelItem> channels = getLiveChannels(favoriteGroupIndex);
+        if (channels == null || channels.isEmpty()) {
+            return true; // 视为无有效频道
+        }
+        for (LiveChannelItem channel : channels) {
+            if (channel.getChannelIndex() != -1) {
+                return false; // 发现有效频道
+            }
+        }
+        return true; // 所有频道都是占位符 (channelIndex == -1)
+    }
+
 
     /**xuameng
      * 切换频道的收藏状态
