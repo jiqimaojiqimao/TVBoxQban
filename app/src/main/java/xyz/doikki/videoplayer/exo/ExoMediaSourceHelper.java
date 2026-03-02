@@ -136,7 +136,7 @@ public final class ExoMediaSourceHelper {
 
     private int inferContentType(String fileName) {
         fileName = fileName.toLowerCase();
-        if (fileName.contains(".mpd")) {
+        if (fileName.contains(".mpd") || fileName.contains("type=mpd")) {  //xuameng   type=mpd有这样写的
             return C.TYPE_DASH;
         } else if (fileName.contains(".m3u8")) {
             return C.TYPE_HLS;
