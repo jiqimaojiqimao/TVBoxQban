@@ -808,8 +808,13 @@ public class LivePlayActivity extends BaseActivity {
         if(!isCurrentLiveChannelValidXu()) { //xuameng 未选择频道空指针问题
             return;
         }
-        if(isBack) return;
         if(channel_Name.getChannelName() != null) {
+            ((TextView) findViewById(R.id.tv_channel_bar_name)).setText(channel_Name.getChannelName());
+            ((TextView) findViewById(R.id.tv_channel_bottom_number)).setText("" + channel_Name.getChannelNum());
+            ((TextView) findViewById(R.id.tv_current_program_time)).setText("暂无当前节目单，聚汇直播欢迎您的观看！");
+            ((TextView) findViewById(R.id.tv_current_program_name)).setText("");
+            ((TextView) findViewById(R.id.tv_next_program_time)).setText("许大师开发制作，请勿商用以及播放违法内容！");
+            ((TextView) findViewById(R.id.tv_next_program_name)).setText("");
             String savedEpgKey = channel_Name.getChannelName() + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
                 String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
@@ -843,6 +848,13 @@ public class LivePlayActivity extends BaseActivity {
                 epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
                 epgListAdapter.setNewData(arrayList);
             }
+            if(channel_Name == null || channel_Name.getSourceNum() <= 1) {
+                ((TextView) findViewById(R.id.tv_source)).setText("[线路源1/1]");
+            } else {
+                ((TextView) findViewById(R.id.tv_source)).setText("[线路源" + (channel_Name.getSourceIndex() + 1) + "/" + channel_Name.getSourceNum() + "]");
+            }
+            tv_right_top_channel_name.setText(channel_Name.getChannelName());
+            tv_right_top_epg_name.setText(channel_Name.getChannelName());
         }
     }
     private void updateChannelIcon(String channelName, String logoUrl) {
