@@ -1740,7 +1740,6 @@ public class LivePlayActivity extends BaseActivity {
             public void onItemClick(TvRecyclerView parent, View itemView, int position) {
                 int SelectedChannelGroupIndex = liveChannelGroupAdapter.getSelectedGroupIndex();
                 int SelectedLiveChannelIndex = liveChannelItemAdapter.getSelectedChannelIndex();
-                LiveChannelItem SelectedLiveChannelItem = getLiveChannels(SelectedChannelGroupIndex).get(SelectedLiveChannelIndex);  //xuameng epg BUG
                 // xuameng添加空列表检查
                 ArrayList<LiveChannelItem> channels = getLiveChannels(SelectedChannelGroupIndex);
                 if(channels == null || channels.isEmpty()) {
@@ -1762,16 +1761,20 @@ public class LivePlayActivity extends BaseActivity {
                 String shiyiStartdate = targetDate + selectedData.originStart.replace(":", "") + "00";
                 String shiyiEnddate = targetDate + selectedData.originEnd.replace(":", "") + "00";
                 Date now = new Date();
-                if(new Date().compareTo(selectedData.startdateTime) < 0) {
+
+                LiveChannelItem SelectedLiveChannelItem = getLiveChannels(SelectedChannelGroupIndex).get(SelectedLiveChannelIndex);  //xuameng epg BUG
+                String shiyiUrl = SelectedLiveChannelItem.getUrl();  //xuameng 解决EPG BUG
+
+                if(now.compareTo(selectedData.startdateTime) < 0) {
                     return;
                 }
                 //                epgListAdapter.setSelectedEpgIndex(position);   //xuameng取消电视手机点击无法回看的EPG节目源变色
                 if(now.compareTo(selectedData.startdateTime) >= 0 && now.compareTo(selectedData.enddateTime) <= 0) {
                     if(mVideoView == null) return;
 
-                    currentChannelGroupIndex = liveChannelGroupAdapter.getSelectedGroupIndex();
-                    currentLiveChannelIndex = liveChannelItemAdapter.getSelectedChannelIndex();
-                    currentLiveChannelItem = getLiveChannels(currentChannelGroupIndex).get(currentLiveChannelIndex);
+                    currentChannelGroupIndex = SelectedChannelGroupIndex;
+                    currentLiveChannelIndex = SelectedLiveChannelIndex;
+                    currentLiveChannelItem = SelectedLiveChannelItem;
                     Hawk.put(HawkConfig.LIVE_CHANNEL, currentLiveChannelItem.getChannelName());
                     HawkUtils.setLastLiveChannelGroup(liveChannelGroupList.get(currentChannelGroupIndex).getGroupName()); //xuameng记忆频道组
                     livePlayerManager.getLiveChannelPlayer(mVideoView, currentLiveChannelItem.getChannelName());
@@ -1785,14 +1788,12 @@ public class LivePlayActivity extends BaseActivity {
                     }
                     showBottomEpg(); //xuameng显示EPG和上面菜单 
                     return;
-                }
-                String shiyiUrl = SelectedLiveChannelItem.getUrl();  //xuameng 解决EPG BUG
-                if(now.compareTo(selectedData.startdateTime) < 0) {} else if(shiyiUrl.contains("PLTV/") || shiyiUrl.contains("TVOD/")) {
+                }else if(shiyiUrl.contains("PLTV/") || shiyiUrl.contains("TVOD/")) {
                     if(mVideoView == null) return;
 
-                    currentChannelGroupIndex = liveChannelGroupAdapter.getSelectedGroupIndex();
-                    currentLiveChannelIndex = liveChannelItemAdapter.getSelectedChannelIndex();
-                    currentLiveChannelItem = getLiveChannels(currentChannelGroupIndex).get(currentLiveChannelIndex);
+                    currentChannelGroupIndex = SelectedChannelGroupIndex;
+                    currentLiveChannelIndex = SelectedLiveChannelIndex;
+                    currentLiveChannelItem = SelectedLiveChannelItem;
                     Hawk.put(HawkConfig.LIVE_CHANNEL, currentLiveChannelItem.getChannelName());
                     HawkUtils.setLastLiveChannelGroup(liveChannelGroupList.get(currentChannelGroupIndex).getGroupName()); //xuameng记忆频道组
                     livePlayerManager.getLiveChannelPlayer(mVideoView, currentLiveChannelItem.getChannelName());
@@ -1835,7 +1836,6 @@ public class LivePlayActivity extends BaseActivity {
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                 int SelectedChannelGroupIndex = liveChannelGroupAdapter.getSelectedGroupIndex();
                 int SelectedLiveChannelIndex = liveChannelItemAdapter.getSelectedChannelIndex();
-                LiveChannelItem SelectedLiveChannelItem = getLiveChannels(SelectedChannelGroupIndex).get(SelectedLiveChannelIndex);  //xuameng epg BUG
                 // xuameng添加空列表检查
                 ArrayList<LiveChannelItem> channels = getLiveChannels(SelectedChannelGroupIndex);
                 if(channels == null || channels.isEmpty()) {
@@ -1857,16 +1857,20 @@ public class LivePlayActivity extends BaseActivity {
                 String shiyiStartdate = targetDate + selectedData.originStart.replace(":", "") + "00";
                 String shiyiEnddate = targetDate + selectedData.originEnd.replace(":", "") + "00";
                 Date now = new Date();
-                if(new Date().compareTo(selectedData.startdateTime) < 0) {
+
+                LiveChannelItem SelectedLiveChannelItem = getLiveChannels(SelectedChannelGroupIndex).get(SelectedLiveChannelIndex);  //xuameng epg BUG
+                String shiyiUrl = SelectedLiveChannelItem.getUrl();   //xuameng 解决EPG BUG
+
+                if(now.compareTo(selectedData.startdateTime) < 0) {
                     return;
                 }
                 //                epgListAdapter.setSelectedEpgIndex(position);   //xuameng取消电视手机点击无法回看的EPG节目源变色
                 if(now.compareTo(selectedData.startdateTime) >= 0 && now.compareTo(selectedData.enddateTime) <= 0) {
                     if(mVideoView == null) return;
 
-                    currentChannelGroupIndex = liveChannelGroupAdapter.getSelectedGroupIndex();
-                    currentLiveChannelIndex = liveChannelItemAdapter.getSelectedChannelIndex();
-                    currentLiveChannelItem = getLiveChannels(currentChannelGroupIndex).get(currentLiveChannelIndex);
+                    currentChannelGroupIndex = SelectedChannelGroupIndex;
+                    currentLiveChannelIndex = SelectedLiveChannelIndex;
+                    currentLiveChannelItem = SelectedLiveChannelItem;
                     Hawk.put(HawkConfig.LIVE_CHANNEL, currentLiveChannelItem.getChannelName());
                     HawkUtils.setLastLiveChannelGroup(liveChannelGroupList.get(currentChannelGroupIndex).getGroupName()); //xuameng记忆频道组
                     livePlayerManager.getLiveChannelPlayer(mVideoView, currentLiveChannelItem.getChannelName());
@@ -1881,15 +1885,12 @@ public class LivePlayActivity extends BaseActivity {
                     //   epgListAdapter.setShiyiSelection(-1, false, timeFormat.format(date));
                     showBottomEpg(); //xuameng显示EPG和上面菜单 				
                     return;
-                }
-
-                String shiyiUrl = SelectedLiveChannelItem.getUrl();   //xuameng 解决EPG BUG
-                if(now.compareTo(selectedData.startdateTime) < 0) {} else if(shiyiUrl.contains("PLTV/") || shiyiUrl.contains("TVOD/")) {
+                }else if(shiyiUrl.contains("PLTV/") || shiyiUrl.contains("TVOD/")) {
                     if(mVideoView == null) return;
 
-                    currentChannelGroupIndex = liveChannelGroupAdapter.getSelectedGroupIndex();
-                    currentLiveChannelIndex = liveChannelItemAdapter.getSelectedChannelIndex();
-                    currentLiveChannelItem = getLiveChannels(currentChannelGroupIndex).get(currentLiveChannelIndex);
+                    currentChannelGroupIndex = SelectedChannelGroupIndex;
+                    currentLiveChannelIndex = SelectedLiveChannelIndex;
+                    currentLiveChannelItem = SelectedLiveChannelItem;
                     Hawk.put(HawkConfig.LIVE_CHANNEL, currentLiveChannelItem.getChannelName());
                     HawkUtils.setLastLiveChannelGroup(liveChannelGroupList.get(currentChannelGroupIndex).getGroupName()); //xuameng记忆频道组
                     livePlayerManager.getLiveChannelPlayer(mVideoView, currentLiveChannelItem.getChannelName());
