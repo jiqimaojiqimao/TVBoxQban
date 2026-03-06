@@ -400,6 +400,11 @@ public class IjkTrackInfo implements ITrackInfo {
         if (zimuCodecs.contains(text5)) {  //xuameng过滤字幕类型里application/字符串
             zimuCodecs = zimuCodecs.replace(text5, textString5);  //xuameng过滤字幕类型里application/字符串
         }
+        String wmav2 = "wmav2";  //xuameng过滤字幕类型里application/字符串
+        String wmav2String = "wma";
+        if (zimuCodecs.contains(wmav2)) {  //xuameng过滤字幕类型里application/字符串
+            zimuCodecs = zimuCodecs.replace(wmav2, wmav2String);  //xuameng过滤字幕类型里application/字符串
+        }
         return zimuCodecs;
     }
 
