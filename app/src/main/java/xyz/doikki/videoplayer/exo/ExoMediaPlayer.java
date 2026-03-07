@@ -24,9 +24,6 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.ui.PlayerView;
-import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON;
-import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;
-import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
 import androidx.media3.ui.SubtitleView;   //xuameng用于显示字幕
 import androidx.media3.common.text.Cue;   //xuameng用于显示字幕
 import androidx.media3.ui.CaptionStyleCompat;
@@ -86,13 +83,13 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (exoSelect > 0) {
             // 选择器优先
             rendererMode = (exoSelect == 1) 
-                ? EXTENSION_RENDERER_MODE_OFF    // 硬解
-                : EXTENSION_RENDERER_MODE_PREFER; // 软解
+                ? NextRenderersFactory.EXTENSION_RENDERER_MODE_OFF    // 硬解
+                : NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
         } else {
             // 使用exoDecode配置
             rendererMode = exoDecode 
-                ? EXTENSION_RENDERER_MODE_PREFER // 软解
-                : EXTENSION_RENDERER_MODE_OFF;   // 硬解
+                ? NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
+                : NextRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
         mRenderersFactory = new NextRenderersFactory(mAppContext)
             .setEnableDecoderFallback(true)   //xuameng回退机制
