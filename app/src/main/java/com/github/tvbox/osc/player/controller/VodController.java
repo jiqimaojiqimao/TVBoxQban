@@ -80,7 +80,7 @@ import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
 import android.media.AudioManager;  //xuameng音乐播放动画
 
-import androidx.media3.ui.SubtitleView;   // 用于显示ExoPlayer内置字幕 
+import androidx.media3.ui.SubtitleView; // 用于显示ExoPlayer内置字幕
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -128,7 +128,6 @@ public class VodController extends BaseController {
                                     @Override
                                     public void onAnimationStart(Animator animation) {
                                         super.onAnimationStart(animation);
-                                        MxuamengView.setVisibility(VISIBLE); // xuameng动画开始防点击
                                         isAnimation = true;
                                     }
                 
@@ -138,7 +137,6 @@ public class VodController extends BaseController {
                                         mBottomRoot.setVisibility(GONE); // xuameng动画结束后隐藏下菜单
                                         mTopRoot1.setVisibility(GONE); // xuameng动画结束后隐藏上菜单
                                         mTopRoot2.setVisibility(GONE); // xuameng动画结束后隐藏上菜单
-                                        MxuamengView.setVisibility(GONE); // xuameng动画结束可点击
                                         isAnimation = false;
                                     }
                                 });
@@ -160,7 +158,7 @@ public class VodController extends BaseController {
                                 .setListener(null);
 
                         // xuameng返回按钮隐藏
-                        backBtn.setVisibility(INVISIBLE);
+                        backBtn.setVisibility(GONE);
                         break;
                     }
                     case 1002: { // 显示底部菜单
@@ -177,14 +175,12 @@ public class VodController extends BaseController {
                                     @Override
                                     public void onAnimationStart(Animator animation) {
                                         super.onAnimationStart(animation);
-                                        MxuamengView.setVisibility(VISIBLE);
                                         isDisplay = true;
                                     }
                 
                                     @Override
                                     public void onAnimationEnd(Animator animation) {
                                         super.onAnimationEnd(animation);
-                                        MxuamengView.setVisibility(GONE);
                                         isDisplay = false;
                                     }
                                 });
@@ -212,7 +208,7 @@ public class VodController extends BaseController {
     
                         // xuameng其他设置
                         mxuPlay.requestFocus();   //xuameng底部菜单默认焦点为播放
-                        backBtn.setVisibility(ScreenUtils.isTv(context) ? INVISIBLE : VISIBLE);   //xuameng返回按钮
+                        backBtn.setVisibility(ScreenUtils.isTv(context) ? GONE : VISIBLE);   //xuameng返回按钮
                         showLockView();    //xuameng屏幕锁
                         mPlayPauseTimexu.setVisibility(GONE);  //xuameng隐藏上面时间
                         mPlayTitle.setVisibility(GONE);   //xuameng隐藏上面视频名称
@@ -233,7 +229,6 @@ public class VodController extends BaseController {
                                     @Override
                                     public void onAnimationStart(Animator animation) {
                                         super.onAnimationStart(animation);
-                                        MxuamengView.setVisibility(VISIBLE);    //xuameng动画开始防点击
                                         isAnimation = true;
                                     }
                                     @Override
@@ -242,7 +237,6 @@ public class VodController extends BaseController {
                                         mBottomRoot.setVisibility(GONE);   //动画结束后隐藏下菜单
                                         mTopRoot1.setVisibility(GONE);    //动画结束后隐藏上菜单
                                         mTopRoot2.setVisibility(GONE);   //动画结束后隐藏上菜单
-                                        MxuamengView.setVisibility(GONE);  //xuameng动画结束可点击
                                         isAnimation = false;
                                     }
                                 });
@@ -264,7 +258,7 @@ public class VodController extends BaseController {
                                 .setListener(null);
 
                         // xuameng返回按钮隐藏
-                        backBtn.setVisibility(INVISIBLE);
+                        backBtn.setVisibility(GONE);
 
                         // xuameng播放控制视图处理
                         if (mControlWrapper.isPlaying()) {
@@ -319,7 +313,6 @@ public class VodController extends BaseController {
     LinearLayout mTopRoot1;
     LinearLayout mTopRoot2;
     LinearLayout mParseRoot;
-    LinearLayout MxuamengView; //xuameng防点击
     LinearLayout mTvPausexu; //xuameng暂停动画
     TvRecyclerView mGridView;
     TextView mPlayTitle;
@@ -428,12 +421,10 @@ public class VodController extends BaseController {
                         @Override
                         public void onAnimationStart(Animator animation) {
                             super.onAnimationStart(animation);
-                            MxuamengView.setVisibility(VISIBLE); //xuameng动画开始防点击
                             isPlaying = true; //xuameng动画开启
                         }
                         public void onAnimationEnd(Animator animation) {
                             super.onAnimationEnd(animation);
-                            MxuamengView.setVisibility(GONE); //xuameng动画结束可点击
                             mTvPausexu.setVisibility(GONE); //xuameng动画暂停菜单隐藏 
                             isPlaying = false; //xuameng动画开启
                         }
@@ -534,7 +525,7 @@ public class VodController extends BaseController {
         }
     }; //xuameng显示系统时间
     private void showLockView() {
-        mLockView.setVisibility(ScreenUtils.isTv(getContext()) ? INVISIBLE : VISIBLE);
+        mLockView.setVisibility(ScreenUtils.isTv(getContext()) ? GONE : VISIBLE);
         mHandler.removeCallbacks(lockRunnable);
         mHandler.postDelayed(lockRunnable, 3000);
     }
@@ -571,7 +562,6 @@ public class VodController extends BaseController {
         mPlayerTimeResetBtn = findViewById(R.id.play_time_reset);
         mPlayPauseTime = findViewById(R.id.tv_sys_time);
         mPlayPauseTimexu = findViewById(R.id.tv_sys_time_xu); //XUAMENG的系统时间
-        MxuamengView = findViewById(R.id.xuamengView); //XUAMENG防点击
         mTvPausexu = findViewById(R.id.tv_pause_xu); //XUAMENG暂停动画
         iv_circle_bg = (ImageView) findViewById(R.id.iv_circle_bg); //xuameng音乐播放时图标
         MxuamengMusic = (ImageView) findViewById(R.id.xuamengMusic); //xuameng播放音乐背景
@@ -632,9 +622,13 @@ public class VodController extends BaseController {
         rootView.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if(isLock) {
-                    if(event.getAction() == MotionEvent.ACTION_UP) {
-                        showLockView();
+                if (isLock) {
+                    if (event.getAction() == MotionEvent.ACTION_UP) {
+                        if (mLockView.getVisibility() == View.VISIBLE) {
+                            mLockView.setVisibility(GONE);  //xuameng 必须GONE如果写成INVISIBLE在surface下会没反应
+                        } else {
+                            showLockView();
+                        }
                     }
                 }
                 return isLock;
@@ -1689,7 +1683,6 @@ public class VodController extends BaseController {
                         @Override
                         public void onAnimationStart(Animator animation) {
                             super.onAnimationStart(animation);
-                            MxuamengView.setVisibility(VISIBLE); //xuameng动画开始防点击
                             if(mPlayPauseTimexu.getVisibility() == View.VISIBLE || mPlayTitle.getVisibility() == View.VISIBLE) {
                                 mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面视频名称
                                 mPlayTitle.setVisibility(GONE); //xuameng隐藏上面时间
@@ -1698,7 +1691,6 @@ public class VodController extends BaseController {
                         }
                         public void onAnimationEnd(Animator animation) {
                             super.onAnimationEnd(animation);
-                            MxuamengView.setVisibility(GONE); //xuameng动画结束可点击
                             mTvPausexu.setVisibility(GONE); //xuameng动画暂停菜单隐藏 
                             isPlaying = false; //xuameng动画开启
                         }
@@ -1754,12 +1746,10 @@ public class VodController extends BaseController {
                         @Override
                         public void onAnimationStart(Animator animation) {
                             super.onAnimationStart(animation);
-                            MxuamengView.setVisibility(VISIBLE); //xuameng动画开始防点击
                             isPlaying = true; //xuameng动画开启
                         }
                         public void onAnimationEnd(Animator animation) {
                             super.onAnimationEnd(animation);
-                            MxuamengView.setVisibility(GONE); //xuameng动画结束可点击
                             mTvPausexu.setVisibility(GONE); //xuameng动画暂停菜单隐藏 
                             isPlaying = false; //xuameng动画开启
                         }
@@ -1849,12 +1839,10 @@ public class VodController extends BaseController {
             @Override
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
-                MxuamengView.setVisibility(VISIBLE); //xuameng动画开始防点击
                 isPlaying = true; //xuameng动画开启
             }
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                MxuamengView.setVisibility(GONE); //xuameng动画结束可点击
                 mTvPausexu.setVisibility(GONE); //xuameng动画暂停菜单隐藏 
                 isPlaying = false; //xuameng动画开启
             }
@@ -1873,12 +1861,10 @@ public class VodController extends BaseController {
             @Override
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
-                MxuamengView.setVisibility(VISIBLE); //xuameng动画开始防点击
                 isPlaying = true; //xuameng动画开启
             }
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                MxuamengView.setVisibility(GONE); //xuameng动画结束可点击
                 isPlaying = false; //xuameng动画开启
             }
         });
@@ -2125,7 +2111,7 @@ public class VodController extends BaseController {
     private class LockRunnable implements Runnable {
         @Override
         public void run() {
-            mLockView.setVisibility(INVISIBLE);
+            mLockView.setVisibility(GONE);  //xuameng 必须GONE如果写成INVISIBLE在surface下会没反应
         }
     }
     @Override
@@ -2152,9 +2138,9 @@ public class VodController extends BaseController {
                 mTopRoot2.setVisibility(GONE); //动画结束后隐藏上菜单
                 mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面时间
                 mPlayTitle.setVisibility(GONE); //xuameng隐藏上面视频名称
-                backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
+                backBtn.setVisibility(GONE); //返回键隐藏菜单
                 mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
-                mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
+                mLockView.setVisibility(GONE); //xuameng隐藏屏幕锁
             }
             return false;
         }
@@ -2173,9 +2159,9 @@ public class VodController extends BaseController {
         }
         mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面时间
         mPlayTitle.setVisibility(GONE); //xuameng隐藏上面视频名称
-        backBtn.setVisibility(INVISIBLE); //返回键隐藏菜单
+        backBtn.setVisibility(GONE); //返回键隐藏菜单
         mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
-        mLockView.setVisibility(INVISIBLE); //xuameng隐藏屏幕锁
+        mLockView.setVisibility(GONE); //xuameng隐藏屏幕锁
         return false;
     }
     @Override
