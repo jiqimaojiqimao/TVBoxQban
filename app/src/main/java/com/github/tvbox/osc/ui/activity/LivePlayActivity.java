@@ -1167,6 +1167,7 @@ public class LivePlayActivity extends BaseActivity {
                                 showProgressBars(true);
                             }else{
                                 mVideoView.start();
+                                iv_playpause.setText("暂停"); 
                                 iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
                             }
                         } else if(isVOD) {
@@ -1186,6 +1187,7 @@ public class LivePlayActivity extends BaseActivity {
                                 showProgressBars(true);
                             }else{
                                 mVideoView.start();
+                                iv_playpause.setText("暂停"); 
                                 iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
                             }
                         } else if(isVOD) {
@@ -1205,6 +1207,7 @@ public class LivePlayActivity extends BaseActivity {
                                 showProgressBars(true);
                             }else{
                                 mVideoView.start();
+                                iv_playpause.setText("暂停"); 
                                 iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
                             }
                         } else if(isVOD) {
