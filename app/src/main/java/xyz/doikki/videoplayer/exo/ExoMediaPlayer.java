@@ -94,7 +94,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 ? EXTENSION_RENDERER_MODE_PREFER // 软解
                 : EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
-        mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+        mRenderersFactory = new NextRenderersFactory(mAppContext)
             .setEnableDecoderFallback(true)   //xuameng回退机制
             .setExtensionRendererMode(rendererMode);
 
