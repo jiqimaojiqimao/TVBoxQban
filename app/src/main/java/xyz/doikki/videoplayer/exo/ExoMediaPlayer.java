@@ -24,6 +24,9 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.ui.PlayerView;
+import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON;
+import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;
+import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
 import androidx.media3.ui.SubtitleView;   //xuameng用于显示字幕
 import androidx.media3.common.text.Cue;   //xuameng用于显示字幕
 import androidx.media3.ui.CaptionStyleCompat;
@@ -32,7 +35,6 @@ import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
 import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory;
 
 import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
@@ -52,7 +54,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private boolean mIsPreparing;
 
     private LoadControl mLoadControl;
-    private NextRenderersFactory mRenderersFactory;
+    private DefaultRenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 	private SubtitleView mExoSubtitleView; // 用于显示ExoPlayer内置字幕
@@ -83,22 +85,17 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (exoSelect > 0) {
             // 选择器优先
             rendererMode = (exoSelect == 1) 
-                ? NextRenderersFactory.EXTENSION_RENDERER_MODE_OFF    // 硬解
-                : NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
+                ? EXTENSION_RENDERER_MODE_OFF    // 硬解
+                : EXTENSION_RENDERER_MODE_PREFER; // 软解
         } else {
             // 使用exoDecode配置
             rendererMode = exoDecode 
-                ? NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
-                : NextRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
+                ? EXTENSION_RENDERER_MODE_PREFER // 软解
+                : EXTENSION_RENDERER_MODE_OFF;   // 硬解
         }
-// 1. 创建 NextRenderersFactory 对象
-mRenderersFactory = new NextRenderersFactory(mAppContext);
-
-// 2. 设置解码回退
-mRenderersFactory.setEnableDecoderFallback(true);
-
-// 3. 设置扩展渲染器模式（不接收返回值）
-mRenderersFactory.setExtensionRendererMode(rendererMode);
+        mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+            .setEnableDecoderFallback(true)   //xuameng回退机制
+            .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
