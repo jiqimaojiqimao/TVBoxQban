@@ -104,10 +104,10 @@ if (rendererMode == NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER) {
 }
 		
         // 2. 设置解码回退
-        mRenderersFactory.setEnableDecoderFallback(true);
+    //    mRenderersFactory.setEnableDecoderFallback(true);
 
         // 3. 设置扩展渲染器模式（不接收返回值）
-        mRenderersFactory.setExtensionRendererMode(rendererMode);
+    //    mRenderersFactory.setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
