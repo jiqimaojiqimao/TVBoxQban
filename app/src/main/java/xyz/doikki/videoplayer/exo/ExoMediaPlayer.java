@@ -83,24 +83,28 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (exoSelect > 0) {
             // 选择器优先
             rendererMode = (exoSelect == 1) 
-                ? NextRenderersFactory.EXTENSION_RENDERER_MODE_OFF    // 硬解
+                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER    // 硬解
                 : NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
         } else {
             // 使用exoDecode配置
             rendererMode = exoDecode 
                 ? NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
-                : NextRenderersFactory.EXTENSION_RENDERER_MODE_OFF;   // 硬解
+                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;   // 硬解
         }
-// 1. 创建 NextRenderersFactory 对象
-mRenderersFactory = new NextRenderersFactory(mAppContext);
-
+    
+        if (rendererMode == NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER) {
+            mRenderersFactory = new NextRenderersFactory(mAppContext);
+        } else {
+            // 默认使用系统硬解工厂
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
+        }
 //mRenderersFactory.setAudioPrefer(true);
 //mRenderersFactory.setVideoPrefer(true);		
-// 2. 设置解码回退
-mRenderersFactory.setEnableDecoderFallback(true);
+        // 2. 设置解码回退
+        mRenderersFactory.setEnableDecoderFallback(true);
 
-// 3. 设置扩展渲染器模式（不接收返回值）
-mRenderersFactory.setExtensionRendererMode(rendererMode);
+        // 3. 设置扩展渲染器模式（不接收返回值）
+        mRenderersFactory.setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
