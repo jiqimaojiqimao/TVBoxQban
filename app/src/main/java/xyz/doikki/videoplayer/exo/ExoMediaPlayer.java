@@ -94,6 +94,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 // 1. 创建 NextRenderersFactory 对象
 mRenderersFactory = new NextRenderersFactory(mAppContext);
 
+mRenderersFactory.setAudioPrefer(true);
+mRenderersFactory.setVideoPrefer(true);		
 // 2. 设置解码回退
 mRenderersFactory.setEnableDecoderFallback(true);
 
