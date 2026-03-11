@@ -100,7 +100,7 @@ if (rendererMode == NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER) {
 } else {
  mRenderersFactory = new DefaultRenderersFactory(mAppContext)
  .setEnableDecoderFallback(true)
- .setExtensionRendererMode(rendererMode);
+ .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
 }
 		
         // 2. 设置解码回退
