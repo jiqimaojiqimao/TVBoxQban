@@ -52,7 +52,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private boolean mIsPreparing;
 
     private LoadControl mLoadControl;
-    private NextRenderersFactory mRenderersFactory;
+    private RenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 	private SubtitleView mExoSubtitleView; // 用于显示ExoPlayer内置字幕
@@ -78,7 +78,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         // xuameng渲染器配置
         boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
         int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
-        // ExoPlayer2 解码模式选择逻辑
+        // ExoPlayer 解码模式选择逻辑
         int rendererMode;
         if (exoSelect > 0) {
             // 选择器优先
@@ -98,8 +98,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             // 默认使用系统硬解工厂
             mRenderersFactory = new DefaultRenderersFactory(mAppContext);
         }
-//mRenderersFactory.setAudioPrefer(true);
-//mRenderersFactory.setVideoPrefer(true);		
+		
         // 2. 设置解码回退
         mRenderersFactory.setEnableDecoderFallback(true);
 
