@@ -92,12 +92,16 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;   // 硬解
         }
     
-        if (rendererMode == NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER) {
-            mRenderersFactory = new NextRenderersFactory(mAppContext);
-        } else {
-            // 默认使用系统硬解工厂
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext);
-        }
+// 替换原工厂创建逻辑
+if (rendererMode == NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER) {
+ mRenderersFactory = new NextRenderersFactory(mAppContext)
+ .setEnableDecoderFallback(true)
+ .setExtensionRendererMode(rendererMode);
+} else {
+ mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+ .setEnableDecoderFallback(true)
+ .setExtensionRendererMode(rendererMode);
+}
 		
         // 2. 设置解码回退
         mRenderersFactory.setEnableDecoderFallback(true);
