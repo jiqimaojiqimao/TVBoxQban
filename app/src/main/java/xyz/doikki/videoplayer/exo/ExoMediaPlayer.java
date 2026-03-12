@@ -79,39 +79,17 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
         int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
         // ExoPlayer 解码模式选择逻辑
-        int rendererMode;
-        if (exoSelect > 0) {
-            // 选择器优先
-            rendererMode = (exoSelect == 1) 
-                ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER    // 硬解
-                : NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER; // 软解
+        if (exoSelect == 2 || (exoSelect == 0 && exoDecode)) {
+        // 软解场景：exoSelect=2 或 exoSelect=0且exoDecode=true
+            mRenderersFactory = new NextRenderersFactory(mAppContext)
+            .setEnableDecoderFallback(true)
+            .setExtensionRendererMode(NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
         } else {
-            // 使用exoDecode配置
-            rendererMode = exoDecode 
-                ? NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER // 软解
-                : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;   // 硬解
+        // 硬解场景
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+            .setEnableDecoderFallback(true)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
         }
-    
-// 替换原工厂创建逻辑
-if (exoSelect == 2 || (exoSelect == 0 && exoDecode)) {
- // 软解场景：exoSelect=2 或 exoSelect=0且exoDecode=true
- mRenderersFactory = new NextRenderersFactory(mAppContext)
- 
- .setVideoPrefer(true)
- .setEnableDecoderFallback(true)
- .setExtensionRendererMode(NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
-} else {
- // 硬解场景
- mRenderersFactory = new DefaultRenderersFactory(mAppContext)
- .setEnableDecoderFallback(true)
- .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
-}
-
-        // 2. 设置解码回退
-    //    mRenderersFactory.setEnableDecoderFallback(true);
-
-        // 3. 设置扩展渲染器模式（不接收返回值）
-    //    mRenderersFactory.setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
@@ -401,6 +379,27 @@ if (exoSelect == 2 || (exoSelect == 0 && exoDecode)) {
                 mRetryCount = 0;    // 重置重试次数，避免影响下一次播放
             }
         }
+
+        if (errorCode == 3002 || errorCode == 3004 || errorCode == 4003) {   //出现错误直播用M3U8方式解码
+            if (mRetryCount < MAX_RETRY_COUNT) {                // xuameng检查是否超过最大重试次数
+                mRetryCount++;                                  // xuameng未超过，执行重试 增加重试计数
+                if (mMediaPlayer != null) {                        // xuameng重置播放器状态
+                    mMediaPlayer.stop();
+                    mMediaPlayer.clearMediaItems();
+                    mIsPreparing = false;                       // xuameng可选：重置一些状态变量
+                }
+                // xuameng重新尝试播放
+                if (mLastUri != null) {
+                    setDataSource(mLastUri, mLastHeaders);
+                    prepareAsync();
+                    start();
+                    return; // 避免触发外层 onError 回调
+                }
+            } else {
+                mRetryCount = 0;    // 重置重试次数，避免影响下一次播放
+            }
+        }
+
         if (mPlayerEventListener != null) {
             mPlayerEventListener.onError();
         }
