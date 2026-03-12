@@ -24,9 +24,6 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.ui.PlayerView;
-import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON;
-import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;
-import static androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
 import androidx.media3.ui.SubtitleView;   //xuameng用于显示字幕
 import androidx.media3.common.text.Cue;   //xuameng用于显示字幕
 import androidx.media3.ui.CaptionStyleCompat;
@@ -35,6 +32,7 @@ import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
 import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
+import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory; //xuameng  NextRenderers
 
 import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
@@ -54,7 +52,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private boolean mIsPreparing;
 
     private LoadControl mLoadControl;
-    private DefaultRenderersFactory mRenderersFactory;
+    private RenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 	private SubtitleView mExoSubtitleView; // 用于显示ExoPlayer内置字幕
@@ -77,25 +75,22 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             mMediaPlayer.removeListener(this);
             mMediaPlayer.release();
         }
+
         // xuameng渲染器配置
         boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
         int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
-        // ExoPlayer2 解码模式选择逻辑
-        int rendererMode;
-        if (exoSelect > 0) {
-            // 选择器优先
-            rendererMode = (exoSelect == 1) 
-                ? EXTENSION_RENDERER_MODE_OFF    // 硬解
-                : EXTENSION_RENDERER_MODE_PREFER; // 软解
+        // ExoPlayer 解码模式选择逻辑
+        if (exoSelect == 2 || (exoSelect == 0 && exoDecode)) {
+        // 软解场景：exoSelect=2 或 exoSelect=0且exoDecode=true
+            mRenderersFactory = new NextRenderersFactory(mAppContext)
+            .setEnableDecoderFallback(false)
+            .setExtensionRendererMode(NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
         } else {
-            // 使用exoDecode配置
-            rendererMode = exoDecode 
-                ? EXTENSION_RENDERER_MODE_PREFER // 软解
-                : EXTENSION_RENDERER_MODE_OFF;   // 硬解
+        // 硬解场景
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+            .setEnableDecoderFallback(true)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
         }
-        mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-            .setEnableDecoderFallback(true)   //xuameng回退机制
-            .setExtensionRendererMode(rendererMode);
 
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
@@ -118,7 +113,16 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
                 .build();
         } else {
-            mLoadControl = new DefaultLoadControl();
+            mLoadControl = new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    20000,    // minBufferMs - 减小最小缓冲时间
+                    30000,   // maxBufferMs - 减小最大缓冲时间
+                    10000,    // bufferForPlaybackMs - 减小播放前缓冲时间
+                    15000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
+                )
+                .setTargetBufferBytes(300 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
+                .setPrioritizeTimeOverSizeThresholds(true)  // 优先考虑字节数阈值
+                .build();
         }
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
@@ -385,6 +389,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 mRetryCount = 0;    // 重置重试次数，避免影响下一次播放
             }
         }
+
         if (mPlayerEventListener != null) {
             mPlayerEventListener.onError();
         }
