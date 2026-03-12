@@ -347,7 +347,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         errorCode = error.errorCode;
         Log.e("EXOPLAYER", "" + error.errorCode);      //xuameng音频出错后尝试重播
 
-        if (errorCode == 5001 || errorCode == 5002 || errorCode == 5003 || errorCode == 5004){
+        if (errorCode == 5001 || errorCode == 5002 || errorCode == 4001){
             memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
         }
 
