@@ -141,7 +141,7 @@ dependencies {
     //安卓工具类
     implementation 'com.blankj:utilcodex:1.31.0'   
     //xuameng exo
-    def exoplayerVersion = "1.9.1"
+    def exoplayerVersion = "1.9.2"
     implementation "androidx.media3:media3-common:$exoplayerVersion"
     implementation "androidx.media3:media3-container:$exoplayerVersion"
     implementation "androidx.media3:media3-database:$exoplayerVersion"
@@ -160,3 +160,4 @@ dependencies {
     implementation "io.github.anilbeesetti:nextlib-mediainfo:1.9.1-0.11.0"
     implementation "io.github.anilbeesetti:nextlib-media3ext:1.9.1-0.11.0"
 }
+
