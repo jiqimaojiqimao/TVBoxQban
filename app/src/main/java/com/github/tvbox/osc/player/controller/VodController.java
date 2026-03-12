@@ -2386,6 +2386,7 @@ public class VodController extends BaseController {
         mSubtitleView.onSubtitleChanged(null);
         mSubtitleView.setVisibility(View.VISIBLE);
         mExoSubtitleView.setVisibility(View.GONE);    //xuameng EXO内置字幕
+        mExoSubtitleView.setCues(null); // 清除字幕数据
     }
 
     private void initVisualizer() {   //xuameng播放音乐柱状图
