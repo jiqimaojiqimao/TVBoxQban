@@ -83,6 +83,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (exoSelect == 2 || (exoSelect == 0 && exoDecode)) {
         // 软解场景：exoSelect=2 或 exoSelect=0且exoDecode=true
             mRenderersFactory = new NextRenderersFactory(mAppContext)
+			.setAudioPrefer(true)	
             .setEnableDecoderFallback(false)
             .setExtensionRendererMode(NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
         } else {
