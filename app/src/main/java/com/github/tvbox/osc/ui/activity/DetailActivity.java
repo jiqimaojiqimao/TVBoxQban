@@ -681,7 +681,7 @@ public class DetailActivity extends BaseActivity {
             vodInfo.currentPlayIndex = vodInfo.playIndex;
             Bundle bundle = new Bundle();
             //保存历史 - 关键修改：使用当前播放的源进行保存
-            String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : firstsourceKey;
+            String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : sourceKey;
             insertVod(saveSourceKey, vodInfo);
             // 同时保存一份到初始源，用于兼容性
             if (!saveSourceKey.equals(firstsourceKey)) {
@@ -728,7 +728,7 @@ public class DetailActivity extends BaseActivity {
             vodInfo.currentPlayIndex = vodInfo.playIndex;
             Bundle bundle = new Bundle();
             //保存历史 - 关键修改：使用当前播放的源进行保存
-            String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : firstsourceKey;
+            String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : sourceKey;
             insertVod(saveSourceKey, vodInfo);
             // 同时保存一份到初始源，用于兼容性
             if (!saveSourceKey.equals(firstsourceKey)) {
@@ -1169,7 +1169,7 @@ public class DetailActivity extends BaseActivity {
                             }
                     
                             // 9. 保存历史记录 - 使用当前播放源进行保存
-                            String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : firstsourceKey;
+                            String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : sourceKey;
                             insertVod(saveSourceKey, saveVodInfo);
                     
                             // 10. 同时保存一份到初始源，用于兼容性
