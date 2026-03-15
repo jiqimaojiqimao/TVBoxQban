@@ -685,7 +685,7 @@ public class DetailActivity extends BaseActivity {
             insertVod(saveSourceKey, vodInfo);
             // 同时保存一份到初始源，用于兼容性
             if (!saveSourceKey.equals(firstsourceKey)) {
-                insertVod(firstsourceKey, vodInfo);
+              //  insertVod(firstsourceKey, vodInfo);
             }
         //   insertVod(sourceKey, vodInfo);
             bundle.putString("sourceKey", sourceKey);
@@ -732,7 +732,7 @@ public class DetailActivity extends BaseActivity {
             insertVod(saveSourceKey, vodInfo);
             // 同时保存一份到初始源，用于兼容性
             if (!saveSourceKey.equals(firstsourceKey)) {
-                insertVod(firstsourceKey, vodInfo);
+        //        insertVod(firstsourceKey, vodInfo);
             }
             bundle.putString("sourceKey", sourceKey);
             App.getInstance().setVodInfo(vodInfo);
@@ -1174,7 +1174,7 @@ public class DetailActivity extends BaseActivity {
                     
                             // 10. 同时保存一份到初始源，用于兼容性
                             if (!saveSourceKey.equals(firstsourceKey)) {
-                                insertVod(firstsourceKey, saveVodInfo);
+                     //           insertVod(firstsourceKey, saveVodInfo);
                             }
                         }
 			                //xuameng解决焦点丢失		if (!fullWindows){
