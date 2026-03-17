@@ -84,7 +84,7 @@ public class RoomDataManger {
     public static List<VodInfo> getAllVodRecord(int limit) {
         int count = AppDataManager.get().getVodRecordDao().getCount();
         Integer index = Hawk.get(HawkConfig.HISTORY_NUM, 0);
-        Integer hisNum = HistoryHelper.getHisNum(index) * 2 + 2 ;
+        Integer hisNum = HistoryHelper.getHisNum(index) * 2 + 1 ;
         if ( count > hisNum ) {
             AppDataManager.get().getVodRecordDao().reserver(hisNum);
         }
