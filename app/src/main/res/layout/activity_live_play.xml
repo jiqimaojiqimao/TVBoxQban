@@ -31,9 +31,10 @@
         android:id="@+id/iv_circle_bg_xu"
         android:padding="@dimen/vs_10"
         android:visibility="gone"
-        android:layout_width="@dimen/vs_80"
-        android:layout_height="@dimen/vs_80"
-        android:src="@drawable/app_icon"/>
+        android:scaleType="fitXY"
+        android:layout_width="@dimen/vs_100"
+        android:layout_height="@dimen/vs_100"
+        android:src="@drawable/app_logo"/>
     <LinearLayout
         android:gravity="center_vertical"
         android:layout_gravity="left"
