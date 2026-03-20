@@ -689,6 +689,7 @@ public class DetailActivity extends BaseActivity {
             }
         //   insertVod(sourceKey, vodInfo);
             bundle.putString("sourceKey", sourceKey);
+            bundle.putString("videoPic", mVideo.pic);   //xuameng 新增给vod显示旋转图片用
 //            bundle.putSerializable("VodInfo", vodInfo);
             App.getInstance().setVodInfo(vodInfo);
             if (showPreview) {
@@ -1404,6 +1405,7 @@ public class DetailActivity extends BaseActivity {
         OkGo.getInstance().cancelTag("detail");
         OkGo.getInstance().cancelTag("quick_search");
 		OkGo.getInstance().cancelTag("pushVod");      //XUAMENG远程推送
+        OkGo.getInstance().cancelTag("lrc_load");  //xuameng 歌词加载
         EventBus.getDefault().unregister(this);
     }
 
