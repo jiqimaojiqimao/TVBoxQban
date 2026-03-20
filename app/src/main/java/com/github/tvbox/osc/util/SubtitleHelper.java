@@ -38,4 +38,12 @@ public class SubtitleHelper {
         Hawk.put(HawkConfig.SUBTITLE_TIME_DELAY, delay);
     }
 
+    public static void setTextStyle(int style) {  //xuameng 存储字幕颜色信息
+        Hawk.put(HawkConfig.SUBTITLE_TEXT_STYLE, style);
+    }
+
+    public static int getTextStyle() {
+        return Hawk.get(HawkConfig.SUBTITLE_TEXT_STYLE, 1); //xuameng 获取字幕颜色信息 默认样式为1（0xFF02F8E1, // 青色）
+    }
+
 }
