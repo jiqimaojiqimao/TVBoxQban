@@ -118,6 +118,7 @@
                 <TextView
                     android:textSize="@dimen/ts_22"
                     android:textColor="@color/color_FFFFFF"
+                    android:textStyle="bold"
                     android:gravity="center"
                     android:layout_gravity="center"
                     android:id="@+id/subtitleStyleOne"
@@ -127,7 +128,7 @@
                     android:focusable="true"
                     android:layout_width="@dimen/vs_170"
                     android:layout_height="wrap_content"
-                    android:text="字幕样式一"
+                    android:text="当前颜色"
                     android:maxLines="1"
                     android:shadowColor="@color/color_CC000000"
                     android:shadowDx="1.0"
@@ -144,8 +145,8 @@
                     android:layout_weight="1.0"/>
                 <TextView
                     android:textSize="@dimen/ts_22"
-                    android:textStyle="bold"
                     android:textColor="@color/color_02F8E1"
+                    android:textStyle="bold"
                     android:gravity="center"
                     android:layout_gravity="center"
                     android:id="@+id/subtitleStyleTwo"
@@ -155,7 +156,7 @@
                     android:focusable="true"
                     android:layout_width="@dimen/vs_170"
                     android:layout_height="wrap_content"
-                    android:text="字幕样式二"
+                    android:text="选择颜色"
                     android:maxLines="1"
                     android:shadowColor="@color/color_CC000000"
                     android:shadowDx="1.0"
