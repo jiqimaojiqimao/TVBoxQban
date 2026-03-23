@@ -148,8 +148,8 @@ public class PlayActivity extends BaseActivity {
     public void refresh(RefreshEvent event) {
         if (event.type == RefreshEvent.TYPE_SUBTITLE_SIZE_CHANGE) {
             mController.mSubtitleView.setTextSize((int) event.obj);
-            mController.mLrcView.setNormalTextSize((int) event.obj * 2.5f); //xuameng 设置LRC歌词 全屏非全屏状态同步
-            mController.mLrcView.setHighlightTextSize((int) event.obj * 2.5f); //xuameng 设置LRC歌词 全屏非全屏状态同步
+            mController.mLrcView.setNormalTextSize((int) event.obj); //xuameng 设置LRC歌词 全屏非全屏状态同步
+            mController.mLrcView.setHighlightTextSize((int) event.obj); //xuameng 设置LRC歌词 全屏非全屏状态同步
         }
     }
 
@@ -328,8 +328,8 @@ public class PlayActivity extends BaseActivity {
             @Override
             public void setTextSize(int size) {
                 mController.mSubtitleView.setTextSize(size);
-                mController.mLrcView.setNormalTextSize(size * 2.5f);  //xuameng 设置LRC歌词字体大小
-                mController.mLrcView.setHighlightTextSize(size * 2.5f);  //xuameng 设置LRC歌词字体大小
+                mController.mLrcView.setNormalTextSize(size);  //xuameng 设置LRC歌词字体大小
+                mController.mLrcView.setHighlightTextSize(size);  //xuameng 设置LRC歌词字体大小
             }
             @Override
             public void setSubtitleDelay(int milliseconds) {
