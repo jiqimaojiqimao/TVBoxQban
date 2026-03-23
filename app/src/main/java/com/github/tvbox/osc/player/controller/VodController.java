@@ -1470,8 +1470,8 @@ public class VodController extends BaseController {
         mSubtitleView.setTextSize(subtitleTextSize);
         mLrcView.setNormalColor(Color.WHITE);      //xuameng LRC歌词字幕 默认颜色
         mLrcView.setHighlightColor(Color.parseColor("#ff02f8e1"));  //xuameng LRC歌词字幕 高亮颜色
-        mLrcView.setNormalTextSize(subtitleTextSize * 2.5f);  //xuameng LRC歌词字幕  默认字体大小
-        mLrcView.setHighlightTextSize(subtitleTextSize * 2.5f);  //xuameng LRC歌词字幕  高亮字体大小
+        mLrcView.setNormalTextSize(subtitleTextSize);  //xuameng LRC歌词字幕  默认字体大小
+        mLrcView.setHighlightTextSize(subtitleTextSize);  //xuameng LRC歌词字幕  高亮字体大小
     }
     @Override
     protected int getLayoutId() {
