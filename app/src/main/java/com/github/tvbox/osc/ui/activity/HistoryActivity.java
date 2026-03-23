@@ -154,7 +154,7 @@ public class HistoryActivity extends BaseActivity {
     };
 
     private void initData() {
-        List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(100);
+        List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(200);  //xuameng 历史记录返回条数  100条 *2 因为有副本
         List<VodInfo> vodInfoList = new ArrayList<>();
         for (VodInfo vodInfo : allVodRecord) {
             if (vodInfo.playNote != null && !vodInfo.playNote.isEmpty())vodInfo.note = "上次看到" + vodInfo.playNote;
