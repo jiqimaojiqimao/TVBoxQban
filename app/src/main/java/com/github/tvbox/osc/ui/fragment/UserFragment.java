@@ -103,7 +103,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         }
         super.onFragmentResume();
         if (Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
-            List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(100);    //xuameng首页历史条数
+            List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(200);    //xuameng首页历史条数   //xuameng 历史记录返回条数  100条 *2 因为有副本
             List<Movie.Video> vodList = new ArrayList<>();
             for (VodInfo vodInfo : allVodRecord) {
                 Movie.Video vod = new Movie.Video();
