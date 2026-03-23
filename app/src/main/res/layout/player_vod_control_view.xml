@@ -33,6 +33,7 @@
         android:background="@android:color/transparent"/>
     <com.github.tvbox.osc.subtitle.LrcView
         android:id="@+id/lrc_view"
+        android:textSize="16.0sp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/visualizer_view"
