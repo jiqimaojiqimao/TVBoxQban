@@ -518,7 +518,11 @@ public class VodController extends BaseController {
             } else {
                 iv_circle_bg.setVisibility(GONE);
             } //xuameng音乐播放时图标判断完
-            mHandler.postDelayed(this, 100);
+            if(mLrcView.getVisibility() == View.VISIBLE) {  
+                mHandler.postDelayed(this, 10);
+            } else {
+                mHandler.postDelayed(this, 100);
+			}
         }
     };
     private Runnable myRunnableMusic = new Runnable() { //xuameng播放音频切换图片
