@@ -123,7 +123,7 @@ public class HistoryActivity extends BaseActivity {
                         Bundle bundle = new Bundle();
                         bundle.putString("id", vodInfo.id);
                         bundle.putString("sourceKey", vodInfo.sourceKey);
-						bundle.putString("picture", vodInfo.pic);    //xuameng某些网站图片部显示
+                        bundle.putString("picture", vodInfo.pic);    //xuameng某些网站图片部显示
                         jumpActivity(DetailActivity.class, bundle);
                     }
                 }
@@ -154,7 +154,7 @@ public class HistoryActivity extends BaseActivity {
     };
 
     private void initData() {
-        List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(200);  //xuameng 历史记录返回条数  100条 *2 因为有副本
+        List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(100); 
         List<VodInfo> vodInfoList = new ArrayList<>();
         for (VodInfo vodInfo : allVodRecord) {
             if (vodInfo.playNote != null && !vodInfo.playNote.isEmpty())vodInfo.note = "上次看到" + vodInfo.playNote;
