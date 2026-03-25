@@ -228,7 +228,7 @@ public class DetailActivity extends BaseActivity {
                 TextView tvSeries = helper.getView(R.id.tvSeriesGroup);
                 tvSeries.setText(item);
         //        if (helper.getLayoutPosition() == getData().size() - 1) {   //xuameng 选集分组
-		//			helper.itemView.setNextFocusRightId(R.id.tvPlay);
+        //            helper.itemView.setNextFocusRightId(R.id.tvPlay);
         //        }
                 if (helper.getLayoutPosition() == getData().size() - 1) {
                     helper.itemView.setId(View.generateViewId());
@@ -263,6 +263,14 @@ public class DetailActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 if (vodInfo != null && vodInfo.seriesMap.size() > 0) {
+
+                    // xuameng检查当前选中的源是否是正在播放的源
+                    if (vodInfo.currentPlayFlag != null && !vodInfo.playFlag.equals(vodInfo.currentPlayFlag)) {
+                        // xuameng当前选中的源不是正在播放的源，禁止倒序操作
+                        App.showToastShort(DetailActivity.this, "倒叙操作只可在当前正在播放的节目所在的列表中操作");
+                        return;
+                    }
+
                     vodInfo.reverseSort = !vodInfo.reverseSort;
                     if (vodInfo.reverseSort){    //XUAMENG读取记录后显示BUG
                         tvSort.setText("正序");
@@ -579,7 +587,7 @@ public class DetailActivity extends BaseActivity {
                     //选集全屏 想选集不全屏的注释下面一行
                     if (showPreview && !fullWindows){
                         toggleFullPreview();
-					}
+                    }
                     if (!showPreview || reload) {
                         jumpToPlay();
                     }
@@ -681,12 +689,12 @@ public class DetailActivity extends BaseActivity {
             vodInfo.currentPlayIndex = vodInfo.playIndex;
             Bundle bundle = new Bundle();
             //保存历史 - 关键修改：使用当前播放的源进行保存
-            String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : sourceKey;
-            insertVod(saveSourceKey, vodInfo);
+        //    String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : sourceKey;
+        //    insertVod(saveSourceKey, vodInfo);
             // 同时保存一份到初始源，用于兼容性
-            if (!saveSourceKey.equals(firstsourceKey)) {
+          //  if (!saveSourceKey.equals(firstsourceKey)) {
                 insertVod(firstsourceKey, vodInfo);
-            }
+          //  }
         //   insertVod(sourceKey, vodInfo);
             bundle.putString("sourceKey", sourceKey);
             bundle.putString("videoPic", mVideo.pic);   //xuameng 新增给vod显示旋转图片用
@@ -729,12 +737,12 @@ public class DetailActivity extends BaseActivity {
             vodInfo.currentPlayIndex = vodInfo.playIndex;
             Bundle bundle = new Bundle();
             //保存历史 - 关键修改：使用当前播放的源进行保存
-            String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : sourceKey;
-            insertVod(saveSourceKey, vodInfo);
+         //   String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : sourceKey;
+          //  insertVod(saveSourceKey, vodInfo);
             // 同时保存一份到初始源，用于兼容性
-            if (!saveSourceKey.equals(firstsourceKey)) {
+           // if (!saveSourceKey.equals(firstsourceKey)) {
                 insertVod(firstsourceKey, vodInfo);
-            }
+           // }
             bundle.putString("sourceKey", sourceKey);
             App.getInstance().setVodInfo(vodInfo);
             if (showPreview) {
@@ -1170,18 +1178,17 @@ public class DetailActivity extends BaseActivity {
                             }
                     
                             // 9. 保存历史记录 - 使用当前播放源进行保存
-                            String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : sourceKey;
-                            insertVod(saveSourceKey, saveVodInfo);
+                          //  String saveSourceKey = vodInfo.currentPlayFlag != null ? vodInfo.currentPlayFlag : sourceKey;
+                          //  insertVod(saveSourceKey, saveVodInfo);
                     
                             // 10. 同时保存一份到初始源，用于兼容性
-                            if (!saveSourceKey.equals(firstsourceKey)) {
+                          //  if (!saveSourceKey.equals(firstsourceKey)) {
                                 insertVod(firstsourceKey, saveVodInfo);
-                            }
+                           // }
                         }
-			                //xuameng解决焦点丢失		if (!fullWindows){
+            //xuameng解决焦点丢失		if (!fullWindows){
             //              mGridView.setSelection(index);
-			//
-            //             insertVod(sourceKey, vodInfo);
+            //             insertVod(sourceKey, vodInfo);}
                 
                         } else if (event.obj instanceof JSONObject) {    //xuameng保存播放器配置
                             vodInfo.playerCfg = ((JSONObject) event.obj).toString();
@@ -1404,14 +1411,14 @@ public class DetailActivity extends BaseActivity {
         OkGo.getInstance().cancelTag("fenci");
         OkGo.getInstance().cancelTag("detail");
         OkGo.getInstance().cancelTag("quick_search");
-		OkGo.getInstance().cancelTag("pushVod");      //XUAMENG远程推送
+        OkGo.getInstance().cancelTag("pushVod");      //XUAMENG远程推送
         OkGo.getInstance().cancelTag("lrc_load");  //xuameng 歌词加载
         EventBus.getDefault().unregister(this);
     }
 
     @Override
     public void onBackPressed() {
-		boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true);  //xuameng true是显示小窗口,false是不显示小窗口
+        boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true);  //xuameng true是显示小窗口,false是不显示小窗口
         if (fullWindows) {
             if (playFragment.onBackPressed())  //xuameng上一级交给VODController控制
                 return;
@@ -1451,7 +1458,7 @@ public class DetailActivity extends BaseActivity {
         return super.dispatchKeyEvent(event);
     }
 
-	@Override
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (event != null && playFragment != null && fullWindows) {
             if (playFragment.onKeyDown(keyCode,event)) {
@@ -1682,7 +1689,7 @@ public class DetailActivity extends BaseActivity {
                             super.onScrollStateChanged(recyclerView, newState);
                             if (newState == mGridViewFlag.SCROLL_STATE_IDLE) {
                                 mGridViewFlag.setSelection(finalScrollPosition);
-                            mGridViewFlag.removeOnScrollListener(this);
+                                mGridViewFlag.removeOnScrollListener(this);
                             }
                         }
                     });
