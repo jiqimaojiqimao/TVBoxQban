@@ -84,7 +84,7 @@ public class RoomDataManger {
     public static List<VodInfo> getAllVodRecord(int limit) {
         int count = AppDataManager.get().getVodRecordDao().getCount();
         Integer index = Hawk.get(HawkConfig.HISTORY_NUM, 0);
-        Integer hisNum = HistoryHelper.getHisNum(index) * 2;   //xuameng 历史记录加倍，因为存储的一个副本
+        Integer hisNum = HistoryHelper.getHisNum(index);   
         if ( count > hisNum ) {
             AppDataManager.get().getVodRecordDao().reserver(hisNum);
         }
