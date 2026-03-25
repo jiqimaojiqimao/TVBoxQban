@@ -167,6 +167,10 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void onChanged() {
                 mGridView.post(() -> {
+                    RecyclerView.LayoutManager layoutManager = mGridView.getLayoutManager();
+                    if (layoutManager == null) {
+                        return; // xuameng防止空指针
+                    }
                     View firstChild = Objects.requireNonNull(mGridView.getLayoutManager()).findViewByPosition(0);
                     if (firstChild != null) {
                         mGridView.setSelectedPosition(0);
@@ -949,6 +953,10 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void resetAllItemsToDefault() {   //xuameng   重置未选中菜单项为默认值 手机上的BUG
+        RecyclerView.LayoutManager layoutManager = mGridView.getLayoutManager();
+        if (layoutManager == null) {
+            return; // xuameng防止空指针
+        }
         for (int i = 0; i < sortAdapter.getItemCount(); i++) {
             if (i != PositionXu ) {
                 View itemView = mGridView.getLayoutManager().findViewByPosition(i);
@@ -965,7 +973,11 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
-    private void resetAllItemsToDefaultPhone() {   
+    private void resetAllItemsToDefaultPhone() {  
+        RecyclerView.LayoutManager layoutManager = mGridView.getLayoutManager();
+        if (layoutManager == null) {
+            return; // xuameng防止空指针
+        }
         for (int i = 0; i < sortAdapter.getItemCount(); i++) {
             if (i != PositionXu ) {              //xuameng   重置未选中菜单项为默认值 手机上的BUG  手机滑动时监听
                 View itemView = mGridView.getLayoutManager().findViewByPosition(i);
