@@ -42,10 +42,6 @@ import com.github.tvbox.osc.util.LOG;
 import com.github.tvbox.osc.util.SearchHelper;
 import com.github.catvod.crawler.JsLoader;
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.AbsCallback;
 import com.lzy.okgo.model.Response;
@@ -59,11 +55,12 @@ import android.text.Editable;		//xuameng搜索历史
 import com.github.tvbox.osc.data.SearchPresenter;  //xuameng搜索历史
 import com.github.tvbox.osc.cache.SearchHistory;   //xuameng搜索历史
 import java.util.Collections;   //xuameng搜索历史
-import com.google.gson.Gson;  //热门搜索
-import com.google.gson.JsonArray; //热门搜索
-import com.google.gson.JsonElement; //热门搜索
-import com.google.gson.JsonObject; //热门搜索
-import com.google.gson.JsonParser; //热门搜索
+import com.google.gson.Gson;  //xuameng热门搜索
+import com.google.gson.JsonArray; //xuameng热门搜索
+import com.google.gson.JsonElement; //xuameng热门搜索
+import com.google.gson.JsonObject; //xuameng热门搜索
+import com.google.gson.JsonParser; //xuameng热门搜索
+import com.google.common.net.HttpHeaders;  //xuameng热门搜索
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -100,14 +97,14 @@ public class SearchActivity extends BaseActivity {
     private PinyinAdapter wordAdapter;
     private String searchTitle = "";
     private TextView tvSearchCheckboxBtn;  //xuameng指定搜索源
-	private RelativeLayout searchTips;   //xuameng搜索历史
-	private LinearLayout llWord;   //xuameng搜索历史
-	private FlowLayout tv_history;    //xuameng搜索历史
-	public String keyword;  //xuameng搜索历史
-	private ImageView clearHistory;  //xuameng搜索历史
-	private SearchPresenter searchPresenter;  //xuameng搜索历史
-	private TextView tHotSearchText;  //xuameng热门搜索
-	private static ArrayList<String> hots = new ArrayList<>();  //xuameng热门搜索
+    private RelativeLayout searchTips;   //xuameng搜索历史
+    private LinearLayout llWord;   //xuameng搜索历史
+    private FlowLayout tv_history;    //xuameng搜索历史
+    public String keyword;  //xuameng搜索历史
+    private ImageView clearHistory;  //xuameng搜索历史
+    private SearchPresenter searchPresenter;  //xuameng搜索历史
+    private TextView tHotSearchText;  //xuameng热门搜索
+    private static ArrayList<String> hots = new ArrayList<>();  //xuameng热门搜索
 
     private static HashMap<String, String> mCheckSources = null;
     private SearchCheckboxDialog mSearchCheckboxDialog = null;
@@ -176,11 +173,11 @@ public class SearchActivity extends BaseActivity {
         etSearch = findViewById(R.id.etSearch);
         tvSearch = findViewById(R.id.tvSearch);
         tvSearchCheckboxBtn = findViewById(R.id.tvSearchCheckboxBtn);
-		searchTips = findViewById(R.id.search_tips);   //xuameng搜索历史
-		llWord = findViewById(R.id.llWord);	//xuameng搜索历史
-		tv_history = findViewById(R.id.tv_history);  //xuameng搜索历史
-		clearHistory = findViewById(R.id.clear_history);  //xuameng搜索历史
-		tHotSearchText = findViewById(R.id.mHotSearch_text);   //xuameng热门搜索
+        searchTips = findViewById(R.id.search_tips);   //xuameng搜索历史
+        llWord = findViewById(R.id.llWord);	//xuameng搜索历史
+        tv_history = findViewById(R.id.tv_history);  //xuameng搜索历史
+        clearHistory = findViewById(R.id.clear_history);  //xuameng搜索历史
+        tHotSearchText = findViewById(R.id.mHotSearch_text);   //xuameng热门搜索
         tvClear = findViewById(R.id.tvClear);
         mGridView = findViewById(R.id.mGridView);
         keyboard = findViewById(R.id.keyBoardRoot);
@@ -192,14 +189,14 @@ public class SearchActivity extends BaseActivity {
         wordAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-				keyword = wordAdapter.getItem(position);
-				String[] split = keyword.split("\uFEFF");
-				keyword = split[split.length - 1];
-				etSearch.setText(keyword);
+                keyword = wordAdapter.getItem(position);
+                String[] split = keyword.split("\uFEFF");
+                keyword = split[split.length - 1];
+                etSearch.setText(keyword);
                 if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
                     Bundle bundle = new Bundle();
                     bundle.putString("title", keyword);
-					refreshSearchHistory(keyword);  //xuameng搜索历史
+                    refreshSearchHistory(keyword);  //xuameng搜索历史
                     jumpActivity(FastSearchActivity.class, bundle);
                 }else {
                     search(keyword);
@@ -234,7 +231,7 @@ public class SearchActivity extends BaseActivity {
                     isSearchBack = true;
                     Bundle bundle = new Bundle();
                     bundle.putString("id", video.id);
-					bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
+                    bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
                     bundle.putString("sourceKey", video.sourceKey);
                     jumpActivity(DetailActivity.class, bundle);
                 }
@@ -245,11 +242,11 @@ public class SearchActivity extends BaseActivity {
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
                 hasKeyBoard = true;
-				if (!TextUtils.isEmpty(keyword)) {
+                if (!TextUtils.isEmpty(keyword)) {
                     if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
                         Bundle bundle = new Bundle();
                         bundle.putString("title", keyword);
-						refreshSearchHistory(keyword);  //xuameng搜索历史
+                        refreshSearchHistory(keyword);  //xuameng搜索历史
                         jumpActivity(FastSearchActivity.class, bundle);
                     }else {
                         search(keyword);
@@ -259,23 +256,32 @@ public class SearchActivity extends BaseActivity {
                 }
             }
         });
+        // xuameng为搜索按钮设置长按事件监听器
+        tvSearch.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                showHotSearchtext();   //xuameng 刷新搜索热词
+                App.showToastShort(SearchActivity.this, "热门搜索已刷新！");
+                return true;
+            }
+        });
         tvClear.setOnClickListener(new View.OnClickListener() {     
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
                 etSearch.setText("");
-				wordAdapter.setNewData(hots);  //xuameng 热搜不用重复刷新     //xuameng修复清空后热门搜索为空
-				tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
+                wordAdapter.setNewData(hots);  //xuameng 热搜不用重复刷新     //xuameng修复清空后热门搜索为空
+                tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
                 searchTips.setVisibility(View.VISIBLE);
                 tHotSearchText.setText("热门搜索");          //xuameng修复删除内容后，热门搜索为空
-				showSuccess();  //xuameng修复BUG
-				mGridView.setVisibility(View.GONE);
-				if (searchExecutorService != null) {
+                showSuccess();  //xuameng修复BUG
+                mGridView.setVisibility(View.GONE);
+                if (searchExecutorService != null) {
                    searchExecutorService.shutdownNow();
                    searchExecutorService = null;
                    JsLoader.stopAll();
-				}
-				cancel();
+                }
+                cancel();
             }
         });
 
@@ -326,17 +332,17 @@ public class SearchActivity extends BaseActivity {
                         loadRec(text);
                     }
                     if (text.length() == 0) {
-						wordAdapter.setNewData(hots);  //xuameng 热搜不用重复刷新   //xuameng修复清空后热门搜索为空
+                        wordAdapter.setNewData(hots);  //xuameng 热搜不用重复刷新   //xuameng修复清空后热门搜索为空
                         tHotSearchText.setText("热门搜索");
-						showSuccess();  //xuameng修复BUG
-						tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
-						searchTips.setVisibility(View.VISIBLE);
-						mGridView.setVisibility(View.GONE);
-						if (searchExecutorService != null) {
-							searchExecutorService.shutdownNow();
-							searchExecutorService = null;
-							JsLoader.stopAll();
-							}
+                        showSuccess();  //xuameng修复BUG
+                        tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
+                        searchTips.setVisibility(View.VISIBLE);
+                        mGridView.setVisibility(View.GONE);
+                        if (searchExecutorService != null) {
+                            searchExecutorService.shutdownNow();
+                            searchExecutorService = null;
+                            JsLoader.stopAll();
+                            }
                     }
                 } else if (pos == 0) {
                     if (remoteDialog == null) {
@@ -400,7 +406,7 @@ public class SearchActivity extends BaseActivity {
             }
         });
         // 仅在 Android 5.0 以下版本应用焦点修复       xuameng修复安卓4搜索历史获取不到焦点问题
- /*       if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -412,10 +418,9 @@ public class SearchActivity extends BaseActivity {
                     }
                 }
             });
-        }    
-*/
+        }
 
-		// ========== xuameng新增：为每个历史标签添加长按直接删除功能 ==========
+        // ========== xuameng新增：为每个历史标签添加长按直接删除功能 ==========
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -454,7 +459,7 @@ public class SearchActivity extends BaseActivity {
 
     private void initViewModel() {
         sourceViewModel = new ViewModelProvider(this).get(SourceViewModel.class);
-		searchPresenter = new SearchPresenter();   //xuameng 搜索历史
+        searchPresenter = new SearchPresenter();   //xuameng 搜索历史
     }
 
     /**
@@ -505,15 +510,15 @@ public class SearchActivity extends BaseActivity {
     private void initData() {
         initCheckedSourcesForSearch();
         Intent intent = getIntent();
-		initSearchHistory();  //xuameng 搜索历史
-		showSuccess();  //xuameng 搜索历史
-		mGridView.setVisibility(View.GONE);
+        initSearchHistory();  //xuameng 搜索历史
+        showSuccess();  //xuameng 搜索历史
+        mGridView.setVisibility(View.GONE);
         if (intent != null && intent.hasExtra("title")) {
             String title = intent.getStringExtra("title");
             if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
                 Bundle bundle = new Bundle();
                 bundle.putString("title", title);
-				refreshSearchHistory(title);  //xuameng 搜索历史
+                refreshSearchHistory(title);  //xuameng 搜索历史
                 jumpActivity(FastSearchActivity.class, bundle);
             }else {
                 search(title);
@@ -534,7 +539,7 @@ public class SearchActivity extends BaseActivity {
             if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
                 Bundle bundle = new Bundle();
                 bundle.putString("title", title);
-				refreshSearchHistory(title);   //xuameng 搜索历史
+                refreshSearchHistory(title);   //xuameng 搜索历史
                 jumpActivity(FastSearchActivity.class, bundle);
             }else{
                 search(title);
@@ -562,10 +567,10 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void search(String title) {
-		if (TextUtils.isEmpty(title)){
+        if (TextUtils.isEmpty(title)){
             App.showToastShort(SearchActivity.this, "输入内容不能为空！");
-			return;
-		}
+            return;
+        }
         cancel();   
         if (remoteDialog != null) {
             remoteDialog.dismiss();
@@ -575,7 +580,7 @@ public class SearchActivity extends BaseActivity {
         this.searchTitle = title;
         mGridView.setVisibility(View.GONE); //xuameng 搜索历史
         searchAdapter.setNewData(new ArrayList<>());
-		refreshSearchHistory(title);  //xuameng 搜索历史
+        refreshSearchHistory(title);  //xuameng 搜索历史
         searchResult();
     }
 
@@ -687,9 +692,9 @@ public class SearchActivity extends BaseActivity {
     }
 
     private void searchData(AbsXml absXml) {  //xuameng重要BUG如果快速模式直接返回
-		if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
-			return;
-		}
+        if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
+            return;
+        }
         if (searchExecutorService == null) {  //xuameng点击清除或删除所有文字后还继续显示搜索结果
             return;
         }
@@ -713,13 +718,13 @@ public class SearchActivity extends BaseActivity {
         int count = allRunCount.decrementAndGet();
         if (count <= 0) {
             if (searchAdapter.getData().size() <= 0) {
-				if (searchExecutorService != null) {
+                if (searchExecutorService != null) {
                     showEmpty();		//xuameng修复BUG
-				}else{
-				tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
-				searchTips.setVisibility(View.VISIBLE);
-				mGridView.setVisibility(View.GONE); 
-				}
+                }else{
+                tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
+                searchTips.setVisibility(View.VISIBLE);
+                mGridView.setVisibility(View.GONE); 
+                }
             }
             cancel();
         }
@@ -764,30 +769,91 @@ public class SearchActivity extends BaseActivity {
         super.onBackPressed();
     }
 
-    public void showHotSearchtext() {          //xuameng 热搜
-        OkGo.<String>get("https://node.video.qq.com/x/api/hot_search")
-                .params("channdlId", "0")
-                .params("_", System.currentTimeMillis())
-                .execute(new AbsCallback<String>() {
-                    @Override
-                    public void onSuccess(Response<String> response) {
-                        try {
-//xuameng已声明类成员变量                            ArrayList<String> hots = new ArrayList<>();
-                            JsonArray itemList = JsonParser.parseString(response.body()).getAsJsonObject().get("data").getAsJsonObject().get("mapResult").getAsJsonObject().get("0").getAsJsonObject().get("listInfo").getAsJsonArray();
-                            for (JsonElement ele : itemList) {
-                                JsonObject obj = (JsonObject) ele;
-                                hots.add(obj.get("title").getAsString().trim().replaceAll("<|>|《|》|-", "").split(" ")[0]);
+    public void showHotSearchtext() { //xuameng 热搜 改成360接口
+        OkGo.<String>get("https://api.web.360kan.com/v1/rank?cat=1")
+        .headers(HttpHeaders.REFERER, "https://www.360kan.com/rank/general")
+        .execute(new AbsCallback<String>() {
+            @Override
+            public void onSuccess(Response<String> response) {
+                try {
+                    String result = response.body();
+                    // 情况1：网络请求成功但返回内容为空
+                    if (TextUtils.isEmpty(result)) {
+                        setDefaultHotWords();
+                        return;
+                    }
+                    hots.clear();
+                    JsonObject jsonObject = JsonParser.parseString(result).getAsJsonObject();
+                    JsonArray dataArray = jsonObject.getAsJsonArray("data");
+                    
+                    // 情况2：返回的JSON结构正确，但data数组为空
+                    if (dataArray != null && dataArray.size() > 0) {
+                        for (JsonElement element : dataArray) {
+                            JsonObject item = element.getAsJsonObject();
+                            // 添加健壮性检查，防止字段缺失
+                            if (item.has("title")) {
+                                String title = item.get("title").getAsString().trim();
+                                hots.add(title);
                             }
-							wordAdapter.setNewData(hots);   
-                        } catch (Throwable th) {
-                            th.printStackTrace();
                         }
                     }
-
-                    @Override
-                    public String convertResponse(okhttp3.Response response) throws Throwable {
-                        return response.body().string();
+                    
+                    // 情况3：data数组为空或解析不出有效数据
+                    if (hots.isEmpty()) {
+                        setDefaultHotWords();
+                    } else {
+                        wordAdapter.setNewData(hots);
                     }
-                });
-		} 
+                    
+                } catch (Throwable th) {
+                    th.printStackTrace();
+                    // 情况4：JSON解析异常
+                    setDefaultHotWords();
+                }
+            }
+
+            @Override
+            public void onError(Response<String> response) {
+                super.onError(response);
+                // 情况5：网络请求失败
+                Throwable exception = response.getException();
+                if (exception != null) {
+                    exception.printStackTrace();
+                }
+                setDefaultHotWords();
+            }
+
+            @Override
+            public String convertResponse(okhttp3.Response response) throws Throwable {
+                return response.body().string();
+            }
+        });
+    }
+
+
+    /**xuameng
+     * 设置默认的热门搜索词
+     * 当网络请求失败或返回空数据时使用
+     */
+    private void setDefaultHotWords() {
+        hots.clear();
+        // 添加一些通用的热门搜索词作为默认值
+        hots.add("聚汇电影");
+        hots.add("聚汇电视剧");
+        hots.add("聚汇综艺");
+        hots.add("聚汇动漫");
+        hots.add("聚汇纪录片");
+        hots.add("聚汇动作片");
+        hots.add("聚汇喜剧片");
+        hots.add("聚汇爱情片");
+        hots.add("聚汇科幻片");
+        hots.add("聚汇悬疑片");
+
+        // 更新UI
+        wordAdapter.setNewData(hots);
+
+        // 给用户一个提示（如果需要）
+         App.showToastShort(SearchActivity.this, "加载热门搜索失败，已显示默认推荐");
+    }
+
 }
