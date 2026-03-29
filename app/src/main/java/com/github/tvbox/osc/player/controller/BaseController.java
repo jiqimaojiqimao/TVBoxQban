@@ -29,9 +29,6 @@ import xyz.doikki.videoplayer.controller.IGestureComponent;
 import xyz.doikki.videoplayer.player.VideoView;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 
-import com.github.tvbox.osc.util.HawkConfig;    //xuameng 滑动亮度判断
-import com.orhanobut.hawk.Hawk; //xuameng 滑动亮度判断
-
 public abstract class BaseController extends BaseVideoController implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, View.OnTouchListener {
     private GestureDetector mGestureDetector;
     private AudioManager mAudioManager;
@@ -115,7 +112,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
     private ProgressBar mLoading;
     private ViewGroup mPauseRoot;
     private TextView mPauseTime;
-    private ImageView music_iv_circle_bg;  //xuameng音乐播放时图标
     private LinearLayout mProgressroot;  //xuameng 显示进程
 
     private LinearLayout mDialogVolume;   //xuameng 新增音量亮度条
@@ -134,7 +130,6 @@ public abstract class BaseController extends BaseVideoController implements Gest
         mPauseRoot = findViewWithTag("vod_control_pause");
         mPauseTime = findViewWithTag("vod_control_pause_t");
         mProgressroot = findViewWithTag("progress_root");    //xuameng 显示进程
-        music_iv_circle_bg = findViewWithTag("music_iv_circle_bg");  //xuameng音乐播放时图标
 
         mDialogVolume = findViewWithTag("dialog_volume");  //xuameng 新增音量亮度条
         mDialogBrightness = findViewWithTag("dialog_brightness");  //xuameng 新增音量亮度条
@@ -158,14 +153,15 @@ public abstract class BaseController extends BaseVideoController implements Gest
                 break;
             case VideoView.STATE_PLAYING:
                 mPauseRoot.setVisibility(GONE);
-                mLoading.setVisibility(GONE);
+                //  mLoading.setVisibility(GONE);  //xuameng这里不应该隐藏
                 break;
             case VideoView.STATE_PAUSED:
                 mPauseRoot.setVisibility(VISIBLE);
-                mLoading.setVisibility(GONE);
+                //  mLoading.setVisibility(GONE);  //xuameng这里不应该隐藏
                 break;
             case VideoView.STATE_PREPARED:
             case VideoView.STATE_ERROR:
+                mLoading.setVisibility(GONE);
             case VideoView.STATE_BUFFERED:
                 mLoading.setVisibility(GONE);
                 break;
