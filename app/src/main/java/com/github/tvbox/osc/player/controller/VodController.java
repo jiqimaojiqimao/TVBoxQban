@@ -120,9 +120,20 @@ public class VodController extends BaseController {
                         if(mProgressRoot.getVisibility() == View.VISIBLE) { //xuameng进程图标
                             mProgressRoot.setVisibility(GONE);
                         }
-                        if (isBufferIng){  //xuameng 修复缓存图标不显示
-                            XuLoading.setVisibility(View.VISIBLE);
-                            mPlayLoadNetSpeed.setVisibility(View.VISIBLE);
+                        try {int playerType = mPlayerConfig.getInt("pl");   //xuameng播放器选择
+                            if (playerType == 0){     //xuameng 如果是系统播放器
+                                if (isSystemPlayerBufferIng){
+                                    XuLoading.setVisibility(View.VISIBLE);
+                                    mPlayLoadNetSpeed.setVisibility(View.VISIBLE);
+                                }
+                            }else{
+                                if (isBufferIng){  //xuameng 修复缓存图标不显示
+                                    XuLoading.setVisibility(View.VISIBLE);
+                                    mPlayLoadNetSpeed.setVisibility(View.VISIBLE);
+                                }
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
                         break;
                     }
@@ -367,11 +378,11 @@ public class VodController extends BaseController {
     private boolean isPlaying = false; //xuameng判断暂停动画
     private boolean isAnimation = false; //xuameng判断隐藏菜单动画
     private boolean isDisplay = false; //xuameng判断显示菜单动画
-    private boolean isVideoplaying = false; //xuameng判断视频开始播放
     private boolean isVideoPlay = false; //xuameng判断视频开始播放
     private boolean isLongClick = false; //xuameng判断长按
     private boolean mSeekBarhasFocus = false; //xuameng seekbar是否拥有焦点
     private boolean isBufferIng = false; //xuameng 判断是否进在缓冲视频
+    private boolean isSystemPlayerBufferIng = false; //xuameng 判断系统播放器是否进在缓冲视频
     private Visualizer mVisualizer;  //xuameng音乐播放动画
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
@@ -427,27 +438,7 @@ public class VodController extends BaseController {
                     mControlWrapper.startFadeOut();
                 }
                 mxuPlay.setText("暂停");
-                if(!isPlaying && mTvPausexu.getVisibility() == View.VISIBLE) {
-                    ObjectAnimator animator10 = ObjectAnimator.ofFloat(mTvPausexu, "translationX", -0, 700); //xuameng动画暂停菜单开始
-                    animator10.setDuration(300); //xuameng动画暂停菜单
-                    animator10.addListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-                            super.onAnimationStart(animation);
-                            isPlaying = true; //xuameng动画开启
-                        }
-                        public void onAnimationEnd(Animator animation) {
-                            super.onAnimationEnd(animation);
-                            mTvPausexu.setVisibility(GONE); //xuameng动画暂停菜单隐藏 
-                            isPlaying = false; //xuameng动画开启
-                        }
-                    });
-                    animator10.start(); //xuameng动画暂停菜单结束					
-                }
-                if(mPlayPauseTimexu.getVisibility() == View.VISIBLE || mPlayTitle.getVisibility() == View.VISIBLE) {
-                    mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面视频名称
-                    mPlayTitle.setVisibility(GONE); //xuameng隐藏上面时间
-                }
+                mHidePauseIng(); //xuameng 隐藏暂停图标
                 try {
                     musicAnimation = mPlayerConfig.getBoolean("music");  //xuameng音乐播放动画获取设置
                 } catch (JSONException e) {
@@ -470,7 +461,7 @@ public class VodController extends BaseController {
                         MxuamengMusic.setVisibility(GONE);
                     }
                 } else {
-                    if(MxuamengMusic.getVisibility() == View.GONE && isVideoplaying) { //xuameng播放音乐背景
+                    if(MxuamengMusic.getVisibility() == View.GONE) { //xuameng播放音乐背景
                         MxuamengMusic.setVisibility(VISIBLE);
                     }
                     FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) iv_circle_bg.getLayoutParams(); //xuameng 新增给vod显示旋转图片用
@@ -486,10 +477,8 @@ public class VodController extends BaseController {
                         params.topMargin = margin;
                         params.leftMargin = margin;
 
-                        if(isVideoplaying) {
-                            loadVideoPic();    //xuameng 加载网络PIC图片
-                            iv_circle_bg.setVisibility(VISIBLE);
-                        }
+                        loadVideoPic();    //xuameng 加载网络PIC图片
+                        iv_circle_bg.setVisibility(VISIBLE);
                     }else {
                         // xuameng如果 mLrcView 不显示，则将 iv_circle_bg 置于屏幕中心
                         params.gravity = Gravity.CENTER;
@@ -507,10 +496,8 @@ public class VodController extends BaseController {
                                 iv_circle_bg.setVisibility(GONE);
                             }
                         } else {
-                            if(isVideoplaying) {
-                                loadVideoPic();  //xuameng 加载网络PIC图片
-                                iv_circle_bg.setVisibility(VISIBLE);
-                            }
+                            loadVideoPic();  //xuameng 加载网络PIC图片
+                            iv_circle_bg.setVisibility(VISIBLE);
                         }
                     }
                     iv_circle_bg.setLayoutParams(params);
@@ -1734,33 +1721,7 @@ public class VodController extends BaseController {
         videoPlayState = playState;
         switch(playState) {
             case VideoView.STATE_IDLE:
-                if(isBottomVisible() && mSeekBarhasFocus) { //xuameng假如焦点在SeekBar
-                    mxuPlay.requestFocus(); //底部菜单默认焦点为播放
-                }
                 mLandscapePortraitBtn.setVisibility(View.GONE);
-                if(!isPlaying && mTvPausexu.getVisibility() == View.VISIBLE) {
-                    ObjectAnimator animator30 = ObjectAnimator.ofFloat(mTvPausexu, "translationX", -0, 700); //xuameng动画暂停菜单开始
-                    animator30.setDuration(300); //xuameng动画暂停菜单
-                    animator30.addListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-                            super.onAnimationStart(animation);
-                            if(mPlayPauseTimexu.getVisibility() == View.VISIBLE || mPlayTitle.getVisibility() == View.VISIBLE) {
-                                mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面视频名称
-                                mPlayTitle.setVisibility(GONE); //xuameng隐藏上面时间
-                            }
-                            isPlaying = true; //xuameng动画开启
-                        }
-                        public void onAnimationEnd(Animator animation) {
-                            super.onAnimationEnd(animation);
-                            mTvPausexu.setVisibility(GONE); //xuameng动画暂停菜单隐藏 
-                            isPlaying = false; //xuameng动画开启
-                        }
-                    });
-                    animator30.start(); //xuameng动画暂停菜单结束
-                }
-                mxuPlay.setText("准备");
-                mVideoSize.setText("[ 0 X 0 ]");
                 if(MxuamengMusic.getVisibility() == View.VISIBLE) { //xuameng播放音乐背景
                     MxuamengMusic.setVisibility(GONE);
                 }
@@ -1770,63 +1731,64 @@ public class VodController extends BaseController {
                 if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
                     customVisualizer.setVisibility(GONE);
                 }
-                releaseVisualizer();  //xuameng播放音乐背景
-                isVideoplaying = false;
+                mPlayLoadNetSpeed.setVisibility(View.GONE);
+                if(isBottomVisible() && mSeekBarhasFocus) { //xuameng假如焦点在SeekBar
+                    mxuPlay.requestFocus(); //底部菜单默认焦点为播放
+                }
                 isVideoPlay = false;
                 isBufferIng = false; //xuameng 判断是否进在缓冲视频
+                isSystemPlayerBufferIng = false;  //xuameng 判断系统播放器是否进在缓冲视频
+                mxuPlay.setText("准备");
+                mVideoSize.setText("[ 0 X 0 ]");
+                releaseVisualizer();  //xuameng播放音乐背景
                 clearSubtitleCache();  //xuameng清除字幕缓存
+                mHidePauseIng(); //xuameng 隐藏暂停图标
                 break;
             case VideoView.STATE_PLAYING:
+                isVideoPlay = true;
+                isSystemPlayerBufferIng = false;  //xuameng 判断系统播放器是否进在缓冲视频
+                //isBufferIng = false; //xuameng 判断是否进在缓冲视频
+                if (videoPlayState == 0){  //xuameng 如果是系统播放器直接隐藏
+                    mPlayLoadNetSpeed.setVisibility(View.GONE);
+                    XuLoading.setVisibility(GONE);
+                }
+                mxuPlay.setText("暂停"); //xuameng底部菜单显示暂停
                 initLandscapePortraitBtnInfo();
                 listener.hideTipXu(); //xuameng 只要播放就隐藏错误信息
                 startProgress();
-                mxuPlay.setText("暂停"); //xuameng底部菜单显示暂停
-                isVideoplaying = true;
-                isVideoPlay = true;
-                isBufferIng = false; //xuameng 判断是否进在缓冲视频
                 break;
             case VideoView.STATE_PAUSED:
                 isVideoPlay = false;
-                isBufferIng = false; //xuameng 判断是否进在缓冲视频
                 mxuPlay.setText("播放"); //xuameng底部菜单显示播放
+                isSystemPlayerBufferIng = false;  //xuameng 判断系统播放器是否进在缓冲视频
+                //isBufferIng = false; //xuameng 判断是否进在缓冲视频
+                if (videoPlayState == 0){    //xuameng 如果是系统播放器直接隐藏
+                    mPlayLoadNetSpeed.setVisibility(View.GONE);
+                    XuLoading.setVisibility(GONE);
+                }
                 //mTopRoot1.setVisibility(GONE);       //xuameng隐藏上面菜单
                 //mTopRoot2.setVisibility(GONE);       //xuameng隐藏上面菜单
                 //mPlayTitle.setVisibility(VISIBLE);   //xuameng显示上面菜单
                 //pauseIngXu();
                 break;
             case VideoView.STATE_ERROR:
+                mPlayLoadNetSpeed.setVisibility(View.GONE);
+                isVideoPlay = false;
                 if(isBottomVisible() && mSeekBarhasFocus) { //xuameng假如焦点在SeekBar
                     mxuPlay.requestFocus(); //底部菜单默认焦点为播放
                 }
                 listener.errReplay();
-                isVideoPlay = false;
                 mxuPlay.setText("准备");
-                if(!isPlaying && mTvPausexu.getVisibility() == View.VISIBLE) {
-                    ObjectAnimator animator31 = ObjectAnimator.ofFloat(mTvPausexu, "translationX", -0, 700); //xuameng动画暂停菜单开始
-                    animator31.setDuration(300); //xuameng动画暂停菜单
-                    animator31.addListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationStart(Animator animation) {
-                            super.onAnimationStart(animation);
-                            isPlaying = true; //xuameng动画开启
-                        }
-                        public void onAnimationEnd(Animator animation) {
-                            super.onAnimationEnd(animation);
-                            mTvPausexu.setVisibility(GONE); //xuameng动画暂停菜单隐藏 
-                            isPlaying = false; //xuameng动画开启
-                        }
-                    });
-                    animator31.start(); //xuameng动画暂停菜单结束
-                }
+                mHidePauseIng(); //xuameng 隐藏暂停图标
                 break;
             case VideoView.STATE_PREPARED:
-                mPlayLoadNetSpeed.setVisibility(GONE);
+                mPlayLoadNetSpeed.setVisibility(View.GONE);
+                isVideoPlay = false;
                 hideLiveAboutBtn();
                 listener.prepared();
                 String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
                 String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
                 mVideoSize.setText("[ " + width + " X " + height + " ]");
-                isVideoPlay = false;
                 try {
                     musicAnimation = mPlayerConfig.getBoolean("music");  //xuameng音乐播放动画获取设置
                 } catch (JSONException e) {
@@ -1840,9 +1802,10 @@ public class VodController extends BaseController {
                 }
                 break;
             case VideoView.STATE_BUFFERED:
-                mPlayLoadNetSpeed.setVisibility(GONE);
+                mPlayLoadNetSpeed.setVisibility(View.GONE);
                 isVideoPlay = true;
                 isBufferIng = false; //xuameng 判断是否进在缓冲视频
+                isSystemPlayerBufferIng = false;  //xuameng 判断系统播放器是否进在缓冲视频
                 break;
             case VideoView.STATE_PREPARING:
                 if(isBottomVisible() && mSeekBarhasFocus) { //xuameng假如焦点在SeekBar
@@ -1850,7 +1813,6 @@ public class VodController extends BaseController {
                 }
                 mLandscapePortraitBtn.setVisibility(View.GONE);
                 simSeekPosition = 0; //XUAMENG重要,换视频时重新记录进度
-                isVideoplaying = false;
                 isVideoPlay = false;
             case VideoView.STATE_BUFFERING:
 			    if(mProgressRoot.getVisibility() == View.GONE) { //xuameng进程图标
@@ -1861,13 +1823,16 @@ public class VodController extends BaseController {
                 }
                 isVideoPlay = false;
                 isBufferIng = true; //xuameng 判断是否进在缓冲视频
-                speedPlayEnd();
+                isSystemPlayerBufferIng = true;  //xuameng 判断系统播放器是否进在缓冲视频
+                speedPlayEnd();  //xuameng 停止快进
                 break;
             case VideoView.STATE_PLAYBACK_COMPLETED:
-                listener.playNext(true);
+                mPlayLoadNetSpeed.setVisibility(View.GONE);
+                clearSubtitleCache();
                 isVideoPlay = false;
                 isBufferIng = false; //xuameng 判断是否进在缓冲视频
-                clearSubtitleCache();
+                isSystemPlayerBufferIng = false;  //xuameng 判断系统播放器是否进在缓冲视频
+                listener.playNext(true);
                 break;
         }
     }
@@ -1914,6 +1879,11 @@ public class VodController extends BaseController {
     }
     public void pauseIngXu() {
         mTvPausexu.setVisibility(VISIBLE);
+        mxuPlay.setVisibility(View.VISIBLE);
+        mxuPlay.setTextColor(Color.WHITE); //xuameng底部菜单显示播放颜色
+        mxuPlay.setText("播放"); //xuameng底部菜单显示播放
+        mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面时间
+        mPlayTitle.setVisibility(GONE); //xuameng隐藏上面视频名称
         if(mBottomRoot.getVisibility() == View.GONE && !isDisplay) { //xuameng如果没显示菜单就显示
             showBottom();
             myHandle.postDelayed(myRunnable, myHandleSeconds);
@@ -1932,12 +1902,51 @@ public class VodController extends BaseController {
             }
         });
         animator8.start(); //xuameng动画暂停菜单结束
-        mxuPlay.setVisibility(View.VISIBLE);
-        mxuPlay.setTextColor(Color.WHITE); //xuameng底部菜单显示播放颜色
-        mxuPlay.setText("播放"); //xuameng底部菜单显示播放
-        mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面时间
-        mPlayTitle.setVisibility(GONE); //xuameng隐藏上面视频名称
     }
+
+    public void mPauseIngXu() {        //xuameng 全屏时如果是暂停状态就显示暂停图标
+		if(isInPlaybackState()){
+            if (!mControlWrapper.isPlaying() && mTvPausexu.getVisibility() == View.GONE){
+                mTvPausexu.setVisibility(VISIBLE);
+                mxuPlay.setVisibility(View.VISIBLE);
+                mxuPlay.setTextColor(Color.WHITE); //xuameng底部菜单显示播放颜色
+                mxuPlay.setText("播放"); //xuameng底部菜单显示播放
+                mHandler.postDelayed(mUpdatePauseLayout, 50);   // Workaround Fix : SurfaceView
+            }
+        }
+    }
+
+	public void mHidePauseIng() { //xuameng 隐藏暂停图标
+        if(!isPlaying && mTvPausexu.getVisibility() == View.VISIBLE) {
+            ObjectAnimator animator30 = ObjectAnimator.ofFloat(mTvPausexu, "translationX", -0, 700); //xuameng动画暂停菜单开始
+            animator30.setDuration(300); //xuameng动画暂停菜单
+            animator30.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+                    super.onAnimationStart(animation);
+                    if(mPlayPauseTimexu.getVisibility() == View.VISIBLE || mPlayTitle.getVisibility() == View.VISIBLE) {
+                        mPlayPauseTimexu.setVisibility(GONE); //xuameng隐藏上面视频名称
+                        mPlayTitle.setVisibility(GONE); //xuameng隐藏上面时间
+                    }
+                    isPlaying = true; //xuameng动画开启
+                }
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
+                    mTvPausexu.setVisibility(GONE); //xuameng动画暂停菜单隐藏 
+                    isPlaying = false; //xuameng动画开启
+                }
+            });
+            animator30.start(); //xuameng动画暂停菜单结束
+        }
+    }
+
+    private final Runnable mUpdatePauseLayout = new Runnable() {
+        @Override
+        public void run() {
+            mTvPausexu.requestLayout();
+        }
+    };
+
     @Override
     public boolean onKeyEvent(KeyEvent event) {
         myHandle.removeCallbacks(myRunnable);
@@ -2004,7 +2013,7 @@ public class VodController extends BaseController {
     }
     private boolean fromLongPress;
     private float speed_old = 1.0f;
-    private void speedPlayStart() {
+    private void speedPlayStart() {    //xuameng 启动快进
         if(isVideoPlay && mControlWrapper.isPlaying()) {
             fromLongPress = true;
             try {
@@ -2026,7 +2035,7 @@ public class VodController extends BaseController {
             }
         }
     }
-    private void speedPlayEnd() {
+    private void speedPlayEnd() {  //xuameng 停止快进
         if(fromLongPress) {
             fromLongPress = false;
             try {
