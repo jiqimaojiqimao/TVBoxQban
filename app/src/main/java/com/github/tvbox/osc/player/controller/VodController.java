@@ -353,6 +353,7 @@ public class VodController extends BaseController {
     TextView mPlayanimation; //xuameng音柱动画
     private ImageView iv_circle_bg; //xuameng音乐播放时图标
     private FrameLayout play_speed_3; //xuameng倍速播放
+    private FrameLayout mPauseContainer; //xuameng mPlayTitle的父级
     private TextView tv_slide_progress_text;  //xuameng 旧的亮度调节框已作废
     ImageView MxuamengMusic; //xuameng播放音乐背景
     private ProgressBar XuLoading; //xuameng  loading
