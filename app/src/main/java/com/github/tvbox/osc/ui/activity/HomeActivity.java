@@ -171,7 +171,7 @@ public class HomeActivity extends BaseActivity {
                     if (layoutManager == null) {
                         return; // xuameng防止空指针
                     }
-                    View firstChild = Objects.requireNonNull(mGridView.getLayoutManager()).findViewByPosition(0);
+                    View firstChild = layoutManager.findViewByPosition(0); // 直接使用已检查的layoutManager
                     if (firstChild != null) {
                         mGridView.setSelectedPosition(0);
                         firstChild.requestFocus();
@@ -582,6 +582,10 @@ public class HomeActivity extends BaseActivity {
             }
             // 如果 sortFocusView 存在且没有获取焦点，则请求焦点
             if (this.sortFocusView != null && !this.sortFocusView.isFocused()) {
+                RecyclerView.LayoutManager layoutManager = mGridView.getLayoutManager();
+                if (layoutManager == null) {
+                    return; // xuameng防止空指针
+                }
                 //this.sortFocusView.requestFocus(); //xuameng这段代码手机使用时菜单失去焦点会闪退   
                 this.mGridView.setSelection(PositionXu);   //xuameng处理手机滑动主页菜单失去焦点时按返回键闪退
             }
