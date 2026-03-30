@@ -2136,6 +2136,8 @@ public class LivePlayActivity extends BaseActivity {
                 switch(playState) {
                     case VideoView.STATE_IDLE:
                         isVideoplaying = false;
+                        isVOD = false;
+                        isBack = false;
                         iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
                         tv_size.setText("[0 X 0]"); //XUAMENG分辨率
                         if(MxuamengMusic.getVisibility() == View.VISIBLE) { //xuameng播放音乐背景
@@ -2148,7 +2150,6 @@ public class LivePlayActivity extends BaseActivity {
                            customVisualizer.setVisibility(View.GONE);
                         }
 				        releaseVisualizer();  //xuameng播放音乐背景
-                        iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
                         sBar = (SeekBar) findViewById(R.id.pb_progressbar); //xuameng重置进度条
                         sBar.setMax(0);
                         sBar.setProgress(0);
