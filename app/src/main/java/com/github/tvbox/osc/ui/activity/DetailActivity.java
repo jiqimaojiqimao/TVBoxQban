@@ -681,6 +681,14 @@ public class DetailActivity extends BaseActivity {
 
     private void jumpToPlay() {
         if (vodInfo != null && vodInfo.seriesMap.get(vodInfo.playFlag).size() > 0) {
+
+            // xuameng临时解决OK线路配置中心
+            String currentUrl = vodInfo.seriesMap.get(vodInfo.playFlag).get(vodInfo.playIndex).url;
+            // xuameng判断URL是否满足条件：不为空、长度不超过4、且包含"Ok"
+            if (currentUrl != null && currentUrl.length() <= 4 && currentUrl.startsWith("Ok")) {
+                return;
+            }
+
             preFlag = vodInfo.playFlag;
             //更新播放地址
             setTextShow(tvPlayUrl, "播放地址：", vodInfo.seriesMap.get(vodInfo.playFlag).get(vodInfo.playIndex).url);
