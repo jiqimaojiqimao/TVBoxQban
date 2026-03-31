@@ -24,10 +24,10 @@ android {
 
     signingConfigs {
         config {
-            keyAlias 'jvhuiys'
-            keyPassword '222222'
-            storeFile file('jvhuiys.jks')
-            storePassword '222222'
+            keyAlias 'TVBoxOSC'
+            keyPassword 'TVBoxOSC'
+            storeFile file('TVBoxOSC.jks')
+            storePassword 'TVBoxOSC'
             v2SigningEnabled = true
         }
     }
@@ -38,12 +38,14 @@ android {
 
     buildTypes {
         release {
+            signingConfig signingConfigs.config
             minifyEnabled true
             shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
         debug {
+            signingConfig signingConfigs.config
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
 
@@ -52,7 +54,7 @@ android {
     
     packagingOptions {
         jniLibs {
-            useLegacyPackaging = false
+            useLegacyPackaging = true
         }
         resources {
             exclude 'META-INF/beans.xml'
