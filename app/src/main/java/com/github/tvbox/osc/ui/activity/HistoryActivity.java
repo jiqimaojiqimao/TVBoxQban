@@ -180,13 +180,14 @@ public class HistoryActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(mGridView != null){
+        if (mGridView != null && mGridView.getLayoutManager() != null) {  //xuameng 防止空指针
             if (HawkConfig.saveHistory){    // xuameng延迟200ms确保渲染完成  默认焦点丢失问题
                 mGridView.postDelayed(() -> {
                     mGridView.setSelection(0);  // xuameng保存历史记录后选择第一项
                     mGridView.requestFocus();
                     mGridView.requestFocusFromTouch();
-                }, 200); 
+                    HawkConfig.saveHistory = false;  //xuameng判断存储历史记录
+                }, 300); 
             }else{
                 mGridView.postDelayed(() -> {   // xuameng没有成功保存历史记录的刚才选那个现在选那个
                     mGridView.requestFocus();
