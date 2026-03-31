@@ -156,7 +156,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
                 //  mLoading.setVisibility(GONE);  //xuameng这里不应该隐藏
                 break;
             case VideoView.STATE_PAUSED:
-                mPauseRoot.setVisibility(VISIBLE);
+                //mPauseRoot.setVisibility(VISIBLE);
                 //  mLoading.setVisibility(GONE);  //xuameng这里不应该隐藏
                 break;
             case VideoView.STATE_PREPARED:
