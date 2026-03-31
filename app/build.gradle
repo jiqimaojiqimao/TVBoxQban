@@ -28,7 +28,7 @@ signingConfigs {
         keyPassword '222222'
         storeFile file('jvhuiys.jks')
         storePassword '222222'
-        v2SigningEnabled true
+        v2SigningEnabled = true
     }
 }
 
@@ -53,7 +53,7 @@ signingConfigs {
     
     packagingOptions {
         jniLibs {
-            useLegacyPackaging true
+            useLegacyPackaging = false
         }
         resources {
             exclude 'META-INF/beans.xml'
@@ -158,16 +158,16 @@ dependencies {
   //  implementation "androidx.media3:media3-container:$exoplayerVersion"
   //  implementation "androidx.media3:media3-database:$exoplayerVersion"
   //  implementation "androidx.media3:media3-datasource:$exoplayerVersion"
-  //  implementation "androidx.media3:media3-datasource-rtmp:$exoplayerVersion"
+    implementation "androidx.media3:media3-datasource-rtmp:$exoplayerVersion"
   //  implementation "androidx.media3:media3-decoder:$exoplayerVersion"
   //  implementation "androidx.media3:media3-effect:$exoplayerVersion"
   //  implementation "androidx.media3:media3-exoplayer:$exoplayerVersion"
  //   implementation "androidx.media3:media3-exoplayer-dash:$exoplayerVersion"
  //   implementation "androidx.media3:media3-exoplayer-hls:$exoplayerVersion"
- //   implementation "androidx.media3:media3-exoplayer-rtsp:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer-rtsp:$exoplayerVersion"
  //   implementation "androidx.media3:media3-exoplayer-smoothstreaming:$exoplayerVersion"
  //   implementation "androidx.media3:media3-extractor:$exoplayerVersion"
- //   implementation "androidx.media3:media3-ui:$exoplayerVersion"
+    implementation "androidx.media3:media3-ui:$exoplayerVersion"
   //  implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'    //xuameng ffmpeg扩展
 }
 
