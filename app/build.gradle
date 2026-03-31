@@ -12,7 +12,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
-        versionName '20260331-2222'
+        versionName '20260330-2222'
         multiDexEnabled = true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -22,30 +22,18 @@ android {
         }
     }
 
-    signingConfigs {
-        config {
-            keyAlias 'TVBoxOSC'
-            keyPassword 'TVBoxOSC'
-            storeFile file('TVBoxOSC.jks')
-            storePassword 'TVBoxOSC'
-            v2SigningEnabled = true
-        }
-    }
-
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.config
             minifyEnabled true
             shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
         debug {
-            signingConfig = signingConfigs.config
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
 
