@@ -681,14 +681,6 @@ public class DetailActivity extends BaseActivity {
 
     private void jumpToPlay() {
         if (vodInfo != null && vodInfo.seriesMap.get(vodInfo.playFlag).size() > 0) {
-
-            // xuameng临时解决OK线路配置中心
-            String currentUrl = vodInfo.seriesMap.get(vodInfo.playFlag).get(vodInfo.playIndex).url;
-            // xuameng判断URL是否满足条件：不为空、长度不超过4、且包含"Ok"
-            if (currentUrl != null && currentUrl.length() <= 4 && currentUrl.startsWith("Ok")) {
-                return;
-            }
-
             preFlag = vodInfo.playFlag;
             //更新播放地址
             setTextShow(tvPlayUrl, "播放地址：", vodInfo.seriesMap.get(vodInfo.playFlag).get(vodInfo.playIndex).url);
@@ -908,6 +900,13 @@ public class DetailActivity extends BaseActivity {
                     }
                     mVideo = absXml.movie.videoList.get(0);
                     mVideo.id = vodId;
+
+                    if (mVideo.sourceKey.contains("配置中心") 
+                        || mVideo.sourceKey.toLowerCase().contains("config")) {  //xuameng 配置中心判断如是就返回
+                        showEmpty();
+                        return;
+                    }
+
                     if (TextUtils.isEmpty(mVideo.name))mVideo.name = "🥇聚汇影视";
                     vodInfo = new VodInfo();
                     if((mVideo.pic==null || mVideo.pic.isEmpty()) && !vod_picture.isEmpty()){    //xuameng某些网站图片部显示
