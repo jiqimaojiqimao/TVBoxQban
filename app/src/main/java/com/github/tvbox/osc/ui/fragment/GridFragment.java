@@ -98,20 +98,27 @@ public class GridFragment extends BaseLazyFragment {
 
     private void changeView(String id,Boolean isFolder){
         if(isFolder){
-            this.sortData.flag =style==null?"1":"2"; // 修改sortData.flag
+            //this.sortData.flag =style==null?"1":"2"; // 修改sortData.flag
+            this.sortData.flag = "1"; // xuameng修改成1不判断style 直接显示文件夹样式
         }else {
-            this.sortData.flag ="2"; // 修改sortData.flag
+            //this.sortData.flag ="2"; // 修改sortData.flag
+            this.sortData.flag = "1"; // xuameng修改成1 直接显示文件夹样式   '2' 显示缩略图的文件夹模式
         }
         initView();
         this.sortData.id =id; // 修改sortData.id为新的ID
         initViewModel();
         initData();
     }
+
     public boolean isFolederMode(){ return (getUITag() =='1'); }
     // 获取当前页面UI的显示模式 ‘0’ 正常模式 '1' 文件夹模式 '2' 显示缩略图的文件夹模式
+
     public char getUITag(){
-        return (sortData == null || sortData.flag == null || sortData.flag.length() ==0 || style!=null) ?  '0' : sortData.flag.charAt(0);
+        //return (sortData == null || sortData.flag == null || sortData.flag.length() ==0 || style!=null) ?  '0' : sortData.flag.charAt(0);
+        // xuameng完全移除 style!=null 的条件判断  如有flag  直接显示文件夹样式
+        return (sortData == null || sortData.flag == null || sortData.flag.length() == 0) ? '0' : sortData.flag.charAt(0);
     }
+
     // 是否允许聚合搜索 sortData.flag的第二个字符为‘1’时允许聚搜
     public boolean enableFastSearch(){  return sortData.flag == null || sortData.flag.length() < 2 || (sortData.flag.charAt(1) == '1'); }
     // 保存当前页面
