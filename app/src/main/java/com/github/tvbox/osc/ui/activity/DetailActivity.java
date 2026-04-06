@@ -929,18 +929,28 @@ public class DetailActivity extends BaseActivity {
                     setTextShow(tvActor, "演员：", mVideo.actor);
                     setTextShow(tvDirector, "导演：", mVideo.director);
                     setTextShow(tvDes, "内容简介：", removeHtmlTag(mVideo.des));
+
+                    int radius = AutoSizeUtils.mm2px(mContext, 8);  //xuameng Base64 图片 圆角设置
+
                     if (!TextUtils.isEmpty(mVideo.pic)) {
-                        Picasso.get()
-                                .load(DefaultConfig.checkReplaceProxy(mVideo.pic))
-                                .transform(new RoundTransformation(MD5.string2MD5(mVideo.pic))
-                                        .centerCorp(true)
-                                        .override(AutoSizeUtils.mm2px(mContext, ImgUtil.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtil.defaultHeight))
-                                        .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
-                                .placeholder(R.drawable.img_loading_placeholder)
-                                .noFade()
-                            //    .error(R.drawable.img_loading_placeholder)
-	                        .error(ImgUtilXude.createTextDrawable(mVideo.name))
-                                .into(ivThumb);
+                        if(ImgUtil.isBase64Image(mVideo.pic)){
+                            // xuameng 如果是 Base64 图片，解码并设置
+                            ivThumb.setImageBitmap(
+                                ImgUtil.decodeBase64ToRoundBitmap(mVideo.pic, radius)   //xuameng 用这个方法进行圆角设置
+                            );
+                        }else {
+                            Picasso.get()
+                                    .load(DefaultConfig.checkReplaceProxy(mVideo.pic))
+                                    .transform(new RoundTransformation(MD5.string2MD5(mVideo.pic))
+                                            .centerCorp(true)
+                                            .override(AutoSizeUtils.mm2px(mContext, ImgUtil.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtil.defaultHeight))
+                                            .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
+                                    .placeholder(R.drawable.img_loading_placeholder)
+                                    .noFade()
+                                //  .error(R.drawable.img_loading_placeholder)
+	                                .error(ImgUtilXude.createTextDrawable(mVideo.name))
+                                    .into(ivThumb);
+                        }
                     } else {
                       //  ivThumb.setImageResource(R.drawable.img_loading_placeholder);
                           ivThumb.setImageDrawable(ImgUtilXude.createTextDrawable(mVideo.name));
