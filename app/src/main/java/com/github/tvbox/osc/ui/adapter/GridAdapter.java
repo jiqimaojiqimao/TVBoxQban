@@ -21,89 +21,34 @@ import java.util.ArrayList;
 import me.jessyan.autosize.utils.AutoSizeUtils;
 
 /**
- * @author pj567
- * @date :2020/12/21
- * @description:
-  * GridAdapter 支持传入 style 来设置图片的宽高比例，
-  * 如果不传 style 则保留旧的默认风格（XML 中 item_grid.xml 定义的尺寸）。
+ * @xuameng
+ * @date :2026/04/05
+ * 增加Base64 图片圆角处理
+ * 增加如果style是list直接显示文件夹样式  删除所有mShowList判断
+ * GridAdapter 支持传入 style 如style 类型不是list 就用style来设置图片的宽高比例，
+ * 如果不传 style 则保留旧的默认风格（XML 中 item_grid.xml 定义的尺寸）。
  */
 public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
-    private boolean mShowList ;
 	private int defaultWidth;
     public ImgUtil.Style style; // 动态风格，传入时调整图片宽高比
 
-    /**
-     * 如果 style 传 null，则采用 item_grid.xml 中的默认尺寸
+    /**xuameng 如果 style = list 就以文件夹显示 style = null 用 item_grid.xml  video.tag.equals("folder" 用 item_list以文件夹显示
+     * 如果 style不是list  传 null，则采用 item_grid.xml 中的默认尺寸
      */
     public GridAdapter(boolean showList, ImgUtil.Style style) {
         super( showList ? R.layout.item_list:R.layout.item_grid, new ArrayList<>());
-        this.mShowList = showList;
-        if(style!=null ){
-            if(style.type.equals("list"))this.mShowList=true;
-			this.defaultWidth=ImgUtil.getStyleDefaultWidth(style);
+        if (style != null) {
+            if ("list".equals(style.type)) {   //xuameng如果 style = list 就以文件夹显示 转style = null 用 item_list
+                style = null;
+            } else {
+                this.defaultWidth = ImgUtil.getStyleDefaultWidth(style);   //style 来设置图片的宽高比例
+            }
         }
         this.style = style;
     }
 
-
-
     @Override
     protected void convert(BaseViewHolder helper, Movie.Video item) {
-        if(this.mShowList) {
-        if (TextUtils.isEmpty(item.note)) {
-        //    helper.setVisible(R.id.tvNote, false);
-			helper.setText(R.id.tvNote, "暂无信息");
-        } else {
-            helper.setVisible(R.id.tvNote, true);
-            helper.setText(R.id.tvNote, item.note);
-        }
-        if (TextUtils.isEmpty(item.name)) {
-            helper.setText(R.id.tvName, "聚汇影视");
-        } else {
-            helper.setText(R.id.tvName, item.name);
-        }
-        TextView tvArea = helper.getView(R.id.tvArea);
-        tvArea.setVisibility(View.GONE);
-        TextView tvLang = helper.getView(R.id.tvLang);
-        tvLang.setVisibility(View.GONE);
-        TextView tvYear = helper.getView(R.id.tvYear);
-        tvYear.setVisibility(View.GONE);
-        
-		ImageView ivThumb = helper.getView(R.id.ivThumb);
-        int newWidth = ImgUtil.defaultWidth;
-        int newHeight = ImgUtil.defaultHeight;
-        if(style!=null){
-             newWidth = defaultWidth;
-             newHeight = (int)(newWidth / style.ratio);
-         }
-            //由于部分电视机使用glide报错
-            if (!TextUtils.isEmpty(item.pic)) {
-                item.pic=item.pic.trim();
-                if(ImgUtil.isBase64Image(item.pic)){
-                    // 如果是 Base64 图片，解码并设置
-                    ivThumb.setImageBitmap(ImgUtil.decodeBase64ToBitmap(item.pic));
-                }else {
-                    Picasso.get()
-                            .load(DefaultConfig.checkReplaceProxy(item.pic))
-                            .transform(new RoundTransformation(MD5.string2MD5(item.pic))
-                                    .centerCorp(true)
-                                  //  .override(AutoSizeUtils.mm2px(mContext, 240), AutoSizeUtils.mm2px(mContext, 320))
-					        .override(AutoSizeUtils.mm2px(mContext,newWidth), AutoSizeUtils.mm2px(mContext,newHeight))
-                            .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
-                            .placeholder(R.drawable.img_loading_placeholder)
-                            .noFade()
-                       //     .error(R.drawable.img_loading_placeholder)
-							.error(ImgUtil.createTextDrawable(item.name))
-                            .into(ivThumb);
-                }
-            } else {
-              //  ivThumb.setImageResource(R.drawable.img_loading_placeholder);
-				ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
-            }
-			applyStyleToImage(ivThumb);//动态设置宽高
-            return;
-        }
-
         TextView tvYear = helper.getView(R.id.tvYear);
         if (item.year <= 0) {
             tvYear.setVisibility(View.GONE);
@@ -148,12 +93,17 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
              newHeight = (int)(newWidth / style.ratio);
          }
         ImageView ivThumb = helper.getView(R.id.ivThumb);
+
+        int radius = AutoSizeUtils.mm2px(mContext, 8);  //xuameng Base64 图片 圆角设置
+
         //由于部分电视机使用glide报错
         if (!TextUtils.isEmpty(item.pic)) {
             item.pic=item.pic.trim();
             if(ImgUtil.isBase64Image(item.pic)){
-                // 如果是 Base64 图片，解码并设置
-                ivThumb.setImageBitmap(ImgUtil.decodeBase64ToBitmap(item.pic));
+                // xuameng 如果是 Base64 图片，解码并设置
+                ivThumb.setImageBitmap(
+                    ImgUtil.decodeBase64ToRoundBitmap(item.pic, radius)   //xuameng 用这个方法进行圆角设置
+                );
             }else {
                 Picasso.get()
                         .load(DefaultConfig.checkReplaceProxy(item.pic))
