@@ -107,6 +107,10 @@ import java.util.TimeZone;
 import xyz.doikki.videoplayer.player.VideoView;
 import java.util.HashSet;  //新增频道收藏
 import java.util.Set;  //新增频道收藏
+import com.github.tvbox.osc.picasso.RoundTransformation; //xuameng 新增给音乐显示旋转图片用
+import me.jessyan.autosize.utils.AutoSizeUtils; //xuameng 新增给音乐显示旋转图片用
+import com.github.tvbox.osc.util.MD5; //xuameng 新增给音乐显示旋转图片用
+
 public class LivePlayActivity extends BaseActivity {
     public static Context context;
     private VideoView mVideoView;
@@ -859,6 +863,15 @@ public class LivePlayActivity extends BaseActivity {
     }
     private void updateChannelIcon(String channelName, String logoUrl) {
         if(StringUtils.isEmpty(logoUrl)) {
+            Picasso.get() //xuameng 音乐旋转图标 台标
+                   .load(logoUrl)
+				   .resize(120,120)
+                   .transform(new RoundTransformation(MD5.string2MD5(logoUrl))
+                   .centerCorp(true)
+                   .roundRadius(AutoSizeUtils.mm2px(mContext, 50), RoundTransformation.RoundType.ALL))
+                   .placeholder(R.drawable.app_logo)
+                   .error(R.drawable.app_logo)
+                   .into(iv_circle_bg_xu);
             imgLiveIconXu.setVisibility(View.GONE);
             liveIconNullBg.setVisibility(View.VISIBLE);
             liveIconNullText.setVisibility(View.VISIBLE);
@@ -866,7 +879,16 @@ public class LivePlayActivity extends BaseActivity {
             Picasso.get().load(logoUrl).placeholder(R.drawable.banner_xu).into(imgLiveIcon); // xuameng内容空显示banner
             liveIconNullText.setVisibility(View.VISIBLE);
             liveIconNullText.setText("[频道编号" + channel_Name.getChannelNum() + "]"); // xuameng显示频道编号
-        } else {
+        } else {   //xuameng 新增给lived显示旋转图片用
+            Picasso.get()  //xuameng 音乐旋转图标 台标
+                   .load(logoUrl)
+				   .resize(120,120)
+                   .transform(new RoundTransformation(MD5.string2MD5(logoUrl))
+                   .centerCorp(true)
+                   .roundRadius(AutoSizeUtils.mm2px(mContext, 50), RoundTransformation.RoundType.ALL))
+                   .placeholder(R.drawable.app_logo)
+                   .error(R.drawable.app_logo)
+                   .into(iv_circle_bg_xu);
             imgLiveIconXu.setVisibility(View.GONE);
             imgLiveIcon.setVisibility(View.VISIBLE);
             Picasso.get().load(logoUrl).placeholder(R.drawable.banner_xu).into(imgLiveIcon); // xuameng内不空显示banner
