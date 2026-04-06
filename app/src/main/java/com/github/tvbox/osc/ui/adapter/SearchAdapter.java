@@ -40,20 +40,30 @@ public class SearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder>
                 helper.setText(R.id.tvNote, item.note);
             }
             ImageView ivThumb = helper.getView(R.id.ivThumb);
+
+            int radius = AutoSizeUtils.mm2px(mContext, 8);  //xuameng Base64 图片 圆角设置
+
             if (!TextUtils.isEmpty(item.pic)) {
-                Picasso.get()
-                        .load(item.pic)
-                        .transform(new RoundTransformation(MD5.string2MD5(item.pic))
-                                .centerCorp(true)
-                                .override(AutoSizeUtils.mm2px(mContext, ImgUtil.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtil.defaultHeight))
-                                .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
-                        .placeholder(R.drawable.img_loading_placeholder)
+                if(ImgUtil.isBase64Image(item.pic)){
+                    // xuameng 如果是 Base64 图片，解码并设置
+                    ivThumb.setImageBitmap(
+                        ImgUtil.decodeBase64ToRoundBitmap(item.pic, radius)   //xuameng 用这个方法进行圆角设置
+                    );
+                }else {
+                    Picasso.get()
+                            .load(item.pic)
+                            .transform(new RoundTransformation(MD5.string2MD5(item.pic))
+                                    .centerCorp(true)
+                                    .override(AutoSizeUtils.mm2px(mContext, ImgUtil.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtil.defaultHeight))
+                                    .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
+                            .placeholder(R.drawable.img_loading_placeholder)
                         .noFade()
-                    //    .error(R.drawable.img_loading_placeholder)
-						.error(ImgUtilXu.createTextDrawable(item.name))
-                    //    .memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)  //xuameng禁用缓存
-                    //    .networkPolicy(NetworkPolicy.NO_CACHE)   //xuameng禁用缓存
-                        .into(ivThumb);
+                        //  .error(R.drawable.img_loading_placeholder)
+						    .error(ImgUtilXu.createTextDrawable(item.name))
+                        //  .memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)  //xuameng禁用缓存
+                        //  .networkPolicy(NetworkPolicy.NO_CACHE)   //xuameng禁用缓存
+                            .into(ivThumb);
+                }
             } else {
              //   ivThumb.setImageResource(R.drawable.img_loading_placeholder);
 				ivThumb.setImageDrawable(ImgUtilXu.createTextDrawable(item.name));
