@@ -48,19 +48,29 @@ public class CollectAdapter extends BaseQuickAdapter<VodCollect, BaseViewHolder>
         tvYear.setText(source!=null?source.getName():"🔍搜索影片");
         
         ImageView ivThumb = helper.getView(R.id.ivThumb);
+
+        int radius = AutoSizeUtils.mm2px(mContext, 8);  //xuameng Base64 图片 圆角设置
+
         //由于部分电视机使用glide报错
         if (!TextUtils.isEmpty(item.pic)) {
-            Picasso.get()
-                    .load(DefaultConfig.checkReplaceProxy(item.pic))
-                    .transform(new RoundTransformation(MD5.string2MD5(item.pic))
-                            .centerCorp(true)
-                            .override(AutoSizeUtils.mm2px(mContext, ImgUtil.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtil.defaultHeight))
-                            .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
-                    .placeholder(R.drawable.img_loading_placeholder)
-                    .noFade()
-                   // .error(R.drawable.img_loading_placeholder)
-					.error(ImgUtil.createTextDrawable(item.name))
-                    .into(ivThumb);
+            if(ImgUtil.isBase64Image(item.pic)){
+                // xuameng 如果是 Base64 图片，解码并设置
+                ivThumb.setImageBitmap(
+                    ImgUtil.decodeBase64ToRoundBitmap(item.pic, radius)   //xuameng 用这个方法进行圆角设置
+                );
+            }else {
+                Picasso.get()
+                        .load(DefaultConfig.checkReplaceProxy(item.pic))
+                        .transform(new RoundTransformation(MD5.string2MD5(item.pic))
+                                .centerCorp(true)
+                                .override(AutoSizeUtils.mm2px(mContext, ImgUtil.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtil.defaultHeight))
+                                .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
+                        .placeholder(R.drawable.img_loading_placeholder)
+                        .noFade()
+                       // .error(R.drawable.img_loading_placeholder)
+					    .error(ImgUtil.createTextDrawable(item.name))
+                        .into(ivThumb);
+            }
         } else {
            // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
 			ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
