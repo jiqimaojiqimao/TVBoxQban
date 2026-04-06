@@ -269,6 +269,9 @@
     <dimen name="vs_4_">-4.0mm</dimen>
     <dimen name="vs_5">5.0mm</dimen>
     <dimen name="vs_50">50.0mm</dimen>
+    <dimen name="vs_52">52.0mm</dimen>
+    <dimen name="vs_54">54.0mm</dimen>
+    <dimen name="vs_56">56.0mm</dimen>
     <dimen name="vs_570">570.0mm</dimen>
     <dimen name="vs_6">6.0mm</dimen>
     <dimen name="vs_60">60.0mm</dimen>
