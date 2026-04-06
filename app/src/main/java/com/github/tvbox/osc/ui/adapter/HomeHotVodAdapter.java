@@ -28,44 +28,54 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
 
     private int defaultWidth;
     private final ImgUtil.Style style;
+    private boolean mShowList ; //xuameng 判断是否 style为list
 
-    /**
+    /**xuameng 增加 boolean showList 判断是否 style为list 是就显示文件夹样式
      * style 数据结构：ratio 指定宽高比（宽 / 高），type 表示风格（例如 rect、list）
      */
-    public HomeHotVodAdapter(ImgUtil.Style style) {
-        super(R.layout.item_user_hot_vod, new ArrayList<>());
-        if(style!=null){
-            this.defaultWidth=ImgUtil.getStyleDefaultWidth(style);
+    public HomeHotVodAdapter(boolean showList, ImgUtil.Style style) {
+        super( showList ? R.layout.item_list:R.layout.item_user_hot_vod, new ArrayList<>());
+        this.mShowList = showList; //xuameng 判断是否 style为list
+        if (style != null) {
+            if ("list".equals(style.type)) {   //如果 style = list 用item_list显示文件夹样式
+                style = null;
+            } else {
+                this.defaultWidth = ImgUtil.getStyleDefaultWidth(style);   //style 来设置图片的宽高比例
+            }
         }
-        this.style=style;
+        this.style = style;
     }
 
     @Override
     protected void convert(BaseViewHolder helper, Movie.Video item) {
     	// takagen99: Add Delete Mode
         FrameLayout tvDel = helper.getView(R.id.delFrameLayout);
-        if (HawkConfig.hotVodDelete) {
-            tvDel.setVisibility(View.VISIBLE);
-        } else {
-            tvDel.setVisibility(View.GONE);
+        if ( !this.mShowList && tvDel != null){
+            if (HawkConfig.hotVodDelete) {   //xuameng增加判断item_list中没有tvDel
+                tvDel.setVisibility(View.VISIBLE);
+            } else {
+                tvDel.setVisibility(View.GONE);
+            }
         }
 
         TextView tvRate = helper.getView(R.id.tvRate);
-        if (Hawk.get(HawkConfig.HOME_REC, 0) == 2){
+        if (Hawk.get(HawkConfig.HOME_REC, 0) == 2 && !this.mShowList && tvRate != null){  //xuameng增加判断item_list中没有tvRate
             tvRate.setText(ApiConfig.get().getSource(item.sourceKey).getName());
-        }else if(Hawk.get(HawkConfig.HOME_REC, 0) == 0){
+        }else if(Hawk.get(HawkConfig.HOME_REC, 0) == 0 && !this.mShowList && tvRate != null){
             tvRate.setText("聚汇热播");          //xuameng显示主页聚汇热播左上小字
-        }else if(Hawk.get(HawkConfig.HOME_REC, 0) == 1){
+        }else if(Hawk.get(HawkConfig.HOME_REC, 0) == 1 && !this.mShowList && tvRate != null){
             tvRate.setText("聚汇推荐");
         }else {
-            tvRate.setVisibility(View.GONE);
+            if (!this.mShowList && tvRate != null){
+                tvRate.setVisibility(View.GONE);
+            }
         }
 
         TextView tvNote = helper.getView(R.id.tvNote);
         if (item.note == null || item.note.isEmpty()) {
         //    tvNote.setVisibility(View.GONE);
-		    tvNote.setText("暂无信息");
-		    tvNote.setVisibility(View.VISIBLE);    
+            tvNote.setText("暂无信息");
+            tvNote.setVisibility(View.VISIBLE);    
         } else {
             tvNote.setText(item.note);
             tvNote.setVisibility(View.VISIBLE);      
@@ -84,12 +94,17 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
             newWidth = defaultWidth;
             newHeight = (int)(newWidth / style.ratio);
         }
+
+        int radius = AutoSizeUtils.mm2px(mContext, 8);  //xuameng Base64 图片 圆角设置
+
         //由于部分电视机使用glide报错
         if (!TextUtils.isEmpty(item.pic)) {
             item.pic=item.pic.trim();
             if(ImgUtil.isBase64Image(item.pic)){
-                // 如果是 Base64 图片，解码并设置
-                ivThumb.setImageBitmap(ImgUtil.decodeBase64ToBitmap(item.pic));
+                // xuameng 如果是 Base64 图片，解码并设置
+                ivThumb.setImageBitmap(
+                    ImgUtil.decodeBase64ToRoundBitmap(item.pic, radius)   //xuameng 用这个方法进行圆角设置
+                );
             }else {
                 Picasso.get()
                         .load(DefaultConfig.checkReplaceProxy(item.pic))
@@ -100,14 +115,14 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
                         .placeholder(R.drawable.img_loading_placeholder)
                         .noFade()
                        // .error(R.drawable.img_loading_placeholder)
-						.error(ImgUtil.createTextDrawable(item.name))
+                        .error(ImgUtil.createTextDrawable(item.name))
                         .into(ivThumb);
             }
         } else {
         //    ivThumb.setImageResource(R.drawable.img_loading_placeholder);
-			ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
+            ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
         }
-		        applyStyleToImage(ivThumb);//动态设置宽高
+        applyStyleToImage(ivThumb);//动态设置宽高
     }
     /**
      * 根据传入的 style 动态设置 ImageView 的高度：高度 = 宽度 / ratio
