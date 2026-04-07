@@ -903,7 +903,7 @@ public class DetailActivity extends BaseActivity {
 
                     if (mVideo.sourceKey.contains("配置中心") 
                         || mVideo.sourceKey.toLowerCase().contains("config")) {  //xuameng 配置中心判断如是就返回
-                        showEmpty();
+                        showConfig();
                         return;
                     }
 
@@ -930,7 +930,7 @@ public class DetailActivity extends BaseActivity {
                     setTextShow(tvDirector, "导演：", mVideo.director);
                     setTextShow(tvDes, "内容简介：", removeHtmlTag(mVideo.des));
 
-                    int radius = AutoSizeUtils.mm2px(mContext, 8);  //xuameng Base64 图片 圆角设置
+                    int radius = AutoSizeUtils.mm2px(mContext, 5);  //xuameng Base64 图片 圆角设置
 
                     if (!TextUtils.isEmpty(mVideo.pic)) {
                         if(ImgUtil.isBase64Image(mVideo.pic)){
