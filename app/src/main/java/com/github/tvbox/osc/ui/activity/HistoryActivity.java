@@ -187,12 +187,12 @@ public class HistoryActivity extends BaseActivity {
                     mGridView.requestFocus();
                     mGridView.requestFocusFromTouch();
                     HawkConfig.saveHistory = false;  //xuameng判断存储历史记录
-                }, 300); 
+                }, 100); 
             }else{
                 mGridView.postDelayed(() -> {   // xuameng没有成功保存历史记录的刚才选那个现在选那个
                     mGridView.requestFocus();
                     mGridView.requestFocusFromTouch();
-                }, 200); 
+                }, 50); 
             }
         }
     }
