@@ -162,6 +162,7 @@ public class HomeActivity extends BaseActivity {
         this.sortAdapter = new SortAdapter();
         this.mGridView.setSpacingWithMargins(0, AutoSizeUtils.dp2px(this.mContext, 10.0f));
         this.mGridView.setAdapter(this.sortAdapter);
+        this.mGridView.setAdapter(this.sortAdapter);
         sortAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {     //xuameng主页默认焦点
             @Override
             public void onChanged() {
@@ -257,12 +258,7 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                    // xuameng只在停止滚动时修复样式
-                 //   if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                 //       mGridView.postDelayed(() -> {
-                 //           resetAllItemsToDefaultPhone();
-                 //   }, 50); 
-                 //}
+               // resetAllItemsToDefaultPhone();   //xuameng   恢复主页菜单样式 解决样式丢失BUG
             }
         });
 
