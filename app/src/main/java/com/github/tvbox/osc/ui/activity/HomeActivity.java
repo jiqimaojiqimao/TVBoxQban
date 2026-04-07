@@ -262,7 +262,7 @@ public class HomeActivity extends BaseActivity {
                  //       mGridView.postDelayed(() -> {
                  //           resetAllItemsToDefaultPhone();
                  //   }, 50); 
-                }
+                 //}
             }
         });
 
