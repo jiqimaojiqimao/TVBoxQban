@@ -90,12 +90,13 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
 
         int newWidth = ImgUtil.defaultWidth;
         int newHeight = ImgUtil.defaultHeight;
-        if(style!=null){
+        if (style != null) {
             newWidth = defaultWidth;
-            newHeight = (int)(newWidth / style.ratio);
+            float safeRatio = ImgUtil.normalizeRatio(style.ratio);  //xuameng normalizeRatio强行指定ratio值防止用户乱写
+            newHeight = (int) (newWidth / safeRatio);
         }
 
-        int radius = AutoSizeUtils.mm2px(mContext, 8);  //xuameng Base64 图片 圆角设置
+        int radius = AutoSizeUtils.mm2px(mContext, 5);  //xuameng Base64 图片 圆角设置
 
         //由于部分电视机使用glide报错
         if (!TextUtils.isEmpty(item.pic)) {
@@ -131,7 +132,8 @@ public class HomeHotVodAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHol
         if(style!=null){
             ViewGroup container = (ViewGroup) ivThumb.getParent();
             int width = defaultWidth;
-            int height = (int) (width / style.ratio);
+            float safeRatio = ImgUtil.normalizeRatio(style.ratio);
+            int height = (int) (width / safeRatio);
             ViewGroup.LayoutParams containerParams = container.getLayoutParams();
             containerParams.height = AutoSizeUtils.mm2px(mContext, height); // 高度
             containerParams.width = ViewGroup.LayoutParams.MATCH_PARENT; // 宽度
