@@ -162,7 +162,6 @@ public class HomeActivity extends BaseActivity {
         this.sortAdapter = new SortAdapter();
         this.mGridView.setSpacingWithMargins(0, AutoSizeUtils.dp2px(this.mContext, 10.0f));
         this.mGridView.setAdapter(this.sortAdapter);
-        this.mGridView.setAdapter(this.sortAdapter);
         sortAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {     //xuameng主页默认焦点
             @Override
             public void onChanged() {
