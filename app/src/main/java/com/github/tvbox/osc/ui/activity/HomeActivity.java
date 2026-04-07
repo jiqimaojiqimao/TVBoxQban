@@ -158,10 +158,9 @@ public class HomeActivity extends BaseActivity {
         this.contentLayout = findViewById(R.id.contentLayout);
         this.mGridView = findViewById(R.id.mGridView);
         this.mViewPager = findViewById(R.id.mViewPager);
-        this.sortAdapter = new SortAdapter();
         this.mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 0, false));
+        this.sortAdapter = new SortAdapter();
         this.mGridView.setSpacingWithMargins(0, AutoSizeUtils.dp2px(this.mContext, 10.0f));
-        this.mGridView.setAdapter(this.sortAdapter);
         this.mGridView.setAdapter(this.sortAdapter);
         sortAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {     //xuameng主页默认焦点
             @Override
@@ -258,7 +257,12 @@ public class HomeActivity extends BaseActivity {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                resetAllItemsToDefaultPhone();   //xuameng   恢复主页菜单样式 解决样式丢失BUG
+                    // xuameng只在停止滚动时修复样式
+                    if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                        mGridView.post(() -> {
+                            resetAllItemsToDefaultPhone();
+                    });
+                }
             }
         });
 
@@ -657,6 +661,9 @@ public class HomeActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (mGridView.getLayoutManager() == null) {  //xuameng 防空指针findViewByPosition
+            mGridView.setLayoutManager(new V7LinearLayoutManager(this));
+        }
         mHandler.post(mRunnable);
     }
 
