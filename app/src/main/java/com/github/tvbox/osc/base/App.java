@@ -6,6 +6,7 @@ import androidx.multidex.MultiDexApplication;
 import com.github.tvbox.osc.bean.VodInfo;
 import com.github.tvbox.osc.callback.EmptyCallback;
 import com.github.tvbox.osc.callback.LoadingCallback;
+import com.github.tvbox.osc.callback.ConfigCallback;  //xuameng配置中心
 import com.github.tvbox.osc.data.AppDataManager;
 import com.github.tvbox.osc.server.ControlManager;
 import com.github.tvbox.osc.util.AppManager;
@@ -54,6 +55,7 @@ public class App extends MultiDexApplication {
         LoadSir.beginBuilder()
                 .addCallback(new EmptyCallback())
                 .addCallback(new LoadingCallback())
+                .addCallback(new ConfigCallback())  //xuameng配置中心
                 .commit();
         AutoSizeConfig.getInstance().setCustomFragment(true).getUnitsManager()
                 .setSupportDP(false)
