@@ -41,7 +41,7 @@ public class SearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder>
             }
             ImageView ivThumb = helper.getView(R.id.ivThumb);
 
-            int radius = AutoSizeUtils.mm2px(mContext, 8);  //xuameng Base64 图片 圆角设置
+            int radius = AutoSizeUtils.mm2px(mContext, 5);  //xuameng Base64 图片 圆角设置
 
             if (!TextUtils.isEmpty(item.pic)) {
                 if(ImgUtil.isBase64Image(item.pic)){
