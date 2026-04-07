@@ -49,7 +49,7 @@ public class CollectAdapter extends BaseQuickAdapter<VodCollect, BaseViewHolder>
         
         ImageView ivThumb = helper.getView(R.id.ivThumb);
 
-        int radius = AutoSizeUtils.mm2px(mContext, 8);  //xuameng Base64 图片 圆角设置
+        int radius = AutoSizeUtils.mm2px(mContext, 5);  //xuameng Base64 图片 圆角设置
 
         //由于部分电视机使用glide报错
         if (!TextUtils.isEmpty(item.pic)) {
