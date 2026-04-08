@@ -42,81 +42,6 @@ public class ImgUtilXu {
     public static int defaultWidth = 220;
     public static int defaultHeight = 280;
 
-    /**
-     * style 数据结构：ratio 指定宽高比（宽 / 高），type 表示风格（例如 rect、list）
-     */
-    public static class Style {
-        public float ratio;
-        public String type;
-
-        public Style(float ratio, String type) {
-            this.ratio = ratio;
-            this.type = type;
-        }
-    }
-
-    public static Style initStyle() {     //xuameng 改成list 不需要ratio
-        String bStyle = ApiConfig.get().getHomeSourceBean().getStyle();
-        if (TextUtils.isEmpty(bStyle)) {
-            return null;
-        }
-
-        try {
-            JSONObject jsonObject = new JSONObject(bStyle);
-
-            String type = jsonObject.getString("type");
-
-            // list 类型不需要 ratio
-            if ("list".equals(type)) {
-                return new Style(0f, type);
-            }
-
-            // 非 list 才解析 ratio
-            float ratio = (float) jsonObject.getDouble("ratio");
-            return new Style(ratio, type);
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    public static int spanCountByStyle(Style style, int defaultCount) {
-        int spanCount = defaultCount;
-        if ("rect".equals(style.type)) {
-            if (style.ratio >= 1.7) {
-                spanCount = 3; // 横图
-            } else if (style.ratio >= 1.3) {
-                spanCount = 4; // 4:3
-            }
-        } else if ("list".equals(style.type)) {   //xuameng list 时 首页推荐 1列
-            spanCount = 1;
-        }
-        return spanCount;
-    }
-
-    public static int getStyleDefaultWidth(Style style) {
-        // 1. style 为空，回退默认
-        if (style == null) {
-            return defaultWidth;
-        }
-
-        // 2. xuameng list 类型，直接给固定宽度
-        if ("list".equals(style.type)) {
-            return 100;
-        }
-
-        // 3. rect / 其他类型，根据 ratio 计算
-        if (style.ratio < 1) {
-            return 220;
-        }
-        if (style.ratio > 1.7) {
-            return 380;
-        }
-        return 280;
-    }
-
     public static Bitmap decodeBase64ToBitmap(String base64Str) {
         // 去掉 Base64 数据的头部前缀，例如 "data:image/png;base64,"
         String base64Data = base64Str.substring(base64Str.indexOf(",") + 1);
@@ -134,32 +59,8 @@ public class ImgUtilXu {
             return drawableCache.get(text);
         }
 
-        Style style = initStyle();
-
-        int width;
-        int height;
-
-        if (style != null) {
-            width = getStyleDefaultWidth(style);
-
-            if ("list".equals(style.type)) {
-                //  list 类型：高度等于宽度（或你希望的任何固定比例）
-                height = width;
-            } else {
-                //  非 list，才使用 ratio   //xuameng 用normalizeRatio 强行指定ratio值防止用户乱写
-                float safeRatio = normalizeRatio(style.ratio);
-                height = (int) (width / safeRatio);
-            }
-        } else {
-            //  style == null，回退默认
-            width = defaultWidth;
-            height = defaultHeight;
-        }
-
-        if (height <= 0) {
-            height = defaultHeight;
-        }
-
+        int width = defaultWidth;
+        int height = defaultHeight;
         int randomColor = getRandomColor();
 
         // xuameng 圆角按 bitmap 尺寸动态计算

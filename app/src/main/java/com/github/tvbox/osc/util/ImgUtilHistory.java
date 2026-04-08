@@ -32,7 +32,7 @@ import me.jessyan.autosize.utils.AutoSizeUtils;
  * 解决base64图片圆角变形等问题
  * @version 2.0.0 <br/>
  */
-public class ImgUtilXude {
+public class ImgUtilHistory {
     private static final Map<String, Drawable> drawableCache = new HashMap<>();
     
     public static boolean isBase64Image(String picUrl) {
