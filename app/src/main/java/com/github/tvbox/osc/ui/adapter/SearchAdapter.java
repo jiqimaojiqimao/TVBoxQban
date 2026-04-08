@@ -14,7 +14,6 @@ import com.github.tvbox.osc.util.MD5;
 import com.orhanobut.hawk.Hawk;
 import com.squareup.picasso.Picasso;
 import com.github.tvbox.osc.util.ImgUtilXu;   //xuamengBASE64图片
-import com.github.tvbox.osc.util.ImgUtil;   //xuamengBASE64图片
 //import com.squareup.picasso.MemoryPolicy; //xuameng禁用缓存
 //import com.squareup.picasso.NetworkPolicy; //xuameng禁用缓存
 
@@ -44,17 +43,17 @@ public class SearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder>
             int radius = AutoSizeUtils.mm2px(mContext, 5);  //xuameng Base64 图片 圆角设置
 
             if (!TextUtils.isEmpty(item.pic)) {
-                if(ImgUtil.isBase64Image(item.pic)){
+                if(ImgUtilXu.isBase64Image(item.pic)){
                     // xuameng 如果是 Base64 图片，解码并设置
                     ivThumb.setImageBitmap(
-                        ImgUtil.decodeBase64ToRoundBitmap(item.pic, radius)   //xuameng 用这个方法进行圆角设置
+                        ImgUtilXu.decodeBase64ToRoundBitmap(item.pic, radius)   //xuameng 用这个方法进行圆角设置
                     );
                 }else {
                     Picasso.get()
                             .load(item.pic)
                             .transform(new RoundTransformation(MD5.string2MD5(item.pic))
                                     .centerCorp(true)
-                                    .override(AutoSizeUtils.mm2px(mContext, ImgUtil.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtil.defaultHeight))
+                                    .override(AutoSizeUtils.mm2px(mContext, ImgUtilXu.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtilXu.defaultHeight))
                                     .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
                             .placeholder(R.drawable.img_loading_placeholder)
                         .noFade()
