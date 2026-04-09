@@ -108,7 +108,7 @@ public class HomeActivity extends BaseActivity {
     private boolean refreshEmpty = false;	//xuameng打断加载判断
     private int currentSelected = 0;
     private int sortFocused = 0;
-    private int PositionXu = 0;  //xuameng 分类筛选BUG修复变色问题
+    private int PositionXu = 0;  //xuameng 记忆当前Position
     public View sortFocusView = null;
     private final Handler mHandler = new Handler();
     private long mExitTime = 0;
@@ -185,19 +185,15 @@ public class HomeActivity extends BaseActivity {
             }
 
             public void onItemSelected(TvRecyclerView tvRecyclerView, View view, int position) {
-                if (view != null) {
+                if (view != null && position >= 0) {
                     HomeActivity.this.currentView = view;
                     HomeActivity.this.sortChange = true;
                     sortAdapter.setSelectedPosition(position); //xuameng 完全交给sortAdapter维护
-                    PositionXu = position;
-                    if (position == -1) {
-                        position = 0;
-                        HomeActivity.this.mGridView.setSelection(0);
-                    }
+                    PositionXu = position;  //xuameng 记忆当前Position
                     HomeActivity.this.sortFocusView = view;
                     HomeActivity.this.sortFocused = position;
                     mHandler.removeCallbacks(mDataRunnable);
-                    mHandler.postDelayed(mDataRunnable, 50);   //xuameng 延时不显示上面的时间栏
+                    mHandler.post(mDataRunnable);   //xuameng 延迟到下一个主线程周期执行
                 }
             }
 
@@ -220,6 +216,7 @@ public class HomeActivity extends BaseActivity {
                     BaseLazyFragment baseLazyFragment = fragments.get(sortFocused);
                     if ((baseLazyFragment instanceof GridFragment)) {
                         ((GridFragment) baseLazyFragment).forceRefresh();
+                        App.showToastShort(HomeActivity.this, "页面刷新成功！");	
                     }
                 }
                 if (direction != View.FOCUS_DOWN) {
@@ -665,8 +662,17 @@ public class HomeActivity extends BaseActivity {
         public void run() {
             if (sortChange) {
                 sortChange = false;
+                // 防御：ViewPager 尚未初始化
+                if (mViewPager == null || mViewPager.getAdapter() == null) {
+                    return;
+                }
                 if (sortFocused != currentSelected) {
                     currentSelected = sortFocused;
+                    // 确保 position 合法
+                    int count = mViewPager.getAdapter().getCount();
+                    if (sortFocused < 0 || sortFocused >= count) {
+                        return;
+                    }
                     mViewPager.setCurrentItem(sortFocused, false);
                     if (sortFocused == 0) {
                         changeTop(false);
