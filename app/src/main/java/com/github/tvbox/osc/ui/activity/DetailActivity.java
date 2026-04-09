@@ -92,7 +92,7 @@ import android.text.TextPaint;
 import androidx.annotation.NonNull;
 import android.graphics.Typeface;
 import androidx.recyclerview.widget.RecyclerView;
-import com.github.tvbox.osc.util.ImgUtilXude;   //xuameng base64图片
+import com.github.tvbox.osc.util.ImgUtilDetail;   //xuameng base64图片
 /**
  * @author pj567
  * @date :2020/12/22
@@ -932,27 +932,27 @@ public class DetailActivity extends BaseActivity {
                     int radius = AutoSizeUtils.mm2px(mContext, 5);  //xuameng Base64 图片 圆角设置
 
                     if (!TextUtils.isEmpty(mVideo.pic)) {
-                        if(ImgUtilXude.isBase64Image(mVideo.pic)){
+                        if(ImgUtilDetail.isBase64Image(mVideo.pic)){
                             // xuameng 如果是 Base64 图片，解码并设置
                             ivThumb.setImageBitmap(
-                                ImgUtilXude.decodeBase64ToRoundBitmap(mVideo.pic, radius)   //xuameng 用这个方法进行圆角设置
+                                ImgUtilDetail.decodeBase64ToRoundBitmap(mVideo.pic, radius)   //xuameng 用这个方法进行圆角设置
                             );
                         }else {
                             Picasso.get()
                                     .load(DefaultConfig.checkReplaceProxy(mVideo.pic))
                                     .transform(new RoundTransformation(MD5.string2MD5(mVideo.pic))
                                             .centerCorp(true)
-                                            .override(AutoSizeUtils.mm2px(mContext, ImgUtilXude.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtilXude.defaultHeight))
+                                            .override(AutoSizeUtils.mm2px(mContext, ImgUtilDetail.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtilDetail.defaultHeight))
                                             .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
                                     .placeholder(R.drawable.img_loading_placeholder)
                                     .noFade()
                                 //  .error(R.drawable.img_loading_placeholder)
-	                                .error(ImgUtilXude.createTextDrawable(mVideo.name))
+	                                .error(ImgUtilDetail.createTextDrawable(mVideo.name))
                                     .into(ivThumb);
                         }
                     } else {
                       //  ivThumb.setImageResource(R.drawable.img_loading_placeholder);
-                          ivThumb.setImageDrawable(ImgUtilXude.createTextDrawable(mVideo.name));
+                          ivThumb.setImageDrawable(ImgUtilDetail.createTextDrawable(mVideo.name));
                     }
 
                     if (vodInfo.seriesMap != null && vodInfo.seriesMap.size() > 0) {
