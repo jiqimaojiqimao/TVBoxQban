@@ -81,6 +81,7 @@ public class SearchCheckboxDialog extends BaseDialog{
         clp.width = AutoSizeUtils.mm2px(getContext(), 400 + 200 * (spanCount - 1));
 
         mGridView.setAdapter(checkboxSearchAdapter);
+        mGridView.setItemAnimator(null);   //xuameng 取消Item动画 闹腾
         checkboxSearchAdapter.setData(mSourceList, mCheckSourcees);
         int pos = 0;
         if (mCheckSourcees != null) {
