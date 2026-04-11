@@ -8,8 +8,6 @@ import com.github.tvbox.osc.bean.MovieSort;
 import java.util.ArrayList;
 
 import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.Drawable;
 
 /**
  * @author xuameng
@@ -70,18 +68,6 @@ public class SortAdapter extends BaseQuickAdapter<MovieSort.SortData, BaseViewHo
                         ? Typeface.DEFAULT_BOLD
                         : Typeface.DEFAULT
         );
-
-        // 创建圆角背景drawable
-        GradientDrawable selectedBackground = new GradientDrawable();
-        selectedBackground.setColor(mContext.getResources().getColor(R.color.color_BD0CADE2));
-        selectedBackground.setCornerRadius(mContext.getResources().getDimension(R.dimen.vs_20));
-
-        // 设置背景：选中时有背景，非选中时无背景
-        if (isSelected) {
-            helper.itemView.setBackground(selectedBackground);
-        } else {
-            helper.itemView.setBackground(null);
-        }
 
         // 设置缩放
         helper.itemView.setPivotX(helper.itemView.getWidth() / 2f);
