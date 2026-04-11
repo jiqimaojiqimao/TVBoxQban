@@ -28,7 +28,7 @@ import com.github.tvbox.osc.ui.dialog.xuamengAboutDialog;
 import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.github.tvbox.osc.util.DefaultConfig; //xuameng长按许大师制作重启APP
 import com.github.tvbox.osc.ui.activity.HomeActivity; //xuameng长按历史键重新载入主页数据
-import com.github.tvbox.osc.util.ImgUtil;
+import com.github.tvbox.osc.util.ImgUtilHot;
 
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.UA;
@@ -71,7 +71,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
     private List<Movie.Video> homeSourceRec;
     public static TvRecyclerView tvHotList1;
     public static TvRecyclerView tvHotList2; //xuameng首页单行
-    private ImgUtil.Style style; //xuameng 图片样式
+    private ImgUtilHot.Style style; //xuameng 图片样式
 
     public static UserFragment newInstance() {
         return new UserFragment();
@@ -97,7 +97,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 tvHotList1.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
             }else{
                 if (style != null && Hawk.get(HawkConfig.HOME_REC, 0) == 1) {
-                    spanCount = ImgUtil.spanCountByStyle(style, spanCount);
+                    spanCount = ImgUtilHot.spanCountByStyle(style, spanCount);
                 }
                 tvHotList1.setLayoutManager(new V7GridLayoutManager(this.mContext, spanCount));
             }
@@ -161,7 +161,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         tvHotList1 = findViewById(R.id.tvHotList1);
         tvHotList2 = findViewById(R.id.tvHotList2);
         if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec != null) {
-            style = ImgUtil.initStyle();
+            style = ImgUtilHot.initStyle();
         }
 
         homeHotVodAdapter = new HomeHotVodAdapter(isFolederMode(), style);   //xuameng 增加传入isFolederMode style为list为true
