@@ -125,7 +125,6 @@ public class ImgUtil {
     }
 
     public static Drawable createTextDrawable(String text) {
-		clearCache(); 
         if (TextUtils.isEmpty(text)) {
             text = "聚";
         }
