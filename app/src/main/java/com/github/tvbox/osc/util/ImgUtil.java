@@ -108,10 +108,10 @@ public class ImgUtil {
         }
 
         // 3. rect / 其他类型，根据 ratio 计算
-        if (style.ratio < 1) {
+        if (style.ratio < 1.3) {
             return 220;
         }
-        if (style.ratio > 1.7) {
+        if (style.ratio >= 1.7) {
             return 380;
         }
         return 280;
@@ -125,14 +125,15 @@ public class ImgUtil {
     }
 
     public static Drawable createTextDrawable(String text) {
+		clearCache(); 
         if (TextUtils.isEmpty(text)) {
             text = "聚";
         }
         text = text.substring(0, 1);
 
-        if (drawableCache.containsKey(text)) {
-            return drawableCache.get(text);
-        }
+    //    if (drawableCache.containsKey(text)) {
+    //        return drawableCache.get(text);
+    //    }
 
         Style style = initStyle();
 
@@ -189,7 +190,7 @@ public class ImgUtil {
         canvas.drawText(text, x, y, paint);
 
         Drawable drawable = new BitmapDrawable(bitmap);
-        drawableCache.put(text, drawable);
+       // drawableCache.put(text, drawable);
         return drawable;
     }
 
