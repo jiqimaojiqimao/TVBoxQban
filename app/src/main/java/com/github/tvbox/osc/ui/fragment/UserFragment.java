@@ -160,7 +160,8 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         tvCollect.setOnFocusChangeListener(focusChangeListener);
         tvHotList1 = findViewById(R.id.tvHotList1);
         tvHotList2 = findViewById(R.id.tvHotList2);
-        if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec != null) {
+        //if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec != null) {
+        if (Hawk.get(HawkConfig.HOME_REC, 0) == 1) {  //xuameng 无论推荐有没有数据
             style = ImgUtilHot.initStyle();
         }
 
