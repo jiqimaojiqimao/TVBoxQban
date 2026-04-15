@@ -163,18 +163,21 @@ public class HomeActivity extends BaseActivity {
         this.mGridView.setSpacingWithMargins(0, AutoSizeUtils.dp2px(this.mContext, 10.0f));
         this.mGridView.setAdapter(this.sortAdapter);
         this.mGridView.setItemAnimator(null);   //xuameng 取消Item动画 闹腾
-        sortAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {     //xuameng主页默认焦点
+        sortAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onChanged() {
                 if (mGridView == null || !mGridView.isAttachedToWindow()) {
-                    return; // 如果RecyclerView为空或未附加到窗口，直接返回
+                    return;
                 }
+
                 mGridView.post(() -> {
-                    RecyclerView.LayoutManager layoutManager = mGridView.getLayoutManager();
-                    if (layoutManager == null) {
-                        return; // xuameng防止空指针
+                    RecyclerView.LayoutManager lm = mGridView.getLayoutManager();
+                    if (lm == null) return;
+
+                    View firstView = lm.findViewByPosition(0);
+                    if (firstView != null && !firstView.hasFocus()) {
+                        mGridView.setSelection(0);
                     }
-                    mGridView.setSelection(0);
                 });
             }
         });
@@ -674,12 +677,8 @@ public class HomeActivity extends BaseActivity {
                         return;
                     }
                     mViewPager.setCurrentItem(sortFocused, false);
-                    if (sortFocused == 0) {
-                        changeTop(false);
-                    } else {
-                        changeTop(true);
-                    }
                 }
+                changeTop(sortFocused != 0);
             }
         }
     };
@@ -711,12 +710,11 @@ public class HomeActivity extends BaseActivity {
         animatorSet.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
-
+                topHide = (byte) (hide ? 1 : 0);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                topHide = (byte) (hide ? 1 : 0);
             }
 
             @Override
@@ -742,7 +740,7 @@ public class HomeActivity extends BaseActivity {
                                     Integer.valueOf(AutoSizeUtils.mm2px(this.mContext, 1.0f))
                             }),
                     ObjectAnimator.ofFloat(this.topLayout, "alpha", new float[]{1.0f, 0.0f})});
-            animatorSet.setDuration(100);
+            animatorSet.setDuration(250);
             animatorSet.start();
             return;
         }
@@ -759,7 +757,7 @@ public class HomeActivity extends BaseActivity {
                                     Integer.valueOf(AutoSizeUtils.mm2px(this.mContext, 50.0f))
                             }),
                     ObjectAnimator.ofFloat(this.topLayout, "alpha", new float[]{0.0f, 1.0f})});
-            animatorSet.setDuration(100);
+            animatorSet.setDuration(250);
             animatorSet.start();
             return;
         }
