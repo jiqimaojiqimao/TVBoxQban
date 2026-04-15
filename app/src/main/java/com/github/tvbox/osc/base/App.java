@@ -19,6 +19,7 @@ import com.github.tvbox.osc.util.PlayerHelper;
 import com.whl.quickjs.android.QuickJSLoader;
  import com.github.catvod.crawler.JsLoader;
 import com.kingja.loadsir.core.LoadSir;
+import com.github.tvbox.osc.crash.CrashHandler;  //xuameng 崩溃信息
 import com.orhanobut.hawk.Hawk;
 import com.p2p.P2PClass;
 import java.io.File;   //xuameng清缓存
@@ -29,9 +30,9 @@ import me.jessyan.autosize.AutoSizeConfig;
 import me.jessyan.autosize.unit.Subunits;
 
 /**
- * @author pj567
- * @date :2020/12/17
- * @description:
+ * @author xuameng
+ * @date :2026/04/14
+ * @description:  增加崩溃  配置中心等
  */
 public class App extends MultiDexApplication {
     private static App instance;
@@ -44,6 +45,8 @@ public class App extends MultiDexApplication {
     public void onCreate() {
         super.onCreate();
         instance = this;
+        //xuameng 全局崩溃捕获（一定要放在最前面）
+        CrashHandler.getInstance().init(this);  //xuameng 崩溃信息
         initParams();
         // OKGo
         OkGoHelper.init(); //台标获取
