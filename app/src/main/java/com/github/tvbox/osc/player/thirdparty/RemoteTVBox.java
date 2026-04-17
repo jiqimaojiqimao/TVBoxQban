@@ -2,7 +2,6 @@ package com.github.tvbox.osc.player.thirdparty;
 
 import android.app.Activity;
 import android.text.TextUtils;
-
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.bean.IpScanningVo;
 import com.github.tvbox.osc.server.RemoteServer;
@@ -23,8 +22,13 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class RemoteTVBox {
+/**
+ * @author xuameng
+ * @date :2026/4/17
+ * @description: 增加相应远程主机名
+ */
 
+public class RemoteTVBox {
     public static boolean run(Activity activity, String url, String title, String subtitle, HashMap<String, String> headers) {
         String actionUrl = getAvalibleActionUrl();
         if (TextUtils.isEmpty(actionUrl)) {
@@ -50,19 +54,16 @@ public class RemoteTVBox {
                 public void onFailure(Call call, IOException e) {
                     e.printStackTrace();
                 }
-
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     String pushResult = response.body().string();
                     if (pushResult.equals("ok")) {
-
                     }
                 }
             });
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return true;
     }
 
@@ -84,7 +85,8 @@ public class RemoteTVBox {
                 continue;
             }
             String actionUrl = "http://" + ip + ":" + port + "/action";
-            String viewHost = "" + ip  + ":" + port;
+            String viewHost = ip + ":" + port;
+            
             try {
                 post(actionUrl, null, new okhttp3.Callback() {
                     @Override
@@ -92,21 +94,28 @@ public class RemoteTVBox {
                         avalibleFailNum++;
                         callback.fail(avalibleFailNum == avalibleIpNum, (avalibleSuccessNum + avalibleFailNum) == avalibleIpNum);
                     }
-
                     @Override
                     public void onResponse(Call call, Response response) throws IOException {
                         avalibleSuccessNum ++;
+                        // 1. xuameng获取远端返回的内容，例如 "ok|Xiaomi Box"  result包包含远端主机名
                         String result = response.body().string();
-                        if (result.equals("ok")) {
-                            callback.found(viewHost, (avalibleSuccessNum + avalibleFailNum) == avalibleIpNum);
+                        
+                        // 2. xuameng判断是否成功（只要以 ok 开头就算成功）
+                        if (result.startsWith("ok")) {
+                            String deviceName = "聚汇影视"; // 默认名字
+                            
+                            // 3. xuameng解析设备名：如果包含 "|"，就分割取第二部分  因为result返回的是 "ok|" + App.deviceName);
+                            if (result.contains("|")) {
+                                deviceName = result.split("\\|")[1];
+                            }
+                            
+                            // 4. xuameng传给回调
+                            callback.found(viewHost, deviceName, (avalibleSuccessNum + avalibleFailNum) == avalibleIpNum);
                         }
                     }
                 });
-            } catch (Exception e) {
-
-            }
+            } catch (Exception e) { }
         }
-
         return;
     }
 
@@ -141,11 +150,10 @@ public class RemoteTVBox {
         client.newCall(new Request.Builder().url(url).post(formBody).build()).enqueue(callback);
     }
 
+    // xuameng修改 Callback 接口，增加 deviceName 参数
     public abstract class Callback {
-        public abstract void found(String viewHost, boolean end);
+        //public abstract void found(String viewHost, boolean end); 原代码
+        public abstract void found(String viewHost, String deviceName, boolean end);
         public abstract void fail(boolean all, boolean end);
     }
-
 }
-
-
