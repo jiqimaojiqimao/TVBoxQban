@@ -1,47 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!-- 主卡片 -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_gravity="center"
-        android:background="@drawable/shape_dialog_bg_main"
+        android:id="@+id/card"
         android:layout_width="@dimen/vs_480"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape_dialog_bg_main"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- 标题 -->
         <TextView
-            android:textSize="@dimen/ts_24"
-            android:textColor="@color/color_CC000000"
             android:id="@+id/title"
-            android:paddingTop="@dimen/vs_25"
-            android:paddingBottom="@dimen/vs_20"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="11111111"
+            android:text="附近聚汇影视"
+            android:textSize="@dimen/ts_24"
+            android:textColor="@color/color_CC000000"
             android:singleLine="true"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            android:paddingTop="@dimen/vs_25"
+            android:paddingBottom="@dimen/vs_20"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- 设备列表 -->
         <com.owen.tvrecyclerview.widget.TvRecyclerView
-            android:orientation="vertical"
             android:id="@+id/list"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:paddingLeft="@dimen/vs_30"
             android:paddingRight="@dimen/vs_30"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            app:layout_constrainedHeight="true"
-            app:layout_constraintHeight_max="@dimen/vs_410"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/title"
             app:tv_layoutManager="V7LinearLayoutManager"
             app:tv_selectedItemIsCentered="true"
-            app:tv_verticalSpacingWithMargins="@dimen/vs_10"/>
+            app:tv_verticalSpacingWithMargins="@dimen/vs_10"
+            app:layout_constraintTop_toBottomOf="@id/title"
+            app:layout_constraintBottom_toTopOf="@id/buttonContainer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_max="@dimen/vs_410" />
+
+        <!-- 占位视图 (用于分隔列表和按钮) -->
         <View
-            android:layout_width="fill_parent"
+            android:layout_width="0dp"
             android:layout_height="@dimen/vs_30"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/list"/>
+            app:layout_constraintTop_toBottomOf="@id/list"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- 底部按钮容器 -->
+        <LinearLayout
+            android:id="@+id/buttonContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="@dimen/vs_20"
+            android:paddingBottom="@dimen/vs_30"
+            android:paddingLeft="@dimen/vs_30"
+            android:paddingRight="@dimen/vs_30"
+            app:layout_constraintTop_toBottomOf="@id/list"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- 清空列表按钮 -->
+            <TextView
+                android:id="@+id/btnClear"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.0"
+                android:layout_marginRight="@dimen/vs_5"
+                android:text="清空列表"
+                android:textSize="@dimen/ts_22"
+                android:textColor="@color/color_FFFFFF"
+                android:gravity="center"
+                android:layout_gravity="center"
+                android:focusable="true"
+                android:background="@drawable/button_dialog_main"
+                android:paddingTop="@dimen/vs_10"
+                android:paddingBottom="@dimen/vs_10" />
+
+            <!-- 重新搜索按钮 -->
+            <TextView
+                android:id="@+id/btnSearch"
+                android:layout_width="@dimen/vs_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.0"
+                android:layout_marginLeft="@dimen/vs_5"
+                android:text="重新搜索"
+                android:textSize="@dimen/ts_22"
+                android:textColor="@color/color_FFFFFF"
+                android:gravity="center"
+                android:layout_gravity="center"
+                android:focusable="true"
+                android:background="@drawable/button_dialog_main"
+                android:paddingTop="@dimen/vs_10"
+                android:paddingBottom="@dimen/vs_10" />
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
-</FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
