@@ -800,60 +800,12 @@ public class ModelSettingFragment extends BaseLazyFragment {
             }
         });
 
-        findViewById(R.id.llSearchTv).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.llSearchTv).setOnClickListener(new View.OnClickListener() {   //xuameng搜索远程聚汇影视
             @Override
             public void onClick(View view) {
                 FastClickCheckUtil.check(view);
-                loadingSearchRemoteTvDialog = new SearchRemoteTvDialog(mActivity);
-                EventBus.getDefault().register(loadingSearchRemoteTvDialog);
-                loadingSearchRemoteTvDialog.setTip("搜索附近聚汇影视");
-                loadingSearchRemoteTvDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                    @Override
-                    public void onDismiss(DialogInterface dialogInterface) {
-                        EventBus.getDefault().unregister(loadingSearchRemoteTvDialog);
-                    }
-                });
-                loadingSearchRemoteTvDialog.show();
-
-                RemoteTVBox tv = new RemoteTVBox();
-                remoteTvHostList = new ArrayList<>();
-                foundRemoteTv = false;
-                view.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                RemoteTVBox.searchAvalible(tv.new Callback() {
-                                    @Override
-                                    public void found(String viewHost, boolean end) {
-                                        remoteTvHostList.add(viewHost);
-                                        if (end) {
-                                            foundRemoteTv = true;
-                                            EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SETTING_SEARCH_TV));
-                                        }
-                                    }
-
-                                    @Override
-                                    public void fail(boolean all, boolean end) {
-                                        if (end) {
-                                            if (all) {
-                                                foundRemoteTv = false;
-                                            } else {
-                                                foundRemoteTv = true;
-                                            }
-                                            EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SETTING_SEARCH_TV));
-                                        }
-                                    }
-                                });
-                            }
-                        }).start();
-
-                    }
-                }, 500);
-
-
+                SearchRemoteTvDialog dialog = new SearchRemoteTvDialog(mActivity);  //xuameng 方法全部移到SearchRemoteTvDialog中
+                dialog.show();
             }
         });
 
@@ -888,11 +840,6 @@ public class ModelSettingFragment extends BaseLazyFragment {
         App.showToastShort(getContext(), "缓存已清空！");
         return;
     }
-
-
-    public static SearchRemoteTvDialog loadingSearchRemoteTvDialog;
-    public static List<String> remoteTvHostList;
-    public static boolean foundRemoteTv;
 
     @Override
     public void onDestroyView() {
