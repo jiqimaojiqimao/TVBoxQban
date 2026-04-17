@@ -31,8 +31,8 @@ import me.jessyan.autosize.unit.Subunits;
 
 /**
  * @author xuameng
- * @date :2026/04/14
- * @description:  增加崩溃  配置中心等
+ * @date :2026/04/17
+ * @description:  增加崩溃  配置中心 增加显示设备名称等
  */
 public class App extends MultiDexApplication {
     private static App instance;
@@ -40,6 +40,8 @@ public class App extends MultiDexApplication {
     private static P2PClass p;
     public static String burl;
     private static String dashData;
+    // xuameng存储最终的设备名称
+    public static String deviceName = "聚汇影视";
 
     @Override
     public void onCreate() {
@@ -78,7 +80,36 @@ public class App extends MultiDexApplication {
 				}
 			}).start();
 					
+        // --- xuameng获取设备名称逻辑 ---
+        new Thread(() -> {
+            try {
+                // 1. 获取品牌 (例如: Xiaomi, TCL)
+                String brand = android.os.Build.BRAND;
+                // 2. 获取产品代号 (例如: peridot, TCL8000)
+                String product = android.os.Build.PRODUCT;
+                
+                // 3. 最终显示名称
+                String displayName = brand; // 默认直接显示品牌
 
+                // 4. 如果产品代号不为空，且不包含品牌名，就拼在后面
+                if (product != null && !product.isEmpty()) {
+                    // 忽略大小写判断 product 是否包含 brand
+                    // 比如 "TCL8000" 包含 "TCL"，就不拼接了，避免显示 "TCL TCL8000"
+                    if (!product.toLowerCase().contains(brand.toLowerCase())) {
+                        displayName = brand + " " + product;
+                    } else {
+                        // 如果 product 已经包含了 brand (例如 product="XiaomiBox")，就只显示 product
+                        displayName = product;
+                    }
+                }
+                
+                deviceName = displayName;
+            } catch (Exception e) {
+                // 极端情况兜底
+                deviceName = "聚汇影视";
+            }
+        }).start();
+        // --- xuameng代码结束 ---
     }
 
     private void initParams() {      //xuameng系统默认设置
