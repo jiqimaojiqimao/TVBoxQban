@@ -1,13 +1,15 @@
 package com.github.tvbox.osc.server;
 
+import com.github.tvbox.osc.base.App; // xuameng引入 App 类
+
 import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD;
 
 /**
- * @author pj567
- * @date :2021/1/5
- * @description: 响应按键和输入
+ * @author xuameng
+ * @date :2026/4/17
+ * @description: 响应按键和输入 增加响应主机名
  */
 
 public class InputRequestProcess implements RequestProcess {
@@ -57,7 +59,9 @@ public class InputRequestProcess implements RequestProcess {
                         }
                     }
                 }
-                return RemoteServer.createPlainTextResponse(NanoHTTPD.Response.Status.OK, "ok");
+                //return RemoteServer.createPlainTextResponse(NanoHTTPD.Response.Status.OK, "ok");
+                //xuameng增加相应主机名
+                return RemoteServer.createPlainTextResponse(NanoHTTPD.Response.Status.OK, "ok|" + App.deviceName);
             default:
                 return RemoteServer.createPlainTextResponse(NanoHTTPD.Response.Status.NOT_FOUND, "Error 404, file not found.");
         }
