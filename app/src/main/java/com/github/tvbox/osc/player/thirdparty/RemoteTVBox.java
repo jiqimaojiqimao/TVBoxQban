@@ -119,8 +119,21 @@ public class RemoteTVBox {
         return;
     }
 
-    public static String getAvalible() {
+/*    public static String getAvalible() {
         return Hawk.get(HawkConfig.REMOTE_TVBOX, null);
+    }
+*/
+    //xuameng value正常为 name(2.2.2.2:2222) 远程调用播放只需要保留 ip和端口 因此修改
+    public static String getAvalible() {
+        String value = Hawk.get(HawkConfig.REMOTE_TVBOX, null);
+        
+        if (value != null) {
+            int start = value.indexOf('(');
+            int end = value.indexOf(')');
+            return value.substring(start + 1, end);
+        }
+        
+        return null;
     }
 
     public static String getAvalibleActionUrl() {
