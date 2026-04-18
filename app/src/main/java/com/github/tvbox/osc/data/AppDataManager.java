@@ -57,8 +57,8 @@ public class AppDataManager {
         public void migrate(SupportSQLiteDatabase database) {
             database.execSQL("CREATE TABLE IF NOT EXISTS `vodRecordTmp` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vodId` TEXT, `updateTime` INTEGER NOT NULL, `sourceKey` TEXT, `data` BLOB, `dataJson` TEXT, `testMigration` INTEGER NOT NULL)");
 
-			database.execSQL("CREATE TABLE IF NOT EXISTS t_search (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, searchKeyWords TEXT)"); //xuameng搜索历史
-			database.execSQL("CREATE INDEX IF NOT EXISTS index_t_search_searchKeyWords ON t_search (searchKeyWords)");  //xuameng搜索历史
+            database.execSQL("CREATE TABLE IF NOT EXISTS t_search (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, searchKeyWords TEXT)"); //xuameng搜索历史
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_t_search_searchKeyWords ON t_search (searchKeyWords)");  //xuameng搜索历史
             // Read every thing from the former Expense table
             Cursor cursor = database.query("SELECT * FROM vodRecord");
 
@@ -141,9 +141,10 @@ public class AppDataManager {
     }
 
     public static boolean backup(File path) throws IOException {
-        if (dbInstance != null && dbInstance.isOpen()) {
+/*xuameng先注销不关闭数据库防止 连接池关闭崩溃        if (dbInstance != null && dbInstance.isOpen()) {
             dbInstance.close();
         }
+*/
         File db = App.getInstance().getDatabasePath(dbPath());
         if (db.exists()) {
             FileUtils.copyFile(db, path);
