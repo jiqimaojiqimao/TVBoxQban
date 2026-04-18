@@ -36,7 +36,6 @@ public class SearchRemoteTvDialog extends BaseDialog {
 
     private SelectDialogAdapter<String> mSelectAdapter;
     private static final List<String> remoteTvHostList = new ArrayList<>();
-    private boolean foundRemoteTv = false;
     private LoadService mLoadService;
     private boolean isSearching = false;
     private volatile boolean isCancelled = false;
@@ -86,7 +85,6 @@ public class SearchRemoteTvDialog extends BaseDialog {
             }
             isCancelled = true;
             isSearching = false;
-            foundRemoteTv = false;
             remoteTvHostList.clear();
             Hawk.delete(HawkConfig.REMOTE_TV_LIST);
             Hawk.delete(HawkConfig.REMOTE_TVBOX);
@@ -128,7 +126,6 @@ public class SearchRemoteTvDialog extends BaseDialog {
         showLoading();
         isSearching = true;
         isCancelled = false;
-        foundRemoteTv = false;
         remoteTvHostList.clear();
         Hawk.delete(HawkConfig.REMOTE_TV_LIST);
         Hawk.delete(HawkConfig.REMOTE_TVBOX);
@@ -172,17 +169,13 @@ public class SearchRemoteTvDialog extends BaseDialog {
             return;
         }
         isSearching = false;
-        foundRemoteTv = found;
         new Handler(Looper.getMainLooper()).post(() -> {
             if (found && !remoteTvHostList.isEmpty()) {
                 // ✅ 保存到 Hawk
                 Hawk.put(HawkConfig.REMOTE_TV_LIST, new ArrayList<>(remoteTvHostList));
                 // ✅ 关键：默认选中第一个
-                if (mSelectAdapter != null) {
-                    PlayerHelper.clearRemoteTvBoxCache(); //xuameng 首次获取必须同步
-                    RemoteTVBox.setAvalible(remoteTvHostList.get(0));
-                    PlayerHelper.clearRemoteTvBoxCache();
-                }
+                RemoteTVBox.setAvalible(remoteTvHostList.get(0));
+                PlayerHelper.clearRemoteTvBoxCache();
                 setTip("选择附近聚汇影视");
                 showRemoteTvList();
             } else {
