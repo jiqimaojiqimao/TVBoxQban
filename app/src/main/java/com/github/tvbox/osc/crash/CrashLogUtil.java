@@ -5,6 +5,7 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -39,10 +40,14 @@ public class CrashLogUtil {
             File file = new File(dir, FILE_NAME);
             if (!file.exists()) return "无崩溃日志";
 
-            return new String(
-                    java.nio.file.Files.readAllBytes(file.toPath()),
-                    StandardCharsets.UTF_8
-            );
+            // 使用兼容的方式读取文件
+            FileInputStream fis = new FileInputStream(file);
+            byte[] buffer = new byte[(int) file.length()];
+            fis.read(buffer);
+            fis.close();
+        
+            return new String(buffer, StandardCharsets.UTF_8);
+        
         } catch (Exception e) {
             Log.e(TAG, "读取崩溃日志失败", e);
             return "读取崩溃日志失败";
