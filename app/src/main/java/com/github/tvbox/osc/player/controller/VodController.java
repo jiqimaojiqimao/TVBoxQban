@@ -217,7 +217,7 @@ public class VodController extends BaseController {
     
                         // xuameng其他设置
                         mxuPlay.requestFocus();   //xuameng底部菜单默认焦点为播放
-                        backBtn.setVisibility(ScreenUtils.isTv(context) ? GONE : VISIBLE);   //xuameng返回按钮
+                        backBtn.setVisibility(ScreenUtils.isTv(getContext()) ? GONE : VISIBLE);   //xuameng返回按钮
                         showLockView();    //xuameng屏幕锁
                         mPauseContainer.setVisibility(GONE);  // xuameng播放标题、暂停时间
     
