@@ -10,7 +10,6 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
@@ -19,6 +18,7 @@ import com.github.tvbox.osc.base.BaseActivity;
 import com.github.tvbox.osc.crash.CrashLogUtil;
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.ui.activity.HomeActivity;
+import com.github.tvbox.osc.util.ScreenUtils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -281,22 +281,17 @@ public class CrashActivity extends BaseActivity {
      * 返回键
      */
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            // 当前焦点不在重启按钮上
+    public void onBackPressed() {
+        if (ScreenUtils.isTv(this)){
             if (tvRestart != null
                     && tvRestart.getVisibility() == View.VISIBLE
-                    && !tvRestart.hasFocus()) {
-
-                tvRestart.requestFocus();
-                return true; // 消费掉 Back 事件
+                    && !tvRestart.isFocused()) {
+                    tvRestart.requestFocus();
+                return;
             }
-
-            // 焦点已经在重启按钮上 → 退出应用
-            restartApp();
-            return true;
         }
-        return super.onKeyDown(keyCode, event);
+        android.os.Process.killProcess(android.os.Process.myPid());
+        System.exit(0);
     }
 
 }
