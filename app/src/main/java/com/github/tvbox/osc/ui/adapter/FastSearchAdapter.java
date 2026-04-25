@@ -22,48 +22,51 @@ import java.util.ArrayList;
 import me.jessyan.autosize.utils.AutoSizeUtils;
 
 public class FastSearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
-    public FastSearchAdapter() {
-        super(R.layout.item_search, new ArrayList<>());
+    public FastSearchAdapter() {   //xuameng 搜索展示 0文字列表 
+        super(Hawk.get(HawkConfig.SEARCH_VIEW, 0) == 0 ? R.layout.item_search_lite : R.layout.item_search, new ArrayList<>());
     }
 
     @Override
     protected void convert(BaseViewHolder helper, Movie.Video item) {
-
-        // with preview
-        helper.setText(R.id.tvName, item.name);
-        helper.setText(R.id.tvSite, ApiConfig.get().getSource(item.sourceKey).getName());
-        helper.setVisible(R.id.tvNote, item.note != null && !item.note.isEmpty());
-        if (item.note != null && !item.note.isEmpty()) {
-            helper.setText(R.id.tvNote, item.note);
-        }
-        ImageView ivThumb = helper.getView(R.id.ivThumb);
-
-        int radius = AutoSizeUtils.mm2px(mContext, 5);  //xuameng Base64 图片 圆角设置
-
-        if (!TextUtils.isEmpty(item.pic)) {
-            if(ImgUtilFastSearch.isBase64Image(item.pic)){
-                // xuameng 如果是 Base64 图片，解码并设置
-                ivThumb.setImageBitmap(
-                    ImgUtilFastSearch.decodeBase64ToRoundBitmap(item.pic, radius)   //xuameng 用这个方法进行圆角设置
-                );
-            }else {
-                Picasso.get()
-                        .load(item.pic)
-                        .transform(new RoundTransformation(MD5.string2MD5(item.pic))
-                                .centerCorp(true)
-                                .override(AutoSizeUtils.mm2px(mContext, ImgUtilFastSearch.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtilFastSearch.defaultHeight))
-                                .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
-                        .placeholder(R.drawable.img_loading_placeholder)
-                        .noFade()
-                      //.error(R.drawable.img_loading_placeholder)
-					    .error(ImgUtilFastSearch.createTextDrawable(item.name))
-                      //.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)  //xuameng禁用缓存
-                      //.networkPolicy(NetworkPolicy.NO_CACHE)   //xuameng禁用缓存
-                        .into(ivThumb);
+        // xuameng 搜索展示 0文字列表
+        if (Hawk.get(HawkConfig.SEARCH_VIEW, 0) == 0) {
+            helper.setText(R.id.tvName, String.format("%s  %s %s %s", ApiConfig.get().getSource(item.sourceKey).getName(), item.name, item.type == null ? "" : item.type, item.note == null ? "" : item.note));
+        } else {  // xuameng 搜索展示 1缩略图
+            helper.setText(R.id.tvName, item.name);
+            helper.setText(R.id.tvSite, ApiConfig.get().getSource(item.sourceKey).getName());
+            helper.setVisible(R.id.tvNote, item.note != null && !item.note.isEmpty());
+            if (item.note != null && !item.note.isEmpty()) {
+                helper.setText(R.id.tvNote, item.note);
             }
-        } else {
-           // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
-			ivThumb.setImageDrawable(ImgUtilFastSearch.createTextDrawable(item.name));
+            ImageView ivThumb = helper.getView(R.id.ivThumb);
+
+            int radius = AutoSizeUtils.mm2px(mContext, 5);  //xuameng Base64 图片 圆角设置
+
+            if (!TextUtils.isEmpty(item.pic)) {
+                if(ImgUtilFastSearch.isBase64Image(item.pic)){
+                    // xuameng 如果是 Base64 图片，解码并设置
+                    ivThumb.setImageBitmap(
+                        ImgUtilFastSearch.decodeBase64ToRoundBitmap(item.pic, radius)   //xuameng 用这个方法进行圆角设置
+                    );
+                }else {
+                    Picasso.get()
+                            .load(item.pic)
+                            .transform(new RoundTransformation(MD5.string2MD5(item.pic))
+                                    .centerCorp(true)
+                                    .override(AutoSizeUtils.mm2px(mContext, ImgUtilFastSearch.defaultWidth), AutoSizeUtils.mm2px(mContext, ImgUtilFastSearch.defaultHeight))
+                                    .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
+                            .placeholder(R.drawable.img_loading_placeholder)
+                            .noFade()
+                          //.error(R.drawable.img_loading_placeholder)
+					        .error(ImgUtilFastSearch.createTextDrawable(item.name))
+                          //.memoryPolicy(MemoryPolicy.NO_CACHE, MemoryPolicy.NO_STORE)  //xuameng禁用缓存
+                          //.networkPolicy(NetworkPolicy.NO_CACHE)   //xuameng禁用缓存
+                            .into(ivThumb);
+                }
+            } else {
+                // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
+			    ivThumb.setImageDrawable(ImgUtilFastSearch.createTextDrawable(item.name));
+            }
         }
 
     }
