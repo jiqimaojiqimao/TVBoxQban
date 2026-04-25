@@ -37,6 +37,9 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import com.orhanobut.hawk.Hawk;  //xuameng 搜索展示用
+import com.github.tvbox.osc.util.HawkConfig; //xuameng 搜索展示用
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,9 +54,9 @@ import java.util.concurrent.LinkedBlockingQueue;   //xuameng 线程池
 import java.util.Locale;   //xuameng 统计进度用
 
 /**
- * @author pj567
- * @date :2020/12/23
- * @description:
+ * @author xuameng
+ * @date :2026/04/25
+ * @description:  搜索展示等修复
  */
 public class FastSearchActivity extends BaseActivity {
     private LinearLayout llLayout;
@@ -195,8 +198,14 @@ public class FastSearchActivity extends BaseActivity {
         });
 
         mGridView.setHasFixedSize(true);
-        mGridView.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
 
+        // xuameng 搜索展示 0文字列表 
+        if (Hawk.get(HawkConfig.SEARCH_VIEW, 0) == 0){
+            mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+        }else{  // xuameng 搜索展示 1缩略图
+            mGridView.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
+        }
+        
         searchAdapter = new FastSearchAdapter();
         mGridView.setAdapter(searchAdapter);
 
@@ -224,8 +233,12 @@ public class FastSearchActivity extends BaseActivity {
             }
         });
 
-
-        mGridViewFilter.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
+        // xuameng 搜索展示 0文字列表 
+        if (Hawk.get(HawkConfig.SEARCH_VIEW, 0) == 0){
+            mGridViewFilter.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));           
+        }else{  // xuameng 搜索展示 1缩略图
+            mGridViewFilter.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
+        }
         searchAdapterFilter = new FastSearchAdapter();
         mGridViewFilter.setAdapter(searchAdapterFilter);
         searchAdapterFilter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
