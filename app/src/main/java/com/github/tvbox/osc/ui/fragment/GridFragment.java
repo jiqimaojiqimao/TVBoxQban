@@ -50,9 +50,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * @author pj567
- * @date :2020/12/21
- * @description:
+ * @author xuameng
+ * @date :2026/04/25
+ * @description:  焦点状态全面修复，list判断 folder文件夹判断等修复
  */
 public class GridFragment extends BaseLazyFragment {
     private MovieSort.SortData sortData = null;
