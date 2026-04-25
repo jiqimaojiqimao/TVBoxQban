@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import androidx.core.content.ContextCompat;    //xuameng新增
+import androidx.core.content.ContextCompat;
 
 import androidx.annotation.NonNull;
 
@@ -23,6 +23,12 @@ import com.owen.tvrecyclerview.widget.V7LinearLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+
+/**
+ * @author xuameng
+ * @date :2026/04/25
+ * @description:  焦点状态全面修复
+ */
 
 public class GridFilterDialog extends BaseDialog {
     public LinearLayout filterRoot;
@@ -52,9 +58,9 @@ public class GridFilterDialog extends BaseDialog {
 
     public void setData(MovieSort.SortData sortData) {
         ArrayList<MovieSort.SortFilter> filters = sortData.filters;
-        Context context = getContext(); //xuameng新增 // 获取上下文
-        final int defaultColor = ContextCompat.getColor(context, R.color.color_FFFFFF); //xuameng新增
-        final int selectedColor = ContextCompat.getColor(context, R.color.color_02F8E1); //xuameng新增
+        Context context = getContext(); // 获取上下文
+        final int defaultColor = ContextCompat.getColor(context, R.color.color_FFFFFF);
+        final int selectedColor = ContextCompat.getColor(context, R.color.color_02F8E1);
         for (MovieSort.SortFilter filter : filters) {
             View line = LayoutInflater.from(getContext()).inflate(R.layout.item_grid_filter, null);
             ((TextView) line.findViewById(R.id.filterName)).setText(filter.name);
@@ -62,35 +68,28 @@ public class GridFilterDialog extends BaseDialog {
             gridView.setHasFixedSize(true);
             gridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false));
        //     GridFilterKVAdapter filterKVAdapter = new GridFilterKVAdapter();
-            GridFilterKVAdapter filterKVAdapter = new GridFilterKVAdapter(defaultColor, selectedColor);   //xuameng新增
+            GridFilterKVAdapter filterKVAdapter = new GridFilterKVAdapter(defaultColor, selectedColor);
             gridView.setAdapter(filterKVAdapter);
             String key = filter.key;
             ArrayList<String> values = new ArrayList<>(filter.values.keySet());
             ArrayList<String> keys = new ArrayList<>(filter.values.values());
             filterKVAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
-                View pre = null;
-
                 @Override
                 public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                     selectChange = true;
                     String filterSelect = sortData.filterSelect.get(key);
+                    GridFilterKVAdapter gridAdapter = (GridFilterKVAdapter) adapter;
+        
                     if (filterSelect == null || !filterSelect.equals(keys.get(position))) {
+                        // 选中新的项
                         sortData.filterSelect.put(key, keys.get(position));
-                        if (pre != null) {
-                            TextView val = pre.findViewById(R.id.filterValue);
-                            val.getPaint().setFakeBoldText(false);
-                            val.setTextColor(getContext().getResources().getColor(R.color.color_FFFFFF));
-                        }
-                        TextView val = view.findViewById(R.id.filterValue);
-                        val.getPaint().setFakeBoldText(true);
-                        val.setTextColor(getContext().getResources().getColor(R.color.color_02F8E1));
-                        pre = view;
+                        // 通过Adapter更新选中状态
+                        gridAdapter.setSelectedPosition(position);
                     } else {
+                        // 取消选中
                         sortData.filterSelect.remove(key);
-                        TextView val = pre.findViewById(R.id.filterValue);
-                        val.getPaint().setFakeBoldText(false);
-                        val.setTextColor(getContext().getResources().getColor(R.color.color_FFFFFF));
-                        pre = null;
+                        // 取消选中状态
+                        gridAdapter.setSelectedPosition(-1);
                     }
                 }
             });
