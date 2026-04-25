@@ -8,6 +8,12 @@ import android.view.View; // xuameng导入 View 类
 
 import java.util.ArrayList;
 
+/**
+ * @author xuameng
+ * @date :2026/04/25
+ * @description:  焦点状态全面修复
+ */
+
 public class GridFilterKVAdapter extends BaseQuickAdapter<String, BaseViewHolder> {
     private int selectedPosition = -1;    // xuameng记录当前选中
     private int lastSelectedPosition = -1; // xuameng记录上次选中
