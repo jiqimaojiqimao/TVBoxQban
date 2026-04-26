@@ -194,10 +194,11 @@ public class HomeActivity extends BaseActivity {
                 if (view != null && position >= 0) {
                     HomeActivity.this.currentView = view;
                     HomeActivity.this.sortChange = true;
-                    sortAdapter.setSelectedPosition(position); //xuameng 完全交给sortAdapter维护
                     PositionXu = position;  //xuameng 记忆当前Position
                     HomeActivity.this.sortFocusView = view;
                     HomeActivity.this.sortFocused = position;
+                    //xuameng 安全地更新Adapter选中状态   完全交给sortAdapter维护
+                    safeUpdateSortAdapterSelection(position, tvRecyclerView);
                     mHandler.removeCallbacks(mDataRunnable);
                     mHandler.post(mDataRunnable);   //xuameng 延迟到下一个主线程周期执行
                 }
@@ -946,6 +947,35 @@ public class HomeActivity extends BaseActivity {
             Log.e(TAG, "跳转设置失败: " + e.getMessage());
             // 备用方案：跳转到应用列表
             startActivity(new Intent(Settings.ACTION_APPLICATION_SETTINGS));
+        }
+    }
+
+    /**
+     * 安全更新SortAdapter的选中位置
+     * 核心：避免在RecyclerView.isComputingLayout()时调用notifyItemChanged()
+     */
+    private void safeUpdateSortAdapterSelection(int position, TvRecyclerView recyclerView) {
+        if (sortAdapter == null || recyclerView == null) {
+            return;
+        }
+    
+        // 检查位置是否合法
+        if (position < 0 || position >= sortAdapter.getItemCount()) {
+            return;
+        }
+    
+        // 检查RecyclerView是否处于"不安全状态"
+        if (recyclerView.isComputingLayout() || recyclerView.isScrolling()) {
+            // 延迟到下一个UI周期执行
+            recyclerView.post(() -> {
+                // 再次检查，因为异步可能导致状态变化
+                if (sortAdapter != null && position >= 0 && position < sortAdapter.getItemCount()) {
+                    sortAdapter.setSelectedPosition(position);
+                }
+            });
+        } else {
+            // 安全状态，直接更新
+            sortAdapter.setSelectedPosition(position);
         }
     }
 
