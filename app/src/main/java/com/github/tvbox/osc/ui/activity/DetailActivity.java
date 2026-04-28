@@ -1089,6 +1089,9 @@ public class DetailActivity extends BaseActivity {
                         mEmptyPlayList.setVisibility(View.VISIBLE);
                     }
                 } else {
+                    if (isPushUrl) {  //xuameng 判断推送恢复初始
+                        isPushUrl = false;
+                    }
                     showEmpty();
                     llPlayerFragmentContainer.setVisibility(View.GONE);
                     llPlayerFragmentContainerBlock.setVisibility(View.GONE);
