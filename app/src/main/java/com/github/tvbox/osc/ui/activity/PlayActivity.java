@@ -150,7 +150,10 @@ public class PlayActivity extends BaseActivity {
             mController.mSubtitleView.setTextSize((int) event.obj);
             mController.mLrcView.setNormalTextSize((int) event.obj); //xuameng 设置LRC歌词 全屏非全屏状态同步
             mController.mLrcView.setHighlightTextSize((int) event.obj); //xuameng 设置LRC歌词 全屏非全屏状态同步
-        }
+        } else if (event.type == RefreshEvent.TYPE_CLOSE_PLAY_ACTIVITY) {  //xuameng 远程关闭playactivity 用于push推送解析刷新
+            // 收到指令，执行关闭
+            finish(); 
+        } 
     }
 
     @Override
@@ -180,6 +183,7 @@ public class PlayActivity extends BaseActivity {
     }
 
     private void initView() {
+        EventBus.getDefault().register(this);
         mHandler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
@@ -650,6 +654,10 @@ public class PlayActivity extends BaseActivity {
                     mVideoView.release();
                     if (finalUrl != null) {
                         String url = finalUrl;
+                        if (url.startsWith("push://") && ApiConfig.get().getSource("push_agent") != null) {  //xuameng 如是推送链接直接返回由detailactivity重新解析
+                            EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodInfo.playIndex));  //xuameng 通知detailactivity退出playactivity页面以便更新数据
+                            return;
+                        }
                         try {
                             int playerType = mVodPlayerCfg.getInt("pl");
                             if (playerType >= 10) {
@@ -1092,6 +1100,7 @@ public class PlayActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        EventBus.getDefault().unregister(this);
         if (mVideoView != null) {
             mVideoView.release();
             mVideoView = null;
