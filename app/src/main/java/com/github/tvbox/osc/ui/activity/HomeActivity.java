@@ -115,6 +115,7 @@ public class HomeActivity extends BaseActivity {
     public View sortFocusView = null;
     private final Handler mHandler = new Handler();
     private long mExitTime = 0;
+    private boolean mGridViewHasFocus = false;  //xuameng 判断 mGridView主页是否拥有焦点
     private static final int REQUEST_CODE_RECORD_AUDIO = 1001; //xuameng获取音频权限
     private static final String TAG = "PermissionHelper";//xuameng获取音频权限
     private static final int MARSHMALLOW = Build.VERSION_CODES.M;  //xuameng获取音频权限
@@ -174,14 +175,28 @@ public class HomeActivity extends BaseActivity {
                 }
 
                 mGridView.post(() -> {
-                    TvRecyclerView.LayoutManager lm = mGridView.getLayoutManager();
-                    if (lm == null) return;
-
-                    View firstView = lm.findViewByPosition(0);
-                    if (firstView != null && !firstView.hasFocus()) {
+                    TvRecyclerView.LayoutManager layoutManager = mGridView.getLayoutManager();
+                    if (layoutManager != null && !mGridViewHasFocus) {  //主页没有拥有焦点时执行
                         mGridView.setSelection(0);
                     }
                 });
+            }
+        });
+
+        // mGridView焦点监听
+        mGridView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    mGridViewHasFocus = false;
+                    return;
+                }
+        
+                // 获取当前焦点item
+                int focusedPosition = mGridView.getSelectedPosition();
+                if (focusedPosition == 0) {
+                    mGridViewHasFocus = true;
+                }
             }
         });
 
