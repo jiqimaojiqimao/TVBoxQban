@@ -1076,11 +1076,15 @@ public class DetailActivity extends BaseActivity {
                                         showSuccess();
                                         App.showToastShort(DetailActivity.this, "推送地址换源解析成功！");
                                     }
-                                }, 1000);
+                                }, 300);
                             }
                         }
                         // startQuickSearch();
                     } else {
+                        if (isPushUrl) {  //xuameng 判断推送恢复初始
+                            isPushUrl = false;
+                            App.showToastShort(DetailActivity.this, "推送数据已失效！");
+                        }
                         mGridViewFlag.setVisibility(View.GONE);
                         mGridView.setVisibility(View.GONE);
                         mSeriesGroupView.setVisibility(View.GONE);
@@ -1091,6 +1095,7 @@ public class DetailActivity extends BaseActivity {
                 } else {
                     if (isPushUrl) {  //xuameng 判断推送恢复初始
                         isPushUrl = false;
+                        App.showToastShort(DetailActivity.this, "推送数据已失效！");
                     }
                     showEmpty();
                     llPlayerFragmentContainer.setVisibility(View.GONE);
@@ -1257,7 +1262,7 @@ public class DetailActivity extends BaseActivity {
                                         App.showToastShort(DetailActivity.this, "推送地址换源解析成功！");
                                         isPushUrl = false;
                                     }
-                                }, 1000);
+                                }, 300);
                                 return; 
                             }
                             insertVod(firstsourceKey, saveVodInfo);
@@ -1809,7 +1814,7 @@ public class DetailActivity extends BaseActivity {
                 RoomDataManger.deleteVodRecord(oldSourceKey, vodInfo);
             
             } catch (Exception e) {
-            e.printStackTrace();
+                e.printStackTrace();
             }
         }
     }
