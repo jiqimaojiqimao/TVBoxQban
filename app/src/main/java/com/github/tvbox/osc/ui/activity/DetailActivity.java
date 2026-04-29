@@ -1083,21 +1083,43 @@ public class DetailActivity extends BaseActivity {
                     } else {
                         if (isPushUrl) {  //xuameng 判断推送恢复初始
                             isPushUrl = false;
-                            App.showToastShort(DetailActivity.this, "推送数据已失效！");
+                            App.showToastShort(DetailActivity.this, "接收到推送数据为空！");
                         }
                         mGridViewFlag.setVisibility(View.GONE);
                         mGridView.setVisibility(View.GONE);
                         mSeriesGroupView.setVisibility(View.GONE);
                         tvPlay.setVisibility(View.GONE);
-                        tvSort.setVisibility(View.GONE);  //xuameng修复无播放数据倒序空指针
+						tvSort.setVisibility(View.GONE);  //xuameng修复无播放数据倒序空指针
                         mEmptyPlayList.setVisibility(View.VISIBLE);
                     }
                 } else {
                     if (isPushUrl) {  //xuameng 判断推送恢复初始
                         isPushUrl = false;
-                        App.showToastShort(DetailActivity.this, "推送数据已失效！");
+                        App.showToastShort(DetailActivity.this, "接收推送数据失败！");
+                    }
+                    if (fullWindows) {
+                        toggleFullPreview();
                     }
                     showEmpty();
+                    mGridViewFlag.setFocusable(false);
+                    mGridView.setFocusable(false);
+                    mSeriesGroupView.setFocusable(false);
+                    tvPlay.setFocusable(false);
+                    tvSort.setFocusable(false);
+                    tvCollect.setFocusable(false);
+                    tvQuickSearch.setFocusable(false);
+                    tvDesc.setFocusable(false); 
+                    tvPush.setFocusable(false);
+                    llPlayerFragmentContainerBlock.setFocusable(false);
+                    mGridViewFlag.setVisibility(View.GONE);
+                    mGridView.setVisibility(View.GONE);
+                    mSeriesGroupView.setVisibility(View.GONE);
+                    tvPlay.setVisibility(View.GONE);
+                    tvSort.setVisibility(View.GONE);  //xuameng修复无播放数据倒序空指针
+                    tvCollect.setVisibility(View.GONE);
+                    tvQuickSearch.setVisibility(View.GONE);
+                    tvDesc.setVisibility(View.GONE);   
+                    tvPush.setVisibility(View.GONE);
                     llPlayerFragmentContainer.setVisibility(View.GONE);
                     llPlayerFragmentContainerBlock.setVisibility(View.GONE);
                 }
