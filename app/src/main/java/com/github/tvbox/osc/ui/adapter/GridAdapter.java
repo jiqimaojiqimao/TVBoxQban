@@ -38,7 +38,7 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
     public GridAdapter(boolean showList, ImgUtil.Style style) {
         super( showList ? R.layout.item_list:R.layout.item_grid, new ArrayList<>());
         if (style != null) {
-            if ("list".equals(style.type)) {   //xuameng如果 style = list 就以文件夹显示 转style = null 用 item_list
+            if (showList || "list".equals(style.type)) {   //xuameng如果 showList或 style = list 就以文件夹显示 转style = null 用 item_list
                 style = null;
             } else {
                 this.defaultWidth = ImgUtil.getStyleDefaultWidth(style);   //style 来设置图片的宽高比例
