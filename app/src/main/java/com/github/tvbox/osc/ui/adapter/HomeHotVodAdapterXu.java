@@ -37,7 +37,7 @@ public class HomeHotVodAdapterXu extends BaseQuickAdapter<Movie.Video, BaseViewH
         super( showList ? R.layout.item_list:R.layout.item_user_hot_vod_xu, new ArrayList<>());
         this.mShowList = showList; //xuameng 判断是否 style为list
         if (style != null) {
-            if ("list".equals(style.type)) {   //如果 style = list 用item_list显示文件夹样式
+            if (showList || "list".equals(style.type)) {   //如果 showList或 style = list 用item_list显示文件夹样式
                 style = null;
             } else {
                 this.defaultWidth = ImgUtilHot.getStyleDefaultWidth(style);   //style 来设置图片的宽高比例
