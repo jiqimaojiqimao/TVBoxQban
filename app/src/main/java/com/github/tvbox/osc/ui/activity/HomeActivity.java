@@ -202,7 +202,7 @@ public class HomeActivity extends BaseActivity {
 
         this.mGridView.setOnItemListener(new TvRecyclerView.OnItemListener() {       //xuameng移除  mHandler.postDelayed
             public void onItemPreSelected(TvRecyclerView tvRecyclerView, View view, int position) {
-				//  xuameng统一由onItemSelected处理焦点变化
+                //  xuameng统一由onItemSelected处理焦点变化
             }
 
             public void onItemSelected(TvRecyclerView tvRecyclerView, View view, int position) {
@@ -214,8 +214,10 @@ public class HomeActivity extends BaseActivity {
                     HomeActivity.this.sortFocused = position;
                     //xuameng 安全地更新Adapter选中状态   完全交给sortAdapter维护
                     safeUpdateSortAdapterSelection(position, tvRecyclerView);
-                    mHandler.removeCallbacks(mDataRunnable);
-                    mHandler.post(mDataRunnable);   //xuameng 延迟到下一个主线程周期执行
+                    if (!isFinishing() && isGridViewSafe()) {  //xuameng安全检查
+                        mHandler.removeCallbacks(mDataRunnable);
+                        mHandler.post(mDataRunnable);  //xuameng 延迟到下一个主线程周期执行
+                    }
                 }
             }
 
@@ -352,7 +354,7 @@ public class HomeActivity extends BaseActivity {
         if (home != null && home.getName() != null && !home.getName().isEmpty())
             tvName.setText(home.getName());
         if (dataInitOk && jarInitOk) {
-//            showLoading();
+            //showLoading();
             sourceViewModel.getSort(ApiConfig.get().getHomeSourceBean().getKey());
             if (hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 LOG.e("有");
@@ -571,43 +573,21 @@ public class HomeActivity extends BaseActivity {
             }
             // 如果 sortFocusView 存在且没有获取焦点，则请求焦点
             if (this.sortFocusView != null && !this.sortFocusView.isFocused()) {
-                if (mGridView == null || !mGridView.isAttachedToWindow()) {
-                    return; // 如果RecyclerView为空或未附加到窗口，直接返回
-                }
-                TvRecyclerView.LayoutManager layoutManager = mGridView.getLayoutManager();
-                if (layoutManager == null) {
-                    return; // xuameng防止空指针
-                }
                 if (currentView != null && PositionXu !=0) {   // xuameng防止空指针
-					//this.sortFocusView.requestFocus(); //xuameng这段代码手机使用时菜单失去焦点会闪退   
-                    this.mGridView.setSelection(PositionXu);   //xuameng处理手机滑动主页菜单失去焦点时按返回键闪退
+                    //this.sortFocusView.requestFocus(); //xuameng这段代码手机使用时菜单失去焦点会闪退   
+                    safeGridViewSetSelection(PositionXu);   //xuameng处理手机滑动主页菜单失去焦点时按返回键闪退
                 }
-
             }
             // 如果当前不是第一个界面，则将列表设置到第一项
             else if (this.sortFocused != 0) {
-                if (mGridView == null || !mGridView.isAttachedToWindow()) {
-                    return; // 如果RecyclerView为空或未附加到窗口，直接返回
-                }
-                TvRecyclerView.LayoutManager layoutManager = mGridView.getLayoutManager();
-                if (layoutManager == null) {
-                    return; // xuameng防止空指针
-                }
-                this.mGridView.setSelection(0);
+                safeGridViewSetSelection(0);   //xuameng安全检查后选择
             } else {
                 exit();
             }
         } else if (baseLazyFragment instanceof UserFragment && UserFragment.tvHotList1.canScrollVertically(-1)) {
             // 如果 UserFragment 列表可以向上滚动，则滚动到顶部
-            if (mGridView == null || !mGridView.isAttachedToWindow()) {
-                return; // 如果RecyclerView为空或未附加到窗口，直接返回
-            }
-            TvRecyclerView.LayoutManager layoutManager = mGridView.getLayoutManager();
-            if (layoutManager == null) {
-                return; // xuameng防止空指针
-            }
             UserFragment.tvHotList1.scrollToPosition(0);
-            this.mGridView.setSelection(0);
+            safeGridViewSetSelection(0);   //xuameng安全检查后选择
         } else {
             exit();
         }
@@ -786,12 +766,15 @@ public class HomeActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         mHandler.removeCallbacksAndMessages(null);
+        if (mGridView != null) {
+            mGridView.setAdapter(null);   // xuameng防止 Fragment/Adapter 再回调
+        }
         EventBus.getDefault().unregister(this);
         AppManager.getInstance().appExit(0);
         ControlManager.get().stopServer();
     }
 
-	private SelectDialog<SourceBean> mSiteSwitchDialog;
+    private SelectDialog<SourceBean> mSiteSwitchDialog;
 
     void showSiteSwitch() {
         List<SourceBean> sites = ApiConfig.get().getSwitchSourceBeanList();
@@ -857,8 +840,18 @@ public class HomeActivity extends BaseActivity {
         dataInitOk = true;
         skipNextUpdate=true;
         showSuccess();
-        sortAdapter.setNewData(DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), new ArrayList<>(), true));
-        initViewPager(null);
+        mHandler.post(() -> {  //xuameng 安全检查后执行
+            if (!isFinishing() && isGridViewSafe()) {
+                sortAdapter.setNewData(
+                    DefaultConfig.adjustSort(
+                        ApiConfig.get().getHomeSourceBean().getKey(),
+                        new ArrayList<>(),
+                        true
+                    )
+                );
+                initViewPager(null);
+            }
+        });
         App.showToastShort(HomeActivity.this, "聚汇影视提示：已打断当前源加载！");
     }
 
@@ -966,32 +959,39 @@ public class HomeActivity extends BaseActivity {
     }
 
     /**
-     * 安全更新SortAdapter的选中位置
+     * xuameng安全更新SortAdapter的选中位置
      * 核心：避免在RecyclerView.isComputingLayout()时调用notifyItemChanged()
      */
     private void safeUpdateSortAdapterSelection(int position, TvRecyclerView recyclerView) {
-        if (sortAdapter == null || recyclerView == null) {
+        if (recyclerView == null || !isGridViewSafe()) {
             return;
         }
-    
-        // 检查位置是否合法
-        if (position < 0 || position >= sortAdapter.getItemCount()) {
-            return;
-        }
-    
-        // 检查RecyclerView是否处于"不安全状态"
+
         if (recyclerView.isComputingLayout() || recyclerView.isScrolling()) {
-            // 延迟到下一个UI周期执行
             recyclerView.post(() -> {
-                // 再次检查，因为异步可能导致状态变化
-                if (sortAdapter != null && position >= 0 && position < sortAdapter.getItemCount()) {
+                if (isGridViewSafe()) { //xuameng安全检查
                     sortAdapter.setSelectedPosition(position);
                 }
             });
         } else {
-            // 安全状态，直接更新
             sortAdapter.setSelectedPosition(position);
         }
     }
+
+    private boolean isGridViewSafe() { //xuameng安全检查
+        return mGridView != null
+                && mGridView.isAttachedToWindow()
+                && mGridView.getLayoutManager() != null;
+    }
+
+    private void safeGridViewSetSelection(int pos) {  //xuameng安全选择
+        if (!isGridViewSafe()) return;
+        mGridView.post(() -> {
+            if (isGridViewSafe()) {
+                mGridView.setSelection(pos);
+            }
+        });
+    }
+
 
 }
