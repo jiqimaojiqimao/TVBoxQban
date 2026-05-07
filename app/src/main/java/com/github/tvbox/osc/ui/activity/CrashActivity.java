@@ -189,7 +189,7 @@ public class CrashActivity extends BaseActivity {
     }
 
     /**
-     * 复制到剪切版并备到到 聚汇影视备份黑标目录中
+     * 复制到剪切版并备到到 jvhuiys_backup目录中
      */
     private void copyCrashLogToClipboard() {
         if (crashLog == null || crashLog.isEmpty()) {
@@ -213,11 +213,11 @@ public class CrashActivity extends BaseActivity {
             return;
         }
 
-        // 2️⃣ 异步保存到 聚汇影视备份黑标 目录
+        // 2️⃣ 异步保存到jvhuiys_backup目录
         new Thread(() -> {
             try {
                 File root = Environment.getExternalStorageDirectory();
-                File dir = new File(root, "聚汇影视备份黑标");
+                File dir = new File(root, "jvhuiys_backup");
 
                 if (!dir.exists()) {
                     dir.mkdirs();
