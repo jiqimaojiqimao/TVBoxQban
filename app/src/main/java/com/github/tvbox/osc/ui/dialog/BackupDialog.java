@@ -95,7 +95,7 @@ public class BackupDialog extends BaseDialog {
         ArrayList<String> result = new ArrayList<>();
         try {
             String root = Environment.getExternalStorageDirectory().getAbsolutePath();
-            File file = new File(root + "/聚汇影视备份黑标/");
+            File file = new File(root + "/jvhuiys_backup/");
             File[] list = file.listFiles();
             Arrays.sort(list, new Comparator<File>() {
                 @Override
@@ -124,7 +124,7 @@ public class BackupDialog extends BaseDialog {
     void restore(String dir) {
         try {
             String root = Environment.getExternalStorageDirectory().getAbsolutePath();
-            File backup = new File(root + "/聚汇影视备份黑标/" + dir);
+            File backup = new File(root + "/jvhuiys_backup/" + dir);
             if (backup.exists()) {
                 File db = new File(backup, "sqlite");
                 if (AppDataManager.restore(db)) {
@@ -160,7 +160,7 @@ public class BackupDialog extends BaseDialog {
     void backup() {
         try {
             String root = Environment.getExternalStorageDirectory().getAbsolutePath();
-            File file = new File(root + "/聚汇影视备份黑标/");
+            File file = new File(root + "/jvhuiys_backup/");
             if (!file.exists())
                 file.mkdirs();
             Date now = new Date();
@@ -197,7 +197,7 @@ public class BackupDialog extends BaseDialog {
     void delete(String dir) {
         try {
             String root = Environment.getExternalStorageDirectory().getAbsolutePath();
-            File backup = new File(root + "/聚汇影视备份黑标/" + dir);
+            File backup = new File(root + "/jvhuiys_backup/" + dir);
             FileUtils.recursiveDelete(backup);
             App.showToastShort(getContext(), "此备份已删除！");
         } catch (Throwable e) {
