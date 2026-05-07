@@ -17,7 +17,7 @@ public class SearchHelper {
     public static HashMap<String, String> getSourcesForSearch() {
         HashMap<String, String> mCheckSources;
         try {
-            String api = Hawk.get(HawkConfig.API_URL, "http://xuameng.vicp.net:8082/tvbox/1/xu.json");
+            String api = Hawk.get(HawkConfig.API_URL, "http://xuameng.vicp.net:8082/jvhuiys/1/xu.json");
             if(api.isEmpty())return null;
             HashMap<String, HashMap<String, String>> mCheckSourcesForApi = Hawk.get(HawkConfig.SOURCES_FOR_SEARCH, new HashMap<>());
             mCheckSources = mCheckSourcesForApi.get(api);
@@ -49,7 +49,7 @@ public class SearchHelper {
     }
 
     public static void putCheckedSources(HashMap<String, String> mCheckSources,boolean isAll) {
-        String api = Hawk.get(HawkConfig.API_URL, "http://xuameng.vicp.net:8082/tvbox/1/xu.json");
+        String api = Hawk.get(HawkConfig.API_URL, "http://xuameng.vicp.net:8082/jvhuiys/1/xu.json");
         if (api.isEmpty()) {
             return;
         }
