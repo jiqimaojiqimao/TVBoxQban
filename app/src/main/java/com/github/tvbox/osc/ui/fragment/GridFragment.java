@@ -51,8 +51,8 @@ import org.json.JSONObject;
 
 /**
  * @author xuameng
- * @date :2026/04/25
- * @description:  焦点状态全面修复，list判断 folder文件夹判断等修复
+ * @date :2026/05/07
+ * @description:  焦点状态全面修复，list判断 folder文件夹判断等修复 LayoutManager为空修复
  */
 public class GridFragment extends BaseLazyFragment {
     private MovieSort.SortData sortData = null;
@@ -146,6 +146,8 @@ public class GridFragment extends BaseLazyFragment {
     public boolean restoreView(){
         if(mGrids.empty()) return false;
         this.showSuccess();
+        mGridView.stopScroll();   //xuameng终止滚动
+        mGridView.setLayoutFrozen(true); //xuameng冻结
         ((ViewGroup) mGridView.getParent()).removeView(this.mGridView); // 重父窗口移除当前控件
         GridInfo info = mGrids.pop();// 还原上次保存的控件
         this.sortData.id = info.sortID;
@@ -155,7 +157,6 @@ public class GridFragment extends BaseLazyFragment {
         this.maxPage = info.maxPage;
         this.isLoad = info.isLoad;
         this.focusedView = info.focusedView;
-        this.mGridView.setVisibility(View.VISIBLE);
 
         if (mGridView.getLayoutManager() == null) {    //xuameng 新增防止LayoutManager为空
             if(isFolederMode()){
@@ -172,13 +173,25 @@ public class GridFragment extends BaseLazyFragment {
                 }
             }
         }
+        mGridView.setLayoutFrozen(false); //xuameng解冻
+        this.mGridView.setVisibility(View.VISIBLE);
 
 //        if(this.focusedView != null){ this.focusedView.requestFocus(); }
-        if(mGridView != null) mGridView.requestFocus();
+//        if(mGridView != null) mGridView.requestFocus();
+        if(mGridView != null) {
+            mGridView.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (mGridView.getLayoutManager() != null) {
+                        mGridView.requestFocus();
+                    }
+                }
+            });
+        }
         return true;
     }
 
-	private ImgUtil.Style style;
+    private ImgUtil.Style style;
     // 更改当前页面
     private void createView(){
         this.saveCurrentView(); // 保存当前页面
@@ -194,19 +207,17 @@ public class GridFragment extends BaseLazyFragment {
             v3.setPadding(mGridView.getPaddingLeft(), mGridView.getPaddingTop(), mGridView.getPaddingRight(), mGridView.getPaddingBottom());
             v3.setClipToPadding(mGridView.getClipToPadding());
 
-            if (mGridView.getLayoutManager() == null) { //xuameng 新增防止LayoutManager为空
-                if(isFolederMode()){
-                    v3.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
-                }else{
-                    int spanCount = isBaseOnWidth() ? 5 : 6;
-                    if (style != null) {
-                        spanCount = ImgUtil.spanCountByStyle(style, spanCount);
-                    }
-                    if (spanCount == 1) {
-                        v3.setLayoutManager(new V7LinearLayoutManager(mContext, spanCount, false));
-                    } else {
-                        v3.setLayoutManager(new V7GridLayoutManager(mContext, spanCount));
-                    }
+            if(isFolederMode()){
+                v3.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+            }else{
+                int spanCount = isBaseOnWidth() ? 5 : 6;
+                if (style != null) {
+                    spanCount = ImgUtil.spanCountByStyle(style, spanCount);
+                }
+                if (spanCount == 1) {
+                    v3.setLayoutManager(new V7LinearLayoutManager(mContext, spanCount, false));
+                } else {
+                    v3.setLayoutManager(new V7GridLayoutManager(mContext, spanCount));
                 }
             }
 
