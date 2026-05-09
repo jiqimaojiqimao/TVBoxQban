@@ -52,7 +52,7 @@ import org.json.JSONObject;
 /**
  * @author xuameng
  * @date :2026/05/07
- * @description:  焦点状态全面修复，list判断 folder文件夹判断等修复 LayoutManager为空修复
+ * @description:  焦点状态全面修复，list判断 folder文件夹判断等修复   mContext判空
  */
 public class GridFragment extends BaseLazyFragment {
     private MovieSort.SortData sortData = null;
@@ -146,8 +146,6 @@ public class GridFragment extends BaseLazyFragment {
     public boolean restoreView(){
         if(mGrids.empty()) return false;
         this.showSuccess();
-        mGridView.stopScroll();   //xuameng终止滚动
-        mGridView.setLayoutFrozen(true); //xuameng冻结
         ((ViewGroup) mGridView.getParent()).removeView(this.mGridView); // 重父窗口移除当前控件
         GridInfo info = mGrids.pop();// 还原上次保存的控件
         this.sortData.id = info.sortID;
@@ -157,37 +155,9 @@ public class GridFragment extends BaseLazyFragment {
         this.maxPage = info.maxPage;
         this.isLoad = info.isLoad;
         this.focusedView = info.focusedView;
-
-        if (mGridView.getLayoutManager() == null) {    //xuameng 新增防止LayoutManager为空
-            if(isFolederMode()){
-                mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
-            }else{
-                int spanCount = isBaseOnWidth() ? 5 : 6;
-                if (style != null) {
-                    spanCount = ImgUtil.spanCountByStyle(style, spanCount);
-                }
-                if (spanCount == 1) {
-                    mGridView.setLayoutManager(new V7LinearLayoutManager(mContext, spanCount, false));
-                } else {
-                    mGridView.setLayoutManager(new V7GridLayoutManager(mContext, spanCount));
-                }
-            }
-        }
-        mGridView.setLayoutFrozen(false); //xuameng解冻
         this.mGridView.setVisibility(View.VISIBLE);
-
 //        if(this.focusedView != null){ this.focusedView.requestFocus(); }
-//        if(mGridView != null) mGridView.requestFocus();
-        if(mGridView != null) {
-            mGridView.post(new Runnable() {
-                @Override
-                public void run() {
-                    if (mGridView.getLayoutManager() != null) {
-                        mGridView.requestFocus();
-                    }
-                }
-            });
-        }
+        if(mGridView != null) mGridView.requestFocus();
         return true;
     }
 
@@ -206,21 +176,6 @@ public class GridFragment extends BaseLazyFragment {
             v3.setLayoutParams(mGridView.getLayoutParams());
             v3.setPadding(mGridView.getPaddingLeft(), mGridView.getPaddingTop(), mGridView.getPaddingRight(), mGridView.getPaddingBottom());
             v3.setClipToPadding(mGridView.getClipToPadding());
-
-            if(isFolederMode()){
-                v3.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
-            }else{
-                int spanCount = isBaseOnWidth() ? 5 : 6;
-                if (style != null) {
-                    spanCount = ImgUtil.spanCountByStyle(style, spanCount);
-                }
-                if (spanCount == 1) {
-                    v3.setLayoutManager(new V7LinearLayoutManager(mContext, spanCount, false));
-                } else {
-                    v3.setLayoutManager(new V7GridLayoutManager(mContext, spanCount));
-                }
-            }
-
             ((ViewGroup) mGridView.getParent()).addView(v3);
             mGridView.setVisibility(View.GONE);
             mGridView = v3;
@@ -237,20 +192,17 @@ public class GridFragment extends BaseLazyFragment {
     private void initView() {
         this.createView();
         mGridView.setAdapter(gridAdapter);
-
-        if (mGridView.getLayoutManager() == null) {  //xuameng 新增防止LayoutManager为空
-            if(isFolederMode()){
-                mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
-            }else{
-                int spanCount = isBaseOnWidth() ? 5 : 6;
-                if (style != null) {
-                    spanCount = ImgUtil.spanCountByStyle(style, spanCount);
-                }
-                if (spanCount == 1) {
+        if(isFolederMode()){
+            mGridView.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+        }else{
+            int spanCount = isBaseOnWidth() ? 5 : 6;
+            if (style != null) {
+                spanCount = ImgUtil.spanCountByStyle(style, spanCount);
+            }
+            if (spanCount == 1) {
                 mGridView.setLayoutManager(new V7LinearLayoutManager(mContext, spanCount, false));
-                } else {
-                    mGridView.setLayoutManager(new V7GridLayoutManager(mContext, spanCount));
-                }
+            } else {
+                mGridView.setLayoutManager(new V7GridLayoutManager(mContext, spanCount));
             }
         }
 
@@ -392,6 +344,10 @@ public class GridFragment extends BaseLazyFragment {
     }
 
     public void showFilter() {
+        // xuameng增加 Context 的有效性检查
+        if (mContext == null) {
+            return;
+        }
         if (!sortData.filters.isEmpty() && gridFilterDialog == null) {
             gridFilterDialog = new GridFilterDialog(mContext);
 //            gridFilterDialog.setData(sortData);
