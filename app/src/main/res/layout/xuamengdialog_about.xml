@@ -4,22 +4,22 @@
     android:orientation="vertical"
     android:background="@drawable/shape_dialog_bg_xuameng"
     android:padding="@dimen/vs_30"
-    android:layout_width="wrap_content"
+    android:layout_width="@dimen/vs_720"
     android:layout_height="wrap_content"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <TextView
         android:textSize="@dimen/ts_24"
         android:textColor="@color/color_FFFFFF"
-        android:layout_width="@dimen/vs_650"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="许大师郑重声明：\n        本软件只提供聚合展示功能，所有资源来自互联网，软件不参与任何制作、上传、储存、下载等内容。软件仅供学习参考，请于安装后24小时内卸载并删除。如在使用中遇到问题，请将问题内容通过邮件发送致：xuameng_1980@163.com，感谢机器猫的大力支持！！"
         android:lineSpacingExtra="@dimen/ts_50"
         android:lineSpacingMultiplier="0.0"/>
     <ImageView
-        android:layout_width="160.0dip"
-        android:layout_height="160.0dip"
+        android:layout_width="@dimen/vs_160"
+        android:layout_height="@dimen/vs_160"
         android:layout_gravity="center"
         android:gravity="center"
-        android:layout_marginTop="10.0dip"
+        android:layout_marginTop="@dimen/vs_20"
         android:src="@drawable/xuameng"/>
 </LinearLayout>
