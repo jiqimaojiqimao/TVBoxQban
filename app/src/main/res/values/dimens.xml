@@ -276,6 +276,7 @@
     <dimen name="vs_6">6.0mm</dimen>
     <dimen name="vs_60">60.0mm</dimen>
     <dimen name="vs_600">600.0mm</dimen>
+    <dimen name="vs_630">630.0mm</dimen>
     <dimen name="vs_60_">-60.0mm</dimen>
     <dimen name="vs_610">610.0mm</dimen>
     <dimen name="vs_640">640.0mm</dimen>
