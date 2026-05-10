@@ -115,6 +115,7 @@ public class HomeActivity extends BaseActivity {
     public View sortFocusView = null;
     private final Handler mHandler = new Handler();
     private long mExitTime = 0;
+    private boolean mGridViewHasFocus = false;  //xuameng 判断 mGridView主页是否拥有焦点
     private static final int REQUEST_CODE_RECORD_AUDIO = 1001; //xuameng获取音频权限
     private static final String TAG = "PermissionHelper";//xuameng获取音频权限
     private static final int MARSHMALLOW = Build.VERSION_CODES.M;  //xuameng获取音频权限
@@ -167,15 +168,29 @@ public class HomeActivity extends BaseActivity {
         this.mGridView.setSpacingWithMargins(0, AutoSizeUtils.dp2px(this.mContext, 10.0f));
         this.mGridView.setAdapter(this.sortAdapter);
         this.mGridView.setItemAnimator(null);   //xuameng 取消Item动画 闹腾
-        sortAdapter.registerAdapterDataObserver(new TvRecyclerView.AdapterDataObserver() {     //xuameng主页默认焦点
+        sortAdapter.registerAdapterDataObserver(new TvRecyclerView.AdapterDataObserver() {
             @Override
             public void onChanged() {
-                mGridView.post(() -> {
-                    View firstChild = Objects.requireNonNull(mGridView.getLayoutManager()).findViewByPosition(0);
-                    if (firstChild != null) {
-                        mGridView.setSelection(0);  //xuameng setSelectedPosition不能获取焦点
-                    }
-                });
+                if (!mGridViewHasFocus) {  //xuameng主页没有拥有焦点时执行
+                    mGridView.setSelection(0);   //xuameng setSelectedPosition不能获取焦点
+                }
+            }
+        });
+
+        // mGridView焦点监听
+        mGridView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    mGridViewHasFocus = false;
+                    return;
+                }
+        
+                // 获取当前焦点item
+                int focusedPosition = mGridView.getSelectedPosition();
+                if (focusedPosition == 0) {
+                    mGridViewHasFocus = true;
+                }
             }
         });
 
