@@ -12,6 +12,12 @@ import java.util.Map;
 
 import okhttp3.Dns;
 
+/**
+ * @author xuameng
+ * @date :2026/05/28
+ * @description:   接口action方式支持
+ */
+
 public class Spider {
 
     public static JSONObject empty = new JSONObject();
@@ -139,6 +145,13 @@ public class Spider {
      * @return
      */
     public Object[] proxyLocal(Map< String, String > params) {
+        return null;
+    }
+
+    /**
+     * xuameng 适配接口action
+     */
+    public String action(String action) throws Exception {
         return null;
     }
 }
