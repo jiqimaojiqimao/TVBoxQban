@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author pj567
- * @date :2020/12/18
- * @description:
+ * @author xuameng
+ * @date :2026/05/28
+ * @description:   接口action方式支持
  */
 public class AbsJson implements Serializable {
 
@@ -104,6 +104,7 @@ public class AbsJson implements Serializable {
         public String vod_weekday; //: ""
         public String vod_writer; //: "周炎青,刘恒,支雅雪,孙露军,李璐,王梦璇"
         public String vod_year; //: "2021"
+        public String action; //: xuameng 兼容接口自定义动作
 
         public Movie.Video toXmlVideo() {
             Movie.Video video = new Movie.Video();
@@ -117,6 +118,7 @@ public class AbsJson implements Serializable {
             video.pic = vod_pic;
             video.lang = vod_lang;
             video.area = vod_area;
+            video.action = action;  //: xuameng 兼容接口自定义动作
             try {
                 video.year = Integer.parseInt(vod_year);
             } catch (Throwable th) {
