@@ -54,10 +54,14 @@ import java.util.List;
 import com.github.tvbox.osc.util.FileUtils; //xuameng 清缓存
 import java.io.File; //xuameng 清缓存
 
+import android.text.TextUtils;  //xuameng 接口action方法判断
+import com.github.catvod.crawler.Spider;  //xuameng 接口action方法判断
+import com.github.tvbox.osc.bean.SourceBean;  //xuameng 接口action方法判断
+
 /**
- * @author pj567
- * @date :2021/3/9
- * @description:
+ * @author xuameng
+ * @date :2026/05/28
+ * @description:   接口action方式支持
  */
 public class UserFragment extends BaseLazyFragment implements View.OnClickListener {
     private LinearLayout tvLive;
@@ -174,12 +178,23 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
                 // takagen99: CHeck if in Delete Mode
-                if ((vod.id != null && !vod.id.isEmpty()) && (Hawk.get(HawkConfig.HOME_REC, 0) == 2) && HawkConfig.hotVodDelete) {
+                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, 0) == 2 && HawkConfig.hotVodDelete) {
                     homeHotVodAdapter.remove(position);
                     VodInfo vodInfo = RoomDataManger.getVodInfo(vod.sourceKey, vod.id);
                     RoomDataManger.deleteVodRecord(vod.sourceKey, vodInfo);
                     App.showToastShort(mContext, "已删除当前记录！");
-                } else if (vod.id != null && !vod.id.isEmpty()) { //xuameng 修复首页聚汇推荐单击不能搜索的问题
+                } else if (!TextUtils.isEmpty(vod.action)) {    //xuameng 接口action方法判断 必须放在线程中执行
+                    new Thread(() -> {
+                        try {
+                            SourceBean bean = ApiConfig.get().getSource(vod.sourceKey);
+                            Spider sp = ApiConfig.get().getCSP(bean);
+                            sp.action(vod.action);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                    return;   //xuameng 接口action方法判断 必须放在线程中执行完
+                } else if (!TextUtils.isEmpty(vod.id)) { //xuameng 修复首页聚汇推荐单击不能搜索的问题
                     Bundle bundle = new Bundle();
                     bundle.putString("id", vod.id);
                     bundle.putString("sourceKey", vod.sourceKey);
@@ -218,12 +233,23 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
                 // takagen99: CHeck if in Delete Mode
-                if ((vod.id != null && !vod.id.isEmpty()) && (Hawk.get(HawkConfig.HOME_REC, 0) == 2) && HawkConfig.hotVodDelete) {
+                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, 0) == 2 && HawkConfig.hotVodDelete) {
                     homeHotVodAdapterxu.remove(position);
                     VodInfo vodInfo = RoomDataManger.getVodInfo(vod.sourceKey, vod.id);
                     RoomDataManger.deleteVodRecord(vod.sourceKey, vodInfo);
                     App.showToastShort(mContext, "已删除当前记录！");
-                } else if (vod.id != null && !vod.id.isEmpty()) { //xuameng 修复首页聚汇推荐单击不能搜索的问题
+                } else if (!TextUtils.isEmpty(vod.action)) {    //xuameng 接口action方法判断 必须放在线程中执行
+                    new Thread(() -> {
+                        try {
+                            SourceBean bean = ApiConfig.get().getSource(vod.sourceKey);
+                            Spider sp = ApiConfig.get().getCSP(bean);
+                            sp.action(vod.action);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                    return;   //xuameng 接口action方法判断 必须放在线程中执行完
+                } else if (!TextUtils.isEmpty(vod.id)) { //xuameng 修复首页聚汇推荐单击不能搜索的问题
                     Bundle bundle = new Bundle();
                     bundle.putString("id", vod.id);
                     bundle.putString("sourceKey", vod.sourceKey);
@@ -328,9 +354,20 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 if (ApiConfig.get().getSourceBeanList().isEmpty()) return false;
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
                 // Additional Check if : Home Rec 0=豆瓣, 1=推荐, 2=历史
-                if ((vod.id != null && !vod.id.isEmpty()) && (Hawk.get(HawkConfig.HOME_REC, 0) == 2)) {
+                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
                     HawkConfig.hotVodDelete = !HawkConfig.hotVodDelete;
                     homeHotVodAdapter.notifyDataSetChanged();
+                } else if (!TextUtils.isEmpty(vod.action)) {    //xuameng 接口action方法判断 必须放在线程中执行
+                    new Thread(() -> {
+                        try {
+                            SourceBean bean = ApiConfig.get().getSource(vod.sourceKey);
+                            Spider sp = ApiConfig.get().getCSP(bean);
+                            sp.action(vod.action);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                    return true;   //xuameng 接口action方法判断 必须放在线程中执行完
                 } else {
                     Bundle bundle = new Bundle();
                     bundle.putString("title", vod.name);
@@ -346,9 +383,20 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 if (ApiConfig.get().getSourceBeanList().isEmpty()) return false;
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
                 // Additional Check if : Home Rec 0=豆瓣, 1=推荐, 2=历史
-                if ((vod.id != null && !vod.id.isEmpty()) && (Hawk.get(HawkConfig.HOME_REC, 0) == 2)) {
+                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
                     HawkConfig.hotVodDelete = !HawkConfig.hotVodDelete;
                     homeHotVodAdapterxu.notifyDataSetChanged();
+                } else if (!TextUtils.isEmpty(vod.action)) {    //xuameng 接口action方法判断 必须放在线程中执行
+                    new Thread(() -> {
+                        try {
+                            SourceBean bean = ApiConfig.get().getSource(vod.sourceKey);
+                            Spider sp = ApiConfig.get().getCSP(bean);
+                            sp.action(vod.action);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }).start();
+                    return true;   //xuameng 接口action方法判断 必须放在线程中执行完
                 } else {
                     Bundle bundle = new Bundle();
                     bundle.putString("title", vod.name);
