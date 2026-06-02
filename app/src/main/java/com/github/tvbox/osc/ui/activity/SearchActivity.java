@@ -78,16 +78,19 @@ import java.util.concurrent.ThreadFactory;  //xuameng 线程池
 import java.util.concurrent.LinkedBlockingQueue;   //xuameng 线程池
 import java.util.Locale;   //xuameng 统计进度用
 
+import com.github.tvbox.osc.bean.MovieSort;   //xuameng 新增搜索结果有folder 就是下一级判断
+import java.util.Stack;  //xuameng 新增搜索结果有folder 就是下一级判断 堆栈列表
+import android.view.ViewTreeObserver;  //xuameng 新增搜索结果有folder 就是下一级判断 监听选中滚动
 /**
- * @author pj567
- * @date :2020/12/23
- * @description:
+ * @author xuameng
+ * @date :2026/06/01
+ * @description:    //xuameng 新增搜索结果有folder 就是下一级判断
  */
 public class SearchActivity extends BaseActivity {
     private LinearLayout llLayout;
     private TvRecyclerView mGridView;
     private TvRecyclerView mGridViewWord;    //xuameng热搜
-    private SourceViewModel sourceViewModel;   //xuameng
+    private SourceViewModel sourceViewModel;   //xuameng 数据源
     private RemoteDialog remoteDialog;
     private EditText etSearch; //xuameng 请输入要搜索的内容
     private TextView tvSearch;   //xuameng 搜索
@@ -108,6 +111,32 @@ public class SearchActivity extends BaseActivity {
 
     private static HashMap<String, String> mCheckSources = null;
     private SearchCheckboxDialog mSearchCheckboxDialog = null;
+
+    // xuameng新增：返回栈（核心）
+    public int page = 1;
+    public int restorePos = 0;
+    private MovieSort.SortData currentSortData = new MovieSort.SortData("", "搜索结果");
+    static class BackNode {
+        String sourceKey;   // 记录来源站点
+        String sortId;      // 记录分类ID
+        int lastSelectedPosition; //  选中项
+        // 构造函数
+        public BackNode(String sourceKey, String sortId, int lastSelectedPosition) {
+            this.sourceKey = sourceKey;
+            this.sortId = sortId;
+            this.lastSelectedPosition = lastSelectedPosition;
+        }
+    }
+    private final Stack<BackNode> backStack = new Stack<>();
+    // 缓存首次全站搜索结果
+    private final List<Movie.Video> topSearchCache = new ArrayList<>();
+    // 判断搜索是否完成
+    private boolean topSearchCompleted = false;
+    // 判断是否正在加载下级列表
+    private boolean getListIng = false; 
+    // 是否处于「全局搜索结果阶段」
+    private boolean isTopSearchStage = true;
+    // xuameng新增：返回栈（核心完成）
 
     @Override
     protected int getLayoutResID() {
@@ -132,30 +161,7 @@ public class SearchActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (pauseRunnable != null && pauseRunnable.size() > 0) {
-            searchExecutorService = new ThreadPoolExecutor(
-            Runtime.getRuntime().availableProcessors(), // 核心线程数=CPU核数
-            Runtime.getRuntime().availableProcessors() * 2, // 最大线程数
-                30L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(1000),  // 队列容量调整为1000
-                new ThreadFactory() {
-                    @Override
-                    public Thread newThread(Runnable r) {
-                        // 关键优化：设置256KB栈大小
-                        Thread t = new Thread(null, r, "search-pool", 256 * 1024);
-                        t.setPriority(Thread.NORM_PRIORITY - 1);
-                        return t;
-                    }
-                },
-                new ThreadPoolExecutor.DiscardOldestPolicy()  // 超限直接丢弃
-            );
-            allRunCount.set(pauseRunnable.size());
-            for (Runnable runnable : pauseRunnable) {
-                searchExecutorService.execute(runnable);
-            }
-            pauseRunnable.clear();
-            pauseRunnable = null;
-        }
+        ContinueSearchExecutor(); //继续搜索
         if (hasKeyBoard) {
             tvSearch.requestFocus();
        //     tvSearch.requestFocusFromTouch();     //xuameng 触碰时不获得焦点
@@ -227,6 +233,23 @@ public class SearchActivity extends BaseActivity {
                     } catch (Throwable th) {
                         th.printStackTrace();
                     }
+
+                    //xuameng 如有下一级直接getListFromSearch 加载列表
+                    if (video.tag != null && (video.tag.equals("folder") || video.tag.equals("cover"))) {  
+                        isTopSearchStage = false;   // 关闭全局搜索结果写入
+                        currentSortData.id = video.id;
+                        int selectedPos = searchAdapter.getData().isEmpty() ? 0 : mGridView.getChildAdapterPosition(mGridView.getFocusedChild());
+                        BackNode node = new BackNode(video.sourceKey, currentSortData.id, selectedPos);
+                        backStack.push(node); //xuameng保存堆栈
+                        page = 1;
+                        searchAdapter.setNewData(new ArrayList<>());
+                        showLoading();
+                        sourceViewModel.getListFromSearch(currentSortData, page, video.sourceKey);
+                        getListIng = true;   // 判断是否正在加载下级列表
+                        return;
+                    }  
+                    //xuameng 如有下一级直接getListFromSearch 加载列表完成
+
                     hasKeyBoard = false;
                     isSearchBack = true;
                     Bundle bundle = new Bundle();
@@ -237,6 +260,7 @@ public class SearchActivity extends BaseActivity {
                 }
             }
         });
+   
         tvSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -256,6 +280,7 @@ public class SearchActivity extends BaseActivity {
                 }
             }
         });
+
         // xuameng为搜索按钮设置长按事件监听器
         tvSearch.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -265,6 +290,7 @@ public class SearchActivity extends BaseActivity {
                 return true;
             }
         });
+
         tvClear.setOnClickListener(new View.OnClickListener() {     
             @Override
             public void onClick(View v) {
@@ -276,11 +302,7 @@ public class SearchActivity extends BaseActivity {
                 tHotSearchText.setText("热门搜索");          //xuameng修复删除内容后，热门搜索为空
                 showSuccess();  //xuameng修复BUG
                 mGridView.setVisibility(View.GONE);
-                if (searchExecutorService != null) {
-                   searchExecutorService.shutdownNow();
-                   searchExecutorService = null;
-                   JsLoader.stopAll();
-                }
+                stopSearchExecutor();
                 cancel();
             }
         });
@@ -295,6 +317,7 @@ public class SearchActivity extends BaseActivity {
             public void afterTextChanged(Editable s) {         //xuameng清空或删除关闭搜索内容显示搜索历史记录
                 keyword = s.toString().trim();
                 if (TextUtils.isEmpty(keyword)) {
+                    stopSearchExecutor();
                     cancel();
                     tv_history.setVisibility(View.VISIBLE);
                     searchTips.setVisibility(View.VISIBLE);
@@ -338,11 +361,8 @@ public class SearchActivity extends BaseActivity {
                         tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
                         searchTips.setVisibility(View.VISIBLE);
                         mGridView.setVisibility(View.GONE);
-                        if (searchExecutorService != null) {
-                            searchExecutorService.shutdownNow();
-                            searchExecutorService = null;
-                            JsLoader.stopAll();
-                            }
+                        stopSearchExecutor();
+                        cancel();
                     }
                 } else if (pos == 0) {
                     if (remoteDialog == null) {
@@ -460,6 +480,28 @@ public class SearchActivity extends BaseActivity {
     private void initViewModel() {
         sourceViewModel = new ViewModelProvider(this).get(SourceViewModel.class);
         searchPresenter = new SearchPresenter();   //xuameng 搜索历史
+
+        ///xuameng：folder / cover 下级 监听返回结果
+        sourceViewModel.listResult.observe(this, absXml -> {
+            if (!getListIng){ // 判断是否正在加载下级列表
+                return;
+            }
+            if (absXml != null && absXml.movie != null && absXml.movie.videoList != null && absXml.movie.videoList.size() > 0) {
+                showSuccess();
+                mGridView.setVisibility(View.VISIBLE);
+                tv_history.setVisibility(View.GONE);
+                searchTips.setVisibility(View.GONE);
+                if (page == 1) {
+                    searchAdapter.setNewData(absXml.movie.videoList);
+                } else {
+                    searchAdapter.addData(absXml.movie.videoList);
+                }
+                page++;
+            } else {
+                showEmpty();
+            }
+        });
+        ///xuameng：folder / cover 下级 监听返回结果完
     }
 
     /**
@@ -571,6 +613,10 @@ public class SearchActivity extends BaseActivity {
             App.showToastShort(SearchActivity.this, "输入内容不能为空！");
             return;
         }
+        isTopSearchStage = true;   // 开启全局搜索阶段
+        backStack.clear();  //xuameng清空节点数据确保数据初始化状态
+        topSearchCompleted = false;  // xuameng搜索完成重置
+        topSearchCache.clear();  // xuameng搜索缓存重置
         cancel();   
         if (remoteDialog != null) {
             remoteDialog.dismiss();
@@ -698,34 +744,48 @@ public class SearchActivity extends BaseActivity {
         if (searchExecutorService == null) {  //xuameng点击清除或删除所有文字后还继续显示搜索结果
             return;
         }
+        // 已经进入子级，直接丢弃全局搜索结果
+        if (!isTopSearchStage) {
+            return;
+        }
         if (absXml != null && absXml.movie != null && absXml.movie.videoList != null && absXml.movie.videoList.size() > 0) {
             List<Movie.Video> data = new ArrayList<>();
             for (Movie.Video video : absXml.movie.videoList) {
                 if (matchSearchResult(video.name, searchTitle)) data.add(video);
             }
-            if (searchAdapter.getData().size() > 0) {
-                searchAdapter.addData(data);
-            } else {
-                showSuccess();   //xuameng搜索历史
+
+            if (searchAdapter.getData().isEmpty()) {
+                if (data != null && !data.isEmpty()){
+	                showSuccess();   //xuameng 修复loading隐藏BUG只有真正获取到数据才隐藏
+                }
                 mGridView.setVisibility(View.VISIBLE);
                 searchAdapter.setNewData(data);
                 tv_history.setVisibility(View.GONE);    //xuameng搜索历史
                 searchTips.setVisibility(View.GONE);  //xuameng搜索历史
-//                llWord.setVisibility(View.GONE);   //xuameng搜索历史
+                //  llWord.setVisibility(View.GONE);   //xuameng搜索历史
+                // xuameng 搜索缓存 有下一级时有缓存不用重搜
+                topSearchCache.addAll(data); //xuameng 增加搜索缓存
+                topSearchCompleted = false;  // xuameng搜索完成
+               // xuameng 搜索缓存 有下一级时有缓存不用重搜完
+            } else {
+                searchAdapter.addData(data);
+                topSearchCache.addAll(data);  // xuameng 搜索缓存 有下一级时有缓存不用重搜
             }
         }
 
         int count = allRunCount.decrementAndGet();
         if (count <= 0) {
+            topSearchCompleted = true;  //xuameng 搜索完成
             if (searchAdapter.getData().size() <= 0) {
                 if (searchExecutorService != null) {
                     showEmpty();		//xuameng修复BUG
                 }else{
-                tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
-                searchTips.setVisibility(View.VISIBLE);
-                mGridView.setVisibility(View.GONE); 
+                    tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
+                    searchTips.setVisibility(View.VISIBLE);
+                    mGridView.setVisibility(View.GONE); 
                 }
             }
+            stopSearchExecutor();
             cancel();
         }
     }
@@ -739,33 +799,59 @@ public class SearchActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         isActivityDestroyed = true; //xuameng 退出就不统计搜索成功了
+        stopSearchExecutor();
         cancel();
-        try {
-            if (searchExecutorService != null) {
-                searchExecutorService.shutdownNow();
-                searchExecutorService = null;
-                JsLoader.stopAll();
-            }
-        } catch (Throwable th) {
-            th.printStackTrace();
-        }
         EventBus.getDefault().unregister(this);
     }
 
     @Override
     public void onBackPressed() {
-        isActivityDestroyed = true;   //xuameng 退出就不统计搜索成功了
-        App.HideToast();  //xuameng HideToast
-        cancel();
-        try {
-            if (searchExecutorService != null) {
-                searchExecutorService.shutdownNow();
-                searchExecutorService = null;
-                JsLoader.stopAll();
+        if (!backStack.isEmpty()) {
+            getListIng = false;  // 判断是否正在加载下级列表
+            App.HideToast();
+            stopSearchExecutor();
+
+            BackNode node = backStack.pop();  //xuameng 取出并移除 栈顶元素
+            page = 1;
+            searchAdapter.setNewData(new ArrayList<>());
+            showLoading();
+
+            if (backStack.isEmpty()) {
+                // xuameng只要有结果，先恢复 UI
+                if (!topSearchCache.isEmpty()) {
+                    searchAdapter.setNewData(topSearchCache);
+                    showSuccess();
+                    mGridView.setVisibility(View.VISIBLE);
+                    // xuameng恢复焦点位置
+                    restorePos = node.lastSelectedPosition;
+                    if (restorePos >= 0 && restorePos < topSearchCache.size()) {
+                        mGridView.post(() -> {
+                            mGridView.setSelection(restorePos);
+                        });
+                    }
+                }
+
+                // xuameng不管有没有结果，只要没跑完就继续
+                if (!topSearchCompleted) {   //xuameng 搜索未完成
+                    // xuameng上次没搜完，继续搜
+                    isTopSearchStage = true;   // 全局搜索结果写入
+                    ContinueSearchExecutor(); //继续搜索
+                }
+            } else {
+                // xuameng中间层级（加载列表）
+                getListIng = true; // 判断是否正在加载下级列表
+                searchAdapter.setNewData(new ArrayList<>());
+                showLoading();
+                currentSortData.id = node.sortId;
+                sourceViewModel.getListFromSearch(currentSortData, page, node.sourceKey);
             }
-        } catch (Throwable th) {
-            th.printStackTrace();
+            return;
         }
+
+        isActivityDestroyed = true;   //xuameng 退出就不统计搜索成功了
+        stopSearchExecutor();
+        cancel();
+        App.HideToast();  //xuameng HideToast
         super.onBackPressed();
     }
 
@@ -854,6 +940,45 @@ public class SearchActivity extends BaseActivity {
 
         // 给用户一个提示（如果需要）
          App.showToastShort(SearchActivity.this, "加载热门搜索失败，已显示默认推荐");
+    }
+
+    public void stopSearchExecutor() {  //停止搜索
+        try {
+            if (searchExecutorService != null) {
+                searchExecutorService.shutdownNow();
+                searchExecutorService = null;
+                JsLoader.stopAll();
+            }
+        } catch (Throwable th) {
+            th.printStackTrace();
+        }
+    }
+
+    public void ContinueSearchExecutor() {  //继续搜索
+        if (pauseRunnable != null && pauseRunnable.size() > 0) {
+            searchExecutorService = new ThreadPoolExecutor(
+            Runtime.getRuntime().availableProcessors(), // 核心线程数=CPU核数
+            Runtime.getRuntime().availableProcessors() * 2, // 最大线程数
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000),  // 队列容量调整为1000
+                new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        // 关键优化：设置256KB栈大小
+                        Thread t = new Thread(null, r, "search-pool", 256 * 1024);
+                        t.setPriority(Thread.NORM_PRIORITY - 1);
+                        return t;
+                    }
+                },
+                new ThreadPoolExecutor.DiscardOldestPolicy()  // 超限直接丢弃
+            );
+            allRunCount.set(pauseRunnable.size());
+            for (Runnable runnable : pauseRunnable) {
+                searchExecutorService.execute(runnable);
+            }
+            pauseRunnable.clear();
+            pauseRunnable = null;
+        }
     }
 
 }
