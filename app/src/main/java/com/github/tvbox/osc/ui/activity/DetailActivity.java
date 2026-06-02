@@ -96,7 +96,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.tvbox.osc.util.ImgUtilDetail;   //xuameng base64图片
 /**
  * @author xuameng
- * @date :2025/05/07 配置中心判断
+ * @date :2025/06/01 配置中心判断  推送判断
  * @description:
  */
 
@@ -147,6 +147,8 @@ public class DetailActivity extends BaseActivity {
     private final ArrayList<String> seriesGroupOptions = new ArrayList<>();
     private View currentSeriesGroupView;
     private int GroupCount;
+    private Handler mHandler = new Handler();  //xuameng 新增推送
+    private volatile boolean isActivityDestroyed = false;  //xuameng判断页面是否已关闭
 
     @Override
     protected int getLayoutResID() {
@@ -1070,14 +1072,7 @@ public class DetailActivity extends BaseActivity {
                             toggleSubtitleTextSize();
                         }else{
                             if (isPushUrl) {  //xuameng 判断推送内容 如是 不执行保存 播放成功后会自动保存
-                                new Handler().postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        isPushUrl = false;
-                                        showSuccess();
-                                        App.showToastShort(DetailActivity.this, "推送地址换源解析成功！");
-                                    }
-                                }, 300);
+                                mHandler.postDelayed(mPushUrlRunnable, 300); //xuameng 推送地址解析成功
                             }
                         }
                         // startQuickSearch();
@@ -1296,13 +1291,7 @@ public class DetailActivity extends BaseActivity {
                                     App.showToastShort(DetailActivity.this, "推送地址需换源解析，请稍后！");
                                     return; 
 								}
-                                new Handler().postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        App.showToastShort(DetailActivity.this, "推送地址换源解析成功！");
-                                        isPushUrl = false;
-                                    }
-                                }, 300);
+                                mHandler.postDelayed(mPushUrlRunnable, 300); //xuameng 推送地址解析成功
                                 return; 
                             }
                             insertVod(firstsourceKey, saveVodInfo);
@@ -1532,6 +1521,7 @@ public class DetailActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        isActivityDestroyed = true;
         try {
             if (searchExecutorService != null) {
                 searchExecutorService.shutdownNow();
@@ -1539,6 +1529,9 @@ public class DetailActivity extends BaseActivity {
             }
         } catch (Throwable th) {
             th.printStackTrace();
+        }
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
         }
         OkGo.getInstance().cancelTag("fenci");
         OkGo.getInstance().cancelTag("detail");
@@ -1577,6 +1570,9 @@ public class DetailActivity extends BaseActivity {
         }
         HawkConfig.intVod = false;  //xuameng判断进入播放
         App.HideToast();
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
         super.onBackPressed();
     }
 
@@ -1858,5 +1854,15 @@ public class DetailActivity extends BaseActivity {
             }
         }
     }
+
+    private Runnable mPushUrlRunnable = new Runnable() {  //xuameng 推送地址
+        @Override
+        public void run() {
+            if (isActivityDestroyed) return;
+            showSuccess();
+            App.showToastShort(DetailActivity.this, "推送地址换源解析成功！");
+            isPushUrl = false;
+        }
+    };
 
 }
