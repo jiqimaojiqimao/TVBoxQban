@@ -3,7 +3,6 @@ package com.github.tvbox.osc.ui.dialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.widget.TextView;
-import android.view.ViewTreeObserver;  //xuameng 新增监听选中滚动
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
@@ -51,23 +50,15 @@ public class SelectDialog<T> extends BaseDialog {
         if (select<10){
             tvRecyclerView.setSelection(select);
         }
-
-        tvRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener(  //xuameng 更新滚动方式解决滚动不准确的问题
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        tvRecyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                        RecyclerView.LayoutManager lm = tvRecyclerView.getLayoutManager();
-                        if (lm == null) return;
-                        // 再选中（TvRecyclerView 需要 post）
-                        tvRecyclerView.post(() -> {
-                            tvRecyclerView.scrollToPosition(selectIdx);
-                            tvRecyclerView.setSelection(selectIdx);
-                        });
-                    }
+        tvRecyclerView.post(new Runnable() {
+            @Override
+            public void run() {
+                if (selectIdx >= 10) {
+                    tvRecyclerView.smoothScrollToPosition(selectIdx);
+                    tvRecyclerView.setSelectionWithSmooth(selectIdx);
                 }
-        );
+            }
+        });
     }
 
 }
