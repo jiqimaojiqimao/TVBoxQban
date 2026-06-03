@@ -421,6 +421,7 @@ public class FastSearchActivity extends BaseActivity {
             backStack.clear();
             isFilterMode = false;
             getListIng = false;
+            searchFilterKey = "";
             // 如果搜索还没结束，继续展示 loading
             if (!topSearchCache.isEmpty()) {
                 searchAdapter.setNewData(topSearchCache);
