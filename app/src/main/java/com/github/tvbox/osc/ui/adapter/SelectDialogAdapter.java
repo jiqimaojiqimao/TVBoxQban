@@ -54,7 +54,6 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
     private int select = 0;
     private SelectDialogInterface dialogInterface;
 
-    private boolean isFocused = false; // xuameng新增焦点状态标志
     private static final int ACTIVE_COLOR = 0xffffffff;  // xuameng拥有焦点选中白色
     private static final int INACTIVE_COLOR = 0xff02f8e1; // xuameng失去焦点选中色
 
@@ -86,11 +85,14 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
         T value = data.get(position);
         String name = dialogInterface.getDisplay(value);
         TextView view = holder.itemView.findViewById(R.id.tvName);
-    
-        // 动态绑定样式
-        view.setTextColor(position == select ? 
-            (isFocused ? ACTIVE_COLOR : INACTIVE_COLOR) :  // xuameng新增焦点状态标志颜色
-            Color.WHITE);
+        boolean isCurrentSelected = position == select;
+        boolean hasFocus = holder.itemView.hasFocus();    
+        // xuameng动态绑定样式
+        view.setTextColor(
+                isCurrentSelected
+                        ? (hasFocus ? ACTIVE_COLOR : INACTIVE_COLOR)
+                        : Color.WHITE
+        );
         view.setTypeface(
             position == select ?        // xuameng新增焦点状态标志字体加粗
                 Typeface.DEFAULT_BOLD :
@@ -115,11 +117,6 @@ public class SelectDialogAdapter<T> extends ListAdapter<T, SelectDialogAdapter.S
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (position == select) {
-                    if (hasFocus) {
-                        isFocused = true;
-                    } else {
-                        isFocused = false;
-                    }
                     // xuameng使用post延迟通知     防止 layout or scrolling问题
                     holder.itemView.post(() -> {
                         if (holder.getAdapterPosition() == select) {
