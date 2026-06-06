@@ -108,6 +108,7 @@ public class SearchActivity extends BaseActivity {
     private SearchPresenter searchPresenter;  //xuameng搜索历史
     private TextView tHotSearchText;  //xuameng热门搜索
     private static ArrayList<String> hots = new ArrayList<>();  //xuameng热门搜索
+    private boolean isLoadRec = true;      // xuameng是否可以加载猜你想搜
 
     private static HashMap<String, String> mCheckSources = null;
     private SearchCheckboxDialog mSearchCheckboxDialog = null;
@@ -284,6 +285,7 @@ public class SearchActivity extends BaseActivity {
         tvSearch.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                FastClickCheckUtil.check(view);
                 showHotSearchtext();   //xuameng 刷新搜索热词
                 App.showToastShort(SearchActivity.this, "热门搜索已刷新！");
                 return true;
@@ -294,6 +296,8 @@ public class SearchActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
+                isLoadRec = false;  //是否可以加载猜你想搜
+                OkGo.getInstance().cancelTag("loadRec");
                 etSearch.setText("");
                 wordAdapter.setNewData(hots);  //xuameng 热搜不用重复刷新     //xuameng修复清空后热门搜索为空
                 mGridView.setVisibility(View.GONE);
@@ -319,14 +323,26 @@ public class SearchActivity extends BaseActivity {
             }
 
             public void afterTextChanged(Editable s) {         //xuameng清空或删除关闭搜索内容显示搜索历史记录
-                keyword = s.toString().trim();
+                keyword = s.toString().replace("\uFEFF", "").trim();
                 if (TextUtils.isEmpty(keyword)) {
+                    isLoadRec = false;  //是否可以加载猜你想搜
+                    OkGo.getInstance().cancelTag("loadRec");
+                    wordAdapter.setNewData(hots);  //xuameng 热搜不用重复刷新   //xuameng修复清空后热门搜索为空
+                    tHotSearchText.setText("热门搜索");
+                    mGridView.setVisibility(View.GONE);
+                    tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
+                    searchTips.setVisibility(View.VISIBLE);
+                    isTopSearchStage = true;   // 开启全局搜索阶段
+                    backStack.clear();  //xuameng清空节点数据确保数据初始化状态
+                    topSearchCompleted = false;  // xuameng搜索完成重置
+                    topSearchCache.clear();  // xuameng搜索缓存重置
+                    getListIng = false;
                     stopSearchExecutor();
                     cancel();
-                    tv_history.setVisibility(View.VISIBLE);
-                    searchTips.setVisibility(View.VISIBLE);
-  //                  llWord.setVisibility(View.VISIBLE);
-                    mGridView.setVisibility(View.GONE);
+                    showSuccess();  //xuameng修复BUG
+                }else{
+                    isLoadRec = true;  //是否可以加载猜你想搜
+                    loadRec(keyword);
                 }
             }
         });
@@ -346,32 +362,11 @@ public class SearchActivity extends BaseActivity {
                     String text = etSearch.getText().toString().trim();
                     text += key;
                     etSearch.setText(text);
-                    if (text.length() > 0) {
-                        loadRec(text);
-                    }
                 } else if (pos == 1) {
                     String text = etSearch.getText().toString().trim();
                     if (text.length() > 0) {
                         text = text.substring(0, text.length() - 1);
                         etSearch.setText(text);
-                    }
-                    if (text.length() > 0) {
-                        loadRec(text);
-                    }
-                    if (text.length() == 0) {
-                        wordAdapter.setNewData(hots);  //xuameng 热搜不用重复刷新   //xuameng修复清空后热门搜索为空
-                        tHotSearchText.setText("热门搜索");
-                        mGridView.setVisibility(View.GONE);
-                        tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
-                        searchTips.setVisibility(View.VISIBLE);
-                        isTopSearchStage = true;   // 开启全局搜索阶段
-                        backStack.clear();  //xuameng清空节点数据确保数据初始化状态
-                        topSearchCompleted = false;  // xuameng搜索完成重置
-                        topSearchCache.clear();  // xuameng搜索缓存重置
-                        getListIng = false;
-                        stopSearchExecutor();
-                        cancel();
-                        showSuccess();  //xuameng修复BUG
                     }
                 } else if (pos == 0) {
                     if (remoteDialog == null) {
@@ -465,6 +460,7 @@ public class SearchActivity extends BaseActivity {
                     child.setOnLongClickListener(new View.OnLongClickListener() {
                         @Override
                         public boolean onLongClick(View v) {
+                            FastClickCheckUtil.check(view);
                             // 直接执行删除操作，不弹出对话框
                             // 1. 从数据库删除数据
                             boolean success = searchPresenter.deleteKeyWordsFromDb(keywordToDelete);
@@ -540,6 +536,7 @@ public class SearchActivity extends BaseActivity {
      */
     private void loadRec(String key) {
         OkGo.get("https://tv.aiseet.atianqi.com/i-tvbin/qtv_video/search/get_search_smart_box")
+                .tag("loadRec")
                 .params("format", "json")
                 .params("page_num", 0)
                 .params("page_size", 50) //随便改
@@ -547,6 +544,9 @@ public class SearchActivity extends BaseActivity {
                 .execute(new AbsCallback() {
                     @Override
                     public void onSuccess(Response response) {
+                        if (!isLoadRec){  //是否可以加载猜你想搜
+                            return;
+                        }
                         try {
                             ArrayList hots = new ArrayList<>();
                             String result = (String) response.body();
