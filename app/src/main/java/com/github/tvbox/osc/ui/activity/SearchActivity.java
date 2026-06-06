@@ -113,8 +113,7 @@ public class SearchActivity extends BaseActivity {
     private SearchCheckboxDialog mSearchCheckboxDialog = null;
 
     // xuameng新增：返回栈（核心）
-    public int page = 1;
-    public int restorePos = 0;
+    private int page = 1;
     private MovieSort.SortData currentSortData = new MovieSort.SortData("", "搜索结果");
     static class BackNode {
         String sourceKey;   // 记录来源站点
@@ -846,8 +845,7 @@ public class SearchActivity extends BaseActivity {
                     showSuccess();
                     mGridView.setVisibility(View.VISIBLE);
                     // xuameng恢复焦点位置
-                    restorePos = node.lastSelectedPosition;
-                    if (restorePos >= 0 && restorePos < topSearchCache.size()) {
+                    if (node.lastSelectedPosition >= 0 && node.lastSelectedPosition < topSearchCache.size()) {
                         mGridView.getViewTreeObserver().addOnGlobalLayoutListener(
                             new ViewTreeObserver.OnGlobalLayoutListener() {
                                 @Override
@@ -856,10 +854,10 @@ public class SearchActivity extends BaseActivity {
                                     TvRecyclerView.LayoutManager lm = mGridView.getLayoutManager();
                                     if (lm == null) return;
                                     // xuameng在这里滚
-                                    lm.scrollToPosition(restorePos);
+                                    lm.scrollToPosition(node.lastSelectedPosition);
                                     // xuameng在这里选中
                                     mGridView.post(() -> {
-                                        mGridView.setSelection(restorePos);
+                                        mGridView.setSelection(node.lastSelectedPosition);
                                     });
                                 }
                             }
