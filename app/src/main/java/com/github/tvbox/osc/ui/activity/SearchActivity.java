@@ -296,13 +296,18 @@ public class SearchActivity extends BaseActivity {
                 FastClickCheckUtil.check(v);
                 etSearch.setText("");
                 wordAdapter.setNewData(hots);  //xuameng 热搜不用重复刷新     //xuameng修复清空后热门搜索为空
+                mGridView.setVisibility(View.GONE);
                 tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
                 searchTips.setVisibility(View.VISIBLE);
                 tHotSearchText.setText("热门搜索");          //xuameng修复删除内容后，热门搜索为空
-                showSuccess();  //xuameng修复BUG
-                mGridView.setVisibility(View.GONE);
+                isTopSearchStage = true;   // 开启全局搜索阶段
+                backStack.clear();  //xuameng清空节点数据确保数据初始化状态
+                topSearchCompleted = false;  // xuameng搜索完成重置
+                topSearchCache.clear();  // xuameng搜索缓存重置
+                getListIng = false;
                 stopSearchExecutor();
                 cancel();
+                showSuccess();  //xuameng修复BUG
             }
         });
 
@@ -356,12 +361,17 @@ public class SearchActivity extends BaseActivity {
                     if (text.length() == 0) {
                         wordAdapter.setNewData(hots);  //xuameng 热搜不用重复刷新   //xuameng修复清空后热门搜索为空
                         tHotSearchText.setText("热门搜索");
-                        showSuccess();  //xuameng修复BUG
+                        mGridView.setVisibility(View.GONE);
                         tv_history.setVisibility(View.VISIBLE);   //xuameng修复BUG
                         searchTips.setVisibility(View.VISIBLE);
-                        mGridView.setVisibility(View.GONE);
+                        isTopSearchStage = true;   // 开启全局搜索阶段
+                        backStack.clear();  //xuameng清空节点数据确保数据初始化状态
+                        topSearchCompleted = false;  // xuameng搜索完成重置
+                        topSearchCache.clear();  // xuameng搜索缓存重置
+                        getListIng = false;
                         stopSearchExecutor();
                         cancel();
+                        showSuccess();  //xuameng修复BUG
                     }
                 } else if (pos == 0) {
                     if (remoteDialog == null) {
