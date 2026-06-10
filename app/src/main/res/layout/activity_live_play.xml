@@ -66,6 +66,7 @@
                     android:scrollbars="none"
                     android:layout_width="@dimen/vs_240"
                     android:layout_height="wrap_content"
+                    app:tv_selectedItemIsCentered="true"
                     android:listSelector="@drawable/item_bg_selector_left"
                     android:divider="@null"
                     android:fadeScrollbars="false"/>
@@ -139,6 +140,7 @@
                 android:scrollbars="none"
                 android:layout_width="@dimen/vs_280"
                 android:layout_height="fill_parent"
+                app:tv_selectedItemIsCentered="true"
                 android:listSelector="@drawable/item_bg_selector_right"
                 android:divider="@null"
                 android:fadeScrollbars="false"/>
