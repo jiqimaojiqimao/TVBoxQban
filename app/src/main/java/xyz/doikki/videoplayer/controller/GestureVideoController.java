@@ -225,8 +225,8 @@ public abstract class GestureVideoController extends BaseVideoController impleme
     protected void slideToChangePosition(float deltaX) {
         deltaX = -deltaX;
         int width = getMeasuredWidth();
-        int duration = (int) mControlWrapper.getDuration();
-        int currentPosition = (int) mControlWrapper.getCurrentPosition();
+        int duration = PlayerUtils.safeTimeMs(mControlWrapper.getDuration());
+        int currentPosition = PlayerUtils.safeTimeMs(mControlWrapper.getCurrentPosition());
         int position = (int) (deltaX / width * 120000 + currentPosition);
         if (position > duration) position = duration;
         if (position < 0) position = 0;
