@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.animation.BounceInterpolator;
 import android.widget.LinearLayout;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.github.tvbox.osc.base.App; //xuameng toast
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.github.tvbox.osc.R;
@@ -139,6 +141,35 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
     @Override
     protected int getLayoutResID() {
         return R.layout.fragment_user;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        TvRecyclerView hotList1 = view.findViewById(R.id.tvHotList1);
+        TvRecyclerView hotList2 = view.findViewById(R.id.tvHotList2);
+        if (hotList1 != null && hotList1.getLayoutManager() == null || hotList2 != null && hotList2.getLayoutManager() == null) {
+            if (Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
+                tvHotList1.setVisibility(View.VISIBLE);
+                tvHotList2.setVisibility(View.GONE);
+                tvHotList1.setHasFixedSize(true);
+                int spanCount = 5;
+                if(isFolederMode()){  //xuameng 增加判断如果style 为 list 就显示文件夹样式
+                    tvHotList1.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+                }else{
+                    if (style != null && Hawk.get(HawkConfig.HOME_REC, 0) == 1) {
+                        spanCount = ImgUtilHot.spanCountByStyle(style, spanCount);
+                    }
+                    tvHotList1.setLayoutManager(new V7GridLayoutManager(this.mContext, spanCount));
+                }
+            } else {
+                tvHotList1.setVisibility(View.GONE);
+                tvHotList2.setVisibility(View.VISIBLE);
+                if(isFolederMode()){  //xuameng 增加判断如果style 为 list 就显示文件夹样式
+                    tvHotList2.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
+                }
+            }
+        }
     }
 
     @Override
