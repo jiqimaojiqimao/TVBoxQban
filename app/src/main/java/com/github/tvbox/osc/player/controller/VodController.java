@@ -386,11 +386,11 @@ public class VodController extends BaseController {
             String speed = PlayerHelper.getDisplaySpeed(mControlWrapper.getTcpSpeed());
             mPlayLoadNetSpeedRightTop.setText("[ " + speed + " ]");
             mPlayLoadNetSpeed.setText(speed);
-            long duration = safeTimeMs(mControlWrapper.getDuration());
+            int duration = safeTimeMs(mControlWrapper.getDuration());
             if(isInPlaybackState() && duration >= 1000 && duration <= 180000000) {
-                long position = safeTimeMs(mControlWrapper.getCurrentPosition());
+                int position = safeTimeMs(mControlWrapper.getCurrentPosition());
                 if(position < 0) position = 0; //xuameng系统播放器有时会有负进度的BUG
-                long TimeRemaining = safeTimeMs(mControlWrapper.getDuration()) - position;
+                int TimeRemaining = safeTimeMs(mControlWrapper.getDuration()) - position;
                 Calendar dateXu = Calendar.getInstance();
                 long t = dateXu.getTimeInMillis();
                 Date afterAdd = new Date(t + TimeRemaining);
@@ -448,7 +448,7 @@ public class VodController extends BaseController {
                     }
                     FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) iv_circle_bg.getLayoutParams(); //xuameng 新增给vod显示旋转图片用
                     if(mLrcView.getVisibility() == View.VISIBLE) {   //xuameng LRC歌词字幕
-                        long position = safeTimeMs(mControlWrapper.getCurrentPosition());
+                        int position = safeTimeMs(mControlWrapper.getCurrentPosition());
                         if (mLrcView != null) {
                             mLrcView.updateTime(position);  //xuameng 刷新LRC歌词字幕
                         }
@@ -1598,7 +1598,7 @@ public class VodController extends BaseController {
     private boolean simSlideStart = false;
     private boolean simSlideStartXu = false;
     private int simSeekPosition = 0;
-    private long simSlideOffset = 0;
+    private int simSlideOffset = 0;
     private long mSpeedTimeUp = 0; //xuameng上键间隔时间
     public void tvSlideStop() {
         int duration = safeTimeMs(mControlWrapper.getDuration());
@@ -1646,19 +1646,19 @@ public class VodController extends BaseController {
                 mSpeedTimeUp = System.currentTimeMillis();
             }
             if(System.currentTimeMillis() - mSpeedTimeUp < 3000) {
-                simSlideOffset += (10000.0f * dir);
+                simSlideOffset += (10000 * dir);
             }
             if(System.currentTimeMillis() - mSpeedTimeUp > 3000 && System.currentTimeMillis() - mSpeedTimeUp < 6000) {
-                simSlideOffset += (30000.0f * dir);
+                simSlideOffset += (30000 * dir);
             }
             if(System.currentTimeMillis() - mSpeedTimeUp > 6000 && System.currentTimeMillis() - mSpeedTimeUp < 9000) {
-                simSlideOffset += (60000.0f * dir);
+                simSlideOffset += (60000 * dir);
             }
             if(System.currentTimeMillis() - mSpeedTimeUp > 9000) {
-                simSlideOffset += (120000.0f * dir);
+                simSlideOffset += (120000 * dir);
             }
             int currentPosition = safeTimeMs(mControlWrapper.getCurrentPosition());
-            int position = (int)(simSlideOffset + currentPosition);
+            int position = simSlideOffset + currentPosition;
             if(position > duration) position = duration;
             if(position < 0) position = 0;
             updateSeekUI(currentPosition, position, duration);
@@ -1681,16 +1681,16 @@ public class VodController extends BaseController {
             mSpeedTimeUp = System.currentTimeMillis();
         }
         if(System.currentTimeMillis() - mSpeedTimeUp < 3000) {
-            simSlideOffset += (10000.0f * dir);
+            simSlideOffset += (10000 * dir);
         }
         if(System.currentTimeMillis() - mSpeedTimeUp > 3000 && System.currentTimeMillis() - mSpeedTimeUp < 6000) {
-            simSlideOffset += (30000.0f * dir);
+            simSlideOffset += (30000 * dir);
         }
         if(System.currentTimeMillis() - mSpeedTimeUp > 6000 && System.currentTimeMillis() - mSpeedTimeUp < 9000) {
-            simSlideOffset += (60000.0f * dir);
+            simSlideOffset += (60000 * dir);
         }
         if(System.currentTimeMillis() - mSpeedTimeUp > 9000) {
-            simSlideOffset += (120000.0f * dir);
+            simSlideOffset += (120000 * dir);
         }
         int currentPosition = safeTimeMs(mControlWrapper.getCurrentPosition());
         int position = (int)(simSlideOffset + currentPosition);
