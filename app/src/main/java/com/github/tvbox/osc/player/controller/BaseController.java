@@ -425,7 +425,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
                     stopSlide();
                     if (mSeekPosition >= 0) {
                         mControlWrapper.seekTo(mSeekPosition);
-                        mSeekPosition = 0;
+                        mSeekPosition = -1;
                     }
                     break;
                 case MotionEvent.ACTION_CANCEL:
