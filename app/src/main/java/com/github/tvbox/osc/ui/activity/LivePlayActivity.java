@@ -769,9 +769,10 @@ public class LivePlayActivity extends BaseActivity {
                 }
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
+                    Date date = new Date();
                     int size = arrayList.size() - 1;
                     while(size >= 0) {
-                        if(new Date().compareTo(((Epginfo) arrayList.get(size)).startdateTime) >= 0) {
+                        if (date.after(((Epginfo) arrayList.get(size)).startdateTime) & date.before(((Epginfo) arrayList.get(size)).enddateTime)) {
                             //tip_epg1.setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);
                             ((TextView) findViewById(R.id.tv_current_program_time)).setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);   //xuameng修复EPG 重复显示
                             ((TextView) findViewById(R.id.tv_current_program_name)).setText(((Epginfo) arrayList.get(size)).title);
@@ -833,9 +834,10 @@ public class LivePlayActivity extends BaseActivity {
                 }
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
+                    Date date = new Date();
                     int size = arrayList.size() - 1;
                     while(size >= 0) {
-                        if(new Date().compareTo(((Epginfo) arrayList.get(size)).startdateTime) >= 0) {
+                        if (date.after(((Epginfo) arrayList.get(size)).startdateTime) & date.before(((Epginfo) arrayList.get(size)).enddateTime)) {
                             //tip_epg1.setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);    用这个方式EPG会重复显示
                             ((TextView) findViewById(R.id.tv_current_program_time)).setText(((Epginfo) arrayList.get(size)).start + "--" + ((Epginfo) arrayList.get(size)).end);   //xuameng修复EPG 重复显示
                             ((TextView) findViewById(R.id.tv_current_program_name)).setText(((Epginfo) arrayList.get(size)).title);
