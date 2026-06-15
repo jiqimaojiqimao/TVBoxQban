@@ -155,7 +155,7 @@ dependencies {
     //安卓工具类
     implementation 'com.blankj:utilcodex:1.31.0'   
     //xuameng exo
-    def exoplayerVersion = "1.10.0"
+    def exoplayerVersion = "1.10.1"
     implementation "androidx.media3:media3-common:$exoplayerVersion"
     implementation "androidx.media3:media3-container:$exoplayerVersion"
     implementation "androidx.media3:media3-database:$exoplayerVersion"
