@@ -711,6 +711,7 @@ public class LivePlayActivity extends BaseActivity {
               return;
    //        }
         }
+        if (parsingEpg) return; //xuameng XML EPG不允许并行，容易卡死
         String url;
         if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
             url = epgStringAddress.replace("{name}", URLEncoder.encode(finalEpgTagName)).replace("{date}", timeFormat.format(date));
@@ -726,7 +727,7 @@ public class LivePlayActivity extends BaseActivity {
             }
             public void onResponse(String paramString) {
                 ArrayList<Epginfo> arrayList = new ArrayList<>();
-                if (paramString == null || paramString.isEmpty()) {
+                if (paramString == null || paramString.trim().isEmpty()) {
                     arrayList = createDefaultEpgList(date);
                     hsEpg.put(savedEpgKey, arrayList);   //xuameng默认列表存入缓存
                     showEpg(date, arrayList);
@@ -736,10 +737,8 @@ public class LivePlayActivity extends BaseActivity {
                 // xuameng XML EPG
                 else if (isXmlEpgResponse(paramString)) {
                     new Thread(() -> {
-                        if (parsingEpg) return;      //xuameng XML EPG不允许并行，容易卡死
 
                         synchronized (this) {
-                            if (parsingEpg) return; // 双重保险
                             parsingEpg = true;
                         }
 
@@ -760,6 +759,13 @@ public class LivePlayActivity extends BaseActivity {
                                 }
                             });
 
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            ArrayList<Epginfo> defaultList = createDefaultEpgList(date);
+                            hsEpg.put(savedEpgKey, defaultList);
+                            showEpg(date, defaultList);
+                            showBottomEpgXU();
+                            parsingEpg = false;
                         } finally {
                             parsingEpg = false;
                         }
@@ -818,6 +824,7 @@ public class LivePlayActivity extends BaseActivity {
               return;
       //     }
         }
+        if (parsingEpg) return; //xuameng XML EPG不允许并行，容易卡死
         String url;
         if(epgStringAddress.contains("{name}") && epgStringAddress.contains("{date}")) {
             url = epgStringAddress.replace("{name}", URLEncoder.encode(finalEpgTagName)).replace("{date}", timeFormat.format(date));
@@ -832,7 +839,7 @@ public class LivePlayActivity extends BaseActivity {
             }
             public void onResponse(String paramString) {
                 ArrayList<Epginfo> arrayList = new ArrayList<>();
-                if (paramString == null || paramString.isEmpty()) {
+                if (paramString == null || paramString.trim().isEmpty()) {
                     arrayList = createDefaultEpgList(date);
                     hsEpg.put(savedEpgKey, arrayList);   //xuameng默认列表存入缓存
                     showEpgxu(date, arrayList);
@@ -841,10 +848,8 @@ public class LivePlayActivity extends BaseActivity {
                 // xuameng XML EPG
                 else if (isXmlEpgResponse(paramString)) {
                     new Thread(() -> {
-                        if (parsingEpg) return;
 
                         synchronized (this) {
-                            if (parsingEpg) return; // 双重保险
                             parsingEpg = true;
                         }
 
@@ -863,6 +868,12 @@ public class LivePlayActivity extends BaseActivity {
                                 }
                             });
 
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            ArrayList<Epginfo> defaultList = createDefaultEpgList(date);
+                            hsEpg.put(savedEpgKey, defaultList);
+                            showEpgxu(date, defaultList);
+                            parsingEpg = false;
                         } finally {
                             parsingEpg = false;
                         }
@@ -1660,32 +1671,29 @@ public class LivePlayActivity extends BaseActivity {
         }
         return true;
     }
-    private boolean playChannelxu(int channelGroupIndex, int liveChannelIndex, boolean changeSource) { //xuameng播放
-        if(!changeSource) {
-            currentChannelGroupIndexXu = channelGroupIndex; //xuameng重要频道组
-            currentLiveChannelIndexXu = liveChannelIndex; //xuameng重要频道名称
-            // xuameng添加空列表检查
-            ArrayList<LiveChannelItem> channels = getLiveChannels(currentChannelGroupIndexXu);
-            if(channels == null || channels.isEmpty()) {
-              //  App.showToastShort(mContext, "聚汇直播提示您：频道为空！");
-                return false;
-            }
-        
-            // xuameng添加索引范围检查
-            if(currentLiveChannelIndexXu < 0 || currentLiveChannelIndexXu >= channels.size()) {
-              //  App.showToastShort(mContext, "聚汇直播提示您：频道为空！");
-                return false;
-            }
-
-			currentLiveChannelItemXu = channels.get(currentLiveChannelIndexXu);
-            // ========== xuameng新增：检查是否为占位项 ==========
-            if (currentLiveChannelItemXu != null && currentLiveChannelItemXu.getChannelIndex() == -1) {
-                // 如果是占位项，直接返回false，不更新EPG
-                return false;
-            }
-            // ========== xuameng 新增结束 ==========
-            liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
+    private boolean getChannelEpg(int channelGroupIndex, int liveChannelIndex) { //xuameng 频道列表切换EPG
+        currentChannelGroupIndexXu = channelGroupIndex; //xuameng重要频道组
+        currentLiveChannelIndexXu = liveChannelIndex; //xuameng重要频道名称
+        // xuameng添加空列表检查
+        ArrayList<LiveChannelItem> channels = getLiveChannels(currentChannelGroupIndexXu);
+        if(channels == null || channels.isEmpty()) {
+            return false;
         }
+        
+        // xuameng添加索引范围检查
+        if(currentLiveChannelIndexXu < 0 || currentLiveChannelIndexXu >= channels.size()) {
+            return false;
+        }
+
+        currentLiveChannelItemXu = channels.get(currentLiveChannelIndexXu);
+        // ========== xuameng新增：检查是否为占位项 ==========
+        if (currentLiveChannelItemXu != null && currentLiveChannelItemXu.getChannelIndex() == -1) {
+            // 如果是占位项，直接返回false，不更新EPG
+            return false;
+        }
+        // ========== xuameng 新增结束 ==========
+        liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
+
         channel_NameXu = currentLiveChannelItemXu; //xuameng重要EPG名称
         if(currentLiveChannelItemXu.getUrl().contains("PLTV/") || currentLiveChannelItemXu.getUrl().contains("TVOD/")) { //xuameng判断直播源URL中有没有PLTV字符，有才可以时移
             currentLiveChannelItemXu.setinclude_back(true);
@@ -2742,7 +2750,7 @@ public class LivePlayActivity extends BaseActivity {
                 liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
                 liveChannelItemAdapter.setFocusedChannelIndex(position);
                 liveChannelItemAdapter.setSelectedChannelIndex(position);
-                playChannelxu(liveChannelGroupAdapter.getSelectedGroupIndex(), liveChannelItemAdapter.getSelectedChannelIndex(), false); //xuameng换频道显示EPG
+                getChannelEpg(liveChannelGroupAdapter.getSelectedGroupIndex(), liveChannelItemAdapter.getSelectedChannelIndex()); //xuameng 频道列表切换EPG
 
             }
             @Override
