@@ -142,7 +142,7 @@ public class HomeActivity extends BaseActivity {
 
     @Override
     protected void init() {
-        setupExceptionHandler(); // xuameng异常捕获
+//        setupExceptionHandler(); // xuameng异常捕获
         EventBus.getDefault().register(this);
         ControlManager.get().startServer();
         initView();
@@ -942,7 +942,7 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
-    // xuameng添加全局异常处理器
+/*    // xuameng添加全局异常处理器
     private void setupExceptionHandler() {
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
@@ -966,5 +966,5 @@ public class HomeActivity extends BaseActivity {
             }
         });
     }
-
+*/
 }
