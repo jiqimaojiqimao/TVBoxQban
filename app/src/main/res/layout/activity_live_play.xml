@@ -474,7 +474,7 @@
                 android:clipToPadding="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="暂无当前节目单，聚汇直播欢迎您的观看！"
+                android:text="暂无当前时段节目单，聚汇直播欢迎您的观看！"
                 android:singleLine="true"
                 android:shadowColor="#cc000000"
                 android:shadowDx="5.0"
