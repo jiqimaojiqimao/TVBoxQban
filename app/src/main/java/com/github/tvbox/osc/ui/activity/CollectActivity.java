@@ -120,9 +120,9 @@ public class CollectActivity extends BaseActivity {
                         Bundle bundle = new Bundle();
                         bundle.putString("id", vodInfo.vodId);
                         bundle.putString("sourceKey", vodInfo.sourceKey);
-                        SourceBean sourceBean = ApiConfig.get().getSource(vodInfo.sourceKey);
-                        if(sourceBean!=null){
-						    bundle.putString("picture", vodInfo.pic);   //xuameng某些网站图片部显示
+                        if (ApiConfig.get().getSource(vodInfo.sourceKey) != null) {
+                            bundle.putString("title", vodInfo.name);  //xuameng 转送名称
+                            bundle.putString("picture", vodInfo.pic);  //xuameng 转送图片
                             jumpActivity(DetailActivity.class, bundle);
                         }else {
                             bundle.putString("title", vodInfo.name);
