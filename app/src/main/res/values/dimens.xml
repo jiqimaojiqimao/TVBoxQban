@@ -224,6 +224,7 @@
     <dimen name="vs_128">128.0mm</dimen>
     <dimen name="vs_130">130.0mm</dimen>
     <dimen name="vs_14">14.0mm</dimen>
+    <dimen name="vs_19">19.0mm</dimen>
     <dimen name="vs_140">140.0mm</dimen>
     <dimen name="vs_148">148.0mm</dimen>
     <dimen name="vs_15">15.0mm</dimen>
@@ -238,6 +239,7 @@
     <dimen name="vs_20">20.0mm</dimen>
     <dimen name="vs_200">200.0mm</dimen>
     <dimen name="vs_20_">-20.0mm</dimen>
+    <dimen name="vs_210">210.0mm</dimen>
     <dimen name="vs_214">214.0mm</dimen>
     <dimen name="vs_220">220.0mm</dimen>
     <dimen name="vs_230">230.0mm</dimen>
@@ -270,6 +272,7 @@
     <dimen name="vs_5">5.0mm</dimen>
     <dimen name="vs_50">50.0mm</dimen>
     <dimen name="vs_52">52.0mm</dimen>
+    <dimen name="vs_520">540.0mm</dimen>
     <dimen name="vs_54">54.0mm</dimen>
     <dimen name="vs_56">56.0mm</dimen>
     <dimen name="vs_570">570.0mm</dimen>
