@@ -149,6 +149,7 @@ dependencies {
     implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'    //xuameng 文件编码
     implementation 'com.github.alidili:FlowLayout:v1.5'  //xuameng搜索历史
     implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
+    implementation 'com.github.ctiao:DanmakuFlameMaster:0.9.25'
     //支持http3
     implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
     implementation ('org.chromium.net:cronet-embedded:101.4951.41')
