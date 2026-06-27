@@ -7,7 +7,7 @@ import com.orhanobut.hawk.Hawk;
 /**
  * @author xuameng
  * @date :2026/06/27
- * @description:   ±£´æµ¯Ä»ÉèÖÃ
+ * @description:   ä¿å­˜å¼¹å¹•è®¾ç½®
  */
 
 public class DanmuHelper {
