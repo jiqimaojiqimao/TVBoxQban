@@ -22,6 +22,9 @@ public class RefreshEvent {
     public static final int TYPE_SUBTITLE_SIZE_CHANGE = 12;
     public static final int TYPE_FILTER_CHANGE = 13;
     public static final int TYPE_PAUSE_VOD = 14;   //xuameng 全屏时如果是暂停状态就显示暂停图标
+    public static final int TYPE_LIVE_API_URL_CHANGE = 15;  //xuameng 直播API
+    public static final int TYPE_SET_DANMU_SETTINGS = 18; //xuameng 弹幕
+    public static final int TYPE_DANMU_REFRESH = 19;  //xuameng 弹幕
     public int type;
     public Object obj;
 
