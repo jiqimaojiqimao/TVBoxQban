@@ -62,6 +62,16 @@ public class HawkConfig {
     public static final String LIVE_FAVORITE_CHANNELS = "live_favorite_channels"; // xuameng存储收藏频道列表的键
 	public static final String SUBTITLE_TEXT_STYLE = "subtitle_text_style";   //xuameng 存储字幕颜色信息
 	public static final String REMOTE_TV_LIST = "remote_tv_list";  //xuameng  存储远端聚汇影视列表
+    public static final String API_LINE_LIST = "api_line_list";  //xuameng 多仓
+    public static final String API_LINE_SOURCE = "api_line_source"; //xuameng 多仓
+    public static final String API_LINE_TAG_SET = "api_line_tag_set"; //xuameng 多仓
+    public static final String DANMU_OPEN = "danmu_open";  //xuameng 弹幕打开
+    public static final String DANMU_MAX_LINE = "danmu_max_line"; //xuameng 弹幕行数
+    public static final String DANMU_SPEED = "danmu_speed"; //xuameng 弹幕速度
+    public static final String DANMU_ALPHA = "danmu_alpha"; //xuameng 弹幕透明度
+    public static final String DANMU_SIZE_SCALE = "danmu_size_scale"; //xuameng 弹幕大小
+    public static final String DANMU_RANDOM_COLOR = "danmu_random_color"; //xuameng 弹幕颜色
+    public static final String DANMU_API = "danmu_api"; //xuameng 弹幕接口
 
 	public static boolean intLIVEPLAYTYPE = false;  //xuameng是否有直播默认播放器
 	public static boolean intSYSplayer = false;  //xuameng是否进入系统播放器
