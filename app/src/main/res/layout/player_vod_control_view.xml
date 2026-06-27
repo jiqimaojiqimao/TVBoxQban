@@ -31,9 +31,14 @@
         android:visibility="gone"
         android:layout_margin="16dp"
         android:background="@android:color/transparent"/>
+    <master.flame.danmaku.ui.widget.DanmakuView
+        android:id="@+id/danmaku"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
     <com.github.tvbox.osc.subtitle.LrcView
         android:id="@+id/lrc_view"
-        android:textSize="16.0sp"
+        android:textSize="16.0mm"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/visualizer_view"
@@ -122,7 +127,7 @@
             android:maxLines="1"/>
     </LinearLayout>
     <com.github.tvbox.osc.subtitle.widget.SimpleSubtitleView
-        android:textSize="16.0sp"
+        android:textSize="16.0mm"
         android:textStyle="bold"
         android:textColor="#ffffffff"
         android:gravity="center"
@@ -136,7 +141,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text=""/>
-    <androidx.media3.ui.SubtitleView
+    <com.google.android.exoplayer2.ui.SubtitleView
         android:id="@+id/exo_subtitle_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -460,6 +465,19 @@
                     android:text="重置"
                     android:singleLine="true"
                     android:layout_marginEnd="@dimen/vs_5"/>
+                <TextView
+                    android:id="@+id/danmu_setting"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/vs_5"
+                    android:layout_marginRight="@dimen/vs_5"
+                    android:background="@@drawable/button_dialog_main_1"
+                    android:focusable="true"
+                    android:padding="@dimen/vs_10"
+                    android:text="弹幕"
+                    android:textColor="@android:color/white"
+                    android:textSize="@dimen/ts_20"
+                    android:visibility="gone" />
                 <TextView
                     android:textSize="@dimen/ts_20"
                     android:textColor="@android:color/white"
