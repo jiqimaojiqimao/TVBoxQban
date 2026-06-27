@@ -8,7 +8,6 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.github.tvbox.osc.base.App;  //xuameng toast
 
 import androidx.annotation.NonNull;
@@ -49,6 +48,8 @@ public class ApiDialog extends BaseDialog {
     public void refresh(RefreshEvent event) {
         if (event.type == RefreshEvent.TYPE_API_URL_CHANGE) {
             inputApi.setText((String) event.obj);
+            inputApiLive.setText((String) event.obj);
+        } else if (event.type == RefreshEvent.TYPE_LIVE_API_URL_CHANGE) {
             inputApiLive.setText((String) event.obj);
         }
     }
@@ -109,6 +110,20 @@ public class ApiDialog extends BaseDialog {
                 dismiss();
             }
         });
+
+        findViewById(R.id.localapi).setOnClickListener(new View.OnClickListener() {  //xuameng 本地配置
+            @Override
+            public void onClick(View v) {
+                if (listener != null) listener.onLocalConfig(false);
+            }
+        });
+        findViewById(R.id.localliveapi).setOnClickListener(new View.OnClickListener() {  //xuameng 本地配置直播
+            @Override
+            public void onClick(View v) {
+                if (listener != null) listener.onLocalConfig(true);
+            }
+        });
+
         findViewById(R.id.apiHistory_live).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -193,9 +208,19 @@ public class ApiDialog extends BaseDialog {
         this.listener = listener;
     }
 
+    public void setLocalApi(String api, boolean live) {  //xuameng 本地配置
+        if (live) {
+            inputApiLive.setText(api);
+        } else {
+            inputApi.setText(api);
+        }
+    }
+
     OnListener listener = null;
 
     public interface OnListener {
         void onchange(String api);
+
+        void onLocalConfig(boolean live);
     }
 }
