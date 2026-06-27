@@ -3,9 +3,14 @@ package com.github.tvbox.osc.ui.fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.database.Cursor;
+import android.net.Uri;
 import android.view.View;
 import android.widget.TextView;
-
+import android.widget.LinearLayout;
+import android.os.Environment;
+import android.provider.DocumentsContract;
+import android.provider.OpenableColumns;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 
@@ -19,6 +24,7 @@ import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.player.thirdparty.RemoteTVBox;
 import com.github.tvbox.osc.ui.activity.HomeActivity;
 import com.github.tvbox.osc.ui.activity.SettingActivity;
+import com.github.tvbox.osc.ui.activity.LocalFileActivity;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
 import com.github.tvbox.osc.ui.dialog.AboutDialog;
 import com.github.tvbox.osc.ui.dialog.ApiDialog;
@@ -56,11 +62,21 @@ import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.HttpUrl;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
+
+import com.hjq.permissions.OnPermissionCallback;
+import com.hjq.permissions.Permission;
+import com.hjq.permissions.XXPermissions;
+
+import com.github.tvbox.osc.ui.dialog.DanmuApiDialog;
+import com.github.tvbox.osc.util.DanmuHelper;
+import com.github.tvbox.osc.api.DanmakuApi;
 
 /**
  * @author pj567
@@ -68,6 +84,7 @@ import tv.danmaku.ijk.media.player.IjkMediaPlayer;
  * @description:
  */
 public class ModelSettingFragment extends BaseLazyFragment {
+    private static final int REQUEST_LOCAL_CONFIG = 1001;
     private TextView tvDebugOpen;
     private TextView tvMediaCodec;
     private TextView tvParseWebView;
@@ -92,6 +109,13 @@ public class ModelSettingFragment extends BaseLazyFragment {
     private TextView tvRecStyleText;
     private TextView tvIjkCachePlay;
     private SelectDialog<SourceBean> mSiteSwitchDialog;  //xuameng点播源切换
+    private TextView tvApiLine;   //xuameng 多仓
+    private View llApi;  //xuameng 多仓
+    private View llApiLine; //xuameng 多仓
+    private ApiDialog apiDialog;
+    private boolean selectLocalLive;  //xuameng 本地配置
+    private TextView tvDanmuOpenText; //xuameng 弹幕
+    private TextView tvDanmuApiText;  //xuameng 弹幕
 
 
     public static ModelSettingFragment newInstance() {
@@ -120,6 +144,10 @@ public class ModelSettingFragment extends BaseLazyFragment {
         tvShowMusicDb.setText(Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false) ? "已开启" : "已关闭");
         tvExodecode.setText(Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false) ? "软解码" : "硬解码");
         tvm3u8AdText.setText(Hawk.get(HawkConfig.M3U8_PURIFY, false) ? "已开启" : "已关闭"); //xuameng去广告
+        tvDanmuOpenText = findViewById(R.id.danmuOpenText);   //xuameng 弹幕
+        tvDanmuOpenText.setText(DanmuHelper.isOpen() ? "已开启" : "已关闭");
+        tvDanmuApiText = findViewById(R.id.danmuApiText);
+        refreshDanmuApiText();  //xuameng 弹幕
         tvSwitchDecode.setText(Hawk.get(HawkConfig.VOD_SWITCHDECODE, false) ? "已开启" : "已关闭"); //xuameng解码切换
         tvSwitchPlayer.setText(Hawk.get(HawkConfig.VOD_SWITCHPLAYER, true) ? "已开启" : "已关闭"); //xuameng播放器切换
         tvFastSearchText.setText(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false) ? "已开启" : "已关闭");
@@ -140,11 +168,14 @@ public class ModelSettingFragment extends BaseLazyFragment {
         tvHistoryNum = findViewById(R.id.tvHistoryNum);
         tvSearchView = findViewById(R.id.tvSearchView);
         tvIjkCachePlay = findViewById(R.id.tvIjkCachePlay);
+        llApi = findViewById(R.id.llApi);
+        llApiLine = findViewById(R.id.llApiLine);
+        tvApiLine = findViewById(R.id.tvApiLine);
         tvMediaCodec.setText(Hawk.get(HawkConfig.IJK_CODEC, ""));
         tvDebugOpen.setText(Hawk.get(HawkConfig.DEBUG_OPEN, false) ? "已打开" : "已关闭");
         tvParseWebView.setText(Hawk.get(HawkConfig.PARSE_WEBVIEW, true) ? "系统自带" : "XWalkView");
         tvApi.setText(Hawk.get(HawkConfig.API_URL, ""));
-
+        refreshApiLineText();  //xuameng 多仓
         tvDns.setText(OkGoHelper.dnsHttpsList.get(Hawk.get(HawkConfig.DOH_URL, 0)));
         tvHomeRec.setText(getHomeRecName(Hawk.get(HawkConfig.HOME_REC, 0)));
         tvHistoryNum.setText(HistoryHelper.getHistoryNumName(Hawk.get(HawkConfig.HISTORY_NUM, 0)));
@@ -366,13 +397,22 @@ public class ModelSettingFragment extends BaseLazyFragment {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
-                ApiDialog dialog = new ApiDialog(mActivity);
+                apiDialog = new ApiDialog(mActivity);
+                ApiDialog dialog = apiDialog;
                 EventBus.getDefault().register(dialog);
                 dialog.setOnListener(new ApiDialog.OnListener() {
                     @Override
                     public void onchange(String api) {
                         Hawk.put(HawkConfig.API_URL, api);
+                        if (!HistoryHelper.isApiLineHistory(api)) {
+                            HistoryHelper.clearApiLineList(); //xuameng 多仓
+                        }
                         tvApi.setText(api);
+                        refreshApiLineText(); //xuameng 多仓
+                    }
+                    @Override
+                    public void onLocalConfig(boolean live) {
+                        openLocalConfig(live);
                     }
                 });
                 dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
@@ -380,13 +420,56 @@ public class ModelSettingFragment extends BaseLazyFragment {
                     public void onDismiss(DialogInterface dialog) {
                         ((BaseActivity) mActivity).hideSysBar();
                         EventBus.getDefault().unregister(dialog);
+                        apiDialog = null;
                     }
                 });
                 dialog.show();
             }
         });
 
+        findViewById(R.id.llApiLine).setOnClickListener(new View.OnClickListener() {   //xuameng 多仓
+            @Override
+            public void onClick(View v) {
+                ArrayList<String> apiLines = Hawk.get(HawkConfig.API_LINE_LIST, new ArrayList<String>());
+                if (apiLines.isEmpty()) {
+                    App.showToastShort(getContext(), "线路列表为空！");
+                    return;
+                }
+                String current = Hawk.get(HawkConfig.API_URL, "");
+                int idx = 0;
+                for (int i = 0; i < apiLines.size(); i++) {
+                    if (current.equals(HistoryHelper.getApiLineUrl(apiLines.get(i)))) {
+                        idx = i;
+                        break;
+                    }
+                }
+                SelectDialog<String> dialog = new SelectDialog<>(mActivity);
+                dialog.setTip("线路选择");
+                dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<String>() {
+                    @Override
+                    public void click(String value, int pos) {
+                        String newApi = HistoryHelper.getApiLineUrl(value);
+                        String oldApi = Hawk.get(HawkConfig.API_URL, "");
+                        if (newApi.isEmpty()) {
+                            return;
+                        }
+                        Hawk.put(HawkConfig.API_URL, newApi);
+                        Hawk.put(HawkConfig.LIVE_API_URL, newApi);
+                        HistoryHelper.setApiHistory(newApi);
+                        HistoryHelper.setLiveApiHistory(newApi);
+                        tvApi.setText(newApi);
+                        refreshApiLineText(); //xuameng 多仓
+                        dialog.dismiss();
+                    }
 
+                    @Override
+                    public String getDisplay(String val) {
+                        return HistoryHelper.getApiLineName(val);
+                    }
+                }, SelectDialogAdapter.stringDiff, apiLines, idx);
+                dialog.show();
+            }
+        });
 
         findViewById(R.id.llMediaCodec).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -711,6 +794,29 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 tvm3u8AdText.setText(!is_purify ? "已开启" : "已关闭");
             }
         });
+        findViewById(R.id.danmuOpen).setOnClickListener(new View.OnClickListener() {  //xuameng 弹幕
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                boolean open = !DanmuHelper.isOpen();
+                DanmuHelper.setOpen(open);
+                tvDanmuOpenText.setText(open ? "已开启" : "已关闭");
+            }
+        });
+        findViewById(R.id.danmuApi).setOnClickListener(new View.OnClickListener() {  //xuameng 弹幕
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                DanmuApiDialog dialog = new DanmuApiDialog(mActivity);
+                dialog.setOnListener(new DanmuApiDialog.OnListener() {
+                    @Override
+                    public void onChange(String api) {
+                        refreshDanmuApiText();
+                    }
+                });
+                dialog.show();
+            }
+        });
         findViewById(R.id.llMusicdb).setOnClickListener(new View.OnClickListener() {   //xuameng点播动画
             @Override
             public void onClick(View v) {
@@ -865,4 +971,198 @@ public class ModelSettingFragment extends BaseLazyFragment {
             return "缩略图";
         }
     }
+
+    private void refreshApiLineText() {  //xuameng 多仓
+        if (tvApiLine == null) return;
+        ArrayList<String> apiLines = Hawk.get(HawkConfig.API_LINE_LIST, new ArrayList<String>());
+        String current = Hawk.get(HawkConfig.API_URL, "");
+        boolean showLine = HistoryHelper.isApiLineUrl(current);
+        if (llApiLine != null) {
+            llApiLine.setVisibility(showLine ? View.VISIBLE : View.GONE);
+            int maxEms = showLine ? 11 : 22;
+            tvApi.setMaxEms(maxEms);
+            tvApiLine.setMaxEms(maxEms);
+        }
+        String lineName = "";
+        if (showLine) {
+            for (String apiLine : apiLines) {
+                if (current.equals(HistoryHelper.getApiLineUrl(apiLine))) {
+                    lineName = HistoryHelper.getApiLineName(apiLine);
+                    break;
+                }
+            }
+        }
+        tvApiLine.setText(lineName);
+    }
+
+    private void openLocalConfig(boolean live) {  //xuameng 本地配置
+        selectLocalLive = live;
+        if (!XXPermissions.isGranted(mContext, Permission.Group.STORAGE)) {
+            App.showToastShort(getContext(), "请选择文件前需要先授予存储权限！");
+            XXPermissions.with(mActivity)
+                    .permission(Permission.Group.STORAGE)
+                    .request(new OnPermissionCallback() {
+                        @Override
+                        public void onGranted(List<String> permissions, boolean all) {
+                            if (all) {
+                                App.showToastShort(getContext(), "已获得存储权限！");
+                                openLocalFileActivity(selectLocalLive);
+                            }
+                        }
+
+                        @Override
+                        public void onDenied(List<String> permissions, boolean never) {
+                            if (never) {
+                                App.showToastShort(getContext(), "获取存储权限失败,请在系统设置中开启！");
+                                XXPermissions.startPermissionActivity(mActivity, permissions);
+                            } else {
+                                App.showToastShort(getContext(), "获取存储权限失败！");
+                            }
+                        }
+                    });
+            return;
+        }
+        openLocalFileActivity(live);
+    }
+
+    private void openLocalFileActivity(boolean live) {
+        Intent intent = new Intent(mContext, LocalFileActivity.class);
+        intent.putExtra(LocalFileActivity.EXTRA_LIVE, live);
+        startActivityForResult(intent, REQUEST_LOCAL_CONFIG);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_LOCAL_CONFIG || resultCode != android.app.Activity.RESULT_OK || data == null || data.getData() == null) {
+            return;
+        }
+        String api = localConfigToApi(data.getData());
+        if (api == null || api.isEmpty()) {
+            App.showToastShort(getContext(), "读取本地配置失败！");
+            return;
+        }
+        if (apiDialog != null) {
+            apiDialog.setLocalApi(api, selectLocalLive);
+        }
+    }
+
+    private String localConfigToApi(Uri uri) {
+        String path = getPathFromUri(uri);
+        if (path == null || path.isEmpty()) {
+            path = copyUriToLocalConfig(uri);
+        }
+        if (path == null || path.isEmpty()) {
+            return "";
+        }
+        String storageRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
+        if (path.startsWith(storageRoot)) {
+            return "clan://localhost/" + path.substring(storageRoot.length()).replaceFirst("^/+", "");
+        }
+        path = copyUriToLocalConfig(uri);
+        if (path != null && path.startsWith(storageRoot)) {
+            return "clan://localhost/" + path.substring(storageRoot.length()).replaceFirst("^/+", "");
+        }
+        return "";
+    }
+
+    private String getPathFromUri(Uri uri) {
+        try {
+            if ("file".equalsIgnoreCase(uri.getScheme())) {
+                return uri.getPath();
+            }
+            if (DocumentsContract.isDocumentUri(mContext, uri)) {
+                String docId = DocumentsContract.getDocumentId(uri);
+                if ("com.android.externalstorage.documents".equals(uri.getAuthority())) {
+                    String[] split = docId.split(":");
+                    if (split.length > 1 && "primary".equalsIgnoreCase(split[0])) {
+                        return Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + split[1];
+                    }
+                }
+                if ("com.android.providers.downloads.documents".equals(uri.getAuthority()) && docId.startsWith("raw:")) {
+                    return docId.substring(4);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
+    private String copyUriToLocalConfig(Uri uri) {
+        InputStream input = null;
+        FileOutputStream output = null;
+        try {
+            input = mContext.getContentResolver().openInputStream(uri);
+            if (input == null) return "";
+            File dir = new File(FileUtils.getExternalCachePath(), "config");
+            if (!dir.exists()) dir.mkdirs();
+            File file = new File(dir, getDisplayName(uri));
+            output = new FileOutputStream(file);
+            byte[] buffer = new byte[8192];
+            int length;
+            while ((length = input.read(buffer)) != -1) {
+                output.write(buffer, 0, length);
+            }
+            return file.getAbsolutePath();
+        } catch (Throwable th) {
+            th.printStackTrace();
+            return "";
+        } finally {
+            try {
+                if (output != null) output.close();
+            } catch (Throwable ignored) {
+            }
+            try {
+                if (input != null) input.close();
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    private String getDisplayName(Uri uri) {
+        String name = "local_config.json";
+        Cursor cursor = null;
+        try {
+            cursor = mContext.getContentResolver().query(uri, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (index >= 0) {
+                    String displayName = cursor.getString(index);
+                    if (displayName != null && !displayName.isEmpty()) {
+                        name = displayName;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return name;
+    }
+
+    private void refreshDanmuApiText() {  //xuameng 弹幕
+        if (tvDanmuApiText == null) return;
+        if (DanmakuApi.isUseDefault()) {
+            tvDanmuApiText.setText("默认");
+            return;
+        }
+        String custom = Hawk.get(HawkConfig.DANMU_API, "");
+        if (!custom.isEmpty()) {
+            tvDanmuApiText.setText("自定义");
+            return;
+        }
+        String config = ApiConfig.get().getDanmaku();
+        tvDanmuApiText.setText(config.isEmpty() ? "默认" : "接口");
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (llApi != null) {
+            llApi.post(() -> {   
+                llApi.requestFocus();   //xuameng 默认焦点
+            }); 
+        }
+    }
+
 }
