@@ -105,6 +105,20 @@
                     android:textColor="@color/color_FFFFFF"
                     android:gravity="center"
                     android:layout_gravity="center"
+                    android:id="@+id/localapi"
+                    android:background="@drawable/button_dialog_main"
+                    android:padding="@dimen/vs_10"
+                    android:focusable="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/vs_5"
+                    android:text="本地"
+                    android:layout_marginStart="@dimen/vs_5"/>
+                <TextView
+                    android:textSize="@dimen/ts_22"
+                    android:textColor="@color/color_FFFFFF"
+                    android:gravity="center"
+                    android:layout_gravity="center"
                     android:id="@+id/inputSubmit"
                     android:background="@drawable/button_dialog_main"
                     android:padding="@dimen/vs_10"
@@ -148,6 +162,20 @@
                     android:layout_weight="1.0"
                     android:inputType="text"
                     android:imeOptions="actionDone"/>
+                <TextView
+                    android:textSize="@dimen/ts_22"
+                    android:textColor="@color/color_FFFFFF"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:id="@+id/localliveapi"
+                    android:background="@drawable/button_dialog_main"
+                    android:padding="@dimen/vs_10"
+                    android:focusable="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/vs_5"
+                    android:text="本地"
+                    android:layout_marginStart="@dimen/vs_5"/>
                 <TextView
                     android:textSize="@dimen/ts_22"
                     android:textColor="@color/color_FFFFFF"
