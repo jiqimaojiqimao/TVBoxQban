@@ -193,9 +193,9 @@ public class SettingActivity extends BaseActivity {
 			return;
 		}
         if (currentApi.equals(Hawk.get(HawkConfig.API_URL, ""))) {   //xuameng 如何配置地址没变
-            if(dnsOpt != Hawk.get(HawkConfig.DOH_URL, 0)){     //xuameng DNS更改重启
+            if(dnsOpt != Hawk.get(HawkConfig.DOH_URL, 0)){  //xuameng DNS更改重启
                 AppManager.getInstance().finishAllActivity();
-                jumpActivity(HomeActivity.class, createBundle());
+                jumpActivity(HomeActivity.class);
             }else if (!currentLiveApi.equals(Hawk.get(HawkConfig.LIVE_API_URL, ""))){    //xuameng修复直播API不刷新问题   重启
                 AppManager.getInstance().finishAllActivity();
                 jumpActivity(HomeActivity.class);
