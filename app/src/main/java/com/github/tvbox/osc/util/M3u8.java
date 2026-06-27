@@ -2,7 +2,7 @@ package com.github.tvbox.osc.util;
 
 import static com.github.tvbox.osc.util.RegexUtils.getPattern;
 
-import com.google.android.exoplayer2.util.UriUtil;
+import androidx.media3.common.util.UriUtil;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
