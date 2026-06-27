@@ -81,8 +81,8 @@ import com.lzy.okgo.model.Response;
 import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.orhanobut.hawk.Hawk;
 
-import androidx.media3.common.Player;
-import androidx.media3.common.text.Cue;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.text.Cue;
 import com.github.tvbox.osc.bean.IJKCode;  //xuamengIJK切换用
 
 import org.greenrobot.eventbus.EventBus;
@@ -120,6 +120,11 @@ import xyz.doikki.videoplayer.player.ProgressManager;
 
 import com.github.tvbox.osc.util.SubtitleHelper;  //xuameng 保存字幕颜色信息用
 
+import com.github.tvbox.osc.ui.dialog.DanmuSettingDialog;  //xuameng 弹幕
+import com.github.tvbox.osc.player.danmu.DanmuLoadController; //xuameng 弹幕
+import com.github.tvbox.osc.api.DanmakuApi; //xuameng 弹幕
+import master.flame.danmaku.ui.widget.DanmakuView; //xuameng弹幕
+
 public class PlayFragment extends BaseLazyFragment {
     public MyVideoView mVideoView;  //xuameng 改成public以便被调用
     private TextView mPlayLoadTip;
@@ -138,6 +143,9 @@ public class PlayFragment extends BaseLazyFragment {
     private int currentSubtitleStyle = 0; // xuameng当前字幕颜色索引
     private final long videoDuration = -1;
 
+    private DanmakuView mDanmuView; //xuameng 弹幕
+    private DanmuLoadController danmuLoadController; //xuameng 弹幕
+
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_play;
@@ -151,16 +159,46 @@ public class PlayFragment extends BaseLazyFragment {
             mController.mLrcView.setHighlightTextSize((int) event.obj);  //xuameng 设置LRC歌词 全屏非全屏状态同步
         }else if (event.type == RefreshEvent.TYPE_PAUSE_VOD) {
             mController.mPauseIngXu();   //xuameng 全屏时如果是暂停状态就显示暂停图标
+        }else if (event.type == RefreshEvent.TYPE_SET_DANMU_SETTINGS) { //xuameng 弹幕
+            setDanmuViewSettings(event.obj instanceof Boolean && (Boolean) event.obj);
+        }else if (event.type == RefreshEvent.TYPE_DANMU_REFRESH) { //xuameng 弹幕
+            checkDanmu(event.obj instanceof String ? (String) event.obj : "");
         }
     }
 
     @Override
     protected void init() {
+        EventBus.getDefault().register(this);
         initView();
+        initDanmuView(); //xuameng 弹幕
         initViewModel();
         initData();
         Hawk.put(HawkConfig.PLAYER_IS_LIVE,false);  //xuameng新增
         HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
+    }
+
+    private void initDanmuView() { //xuameng 弹幕
+        mDanmuView = mController.getDanmuView();
+        danmuLoadController = new DanmuLoadController(mVideoView, mController, mDanmuView);
+    }
+
+    private void setDanmuViewSettings(boolean reload) { //xuameng 弹幕
+        if (danmuLoadController != null) danmuLoadController.applySettings(reload);
+    }
+
+    private void checkDanmu(String danmu) { //xuameng 弹幕
+        if (danmuLoadController != null) {
+            VodInfo.VodSeries series = mVodInfo == null ? null : getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
+            danmuLoadController.check(danmu, mVodInfo == null ? "" : mVodInfo.name, series == null ? "" : series.name);
+        }
+    }
+
+    private void startDanmuIfReady() {  //xuameng 弹幕
+        if (danmuLoadController != null) danmuLoadController.startIfReady();
+    }
+
+    private void resetDanmuState() {  //xuameng 弹幕
+        if (danmuLoadController != null) danmuLoadController.reset();
     }
 
     public long getSavedProgress(String url) {
@@ -191,7 +229,6 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     private void initView() {
-        EventBus.getDefault().register(this);
         mHandler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
@@ -226,6 +263,11 @@ public class PlayFragment extends BaseLazyFragment {
         };
         mVideoView.setProgressManager(progressManager);
         mController.setListener(new VodController.VodControlListener() {
+            @Override
+            public void showDanmuSetting() { //xuameng 弹幕
+                DanmuSettingDialog dialog = new DanmuSettingDialog(requireContext(), mDanmuView);
+                dialog.show();
+            }
             @Override
             public void playNext(boolean rmProgress) {
                 String preProgressKey = progressKey;
@@ -301,6 +343,7 @@ public class PlayFragment extends BaseLazyFragment {
             @Override
             public void prepared() {
                 initSubtitleView();
+                startDanmuIfReady(); //xuameng 弹幕
             }
             @Override
             public void startPlayUrl(String url, HashMap<String, String> headers) {
@@ -984,6 +1027,7 @@ public class PlayFragment extends BaseLazyFragment {
                         }
                         String flag = info.optString("flag");
                         String url = info.getString("url");
+                        String danmaku = info.optString("danmaku", ""); //xuameng 弹幕
                         if(url.startsWith("[")){
                             url=mController.firstUrlByArray(url);
                         }
@@ -1016,6 +1060,8 @@ public class PlayFragment extends BaseLazyFragment {
                             mController.showParse(false);
                             playUrl(playUrl + url, headers);
                         }
+                        checkDanmu(danmaku); //xuameng 弹幕
+                        searchDanmu(danmaku); //xuameng 弹幕
                     } catch (Throwable th) {
 //                        errorWithRetry("获取播放信息错误", true);
 //                        Toast.makeText(mContext, "获取播放信息错误1", Toast.LENGTH_SHORT).show();
@@ -1027,6 +1073,36 @@ public class PlayFragment extends BaseLazyFragment {
                 }
             }
         });
+    }
+
+    private void searchDanmu(String danmaku) { //xuameng 弹幕
+        if (!TextUtils.isEmpty(danmaku) || !DanmakuApi.canSearch() || mVodInfo == null) return;
+        VodInfo.VodSeries series = getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
+        String key = progressKey;
+        DanmakuApi.search(mVodInfo.name, series == null ? "" : series.name, new DanmakuApi.SearchCallback() {
+            @Override
+            public void onFound(String url) {
+                if (!TextUtils.equals(key, progressKey)) return;
+                checkDanmu(url);
+            }
+
+            @Override
+            public void onNotFound() {
+                if (!TextUtils.equals(key, progressKey)) return;
+                checkDanmu("");
+            }
+        });
+    }
+    private VodInfo.VodSeries getCurrentSeries(String flag, int index) {
+        if (flag == null || mVodInfo == null || mVodInfo.seriesMap == null) {
+            return null;
+        }
+        List<VodInfo.VodSeries> currentList = mVodInfo.seriesMap.get(flag);
+        if (currentList == null || currentList.isEmpty()) {
+            return null;
+        }
+        int safeIndex = Math.max(0, Math.min(index, currentList.size() - 1));
+        return currentList.get(safeIndex);
     }
 
     public void setData(Bundle bundle) {
@@ -1162,6 +1238,10 @@ public class PlayFragment extends BaseLazyFragment {
     public void onDestroyView() {
         super.onDestroyView();
         EventBus.getDefault().unregister(this);
+        if (danmuLoadController != null) { //xuameng 弹幕
+            danmuLoadController.destroy();
+            danmuLoadController = null;
+        }
         if (mVideoView != null) {
             mVideoView.release();
             mVideoView = null;
@@ -1413,6 +1493,7 @@ public class PlayFragment extends BaseLazyFragment {
         }
         stopParse();
         initParseLoadFound();
+        resetDanmuState(); //xuameng 弹幕
 //xuameng某些设备有问题        mController.stopOther();
         if(mVideoView!= null) mVideoView.release();
         subtitleCacheKey = mVodInfo.sourceKey + "-" + mVodInfo.id + "-" + mVodInfo.playFlag + "-" + mVodInfo.playIndex+ "-" + vs.name + "-subt";
