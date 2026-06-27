@@ -88,6 +88,10 @@
             android:name=".ui.activity.CrashActivity"
 			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
+        <activity
+            android:name=".ui.activity.LocalFileActivity"
+			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+            android:screenOrientation="sensorLandscape" />
 
         <receiver android:name=".receiver.SearchReceiver">
             <intent-filter>
