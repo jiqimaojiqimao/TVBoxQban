@@ -100,7 +100,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -703,12 +702,16 @@ public class LivePlayActivity extends BaseActivity {
         timeFormat.setTimeZone(TimeZone.getTimeZone("GMT+8:00"));
         String[] epgInfo = EpgUtil.getEpgInfo(channelName); //解析频道名
         final String finalEpgTagName = (epgInfo != null && !epgInfo[1].isEmpty()) ? epgInfo[1] : channelName; //xuameng JSON中的频道名
-        if(logoUrl == null || logoUrl.isEmpty()) {
-            updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]); //xuameng自带logo
-        } else if(logoUrl.equals("false")) {
-            updateChannelIcon(channelName, null);
+        if (!channel_Name.getChannelLogo().isEmpty()) {
+            logoUrl = channel_Name.getChannelLogo();
+            updateChannelIcon(channelName, logoUrl);
         } else {
-            String logo = logoUrl.replace("{name}", channelName); //xuameng支持logourl
+            initLiveObj(); //xuameng 直播配置里有没有logo配置
+        }
+        if(logoUrl == null || logoUrl.isEmpty() || logoUrl.equals("false")) {
+            updateChannelIcon(channelName, epgInfo == null ? null : epgInfo[0]); //xuameng自带logo
+        } else {
+            String logo = logoUrl.replace("{name}", finalEpgTagName); //xuameng支持logourl
             updateChannelIcon(channelName, logo);
         }
         epgListAdapter.CanBack(currentLiveChannelItem.getinclude_back());
@@ -950,16 +953,21 @@ public class LivePlayActivity extends BaseActivity {
             ((TextView) findViewById(R.id.tv_next_program_time)).setText("许大师开发制作，请勿商用以及播放违法内容！");
             ((TextView) findViewById(R.id.tv_next_program_name)).setText("");
             String savedEpgKey = channel_Name.getChannelName() + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
+            String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
+            final String finalEpgTagName = (epgInfo != null && !epgInfo[1].isEmpty()) ? epgInfo[1] : channel_Name.getChannelName(); //xuameng JSON中的频道名
+            if (!channel_Name.getChannelLogo().isEmpty()) {
+                logoUrl = channel_Name.getChannelLogo();
+                updateChannelIcon(channel_Name.getChannelName(), logoUrl);
+            } else {
+                initLiveObj(); //xuameng 直播配置里有没有logo配置
+            }
+            if(logoUrl == null || logoUrl.isEmpty() || logoUrl.equals("false")) {
+                updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]); //xuameng自带logo
+            } else {
+                String logo = logoUrl.replace("{name}", finalEpgTagName); //xuameng支持logourl
+                updateChannelIcon(channel_Name.getChannelName(), logo);
+            }
             if(hsEpg.containsKey(savedEpgKey)) {
-                String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
-                if(logoUrl == null || logoUrl.isEmpty()) {
-                    updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]); //xuameng自带url
-                } else if(logoUrl.equals("false")) {
-                    updateChannelIcon(channel_Name.getChannelName(), null);
-                } else {
-                    String logo = logoUrl.replace("{name}", channel_Name.getChannelName());
-                    updateChannelIcon(channel_Name.getChannelName(), logo); //xuameng支持logourl
-                }
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
                     Date date = new Date();
@@ -1016,15 +1024,6 @@ public class LivePlayActivity extends BaseActivity {
             ((TextView) findViewById(R.id.tv_next_program_name)).setText("");
             String savedEpgKey = channel_Name.getChannelName() + "_" + Objects.requireNonNull(liveEpgDateAdapter.getItem(liveEpgDateAdapter.getSelectedIndex())).getDatePresented();
             if(hsEpg.containsKey(savedEpgKey)) {
-                String[] epgInfo = EpgUtil.getEpgInfo(channel_Name.getChannelName());
-                if(logoUrl == null || logoUrl.isEmpty()) {
-                    updateChannelIcon(channel_Name.getChannelName(), epgInfo == null ? null : epgInfo[0]); //xuameng自带logo
-                } else if(logoUrl.equals("false")) {
-                    updateChannelIcon(channel_Name.getChannelName(), null);
-                } else {
-                    String logo = logoUrl.replace("{name}", channel_Name.getChannelName());
-                    updateChannelIcon(channel_Name.getChannelName(), logo); //xuameng支持logourl
-                }
                 ArrayList arrayList = (ArrayList) hsEpg.get(savedEpgKey);
                 if(arrayList != null && arrayList.size() > 0) {
                     Date date = new Date();
@@ -1058,33 +1057,15 @@ public class LivePlayActivity extends BaseActivity {
         }
     }
     private void updateChannelIcon(String channelName, String logoUrl) {
-        if(StringUtils.isEmpty(logoUrl)) {
-            Picasso.get() //xuameng 音乐旋转图标 台标
-                   .load(logoUrl)
-				   .resize(120,120)
-                   .transform(new RoundTransformation(MD5.string2MD5(logoUrl))
-                   .centerCorp(true)
-                   .roundRadius(AutoSizeUtils.mm2px(mContext, 50), RoundTransformation.RoundType.ALL))
-                   .placeholder(R.drawable.app_logo)
-                   .error(R.drawable.app_logo)
-                   .into(iv_circle_bg_xu);
-            imgLiveIconXu.setVisibility(View.GONE);
-            liveIconNullBg.setVisibility(View.VISIBLE);
-            liveIconNullText.setVisibility(View.VISIBLE);
-            imgLiveIcon.setVisibility(View.VISIBLE);
-            Picasso.get().load(logoUrl).placeholder(R.drawable.banner_xu).into(imgLiveIcon); // xuameng内容空显示banner
-            liveIconNullText.setVisibility(View.VISIBLE);
-            liveIconNullText.setText("[频道编号" + channel_Name.getChannelNum() + "]"); // xuameng显示频道编号
-        } else {   //xuameng 新增给lived显示旋转图片用
-            Picasso.get()  //xuameng 音乐旋转图标 台标
-                   .load(logoUrl)
-				   .resize(120,120)
-                   .transform(new RoundTransformation(MD5.string2MD5(logoUrl))
-                   .centerCorp(true)
-                   .roundRadius(AutoSizeUtils.mm2px(mContext, 50), RoundTransformation.RoundType.ALL))
-                   .placeholder(R.drawable.app_logo)
-                   .error(R.drawable.app_logo)
-                   .into(iv_circle_bg_xu);
+        Picasso.get()  //xuameng 音乐旋转图标 台标
+            .load(logoUrl)
+            .resize(120,120)
+            .transform(new RoundTransformation(MD5.string2MD5(logoUrl))
+            .centerCorp(true)
+            .roundRadius(AutoSizeUtils.mm2px(mContext, 50), RoundTransformation.RoundType.ALL))
+            .placeholder(R.drawable.app_logo)
+            .error(R.drawable.app_logo)
+            .into(iv_circle_bg_xu);
             imgLiveIconXu.setVisibility(View.GONE);
             imgLiveIcon.setVisibility(View.VISIBLE);
             Picasso.get().load(logoUrl).placeholder(R.drawable.banner_xu).into(imgLiveIcon); // xuameng内不空显示banner
@@ -1092,7 +1073,6 @@ public class LivePlayActivity extends BaseActivity {
             liveIconNullText.setVisibility(View.VISIBLE);
             liveIconNullText.setVisibility(View.VISIBLE);
             liveIconNullText.setText("[频道编号" + channel_Name.getChannelNum() + "]"); // xuameng显示频道编号
-        }
     }
     //频道列表
     @SuppressLint("NotifyDataSetChanged")
@@ -1618,6 +1598,17 @@ public class LivePlayActivity extends BaseActivity {
     private HashMap < String, String > liveWebHeader() { //xuameng自定义UA
         return Hawk.get(HawkConfig.LIVE_WEB_HEADER);
     }
+    private HashMap<String, String> liveChannelHeader() {  //xuameng自定义UA  如M3U里有用M3U的
+        if (currentLiveChannelItem == null) return liveWebHeader();
+        HashMap<String, String> header = new HashMap<>();
+        HashMap<String, String> liveHeader = liveWebHeader();
+        if (liveHeader != null) header.putAll(liveHeader);
+        if (currentLiveChannelItem.getHeaders() != null) {
+            header.putAll(currentLiveChannelItem.getHeaders());
+        }
+        if (header.isEmpty()) return null;
+        return header;
+    }
     private boolean playChannel(int channelGroupIndex, int liveChannelIndex, boolean changeSource) { //xuameng播放
         if(mVideoView == null) return true; //XUAMENG可能会引起空指针问题的修复
         // xuameng 1. 获取目标频道组名称，判断是否为“我的收藏”
@@ -1685,8 +1676,8 @@ public class LivePlayActivity extends BaseActivity {
         liveEpgDateAdapter.setSelectedIndex(1); //xuameng频道EPG日期自动选今天
         simSeekPosition = 0; //XUAMENG重要,换视频时重新记录进度
         simSlideOffset = 0; //XUAMENG重要,换视频时重新记录进度
-        if(liveWebHeader() != null) LOG.i("echo-" + liveWebHeader().toString());
-        mVideoView.setUrl(currentLiveChannelItem.getUrl(), liveWebHeader());
+        if(liveChannelHeader()!=null)LOG.i("echo-"+liveChannelHeader().toString());
+        mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveChannelHeader());
         mVideoView.start();
         if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
             iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -2011,7 +2002,7 @@ public class LivePlayActivity extends BaseActivity {
                     channel_Name = currentLiveChannelItem; //xuameng重要EPG名称
 
                     mVideoView.release();
-                    mVideoView.setUrl(currentLiveChannelItem.getUrl(), liveWebHeader());
+                    mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveChannelHeader());
                     mVideoView.start();
                     if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
                         iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -2042,8 +2033,8 @@ public class LivePlayActivity extends BaseActivity {
                     }
                     LOG.i("echo-回看地址playUrl :" + shiyiUrl);
                     playUrl = shiyiUrl;
-                    if(liveWebHeader() != null) LOG.i("echo-liveWebHeader :" + liveWebHeader().toString());
-                    mVideoView.setUrl(playUrl, liveWebHeader());
+                    if(liveChannelHeader()!=null)LOG.i("echo-liveWebHeader :"+ liveChannelHeader().toString());
+                    mVideoView.setUrl(playUrl,liveChannelHeader());
                     mVideoView.start();
                     if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
                         iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -2107,7 +2098,7 @@ public class LivePlayActivity extends BaseActivity {
                     channel_Name = currentLiveChannelItem; //xuameng重要EPG名称
 
                     mVideoView.release();
-                    mVideoView.setUrl(currentLiveChannelItem.getUrl(), liveWebHeader());
+                    mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveChannelHeader());
                     mVideoView.start();
                     if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
                         iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -2139,8 +2130,8 @@ public class LivePlayActivity extends BaseActivity {
                     }
                     LOG.i("echo-回看地址playUrl :" + shiyiUrl);
                     playUrl = shiyiUrl;
-                    if(liveWebHeader() != null) LOG.i("echo-liveWebHeader :" + liveWebHeader().toString());
-                    mVideoView.setUrl(playUrl, liveWebHeader());
+                    if(liveChannelHeader()!=null)LOG.i("echo-liveWebHeader :"+ liveChannelHeader().toString());
+                    mVideoView.setUrl(playUrl,liveChannelHeader());
                     mVideoView.start();
                     if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
                         iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -2994,7 +2985,7 @@ public class LivePlayActivity extends BaseActivity {
                 liveSettingItemAdapter.selectItem(position, true, true);
                 mVideoView.release();
                 livePlayerManager.changeLivePlayerType(mVideoView, position, currentLiveChannelItem.getChannelName());
-                mVideoView.setUrl(currentLiveChannelItem.getUrl(), liveWebHeader());
+                mVideoView.setUrl(currentLiveChannelItem.getUrl(), liveChannelHeader());
                 mVideoView.start();
                 if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
                     iv_Play_Xu.setVisibility(View.GONE); //回看暂停图标
@@ -3085,7 +3076,7 @@ public class LivePlayActivity extends BaseActivity {
                 if(position == liveSettingItemAdapter.getSelectedItemIndex()) return;
                 mVideoView.release();
                 livePlayerManager.changeLivePlayerRender(mVideoView, position, currentLiveChannelItem.getChannelName()); //xuameng 设置渲染方式
-                mVideoView.setUrl(currentLiveChannelItem.getUrl(), liveWebHeader());
+                mVideoView.setUrl(currentLiveChannelItem.getUrl(),liveChannelHeader());
                 mVideoView.start();
                 liveSettingItemAdapter.selectItem(position, true, true);
                 if(iv_Play_Xu.getVisibility() == View.VISIBLE) {
@@ -3140,7 +3131,6 @@ public class LivePlayActivity extends BaseActivity {
             }
             return;
         }
-        initLiveObj(); //xuameng 直播配置里有没有logo配置
         if(list.size() == 1 && list.get(0).getGroupName().startsWith("http://127.0.0.1")) {
             loadProxyLives(list.get(0).getGroupName());
         } else {
@@ -3179,9 +3169,7 @@ public class LivePlayActivity extends BaseActivity {
             }
             @Override
             public void onSuccess(Response < String > response) {
-                LinkedHashMap < String, LinkedHashMap < String, ArrayList < String >>> linkedHashMap = new LinkedHashMap < > ();
-                TxtSubscribe.parse(linkedHashMap, response.body());
-                JsonArray livesArray = TxtSubscribe.live2JsonArray(linkedHashMap);
+                JsonArray livesArray = TxtSubscribe.parseToJsonArray(response.body());
                 JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
                 ApiConfig.get().loadLives(livesArray);
                 List < LiveChannelGroup > list = ApiConfig.get().getChannelGroupList();
@@ -4032,12 +4020,14 @@ public class LivePlayActivity extends BaseActivity {
         initLiveState();
     }
 
-    private void initLiveObj(){
+    private void initLiveObj(){   //xuameng 直播配置里有没有logo配置
         int position=Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0);
         JsonArray live_groups=Hawk.get(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
         JsonObject livesOBJ = live_groups.get(position).getAsJsonObject();
         if(livesOBJ.has("logo")){
             logoUrl = livesOBJ.get("logo").getAsString();    //xuameng 直播配置里有没有logo配置
+        }else{
+            logoUrl = null; 
         }
     }
 
