@@ -8,8 +8,9 @@ import fi.iki.elonen.NanoHTTPD;
 
 /**
  * @author xuameng
- * @date :2026/4/17
+ * @date :2026/6/27
  * @description: 响应按键和输入 增加响应主机名
+   弹幕远程输入
  */
 
 public class InputRequestProcess implements RequestProcess {
@@ -39,12 +40,20 @@ public class InputRequestProcess implements RequestProcess {
                     String action = params.get("do");
 
                     switch (action) {
-                        case "search": {
+                        case "search": {  //xuameng搜索远程输入
                             mDataReceiver.onTextReceived(params.get("word").trim());
                             break;
                         }
-                        case "api": {
+                        case "api": {  //xuameng接口远程输入
                             mDataReceiver.onApiReceived(params.get("url").trim());
+                            break;
+                        }
+                        case "liveApi": {   //xuameng直播远程输入
+                            mDataReceiver.onLiveApiReceived(params.get("url").trim());
+                            break;
+                        }
+                        case "danmuApi": {  //xuameng 弹幕远程输入
+                            mDataReceiver.onDanmuApiReceived(params.get("url").trim());
                             break;
                         }
                         case "push": {
