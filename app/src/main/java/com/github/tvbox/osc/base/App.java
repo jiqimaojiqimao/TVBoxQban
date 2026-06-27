@@ -136,6 +136,7 @@ public class App extends MultiDexApplication {
         putDefault(HawkConfig.EXO_PLAYER_DECODE, false);      //xuameng exo解码方式  false硬解  true软解
         putDefault(HawkConfig.VOD_SWITCHDECODE, false);       //xuameng解码切换  默认关闭
         putDefault(HawkConfig.VOD_SWITCHPLAYER, true);      //xuameng播放器切换  默认开启
+        putDefault(HawkConfig.DANMU_OPEN, false);      //xuameng弹幕默认关闭
 
     }
 
