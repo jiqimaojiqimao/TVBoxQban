@@ -275,6 +275,7 @@ public class FastSearchActivity extends BaseActivity {
                     Bundle bundle = new Bundle();
                     bundle.putString("id", video.id);
                     bundle.putString("sourceKey", video.sourceKey);
+                    bundle.putString("title", video.name);
 					bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
                     jumpActivity(DetailActivity.class, bundle);
                 }
@@ -333,6 +334,7 @@ public class FastSearchActivity extends BaseActivity {
                     Bundle bundle = new Bundle();
                     bundle.putString("id", video.id);
                     bundle.putString("sourceKey", video.sourceKey);
+                    bundle.putString("title", video.name);
 					bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
                     jumpActivity(DetailActivity.class, bundle);
                 }
