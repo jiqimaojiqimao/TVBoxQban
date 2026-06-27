@@ -9,10 +9,14 @@ import com.google.gson.JsonArray;  //xuameng 新增我的收藏
 
 import com.orhanobut.hawk.Hawk;   //xuameng 新增我的收藏
 import com.github.tvbox.osc.util.HawkConfig;  //xuameng 新增我的收藏
+
+import java.util.HashMap;
+import java.util.Map;
 /**
- * @author pj567
- * @date :2021/1/12
- * @description:
+ * @author xuameng
+ * @date :2026/6/27
+ * @description:  支持收藏
+ M3U补全
  */
 public class LiveChannelItem {
     /**
@@ -26,6 +30,18 @@ public class LiveChannelItem {
     private int channelIndex;
     private int channelNum;
     private String channelName;
+    private String channelLogo;
+    private String channelEpg;
+    private String channelUa;
+    private String channelClick;
+    private String channelFormat;
+    private String channelOrigin;
+    private String channelReferer;
+    private String channelTvgId;
+    private String channelTvgName;
+    private JsonObject channelCatchup;
+    private Map<String, String> channelHeader;
+    private Integer channelParse;
     private ArrayList<String> channelSourceNames;
     private ArrayList<String> channelUrls;
     public int sourceIndex = 0;
@@ -62,6 +78,114 @@ public class LiveChannelItem {
 
     public String getChannelName() {
         return channelName;
+    }
+
+    public void setChannelLogo(String channelLogo) {
+        this.channelLogo = channelLogo;
+    }
+
+    public String getChannelLogo() {
+        return channelLogo == null ? "" : channelLogo;
+    }
+
+    public void setChannelEpg(String channelEpg) {
+        this.channelEpg = channelEpg;
+    }
+
+    public String getChannelEpg() {
+        return channelEpg == null ? "" : channelEpg;
+    }
+
+    public void setChannelUa(String channelUa) {
+        this.channelUa = channelUa;
+    }
+
+    public String getChannelUa() {
+        return channelUa == null ? "" : channelUa;
+    }
+
+    public void setChannelClick(String channelClick) {
+        this.channelClick = channelClick;
+    }
+
+    public String getChannelClick() {
+        return channelClick == null ? "" : channelClick;
+    }
+
+    public void setChannelFormat(String channelFormat) {
+        this.channelFormat = channelFormat;
+    }
+
+    public String getChannelFormat() {
+        return channelFormat == null ? "" : channelFormat;
+    }
+
+    public void setChannelOrigin(String channelOrigin) {
+        this.channelOrigin = channelOrigin;
+    }
+
+    public String getChannelOrigin() {
+        return channelOrigin == null ? "" : channelOrigin;
+    }
+
+    public void setChannelReferer(String channelReferer) {
+        this.channelReferer = channelReferer;
+    }
+
+    public String getChannelReferer() {
+        return channelReferer == null ? "" : channelReferer;
+    }
+
+    public void setChannelTvgId(String channelTvgId) {
+        this.channelTvgId = channelTvgId;
+    }
+
+    public String getChannelTvgId() {
+        return channelTvgId == null ? "" : channelTvgId;
+    }
+
+    public void setChannelTvgName(String channelTvgName) {
+        this.channelTvgName = channelTvgName;
+    }
+
+    public String getChannelTvgName() {
+        return channelTvgName == null ? "" : channelTvgName;
+    }
+
+    public void setChannelCatchup(JsonObject channelCatchup) {
+        this.channelCatchup = channelCatchup;
+    }
+
+    public JsonObject getChannelCatchup() {
+        return channelCatchup == null ? new JsonObject() : channelCatchup;
+    }
+
+    public boolean hasCatchup() {
+        return channelCatchup != null && channelCatchup.entrySet().size() > 0;
+    }
+
+    public void setChannelHeader(Map<String, String> channelHeader) {
+        this.channelHeader = channelHeader;
+    }
+
+    public Map<String, String> getChannelHeader() {
+        return channelHeader == null ? new HashMap<String, String>() : channelHeader;
+    }
+
+    public void setChannelParse(Integer channelParse) {
+        this.channelParse = channelParse;
+    }
+
+    public int getChannelParse() {
+        return channelParse == null ? 0 : channelParse.intValue();
+    }
+
+    public Map<String, String> getHeaders() {
+        Map<String, String> headers = new HashMap<>(getChannelHeader());
+        if (!getChannelUa().isEmpty()) headers.put("User-Agent", getChannelUa());
+        if (!getChannelOrigin().isEmpty()) headers.put("Origin", getChannelOrigin());
+        if (!getChannelReferer().isEmpty()) headers.put("Referer", getChannelReferer());
+        return headers;
     }
 
     public ArrayList<String> getChannelUrls() {
@@ -107,6 +231,10 @@ public class LiveChannelItem {
 
     public String getSourceName() {
         return channelSourceNames.get(sourceIndex);
+    }
+
+    public boolean isEmptyCatchup() {
+        return channelCatchup == null || channelCatchup.entrySet().size() == 0;
     }
 
     /**xuameng 我的收藏
@@ -219,29 +347,26 @@ public class LiveChannelItem {
         return set1.equals(set2);
     }   */
 
-    /**  我的收藏   只判断第一个源 要不然太慢
-     * 判断两个 JsonObject 是否代表同一个频道
-     */
-    public static boolean isSameChannel(JsonObject fav1, JsonObject fav2) {
-        // 1. 先比较频道名（保持原逻辑，确保是同一频道）
-        if (!fav1.get("channelName").getAsString().equals(fav2.get("channelName").getAsString())) {
-            return false;
-        }
-    
-        // 2. 直接取两个频道的第一个URL（index=0）比较
-        JsonArray urls1 = fav1.getAsJsonArray("channelUrls");
-        JsonArray urls2 = fav2.getAsJsonArray("channelUrls");
-    
-        // 3. 边界检查：确保两个数组都有至少一个URL（避免越界）
-        if (urls1.size() == 0 || urls2.size() == 0) {
-            return false; // 若某频道无URL，视为不同
-        }
-    
-        // 4. 比较第一个URL（index=0）
-        String firstUrl1 = urls1.get(0).getAsString();
-        String firstUrl2 = urls2.get(0).getAsString();
-        return firstUrl1.equals(firstUrl2);
+public static boolean isSameChannel(JsonObject fav1, JsonObject fav2) {
+    // 1. 先比较频道名（保持原逻辑，确保是同一频道）
+    if (!fav1.get("channelName").getAsString().equals(fav2.get("channelName").getAsString())) {
+        return false;
     }
+    
+    // 2. 直接取两个频道的第一个URL（index=0）比较
+    JsonArray urls1 = fav1.getAsJsonArray("channelUrls");
+    JsonArray urls2 = fav2.getAsJsonArray("channelUrls");
+    
+    // 3. 边界检查：确保两个数组都有至少一个URL（避免越界）
+    if (urls1.size() == 0 || urls2.size() == 0) {
+        return false; // 若某频道无URL，视为不同
+    }
+    
+    // 4. 比较第一个URL（index=0）
+    String firstUrl1 = urls1.get(0).getAsString();
+    String firstUrl2 = urls2.get(0).getAsString();
+    return firstUrl1.equals(firstUrl2);
+}
 
 
     /**  我的收藏
