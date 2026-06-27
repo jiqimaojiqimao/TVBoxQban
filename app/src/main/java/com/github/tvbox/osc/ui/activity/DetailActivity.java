@@ -930,11 +930,11 @@ public class DetailActivity extends BaseActivity {
                         showConfig();
                         return;
                     }
-
+                    if (TextUtils.isEmpty(mVideo.name))mVideo.name = vod_name;  //xuameng 视频名称
                     if (TextUtils.isEmpty(mVideo.name))mVideo.name = "🥇聚汇影视";
                     vodInfo = new VodInfo();
                     if((mVideo.pic==null || mVideo.pic.isEmpty()) && !vod_picture.isEmpty()){    //xuameng某些网站图片部显示
-                        mVideo.pic=vod_picture;
+                        mVideo.pic=vod_picture;  //xuameng 视频图片
                     }
                     vodInfo.setVideo(mVideo);
                     vodInfo.sourceKey = mVideo.sourceKey;
@@ -1143,12 +1143,14 @@ public class DetailActivity extends BaseActivity {
         return label + "<font color=\"#FFFFFF\">" + content + "</font>";
     }
 
-    private String  vod_picture="";
+    private String  vod_picture="";    //xuameng 视频图片
+    private String  vod_name="";  //xuameng 视频名称
     private void initData() {
         Intent intent = getIntent();
         if (intent != null && intent.getExtras() != null) {
             Bundle bundle = intent.getExtras();
-            vod_picture=bundle.getString("picture", "");
+            vod_picture=bundle.getString("picture", ""); //xuameng 视频图片
+            vod_name=bundle.getString("title", "");  //xuameng 视频名称
             loadDetail(bundle.getString("id", null), bundle.getString("sourceKey", ""));
         }
     }
@@ -1325,6 +1327,8 @@ public class DetailActivity extends BaseActivity {
             } else if (event.type == RefreshEvent.TYPE_QUICK_SEARCH_SELECT) {
                 if (event.obj != null) {
                     Movie.Video video = (Movie.Video) event.obj;
+                    vod_name = video.name; //xuameng 视频名称
+                    vod_picture = video.pic; //xuameng 视频图片
                     loadDetailXu(video.id, video.sourceKey);
                 }
             } else if (event.type == RefreshEvent.TYPE_QUICK_SEARCH_WORD_CHANGE) {
