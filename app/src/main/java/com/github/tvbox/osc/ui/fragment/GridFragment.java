@@ -71,6 +71,9 @@ public class GridFragment extends BaseLazyFragment {
     private boolean isLoad = false;
     private boolean isTop = true;
     private View focusedView = null;
+    private boolean isRequesting = false;
+    private boolean hasActionItems = false;
+
     private static class GridInfo{
         public String sortID="";
         public TvRecyclerView mGridView;
@@ -78,6 +81,7 @@ public class GridFragment extends BaseLazyFragment {
         public int page = 1;
         public int maxPage = 1;
         public boolean isLoad = false;
+        public boolean hasActionItems = false;
         public View focusedView= null;
     }
     Stack<GridInfo> mGrids = new Stack<GridInfo>(); //ui栈
@@ -166,6 +170,7 @@ public class GridFragment extends BaseLazyFragment {
         info.page = this.page;
         info.maxPage = this.maxPage;
         info.isLoad = this.isLoad;
+        info.hasActionItems = this.hasActionItems;
         info.focusedView = this.focusedView;
         this.mGrids.push(info);
     }
@@ -181,6 +186,7 @@ public class GridFragment extends BaseLazyFragment {
         this.page = info.page;
         this.maxPage = info.maxPage;
         this.isLoad = info.isLoad;
+        this.hasActionItems = info.hasActionItems;
         this.focusedView = info.focusedView;
         this.mGridView.setVisibility(View.VISIBLE);
 //        if(this.focusedView != null){ this.focusedView.requestFocus(); }
@@ -273,15 +279,7 @@ public class GridFragment extends BaseLazyFragment {
 
                     //xuameng 接口action方法判断 必须放在线程中执行
                     if (!TextUtils.isEmpty(video.action)) {
-                        new Thread(() -> {
-                            try {
-                                SourceBean bean = ApiConfig.get().getSource(video.sourceKey);
-                                Spider sp = ApiConfig.get().getCSP(bean);
-                                sp.action(video.action);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }).start();
+                        sourceViewModel.action(video.sourceKey, video.action);
                         return;
                     }
                     //xuameng 接口action方法判断 必须放在线程中执行完
@@ -318,15 +316,7 @@ public class GridFragment extends BaseLazyFragment {
                 if (video != null) {
                     //xuameng 接口action方法判断 必须放在线程中执行
                     if (!TextUtils.isEmpty(video.action)) {
-                        new Thread(() -> {
-                            try {
-                                SourceBean bean = ApiConfig.get().getSource(video.sourceKey);
-                                Spider sp = ApiConfig.get().getCSP(bean);
-                                sp.action(video.action);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }).start();
+                        sourceViewModel.action(video.sourceKey, video.action);
                         return true;
                     }
                     //xuameng 接口action方法判断 必须放在线程中执行完
@@ -350,12 +340,15 @@ public class GridFragment extends BaseLazyFragment {
         sourceViewModel.listResult.observe(this, new Observer<AbsXml>() {
             @Override
             public void onChanged(AbsXml absXml) {
+                isRequesting = false;
                 if (absXml != null && absXml.movie != null && absXml.movie.videoList != null && absXml.movie.videoList.size() > 0) {
                     if (page == 1) {
                         showSuccess();
                         isLoad = true;
+                        hasActionItems = hasActionVideo(absXml.movie.videoList);
                         gridAdapter.setNewData(absXml.movie.videoList);
                     } else {
+                        hasActionItems = hasActionItems || hasActionVideo(absXml.movie.videoList);
                         gridAdapter.addData(absXml.movie.videoList);
                     }
                     page++;
@@ -370,6 +363,7 @@ public class GridFragment extends BaseLazyFragment {
                     }
                 } else {
                     if (page == 1) {
+                        hasActionItems = false;
                         showEmpty();
                     } else if(page > 2){// 只有一页数据时不提示
                         App.showToastShort(getContext(), "没有更多了！");
@@ -379,6 +373,19 @@ public class GridFragment extends BaseLazyFragment {
                 }
             }
         });
+
+        sourceViewModel.actionResult.observe(this, new Observer<JSONObject>() {   //xuameng 接口action方法判断
+            @Override
+            public void onChanged(JSONObject jsonObject) {
+                if (jsonObject == null) return;
+                String msg = jsonObject.optString("msg");
+                if (!msg.isEmpty()) App.showToastShort(getContext(), msg);
+            }
+        });
+    }
+
+    public boolean shouldReloadOnSelect() {
+        return !isRequesting && mGrids.empty() && (hasActionItems || !isLoad);
     }
 
     public boolean isLoad() {
@@ -387,9 +394,19 @@ public class GridFragment extends BaseLazyFragment {
 
     private void initData() {
         showLoading();
+        isRequesting = true;
         isLoad = false;
+        hasActionItems = false;
         scrollTop();
         sourceViewModel.getList(sortData, page);
+    }
+
+    private boolean hasActionVideo(List<Movie.Video> videos) {
+        if (videos == null) return false;
+        for (Movie.Video video : videos) {
+            if (video != null && video.action != null) return true;
+        }
+        return false;
     }
 
     public boolean isTop() {
