@@ -61,7 +61,7 @@ public class TxtSubscribe {
         if (str.isEmpty()) return new JsonArray();
         try {
             JsonElement element = JsonParser.parseString(str);
-            if (element.isJsonArray()) return normalizeJsonArray(element.getAsJsonArray());
+            if (element.isJsonArray()) return removeEmptyGroups(normalizeJsonArray(element.getAsJsonArray()));
         } catch (Throwable ignored) {
         }
         if (str.startsWith("#EXTM3U")) return parseM3uToJsonArray(str);
@@ -109,7 +109,7 @@ public class TxtSubscribe {
             if (!outGroup.has("channels")) outGroup.add("channels", new JsonArray());
             result.add(outGroup);
         }
-        return result;
+        return removeEmptyGroups(result);
     }
 
     private static void copyIfExists(JsonObject src, JsonObject dst, String key) {
@@ -164,7 +164,17 @@ public class TxtSubscribe {
             reader.close();
         } catch (Throwable ignored) {
         }
-        return result;
+        return removeEmptyGroups(result);
+    }
+
+    private static JsonArray removeEmptyGroups(JsonArray result) {    //xuameng 移除空频道组
+        JsonArray out = new JsonArray();
+        for (JsonElement e : result) {
+            JsonObject g = e.getAsJsonObject();
+            JsonArray c = g.getAsJsonArray("channels");
+            if (c != null && c.size() > 0) out.add(g);
+        }
+        return out;
     }
 
     private static JsonArray parseTxtToJsonArray(String str) {
@@ -208,7 +218,7 @@ public class TxtSubscribe {
             reader.close();
         } catch (Throwable ignored) {
         }
-        return result;
+        return removeEmptyGroups(result);
     }
 
     private static JsonObject parseHeaderString(String text) {
