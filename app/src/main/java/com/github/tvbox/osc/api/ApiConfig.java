@@ -58,9 +58,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author pj567
- * @date :2020/12/18
- * @description:
+ * @author xuameng
+ * @date :2026/06/28
+ * @description: 增加弹幕等
  */
 public class ApiConfig {
     private static ApiConfig instance;
