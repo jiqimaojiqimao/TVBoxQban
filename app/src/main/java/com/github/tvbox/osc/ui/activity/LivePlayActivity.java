@@ -212,6 +212,7 @@ public class LivePlayActivity extends BaseActivity {
     private boolean isVideoplaying = false; //xuameng判断视频开始播放
     private boolean XuSource = false; //xuameng退出回看
     private boolean TimeoutChangeSource = false; //xuameng是否自动换源
+    private boolean useDefaultLiveChannelList = false; //xuameng 使用默认判断列表
     private int selectedChannelNumber = 0; // xuameng遥控器数字键输入的要切换的频道号码
     private TextView tvSelectedChannel; //xuameng频道编号
     private ImageView iv_circle_bg_xu; //xuameng音乐播放时图标
@@ -2363,10 +2364,11 @@ public class LivePlayActivity extends BaseActivity {
                     case VideoView.STATE_PAUSED:
                         break;
                     case VideoView.STATE_PREPARED:
+                        if(mVideoView == null) return;
                         String width = Integer.toString(mVideoView.getVideoSize()[0]);
                         String height = Integer.toString(mVideoView.getVideoSize()[1]);
                         tv_size.setText("[" + width + " X " + height + "]");
-
+  
                         musicAnimation = livePlayerManager.getLivePlaymusic();
                         if (musicAnimation){
                             int newSessionId = mVideoView.getAudioSessionId();   //xuameng音乐播放动画
@@ -2409,6 +2411,7 @@ public class LivePlayActivity extends BaseActivity {
                         mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBuffer);
                         isVideoplaying = true;
                         isBuffer = false;
+						if(mVideoView == null) return;
                         if(isBack) { //xuameng 回看不成功返回直播
                             int durationXu = safeTimeMs(mVideoView.getDuration());
                             if(durationXu < 60000) {
@@ -2962,6 +2965,7 @@ public class LivePlayActivity extends BaseActivity {
                 if(!isCurrentLiveChannelValid()) { //xuameng 未选择频道空指针问题
                     return;
                 }
+                if (position < 0 || position >= currentLiveChannelItem.getSourceNum()) return;
                 if(position == liveSettingItemAdapter.getSelectedItemIndex()) return;
                 liveSettingItemAdapter.selectItem(position, true, true);
                 currentLiveChannelItem.setSourceIndex(position);
@@ -3066,6 +3070,7 @@ public class LivePlayActivity extends BaseActivity {
                 mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);  //xuameng BUG
                 mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBack);  //xuameng BUG
                 mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBuffer);  //xuameng BUG
+				useDefaultLiveChannelList = false;
                 recreate();
                 return;
             case 6: //xuameng渲染方式
@@ -3169,42 +3174,49 @@ public class LivePlayActivity extends BaseActivity {
             }
             @Override
             public void onSuccess(Response < String > response) {
-                JsonArray livesArray = TxtSubscribe.parseToJsonArray(response.body());
-                JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
-                ApiConfig.get().loadLives(livesArray);
-                List < LiveChannelGroup > list = ApiConfig.get().getChannelGroupList();
+                new Thread(() -> {
+                    try {
+                        JsonArray livesArray = TxtSubscribe.parseToJsonArray(response.body());
+                        runOnUiThread(() -> {
+                            JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
+                            ApiConfig.get().loadLives(livesArray);
+                            List < LiveChannelGroup > list = ApiConfig.get().getChannelGroupList();
 
-                // xuameng排除"我的收藏"组，检查剩余组是否为空
-                boolean hasValidGroups = false;
-                for (LiveChannelGroup group : list) {
-                    if (group != null && !"我的收藏".equals(group.getGroupName())) {
-                        hasValidGroups = true;
-                        break;
-                    }
-                }
+                            // xuameng排除"我的收藏"组，检查剩余组是否为空
+                            boolean hasValidGroups = false;
+                            for (LiveChannelGroup group : list) {
+                                if (group != null && !"我的收藏".equals(group.getGroupName())) {
+                                    hasValidGroups = true;
+                                    break;
+                                }
+                            }
 
-                // xuameng如果原列表为空，或排除收藏组后没有其他组，则显示默认列表
-                if (list.isEmpty() || !hasValidGroups) {
-                    if(live_groups.size() > 1) {
-                        setDefaultLiveChannelList();
-                        showSuccess();
-                        App.showToastShort(mContext, "聚汇直播提示您：直播列表为空！请切换线路！");
-                    } else {
+                            // xuameng如果原列表为空，或排除收藏组后没有其他组，则显示默认列表
+                            if (list.isEmpty() || !hasValidGroups) {
+                                if(live_groups.size() > 1) {
+                                    setDefaultLiveChannelList();
+                                    showSuccess();
+                                    App.showToastShort(mContext, "聚汇直播提示您：直播列表为空！请切换线路！");
+                                } else {
+                                    setDefaultLiveChannelList();
+                                    showSuccess();
+                                    App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
+                                }
+                                return;
+                            }
+                            liveChannelGroupList.clear();
+                            liveChannelGroupList.addAll(list);
+				            LivePlayActivity.this.showSuccess();
+                            initLiveState();
+                        });
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
                         setDefaultLiveChannelList();
                         showSuccess();
                         App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
                     }
-                    return;
-                }
-                liveChannelGroupList.clear();
-                liveChannelGroupList.addAll(list);
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        LivePlayActivity.this.showSuccess();
-                        initLiveState();
-                    }
-                });
+                }).start();
             }
             @Override
             public void onError(Response < String > response) {
@@ -3985,6 +3997,7 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     private void setDefaultLiveChannelList() {      //xuameng 加载失败默认频道列表
+        useDefaultLiveChannelList = true;
         liveChannelGroupList.clear();
     
         // 1. xuameng先添加收藏组（即使为空）
@@ -4021,6 +4034,9 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     private void initLiveObj(){   //xuameng 直播配置里有没有logo配置
+		if (useDefaultLiveChannelList){
+            return;
+		}
         int position=Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0);
         JsonArray live_groups=Hawk.get(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
         JsonObject livesOBJ = live_groups.get(position).getAsJsonObject();
