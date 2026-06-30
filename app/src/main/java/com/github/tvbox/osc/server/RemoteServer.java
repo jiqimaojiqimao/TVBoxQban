@@ -109,7 +109,10 @@ public class RemoteServer extends NanoHTTPD {
 
     private Response getProxy(Object[] rs){
         try {
-            if (rs[0] instanceof NanoHTTPD.Response) return (NanoHTTPD.Response) rs[0];
+            if (rs == null || rs.length < 3) {
+                LOG.e("echo-proxy error: empty proxy result");
+                return NanoHTTPD.newFixedLengthResponse(Response.Status.INTERNAL_ERROR, NanoHTTPD.MIME_PLAINTEXT, "500");
+            }
             int code = (int) rs[0];
             String mime = (String) rs[1];
             InputStream stream = rs[2] != null ? (InputStream) rs[2] : null;
