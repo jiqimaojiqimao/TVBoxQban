@@ -123,6 +123,16 @@ import java.util.regex.Matcher; //xuameng 支持XML EPG用
 import java.util.regex.Pattern; //xuameng 支持XML EPG用
 import java.util.concurrent.TimeUnit; //xuameng 支持XML EPG用
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import com.github.catvod.crawler.Spider;
+import android.Manifest;
+
 public class LivePlayActivity extends BaseActivity {
     public static Context context;
     private VideoView mVideoView;
@@ -2771,6 +2781,7 @@ public class LivePlayActivity extends BaseActivity {
             }
             @Override
             public void onItemClick(TvRecyclerView parent, View itemView, int position) { //选中播放就隐藏左侧频道菜单
+                FastClickCheckUtil.check(itemView);
                 if(tvLeftChannelListLayout.getVisibility() == View.VISIBLE) {
                     mHideChannelListRunXu(); //xuameng隐藏频道菜单
                 }
@@ -2794,10 +2805,10 @@ public class LivePlayActivity extends BaseActivity {
         liveChannelItemAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
+                FastClickCheckUtil.check(view);
                 if(tvLeftChannelListLayout.getVisibility() == View.VISIBLE) {
                     mHideChannelListRunXu(); //xuameng隐藏频道菜单
                 }
-                FastClickCheckUtil.check(view);
                 // xuameng添加安全检查添加安全检查
                 if (position < 0 || adapter.getData() == null || position >= adapter.getData().size()) {
                     return;
@@ -3166,77 +3177,156 @@ public class LivePlayActivity extends BaseActivity {
         }
         showLoading();
         LOG.i("echo-live-url:" + url);
-        OkGo. < String > get(url).tag("xuameng").execute(new AbsCallback < String > () {
-            @Override
-            public String convertResponse(okhttp3.Response response) throws Throwable {
-                assert response.body() != null;
-                return response.body().string();
+        if(url.contains(".js")){
+            if ((!hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
+                // 权限不足时，直接设置默认播放列表
+                setDefaultLiveChannelList();
+                showSuccess();
+                App.showToastShort(mContext, "该源需要存储权限！");
+                return;
             }
-            @Override
-            public void onSuccess(Response < String > response) {
-                new Thread(() -> {
+            String finalUrl = url;
+            Runnable waitResponse = new Runnable() {
+                @Override
+                public void run() {
+                    ExecutorService executor = Executors.newSingleThreadExecutor();
+                    Future<String> future = executor.submit(new Callable<String>() {
+                        @Override
+                        public String call() {
+                            Spider sp = ApiConfig.get().getLiveCSP(finalUrl);
+                            String json=sp.liveContent(finalUrl);
+//                            LOG.i("echo--loadProxyLives-json--"+json);
+                            return json;
+                        }
+                    });
+                    String sortJson = null;
                     try {
-                        JsonArray livesArray = TxtSubscribe.parseToJsonArray(response.body());
-                        runOnUiThread(() -> {
-                            JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
-                            ApiConfig.get().loadLives(livesArray);
-                            List < LiveChannelGroup > list = ApiConfig.get().getChannelGroupList();
-
-                            // xuameng排除"我的收藏"组，检查剩余组是否为空
-                            boolean hasValidGroups = false;
-                            for (LiveChannelGroup group : list) {
-                                if (group != null && !"我的收藏".equals(group.getGroupName())) {
-                                    hasValidGroups = true;
-                                    break;
-                                }
-                            }
-
-                            // xuameng如果原列表为空，或排除收藏组后没有其他组，则显示默认列表
-                            if (list.isEmpty() || !hasValidGroups) {
-                                if(live_groups.size() > 1) {
-                                    setDefaultLiveChannelList();
-                                    showSuccess();
-                                    App.showToastShort(mContext, "聚汇直播提示您：直播列表为空！请切换线路！");
-                                } else {
+                        sortJson = future.get(ApiConfig.get().getLiveConnectTimeoutSeconds(), TimeUnit.SECONDS);
+                    } catch (TimeoutException e) {
+                        e.printStackTrace();
+                        future.cancel(true);
+                    } catch (InterruptedException | ExecutionException e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (sortJson==null || sortJson.isEmpty()) {
+                            // 频道列表为空时，使用默认播放列表
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
                                     setDefaultLiveChannelList();
                                     showSuccess();
                                     App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
                                 }
-                                return;
-                            }
-                            liveChannelGroupList.clear();
-                            liveChannelGroupList.addAll(list);
-				            LivePlayActivity.this.showSuccess();
-                            initLiveState();
-                        });
+                            });
+                            return;
+                        }
+                        JsonArray livesArray = TxtSubscribe.parseToJsonArray(sortJson);
 
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        setDefaultLiveChannelList();
-                        showSuccess();
-                        App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
-                    }
-                }).start();
-            }
-            @Override
-            public void onError(Response < String > response) {
-                JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(live_groups.size() > 1) {
-                            setDefaultLiveChannelList();
-                            showSuccess();
-                            App.showToastShort(mContext, "聚汇直播提示您：直播列表获取错误！请切换线路！");
-                        } else {
-                            setDefaultLiveChannelList();
-                            showSuccess();
-                            App.showToastShort(mContext, "聚汇直播提示您：直播列表获取错误！");
+                        ApiConfig.get().loadLives(livesArray);
+                        List<LiveChannelGroup> list = ApiConfig.get().getChannelGroupList();
+                        if (list.isEmpty()) {
+                            mHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    setDefaultLiveChannelList();
+                                    showSuccess();
+                                    App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
+                                }
+                            });
+                            return;
+                        }
+                        liveChannelGroupList.clear();
+                        liveChannelGroupList.addAll(list);
+
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                LivePlayActivity.this.showSuccess();
+                                initLiveState();
+                            }
+                        });
+                        try {
+                            executor.shutdown();
+                        } catch (Throwable th) {
+                            th.printStackTrace();
                         }
                     }
-                });
-            }
-        });
+                }
+            };
+            Executors.newSingleThreadExecutor().execute(waitResponse);
+        } else {
+            OkGo. < String > get(url).tag("xuameng").execute(new AbsCallback < String > () {
+                @Override
+                public String convertResponse(okhttp3.Response response) throws Throwable {
+                    assert response.body() != null;
+                    return response.body().string();
+                }
+                @Override
+                public void onSuccess(Response < String > response) {
+                    new Thread(() -> {
+                        try {
+                            JsonArray livesArray = TxtSubscribe.parseToJsonArray(response.body());
+                            runOnUiThread(() -> {
+                                JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
+                                ApiConfig.get().loadLives(livesArray);
+                                List < LiveChannelGroup > list = ApiConfig.get().getChannelGroupList();
+
+                                // xuameng排除"我的收藏"组，检查剩余组是否为空
+                                boolean hasValidGroups = false;
+                                for (LiveChannelGroup group : list) {
+                                    if (group != null && !"我的收藏".equals(group.getGroupName())) {
+                                        hasValidGroups = true;
+                                        break;
+                                    }
+                                }
+
+                                // xuameng如果原列表为空，或排除收藏组后没有其他组，则显示默认列表
+                                if (list.isEmpty() || !hasValidGroups) {
+                                    if(live_groups.size() > 1) {
+                                        setDefaultLiveChannelList();
+                                        showSuccess();
+                                        App.showToastShort(mContext, "聚汇直播提示您：直播列表为空！请切换线路！");
+                                    } else {
+                                        setDefaultLiveChannelList();
+                                        showSuccess();
+                                        App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
+                                    }
+                                    return;
+                                }
+                                liveChannelGroupList.clear();
+                                liveChannelGroupList.addAll(list);
+				                LivePlayActivity.this.showSuccess();
+                                initLiveState();
+                            });
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            setDefaultLiveChannelList();
+                            showSuccess();
+                            App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
+                        }
+                    }).start();
+                }
+                @Override
+                public void onError(Response < String > response) {
+                    JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(live_groups.size() > 1) {
+                                setDefaultLiveChannelList();
+                                showSuccess();
+                                App.showToastShort(mContext, "聚汇直播提示您：直播列表获取错误！请切换线路！");
+                            } else {
+                                setDefaultLiveChannelList();
+                                showSuccess();
+                                App.showToastShort(mContext, "聚汇直播提示您：直播列表获取错误！");
+                            }
+                        }
+                    });
+                }
+            });
+		}
     }
 
     private void initLiveState() {
@@ -4404,6 +4494,9 @@ public class LivePlayActivity extends BaseActivity {
             boolean isFavorited = !found; // 若未找到（添加收藏），则状态为true；否则为false
             liveChannelItemAdapter.updateFavoriteCache(channel, isFavorited, position);
         }
+        // 通知 ApiConfig 重新构建收藏组
+        ApiConfig.get().rebuildFavoriteGroup();
+		// 刷新收藏频道组
         refreshFavoriteChannelGroup();
     }
 
