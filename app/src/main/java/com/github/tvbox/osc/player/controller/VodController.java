@@ -94,7 +94,7 @@ import org.greenrobot.eventbus.EventBus; //xuameng弹幕
 import com.github.tvbox.osc.event.RefreshEvent; //xuameng弹幕
 import com.github.tvbox.osc.util.DanmuHelper; //xuameng弹幕
 
-import androidx.media3.ui.SubtitleView; // 用于显示ExoPlayer内置字幕
+import com.google.android.exoplayer2.ui.SubtitleView;   // 用于显示ExoPlayer内置字幕
 
 import android.os.Build;
 import android.webkit.WebView;
