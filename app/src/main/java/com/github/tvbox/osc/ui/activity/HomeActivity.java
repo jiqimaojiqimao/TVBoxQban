@@ -254,21 +254,20 @@ public class HomeActivity extends BaseActivity {
                 if(dataInitOk && jarInitOk){
                     String cachePath = FileUtils.getCachePath();          //xuameng点击清空缓存
                     String cspCachePath = FileUtils.getFilePath()+"/csp/";
+                    String jarCachePath = FileUtils.getFilePath()+"/jar/";
                     File cspCacheDir = new File(cspCachePath);
+                    File jarCacheDir = new File(jarCachePath);
                     File cacheDir = new File(cachePath);
-                    if (!cacheDir.exists() && !cspCacheDir.exists()) return;
-                        new Thread(() -> {
-                            try {
-                                if(cacheDir.exists())FileUtils.cleanDirectory(cacheDir);
-                                if(cspCacheDir.exists()){
-                                    //		FileUtils.deleteFile(cspCacheDir);
-                                    FileUtils.cleanDirectory(cspCacheDir);
-                                }
+                    new Thread(() -> {
+                        try {
+                            if(cacheDir.exists()) FileUtils.cleanDirectory(cacheDir);
+                            if(cspCacheDir.exists()) FileUtils.cleanDirectory(cspCacheDir);
+                            if(cspCacheDir.exists()) FileUtils.cleanDirectory(jarCacheDir);
                                 // ApiConfig.get().clearJarLoader();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
-                        }).start();
+                    }).start();
                     App.showToastShort(HomeActivity.this, "缓存已清空！");
                 }else {
                     jumpActivity(SettingActivity.class);		//xuameng加载慢跳转设置
@@ -342,6 +341,7 @@ public class HomeActivity extends BaseActivity {
     private boolean jarInitOk = false;
 
     private void initData() {
+        Hawk.put(HawkConfig.API_INIT_OK, true);
         refreshEmpty = false;	//xuameng打断加载判断
         SourceBean home = ApiConfig.get().getHomeSourceBean();
         if (home != null && home.getName() != null && !home.getName().isEmpty())
@@ -475,6 +475,7 @@ public class HomeActivity extends BaseActivity {
                                         public void run() {
                                             initData();
                                             //dialog.hide();
+                                            Hawk.put(HawkConfig.API_INIT_OK, false);  //判断API加载成功
                                             dialog.dismiss();  //xuameng显示BUG
                                         }
                                     });
@@ -489,6 +490,7 @@ public class HomeActivity extends BaseActivity {
                                         public void run() {
                                             initData();
                                             //dialog.hide();
+                                            Hawk.put(HawkConfig.API_INIT_OK, false);  //判断API加载成功
                                             dialog.dismiss();  //xuameng显示BUG
                                         }
                                     });
