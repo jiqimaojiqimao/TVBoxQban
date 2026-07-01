@@ -794,6 +794,23 @@ public class DetailActivity extends BaseActivity {
 
     @SuppressLint("NotifyDataSetChanged")
     void refreshList() {     //xuameng 不同源选集不准确及 自动播放源不对等问题 切换回正在播放的源可以恢复到正确状态等BUG
+
+        if (isPushUrl) {  //xuameng 推送解析时返回防UBG
+	        return;
+        }
+        if (vodInfo == null || vodInfo.seriesMap == null || vodInfo.playFlag == null) {  //XUAMENG 防空
+            return;
+        }
+
+        List<VodInfo.VodSeries> seriesList = vodInfo.seriesMap.get(vodInfo.playFlag);
+        if (seriesList == null || seriesList.isEmpty()) {   //XUAMENG 防空
+            if (!vodInfo.seriesMap.isEmpty()) {
+                vodInfo.playFlag = (String) vodInfo.seriesMap.keySet().toArray()[0];
+                seriesList = vodInfo.seriesMap.get(vodInfo.playFlag);
+            }
+            if (seriesList == null) return;
+        }
+
         if (vodInfo.seriesMap.get(vodInfo.playFlag).size() <= vodInfo.playIndex) {
             vodInfo.playIndex = 0;
         }
@@ -1077,6 +1094,9 @@ public class DetailActivity extends BaseActivity {
                             isPushUrl = false;
                             App.showToastShort(DetailActivity.this, "接收到推送数据为空！");
                         }
+                        if (fullWindows) {
+                            exitFullPreview();
+                        }
                         mGridViewFlag.setVisibility(View.GONE);
                         mGridView.setVisibility(View.GONE);
                         mSeriesGroupView.setVisibility(View.GONE);
@@ -1096,7 +1116,7 @@ public class DetailActivity extends BaseActivity {
                         App.showToastShort(DetailActivity.this, "接收推送数据失败！");
                     }
                     if (fullWindows) {
-                        enterFullPreview();
+                        exitFullPreview();
                     }
                     if (isShowConfig){ //xuameng 配置中心判断
                         showConfig();
@@ -1537,6 +1557,10 @@ public class DetailActivity extends BaseActivity {
             if (playFragment != null && playFragment.onBackPressed()) return;//xuameng上一级交给VODController控制
             exitFullPreview();
             switchToPlayingSourceAndScroll();   //xuameng滚动到当前剧集
+            if (vodInfo != null && vodInfo.seriesMap != null) {
+                List<VodInfo.VodSeries> list = vodInfo.seriesMap.get(vodInfo.playFlag);
+                mSeriesGroupView.setVisibility(list.size()>GroupCount ? View.VISIBLE : View.GONE);
+            }
             return;
         }
         else if (seriesSelect) {
