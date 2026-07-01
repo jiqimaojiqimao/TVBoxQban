@@ -54,9 +54,11 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -96,6 +98,7 @@ public class ApiConfig {
     private final ExecutorService configLoadExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService jarLoadExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService danmuSearchExecutor = Executors.newSingleThreadExecutor();
+    private final Set<String> warmedSearchSpiderKeys = new HashSet<>();
 
     private final String userAgent = "okhttp/3.15";
 
@@ -727,6 +730,16 @@ public class ApiConfig {
         return trimContent;
     }
 
+    private void resetConfigData() {
+        clearSpiderCache();
+        currentPlaySourceKey = "";
+        sourceBeanList.clear();
+        liveChannelGroupList.clear();
+        parseBeanList.clear();
+        searchSourceBeanList = new ArrayList<>();
+        Hawk.put(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
+    }
+
     private void clearApiLinesIfUnmatched(String apiUrl) { //xuameng 多仓
         ArrayList<String> apiLines = Hawk.get(HawkConfig.API_LINE_LIST, new ArrayList<String>());
         if (apiLines.isEmpty()) {
@@ -743,6 +756,7 @@ public class ApiConfig {
     private static String jarCache = "true";
 
     private void parseJson(String apiUrl, String jsonStr) {
+        resetConfigData();
         JsonObject infoJson = gson.fromJson(jsonStr, JsonObject.class);
         // spider
         spider = DefaultConfig.safeJsonString(infoJson, "spider", "");
@@ -1544,6 +1558,30 @@ public class ApiConfig {
         }
     }
 
+    public void warmSearchSpiders() {
+        final ArrayList<SourceBean> sources = new ArrayList<>(sourceBeanList.values());
+        configLoadExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                LOG.i("echo-warm-spider start");
+                for (SourceBean source : sources) {
+                    if (source == null || source.getType() != 3 || !source.isSearchable()) continue;
+                    String warmKey = source.getKey() + "|" + source.getApi() + "|" + source.getJar() + "|" + source.getExt();
+                    synchronized (warmedSearchSpiderKeys) {
+                        if (warmedSearchSpiderKeys.contains(warmKey)) continue;
+                        warmedSearchSpiderKeys.add(warmKey);
+                    }
+                    try {
+                        LOG.i("echo-warm-spider load:" + warmKey);
+                        getCSP(source);
+                    } catch (Throwable th) {
+                        LOG.e("echo-warm-search-spider-error " + source.getKey() + ":" + th.getMessage());
+                    }
+                }
+            }
+        });
+    }
+
     public Spider getJsCSP(String url) {
         currentLiveSpider = url;
         return jsLoader.getSpider(MD5.string2MD5(url), url, "", "");
@@ -1731,7 +1769,9 @@ public class ApiConfig {
     public List<SourceBean> getSwitchSourceBeanList() {
         List<SourceBean> filteredList = new ArrayList<>();
         for (SourceBean bean : sourceBeanList.values()) {
-            filteredList.add(bean);
+            if (bean.getFilterable() == 1) {
+                filteredList.add(bean);
+            }
         }
         return filteredList;
     }
@@ -1863,6 +1903,9 @@ public class ApiConfig {
     public void clearLoader() {
         jarLoader.clear();
         jsLoader.clear();
+        synchronized (warmedSearchSpiderKeys) {
+            warmedSearchSpiderKeys.clear();
+        }
     }
 
     public void clearSpiderCache() {
