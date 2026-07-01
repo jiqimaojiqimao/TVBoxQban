@@ -378,6 +378,7 @@ public class VodController extends BaseController {
 	private String videoPicUrl; //xuameng 新增给vod显示旋转图片用
     private boolean hasDanmu = false; //xuameng弹幕
     private DanmakuView mDanmuView; //xuameng弹幕
+    boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true);  //xuameng true是显示小窗口,false是不显示小窗口
 
     Handler myHandle;
     Runnable myRunnable;
@@ -2260,6 +2261,10 @@ public class VodController extends BaseController {
         backBtn.setVisibility(GONE); //返回键隐藏菜单
         mTvPausexu.setVisibility(GONE); //隐藏暂停菜单
         mLockView.setVisibility(GONE); //xuameng隐藏屏幕锁
+		if (!showPreview && isLock){  //xuameng 如果不是小窗口播放开锁
+            isLock = false;
+            mLockView.setImageResource(isLock ? R.drawable.icon_lock : R.drawable.icon_unlock);
+        }
         return false;
     }
     @Override
