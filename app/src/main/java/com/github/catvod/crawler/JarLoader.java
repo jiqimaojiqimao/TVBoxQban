@@ -5,12 +5,12 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.github.catvod.net.OkHttp;
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.server.ControlManager;
 import com.github.tvbox.osc.server.RemoteServer;
 import com.github.tvbox.osc.util.FileUtils;
 import com.github.tvbox.osc.util.MD5;
-import com.github.tvbox.osc.util.urlhttp.OkHttpUtil;
 import com.lzy.okgo.OkGo;
 
 import org.json.JSONObject;
@@ -150,7 +150,7 @@ public class JarLoader {
             }
             aliases.put(jarKey(source), key);
             if (md5.startsWith("http")) {
-                String value = OkHttpUtil.string(md5, null);
+                String value = OkHttp.string(md5, null);
                 md5 = value == null ? "" : value.trim();
             }
             File file = fileForJar(source);
