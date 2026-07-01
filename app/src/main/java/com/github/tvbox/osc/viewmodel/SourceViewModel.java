@@ -29,7 +29,7 @@ import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.LOG;
 import com.github.tvbox.osc.util.MD5;
 import com.github.tvbox.osc.util.thunder.Thunder;
-import com.github.tvbox.osc.util.urlhttp.OkHttpUtil;
+import com.github.catvod.net.OkHttp;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -695,7 +695,7 @@ public class SourceViewModel extends ViewModel {
                     });
                     String sortJson = null;
                     try {
-                        sortJson = future.get(10, TimeUnit.SECONDS);
+                        sortJson = future.get(20, TimeUnit.SECONDS);
                     } catch (TimeoutException e) {
                         e.printStackTrace();
                         future.cancel(true);
@@ -811,7 +811,7 @@ public class SourceViewModel extends ViewModel {
 
                     String json = null;
                     try {
-                        json = future.get(15, TimeUnit.SECONDS);
+                        json = future.get(20, TimeUnit.SECONDS);
                         LOG.i("echo--getDetail--result:" + json);
                     } catch (TimeoutException e) {
                         LOG.i("echo--getDetail--timeout");
@@ -1312,7 +1312,7 @@ public class SourceViewModel extends ViewModel {
                     result = tryMinifyJson(result);
                     extendCache.putIfAbsent(key, result);
                 } else if (extend.startsWith("http")) {
-                    result = OkHttpUtil.string(extend, null);
+                    result = OkHttp.string(extend, null);
                     if (!result.isEmpty()) {
                         result = tryMinifyJson(result);
                         if(result.length()>2500)result = extend;
@@ -1324,7 +1324,7 @@ public class SourceViewModel extends ViewModel {
         });
 
         try {
-            return future.get(5, TimeUnit.SECONDS);
+            return future.get(20, TimeUnit.SECONDS);
         } catch (TimeoutException te) {
             te.printStackTrace();
             future.cancel(true);
@@ -1771,7 +1771,7 @@ public class SourceViewModel extends ViewModel {
                 result = tryMinifyJson(result);
                 extendCache.putIfAbsent(key, result);
             } else {
-                result = OkHttpUtil.string(extend, null);
+                result = OkHttp.string(extend, null);
                 if (!TextUtils.isEmpty(result)) {
                     result = tryMinifyJson(result);
                     if (result.length() > 2500) result = extend;
