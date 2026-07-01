@@ -7,7 +7,7 @@ import android.util.Base64;
 import com.github.tvbox.osc.base.App;
 
 import com.github.tvbox.osc.server.ControlManager;
-import com.github.tvbox.osc.util.urlhttp.OkHttpUtil;
+import com.github.catvod.net.OkHttp;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.orhanobut.hawk.Hawk;
@@ -428,7 +428,7 @@ public class FileUtils {
             headerMap=new HashMap<>();
             headerMap.put("User-Agent",str.startsWith("https://gitcode.net/") ? UA.random() : "okhttp/3.15");
         }
-        return OkHttpUtil.string(str,headerMap);
+        return OkHttp.string(str, headerMap);
     }
 
     public static File open(String str) {
