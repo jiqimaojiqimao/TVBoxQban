@@ -153,16 +153,32 @@ public class FileUtils {
         return App.getInstance().getFilesDir().getAbsolutePath();
     }
 
-    public static void cleanDirectory(File dir) {
-        if (!dir.exists()) return;
+    public static void cleanDirectory(File dir) {  //xuameng 删除目录下的文件及目录
+        if (!dir.exists() || !dir.isDirectory()) {
+            return;
+        }
+
         File[] files = dir.listFiles();
-        if (files == null || files.length == 0) return;
-        for(File one : files) {
-            try {
-                deleteFile(one);
-            } catch (Exception e) {
-                e.printStackTrace();
+        if (files == null) {
+            return;
+        }
+
+        for (File file : files) {
+            deleteRecursively(file);
+        }
+    }
+
+    private static void deleteRecursively(File file) {  //xuameng 目录文件全删除
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteRecursively(child);
+                }
             }
+        }
+        if (!file.delete()) {
+            System.err.println("删除失败: " + file.getAbsolutePath());
         }
     }
 
