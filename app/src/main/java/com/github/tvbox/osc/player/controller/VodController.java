@@ -1769,17 +1769,10 @@ public class VodController extends BaseController {
         videoPlayState = playState;
         switch(playState) {
             case VideoView.STATE_IDLE:
-                mLandscapePortraitBtn.setVisibility(View.GONE);
-                if(MxuamengMusic.getVisibility() == View.VISIBLE) { //xuameng播放音乐背景
-                    MxuamengMusic.setVisibility(GONE);
-                }
-                if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐播放时图标
-                    iv_circle_bg.setVisibility(GONE);
-                }
-                if(customVisualizer.getVisibility() == View.VISIBLE) { //xuameng播放音乐柱状图
-                    customVisualizer.setVisibility(GONE);
-                }
-                mPlayLoadNetSpeed.setVisibility(View.GONE);
+                imageHide();  //xuameng 隐藏图片
+                mHidePauseIng(); //xuameng 隐藏暂停图标
+                releaseVisualizer();  //xuameng播放音乐背景
+                clearSubtitleCache();  //xuameng清除字幕缓存
                 if(isBottomVisible() && mSeekBarhasFocus) { //xuameng假如焦点在SeekBar
                     mxuPlay.requestFocus(); //底部菜单默认焦点为播放
                 }
@@ -1787,13 +1780,9 @@ public class VodController extends BaseController {
                 isBufferIng = false; //xuameng 判断是否进在缓冲视频
                 mxuPlay.setText("准备");
                 mVideoSize.setText("[ 0 X 0 ]");
-                releaseVisualizer();  //xuameng播放音乐背景
-                clearSubtitleCache();  //xuameng清除字幕缓存
-                mHidePauseIng(); //xuameng 隐藏暂停图标
                 break;
             case VideoView.STATE_PLAYING:
                 isVideoPlay = true;
-                //isBufferIng = false; //xuameng 判断是否进在缓冲视频
                 mxuPlay.setText("暂停"); //xuameng底部菜单显示暂停
                 initLandscapePortraitBtnInfo();
                 listener.hideTipXu(); //xuameng 只要播放就隐藏错误信息
@@ -1802,21 +1791,17 @@ public class VodController extends BaseController {
             case VideoView.STATE_PAUSED:
                 isVideoPlay = false;
                 mxuPlay.setText("播放"); //xuameng底部菜单显示播放
-                //isBufferIng = false; //xuameng 判断是否进在缓冲视频
-                //mTopRoot1.setVisibility(GONE);       //xuameng隐藏上面菜单
-                //mTopRoot2.setVisibility(GONE);       //xuameng隐藏上面菜单
-                //mPlayTitle.setVisibility(VISIBLE);   //xuameng显示上面菜单
-                //pauseIngXu();
                 break;
             case VideoView.STATE_ERROR:
-                mPlayLoadNetSpeed.setVisibility(View.GONE);
+                imageHide();  //xuameng 隐藏图片
+                mHidePauseIng(); //xuameng 隐藏暂停图标
                 isVideoPlay = false;
+                isBufferIng = false; //xuameng 判断是否进在缓冲视频
                 if(isBottomVisible() && mSeekBarhasFocus) { //xuameng假如焦点在SeekBar
                     mxuPlay.requestFocus(); //底部菜单默认焦点为播放
                 }
                 listener.errReplay();
                 mxuPlay.setText("准备");
-                mHidePauseIng(); //xuameng 隐藏暂停图标
                 break;
             case VideoView.STATE_PREPARED:
                 mPlayLoadNetSpeed.setVisibility(View.GONE);
@@ -1827,17 +1812,7 @@ public class VodController extends BaseController {
                 String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
                 String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
                 mVideoSize.setText("[ " + width + " X " + height + " ]");
-                try {
-                    musicAnimation = mPlayerConfig.getBoolean("music");  //xuameng音乐播放动画获取设置
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                if (musicAnimation){
-                    int newSessionId = mControlWrapper.getAudioSessionId();   //xuameng音乐播放动画
-                    if(newSessionId != audioSessionId) { // 避免重复初始化
-                       initVisualizer();  //xuameng音乐播放动画
-                    }
-                }
+                initialVisualizer();
                 break;
             case VideoView.STATE_BUFFERED:
                 mPlayLoadNetSpeed.setVisibility(View.GONE);
@@ -1848,14 +1823,15 @@ public class VodController extends BaseController {
                 if(isBottomVisible() && mSeekBarhasFocus) { //xuameng假如焦点在SeekBar
                     mxuPlay.requestFocus(); //底部菜单默认焦点为播放
                 }
-                mLandscapePortraitBtn.setVisibility(View.GONE);
+                imageHide();
                 simSeekPosition = 0; //XUAMENG重要,换视频时重新记录进度
                 isVideoPlay = false;
+                isBufferIng = false; //xuameng 判断是否进在缓冲视频
             case VideoView.STATE_BUFFERING:
 			    if(mProgressRoot.getVisibility() == View.GONE) { //xuameng进程图标
                     mPlayLoadNetSpeed.setVisibility(View.VISIBLE);
                 }
-                if(iv_circle_bg.getVisibility() == View.VISIBLE && mLrcView.getVisibility() == View.GONE) { //xuameng音乐播放时图标
+                if(mLrcView.getVisibility() == View.GONE) { //xuameng音乐播放时图标
                     iv_circle_bg.setVisibility(GONE);
                 }
                 isVideoPlay = false;
@@ -1863,7 +1839,7 @@ public class VodController extends BaseController {
                 speedPlayEnd();  //xuameng 停止快进
                 break;
             case VideoView.STATE_PLAYBACK_COMPLETED:
-                mPlayLoadNetSpeed.setVisibility(View.GONE);
+                imageHide();  //xuameng 隐藏图片
                 clearSubtitleCache();
                 isVideoPlay = false;
                 isBufferIng = false; //xuameng 判断是否进在缓冲视频
@@ -1871,6 +1847,29 @@ public class VodController extends BaseController {
                 break;
         }
     }
+
+    private void initialVisualizer() {   //xuameng 初始化音柱
+        try {
+            musicAnimation = mPlayerConfig.getBoolean("music");  //xuameng音乐播放动画获取设置
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        if (musicAnimation){
+            int newSessionId = mControlWrapper.getAudioSessionId();   //xuameng音乐播放动画
+            if(newSessionId != audioSessionId) { // 避免重复初始化
+               initVisualizer();  //xuameng音乐播放动画
+            }
+        }
+    }
+
+    private void imageHide() {   //xuameng 隐藏图片
+        mLandscapePortraitBtn.setVisibility(View.GONE);  //xuameng 横屏竖屏
+        MxuamengMusic.setVisibility(GONE);  //xuameng播放音乐背景
+        iv_circle_bg.setVisibility(GONE); //xuameng音乐播放时图标
+        customVisualizer.setVisibility(GONE); //xuameng播放音乐柱状图
+        mPlayLoadNetSpeed.setVisibility(View.GONE); //xuameng 网速显示
+    }
+
     boolean isBottomVisible() { //xuameng底部菜单是否显示
         return mBottomRoot.getVisibility() == VISIBLE;
     }
