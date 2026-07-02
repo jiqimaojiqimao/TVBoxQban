@@ -2,9 +2,9 @@ package xyz.doikki.videoplayer.exo;
 
 import androidx.annotation.NonNull;
 
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy;
-import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy;
+import androidx.media3.common.C;
+import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy;
+import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy;
 
 import java.io.IOException;
 
