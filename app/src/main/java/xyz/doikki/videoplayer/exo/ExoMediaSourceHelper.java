@@ -102,8 +102,10 @@ public final class ExoMediaSourceHelper {
             setHeaders(headers);
         }
 
-        if (errorCode == 3003 || errorCode == 3001 || errorCode == 2000) {               // xuameng当错误码为3003时，强制使用 HLS 源进行播放
-            return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+        if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {      // xuameng当错误码为3003时，强制使用 HLS 源进行播放
+            return new HlsMediaSource.Factory(factory)
+                    .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
+                    .createMediaSource(MediaItem.fromUri(contentUri));
         }
 
         if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
@@ -115,7 +117,9 @@ public final class ExoMediaSourceHelper {
             case C.TYPE_DASH:
                 return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
             case C.TYPE_HLS:
-                return new HlsMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+                return new HlsMediaSource.Factory(factory)
+                        .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
+                        .createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
                 return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
@@ -136,7 +140,7 @@ public final class ExoMediaSourceHelper {
 
     private int inferContentType(String fileName) {
         fileName = fileName.toLowerCase();
-        if (fileName.contains(".mpd") || fileName.contains("type=mpd")) {  //xuameng   type=mpd有这样写的
+        if (fileName.contains(".mpd") || fileName.contains("type=mpd") || fileName.contains("type=dash") || fileName.contains("format=mpd") || fileName.contains("format=dash")) { //xuameng   type=mpd有这样写的
             return C.TYPE_DASH;
         } else if (fileName.contains("m3u8") || fileName.contains("type=hls") || fileName.contains("format=hls")) {
             return C.TYPE_HLS;
