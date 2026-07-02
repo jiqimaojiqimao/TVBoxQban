@@ -366,7 +366,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
         // ====== 新增结束 ======
 
-        if (errorCode == 3003 || errorCode == 3001 || errorCode == 2000) {   //出现错误直播用M3U8方式解码
+        if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {   //出现错误直播用M3U8方式解码
             if (mRetryCount < MAX_RETRY_COUNT) {                // xuameng检查是否超过最大重试次数
                 mRetryCount++;                                  // xuameng未超过，执行重试 增加重试计数
                 if (mMediaPlayer != null) {                        // xuameng重置播放器状态
