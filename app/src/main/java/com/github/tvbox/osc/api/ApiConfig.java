@@ -1558,14 +1558,17 @@ public class ApiConfig {
         }
     }
 
-    public void warmSearchSpiders() {
+    public void warmSearchSpiders() {  //xuameng搜索预热
         final ArrayList<SourceBean> sources = new ArrayList<>(sourceBeanList.values());
         configLoadExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 LOG.i("echo-warm-spider start");
+                int eligibleCount = 0;
                 for (SourceBean source : sources) {
                     if (source == null || source.getType() != 3 || !source.isSearchable()) continue;
+                    if (eligibleCount >= 20) break;
+                    eligibleCount++;
                     String warmKey = source.getKey() + "|" + source.getApi() + "|" + source.getJar() + "|" + source.getExt();
                     synchronized (warmedSearchSpiderKeys) {
                         if (warmedSearchSpiderKeys.contains(warmKey)) continue;
