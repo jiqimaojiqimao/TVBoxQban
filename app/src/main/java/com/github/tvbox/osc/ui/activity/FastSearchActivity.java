@@ -87,21 +87,23 @@ public class FastSearchActivity extends BaseActivity {
     private HashMap<String, ArrayList<Movie.Video>> resultVods; // 搜索结果
     private List<String> quickSearchWord = new ArrayList<>();
     private HashMap<String, String> mCheckSources = null;
+    private final HashMap<String, List<Movie.Video>> folderCache = new HashMap<>();  //xuameng 搜索中间层缓存
 
     // xuameng新增：返回栈（核心）
     private int page = 1;
     private MovieSort.SortData currentSortData = new MovieSort.SortData("", "搜索结果");
     static class BackNode {
         String sourceKey;    // 记录来源站点
-        String sortId;        // 记录分类ID
+        String sortId;        // 当前节点（下一级）的 ID
+        String parentSortId; // 父节点（上一层）的 ID
         int lastSelectedPosition;  //  选中项
         boolean isFilterMode;     // 是否来自筛选列表
         String filterKey;         // 当前筛选 key
 
-        private BackNode(String sourceKey, String sortId, int lastSelectedPosition,
-                        boolean isFilterMode, String filterKey) {
+        private BackNode(String sourceKey, String sortId, String parentSortId, int lastSelectedPosition, boolean isFilterMode, String filterKey) {
             this.sourceKey = sourceKey;
             this.sortId = sortId;
+            this.parentSortId = parentSortId;
             this.lastSelectedPosition = lastSelectedPosition;
             this.isFilterMode = isFilterMode;
             this.filterKey = filterKey;
@@ -120,8 +122,8 @@ public class FastSearchActivity extends BaseActivity {
     private boolean isNextLevel = false;
     // 是否进入过下一级分类
     private boolean isNextLevelFilter = false;
-    // 当前选中项全部
-    private int selectedPos = 0;
+    // 首页选中项全部
+    private int firstSelectedPos = 0;
     // xuameng新增：返回栈（核心完成）
 
     private View.OnFocusChangeListener focusChangeListener = new View.OnFocusChangeListener() {  //xuameng 左侧菜单焦点监听
@@ -250,18 +252,24 @@ public class FastSearchActivity extends BaseActivity {
                     if (video.tag != null && (video.tag.equals("folder") || video.tag.equals("cover"))) {  
                         isTopSearchStage = false;   // 关闭全局搜索结果写入
                         isNextLevel = true;  //进入过下一级
+                        // 【关键】在修改 currentSortData.id 之前，先把当前的 ID 保存下来，它就是父级 ID
+                        String currentParentId = currentSortData.id; 
                         currentSortData.id = video.id;
-                        selectedPos = searchAdapter.getData().isEmpty() ? 0 : mGridView.getChildAdapterPosition(mGridView.getFocusedChild());
+                        int selectedPos = position;
+                        if (selectedPos > 0 && firstSelectedPos == 0){  //首页选中项全部只赋值一次
+	                        firstSelectedPos = selectedPos;
+                        }
+                        // 【关键】把父级 ID 传入 BackNode
                         BackNode node = new BackNode(
                             video.sourceKey,
-                            currentSortData.id,
-                            selectedPos,
-                            false,          // 不是筛选
-                            ""             // 无筛选 key
+                            currentSortData.id, // 当前层级（下一级）的 ID
+                            currentParentId,    // 【传入】上一层的 ID
+                            selectedPos, 
+                            false,  // 不是筛选
+                            ""     // 无筛选 key
                         );
 		                isFilterMode = false; //来自筛选列表
                         backStack.push(node); //xuameng保存堆栈
-                        page = 1;
                         searchAdapter.setNewData(new ArrayList<>());
                         showLoading();
                         mGridView.setVisibility(View.VISIBLE);
@@ -276,7 +284,7 @@ public class FastSearchActivity extends BaseActivity {
                     bundle.putString("id", video.id);
                     bundle.putString("sourceKey", video.sourceKey);
                     bundle.putString("title", video.name);
-					bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
+                    bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
                     jumpActivity(DetailActivity.class, bundle);
                 }
             }
@@ -309,19 +317,22 @@ public class FastSearchActivity extends BaseActivity {
                     if (video.tag != null && (video.tag.equals("folder") || video.tag.equals("cover"))) {  
                         isTopSearchStage = false;   // 关闭全局搜索结果写入
                         isNextLevelFilter = true;  //进入过下一级分类
+                        // 【关键】在修改 currentSortData.id 之前，先把当前的 ID 保存下来，它就是父级 ID
+                        String currentParentId = currentSortData.id; 
                         currentSortData.id = video.id;
-                        int selectedPosFilter = searchAdapterFilter.getData().isEmpty() ? 0 : mGridViewFilter.getChildAdapterPosition(mGridViewFilter.getFocusedChild());
+                        int selectedPosFilter = position;
 
+                        // 【关键】把父级 ID 传入 BackNode
                         BackNode node = new BackNode(
                             video.sourceKey,
-                            currentSortData.id,
-                            selectedPosFilter,
+                            currentSortData.id, // 当前层级（下一级）的 ID
+                            currentParentId,    // 【传入】上一层的 ID
+                            selectedPosFilter, 
                             true,           // 来自筛选
                             searchFilterKey// 当前筛选 key
                         );
 		                isFilterMode = true; //来自筛选列表
                         backStack.push(node); //xuameng保存堆栈
-                        page = 1;
                         searchAdapterFilter.setNewData(new ArrayList<>());
                         showLoading();
                         mGridView.setVisibility(View.GONE);
@@ -335,7 +346,7 @@ public class FastSearchActivity extends BaseActivity {
                     bundle.putString("id", video.id);
                     bundle.putString("sourceKey", video.sourceKey);
                     bundle.putString("title", video.name);
-					bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
+                    bundle.putString("picture", video.pic);   //xuameng某些网站图片部显示
                     jumpActivity(DetailActivity.class, bundle);
                 }
             }
@@ -367,45 +378,22 @@ public class FastSearchActivity extends BaseActivity {
                 return;
             }
             if (absXml != null && absXml.movie != null && absXml.movie.videoList != null && absXml.movie.videoList.size() > 0) {
+                // ✅ 写缓存（核心）
+                // ✅ 从返回栈中取当前 node
+                 if (!backStack.isEmpty()) {
+                    BackNode node = backStack.peek();
+                    // ✅ 正确 cacheKey
+                    String cacheKey = node.sourceKey + "_" + currentSortData.id;
+                    folderCache.put(cacheKey, absXml.movie.videoList);
+                }
                 showSuccess();
                 if (isFilterMode) {
                     searchAdapterFilter.setNewData(absXml.movie.videoList);
-                    mGridViewFilter.getViewTreeObserver().addOnGlobalLayoutListener(
-                        new ViewTreeObserver.OnGlobalLayoutListener() {
-                            @Override
-                            public void onGlobalLayout() {
-                                mGridViewFilter.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                                TvRecyclerView.LayoutManager lm = mGridViewFilter.getLayoutManager();
-                                if (lm == null) return;
-                                // xuameng在这里滚
-                                lm.scrollToPosition(0);
-                                // xuameng在这里选中
-                                mGridViewFilter.post(() -> {
-                                    mGridViewFilter.setSelection(0);
-                                });
-                            }
-                        }
-                    );
+                    scrollAndSelectAfterLayout(mGridViewFilter, 0);
                 } else {
                     searchAdapter.setNewData(absXml.movie.videoList);
-                    mGridView.getViewTreeObserver().addOnGlobalLayoutListener(
-                        new ViewTreeObserver.OnGlobalLayoutListener() {
-                            @Override
-                            public void onGlobalLayout() {
-                                mGridView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                                TvRecyclerView.LayoutManager lm = mGridView.getLayoutManager();
-                                if (lm == null) return;
-                                // xuameng在这里滚
-                                lm.scrollToPosition(0);
-                                // xuameng在这里选中
-                                mGridView.post(() -> {
-                                    mGridView.setSelection(0);
-                                });
-                            }
-                        }
-                    );
+                    scrollAndSelectAfterLayout(mGridView, 0);
                 }
-                page++;
             } else {
                 showEmpty();
             }
@@ -422,39 +410,40 @@ public class FastSearchActivity extends BaseActivity {
             searchFilterKey = "";
             if (isNextLevelFilter){
                 backStack.clear();
+                folderCache.clear(); // xuameng 清空中间层缓存数据
                 showSuccess();
                 isNextLevelFilter = false;
             }
-            // 如果搜索还没结束，继续展示
-            if (!topSearchCompleted) {
-                isTopSearchStage = true;   // 打开全局搜索结果写入
-                ContinueSearchExecutor();
-            } 
             if (isNextLevel){  //xuameng 进入过下一级
                 backStack.clear();
+                folderCache.clear(); // xuameng 清空中间层缓存数据
                 showSuccess();
                 isNextLevel = false;  //进入过下一级重置
                 if (!topSearchCache.isEmpty()) {
                     searchAdapter.setNewData(topSearchCache);
                 }
-                if (selectedPos >= 0 && selectedPos < topSearchCache.size()) {
-                    mGridView.getViewTreeObserver().addOnGlobalLayoutListener(
-                        new ViewTreeObserver.OnGlobalLayoutListener() {
-                            @Override
-                            public void onGlobalLayout() {
-                                mGridView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                                TvRecyclerView.LayoutManager lm = mGridView.getLayoutManager();
-                                if (lm == null) return;
-                                // xuameng在这里滚
-                                lm.scrollToPosition(selectedPos);
-                                // xuameng在这里只滚动不选中焦点
-                                mGridView.post(() -> {
-                                    mGridView.setSelectedPosition(selectedPos);
-                                });
-                            }
+                mGridViewWordFenci.requestFocus();    //xuameng 指定分词为焦点 防止系统乱分配焦点 防止下面滚动位置不对的BUG
+                mGridView.getViewTreeObserver().addOnGlobalLayoutListener(
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            mGridView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                            TvRecyclerView.LayoutManager lm = mGridView.getLayoutManager();
+                            if (lm == null) return;
+                            // xuameng在这里滚
+                            lm.scrollToPosition(firstSelectedPos);
+                            // xuameng在这里只滚动不选中焦点
+                            mGridView.post(() -> {
+                                mGridView.setSelectedPosition(firstSelectedPos);
+                            });
                         }
-                    );
-                }
+                    }
+                );				
+                // 如果搜索还没结束，继续展示
+                if (!topSearchCompleted) {
+                    isTopSearchStage = true;   // 打开全局搜索结果写入
+                    ContinueSearchExecutor();
+                } 
             }
             return;
         }
@@ -462,18 +451,19 @@ public class FastSearchActivity extends BaseActivity {
         mGridViewFilter.setVisibility(View.VISIBLE);
         String key = spNames.get(spName);
         if (key.isEmpty()) return;
+        if (searchFilterKey == key) return;
+        showSuccess();
+        searchFilterKey = key;
+        getListIng = false;
+        folderCache.clear(); // xuameng 清空中间层缓存数据
+        backStack.clear();
+        List<Movie.Video> list = resultVods.get(key);
+        searchAdapterFilter.setNewData(list); 
         // 搜索还没结束，继续展示
         if (!topSearchCompleted) {
             isTopSearchStage = true;   // 打开全局搜索结果写入
             ContinueSearchExecutor();
         }
-        if (searchFilterKey == key) return;
-        showSuccess();
-        searchFilterKey = key;
-        getListIng = false;
-        backStack.clear();
-        List<Movie.Video> list = resultVods.get(key);
-        searchAdapterFilter.setNewData(list); 
     }
 
     private void fenci() {
@@ -563,6 +553,7 @@ public class FastSearchActivity extends BaseActivity {
             App.showToastShort(FastSearchActivity.this, "输入内容不能为空！");
 			return;
 		}
+        folderCache.clear(); // xuameng 清空中间层缓存数据
         isTopSearchStage = true;   // 开启全局搜索阶段
         backStack.clear();  //xuameng清空节点数据确保数据初始化状态
         topSearchCompleted = false;  // xuameng搜索完成重置
@@ -791,12 +782,10 @@ public class FastSearchActivity extends BaseActivity {
             getListIng = false;
             App.HideToast();
             BackNode node = backStack.pop();
-            int remainLevel = backStack.size();
-            page = 1;
             showLoading();
 
             // 情况 1：从「筛选列表的下一级」返回到筛选页
-            if (node.isFilterMode  && remainLevel == 0) {
+            if (node.isFilterMode  && backStack.isEmpty()) {
                 mGridView.setVisibility(View.GONE);
                 mGridViewFilter.setVisibility(View.VISIBLE);
                 isNextLevelFilter = false;
@@ -805,22 +794,7 @@ public class FastSearchActivity extends BaseActivity {
                 if (list != null && !list.isEmpty()) {
                     searchAdapterFilter.setNewData(list);
                     showSuccess();
-                    mGridViewFilter.getViewTreeObserver().addOnGlobalLayoutListener(
-                       new ViewTreeObserver.OnGlobalLayoutListener() {
-                            @Override
-                            public void onGlobalLayout() {
-                                mGridViewFilter.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                                TvRecyclerView.LayoutManager lm = mGridViewFilter.getLayoutManager();
-                                if (lm == null) return;
-                                // xuameng在这里滚
-                                lm.scrollToPosition(node.lastSelectedPosition);
-                                // xuameng在这里选中
-                                mGridViewFilter.post(() -> {
-                                    mGridViewFilter.setSelection(node.lastSelectedPosition);
-                               });
-                            }
-                        }
-                    );
+                    scrollAndSelectAfterLayout(mGridViewFilter, node.lastSelectedPosition);
                 }
 
                 if (!topSearchCompleted) {
@@ -839,22 +813,7 @@ public class FastSearchActivity extends BaseActivity {
                     searchAdapter.setNewData(topSearchCache);
                     showSuccess();
                     if (node.lastSelectedPosition >= 0 && node.lastSelectedPosition < topSearchCache.size()) {
-                        mGridView.getViewTreeObserver().addOnGlobalLayoutListener(
-                            new ViewTreeObserver.OnGlobalLayoutListener() {
-                                @Override
-                                public void onGlobalLayout() {
-                                    mGridView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                                    TvRecyclerView.LayoutManager lm = mGridView.getLayoutManager();
-                                    if (lm == null) return;
-                                    // xuameng在这里滚
-                                    lm.scrollToPosition(node.lastSelectedPosition);
-                                    // xuameng在这里选中
-                                    mGridView.post(() -> {
-                                        mGridView.setSelection(node.lastSelectedPosition);
-                                    });
-                                }
-                            }
-                        );
+                        scrollAndSelectAfterLayout(mGridView, node.lastSelectedPosition);
                     }
                 }
 
@@ -866,8 +825,10 @@ public class FastSearchActivity extends BaseActivity {
             }
 
             //  情况 3：中间层级（folder 嵌套）
-            getListIng = true;
-            currentSortData.id = node.sortId;
+            currentSortData.id = node.parentSortId;   //xuameng 变成上级ID
+
+			// 缓存 key
+            String cacheKey = node.sourceKey + "_" + node.parentSortId;
 
             // 关键：恢复 UI 状态
             if (node.isFilterMode) {
@@ -883,8 +844,28 @@ public class FastSearchActivity extends BaseActivity {
                 mGridView.setVisibility(View.VISIBLE);
             }
 
-            sourceViewModel.getListFromSearch(currentSortData, page, node.sourceKey);
-            return;
+            // ✅ 优先读缓存
+            List<Movie.Video> cachedList = folderCache.get(cacheKey);
+            if (cachedList != null && !cachedList.isEmpty()) {
+                // ✅ 有缓存：直接用，不请求网络
+                getListIng = false;
+                showSuccess();
+
+               if (node.isFilterMode) {
+                   searchAdapterFilter.setNewData(cachedList);
+                   scrollAndSelectAfterLayout(mGridViewFilter, node.lastSelectedPosition);
+               } else {
+                   searchAdapter.setNewData(cachedList);
+                   scrollAndSelectAfterLayout(mGridView, node.lastSelectedPosition);
+               }
+               return;
+           }
+
+           // ❌ 无缓存：再走网络
+           getListIng = true;
+           showLoading();
+           sourceViewModel.getListFromSearch(currentSortData, page, node.sourceKey);
+           return;
         }
 
         //  真正退出 Activity
@@ -893,6 +874,37 @@ public class FastSearchActivity extends BaseActivity {
         cancel();
         App.HideToast();
         super.onBackPressed();
+    }
+
+    /**
+     * xuameng等待布局完成，然后滚动并选中指定位置
+     *
+     * @param recyclerView 目标 TvRecyclerView
+     * @param position     要选中的位置
+     */
+    private void scrollAndSelectAfterLayout(TvRecyclerView recyclerView, int position) {
+        if (recyclerView == null) return;
+
+        recyclerView.getViewTreeObserver().addOnGlobalLayoutListener(
+            new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    // 防止重复回调
+                    recyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                    TvRecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
+                    if (lm == null) return;
+
+                    // 滚动
+                    lm.scrollToPosition(position);
+
+                    // 选中焦点
+                    recyclerView.post(() ->
+                        recyclerView.setSelection(position)
+                    );
+                }
+            }
+        );
     }
 
     public void stopSearchExecutor() {  //停止搜索
