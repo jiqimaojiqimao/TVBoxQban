@@ -1868,7 +1868,6 @@ public class VodController extends BaseController {
         iv_circle_bg.setVisibility(GONE); //xuameng音乐播放时图标
         customVisualizer.setVisibility(GONE); //xuameng播放音乐柱状图
         mPlayLoadNetSpeed.setVisibility(View.GONE); //xuameng 网速显示
-        XuLoading.setVisibility(GONE);   //xuameng 缓存图片
     }
 
     boolean isBottomVisible() { //xuameng底部菜单是否显示
