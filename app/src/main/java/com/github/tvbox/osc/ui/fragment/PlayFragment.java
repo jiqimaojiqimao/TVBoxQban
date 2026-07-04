@@ -80,8 +80,8 @@ import com.lzy.okgo.model.Response;
 import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.orhanobut.hawk.Hawk;
 
-import androidx.media3.common.Player;
-import androidx.media3.common.text.Cue;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.text.Cue;
 import com.github.tvbox.osc.bean.IJKCode;  //xuamengIJK切换用
 
 import org.greenrobot.eventbus.EventBus;
@@ -717,6 +717,12 @@ public class PlayFragment extends BaseLazyFragment {
         LOG.i("echo-goPlayUrl:" + url);
         if (mActivity == null) return;
         if (!isAdded()) return;
+        if (TextUtils.isEmpty(url)) {   //xuameng 地址为空
+	        pauseForHidden();
+            mController.imageHide();  //xuameng隐藏图片
+            errorWithRetry("播放地址为空", false);
+            return;
+        }
         LOG.i("playUrl:" + url);
         final String finalUrl = url;
         requireActivity().runOnUiThread(new Runnable() {
