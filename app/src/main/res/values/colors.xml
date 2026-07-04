@@ -59,6 +59,7 @@
     <color name="color_FFB800">#ffff6600</color>
     <color name="color_FFFFFF">#ffffffff</color>
     <color name="color_FFFFFF_50">#80ffffff</color>
+    <color name="color_000000_d9">#d9000000</color>
     <color name="color_picker_background_color">#ffffffff</color>
     <color name="color_picker_border_color">#ffb0b0b0</color>
     <color name="dim_foreground_disabled_material_dark">#80bebebe</color>
