@@ -479,6 +479,19 @@
                     android:textSize="@dimen/ts_20"
                     android:visibility="gone" />
                 <TextView
+                    android:id="@+id/danmu_search_ui"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/vs_5"
+                    android:layout_marginRight="@dimen/vs_5"
+                    android:background="@@drawable/button_dialog_main_1"
+                    android:focusable="true"
+                    android:padding="@dimen/vs_10"
+                    android:text="弹幕搜索"
+                    android:textColor="@android:color/white"
+                    android:textSize="@dimen/ts_20"
+                    android:visibility="gone" />
+                <TextView
                     android:textSize="@dimen/ts_20"
                     android:textColor="@android:color/white"
                     android:id="@+id/zimu_select"
