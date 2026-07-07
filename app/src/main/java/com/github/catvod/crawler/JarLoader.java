@@ -260,6 +260,7 @@ public class JarLoader {
             ConcurrentHashMap<String, Method> methods =
                     longClick ? danmuLongClickMethods : danmuClickMethods;
             Method method = methods.get(recent);
+            if (method == null) method = methods.get("main");
             if (method == null) return;
             method.invoke(null, name, episode);
         } catch (Throwable e) {
