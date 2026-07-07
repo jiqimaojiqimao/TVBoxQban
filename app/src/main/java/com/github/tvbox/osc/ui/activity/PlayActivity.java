@@ -290,6 +290,13 @@ public class PlayActivity extends BaseActivity {
                 DanmuSettingDialog dialog = new DanmuSettingDialog(PlayActivity.this, mDanmuView);
                 dialog.show();
             }
+
+            @Override
+            public void searchDanmuUi(boolean longClick) {  //xuameng 弹幕搜索
+                VodInfo.VodSeries series = mVodInfo == null ? null : getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
+                ApiConfig.get().searchDanmuUi(mVodInfo == null ? "" : mVodInfo.name, series == null ? "" : series.name, longClick);
+            }
+
             @Override
             public void playNext(boolean rmProgress) {
                 String preProgressKey = progressKey;
