@@ -290,6 +290,7 @@ public class CrashActivity extends BaseActivity {
                 return;
             }
         }
+        CrashLogUtil.deleteCrashLog(this);  //删除日志
         android.os.Process.killProcess(android.os.Process.myPid());
         System.exit(0);
     }
