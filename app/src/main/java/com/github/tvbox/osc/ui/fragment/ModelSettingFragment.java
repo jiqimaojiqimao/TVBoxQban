@@ -927,22 +927,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
 
     private void onClickClearCache(View v) {
         FastClickCheckUtil.check(v);
-        String cachePath = FileUtils.getCachePath();          //xuameng点击清空缓存
-        String cspCachePath = FileUtils.getFilePath()+"/csp/";
-        String jarCachePath = FileUtils.getFilePath()+"/jar/";
-        File cspCacheDir = new File(cspCachePath);
-        File jarCacheDir = new File(jarCachePath);
-        File cacheDir = new File(cachePath);
-        new Thread(() -> {
-            try {
-                if(cacheDir.exists()) FileUtils.cleanDirectory(cacheDir);
-                if(cspCacheDir.exists()) FileUtils.cleanDirectory(cspCacheDir);
-                if(jarCacheDir.exists()) FileUtils.cleanDirectory(jarCacheDir);
-                    // ApiConfig.get().clearJarLoader();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-        }).start();
+        FileUtils.clearSpiderCacheFiles();
         App.showToastShort(getContext(), "缓存已清空！");
         return;
     }
