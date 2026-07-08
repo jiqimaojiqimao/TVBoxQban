@@ -253,22 +253,7 @@ public class HomeActivity extends BaseActivity {
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
                 if(dataInitOk && jarInitOk){
-                    String cachePath = FileUtils.getCachePath();          //xuameng点击清空缓存
-                    String cspCachePath = FileUtils.getFilePath()+"/csp/";
-                    String jarCachePath = FileUtils.getFilePath()+"/jar/";
-                    File cspCacheDir = new File(cspCachePath);
-                    File jarCacheDir = new File(jarCachePath);
-                    File cacheDir = new File(cachePath);
-                    new Thread(() -> {
-                        try {
-                            if(cacheDir.exists()) FileUtils.cleanDirectory(cacheDir);
-                            if(cspCacheDir.exists()) FileUtils.cleanDirectory(cspCacheDir);
-                            if(jarCacheDir.exists()) FileUtils.cleanDirectory(jarCacheDir);
-                                // ApiConfig.get().clearJarLoader();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                    }).start();
+                    FileUtils.clearSpiderCacheFiles();
                     App.showToastShort(HomeActivity.this, "缓存已清空！");
                 }else {
                     jumpActivity(SettingActivity.class);		//xuameng加载慢跳转设置
@@ -279,6 +264,7 @@ public class HomeActivity extends BaseActivity {
         tvName.setOnLongClickListener(new View.OnLongClickListener() {      //xuameng长按重新加载
             @Override
             public boolean onLongClick(View v) {
+                FastClickCheckUtil.check(v);
                 if(dataInitOk && jarInitOk){
                     Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -297,6 +283,7 @@ public class HomeActivity extends BaseActivity {
         tvDate.setOnClickListener(new View.OnClickListener() {    //xuameng点击系统时间跳转设置
             @Override
             public void onClick(View v) {
+                FastClickCheckUtil.check(v);
                 if(dataInitOk && jarInitOk){           //xuameng MENU键显示主页源
                     showSiteSwitch(); 
                 }else{
@@ -308,6 +295,7 @@ public class HomeActivity extends BaseActivity {
         tvDate.setOnLongClickListener(new View.OnLongClickListener() {      //xuameng长按重新加载
             @Override
             public boolean onLongClick(View v) {
+                FastClickCheckUtil.check(v);
                 jumpActivity(SettingActivity.class);		//xuameng加载慢跳转设置   
                 return true;
             }
@@ -373,11 +361,12 @@ public class HomeActivity extends BaseActivity {
                                     if (Hawk.get(HawkConfig.HOME_DEFAULT_SHOW, false)) {         //xuameng直接进入直播
                                         jumpActivity(LivePlayActivity.class);
                                     }
-                                if (!ApiConfig.get().JvhuiWarning.isEmpty()){
-                                    String JvhuiWarning = ApiConfig.get().JvhuiWarning;
-                                    App.showToastShort(HomeActivity.this, (JvhuiWarning));
-                                }else{
-                                    App.showToastShort(HomeActivity.this, "聚汇影视提示：jar加载成功！");									}
+                                    if (!ApiConfig.get().JvhuiWarning.isEmpty()){
+                                        String JvhuiWarning = ApiConfig.get().JvhuiWarning;
+                                        App.showToastShort(HomeActivity.this, (JvhuiWarning));
+                                    }else{
+                                        App.showToastShort(HomeActivity.this, "聚汇影视提示：jar加载成功！");									
+                                    }
                                 }
                                 initData();
                                 checkMicrophonePermission();  //xuameng音频权限
