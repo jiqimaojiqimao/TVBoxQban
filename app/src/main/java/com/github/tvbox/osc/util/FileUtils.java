@@ -240,6 +240,40 @@ public class FileUtils {
         }
     }
 
+    public static void clearSpiderCacheFiles() {  //xuameng点击清空缓存
+        String cachePath = FileUtils.getCachePath();          
+        String cspCachePath = FileUtils.getFilePath()+"/csp/";
+        File cspCacheDir = new File(cspCachePath);
+        File cacheDir = new File(cachePath);
+        new Thread(() -> {
+            try {
+                if(cacheDir.exists()) FileUtils.cleanDirectory(cacheDir);
+                if(cspCacheDir.exists()) FileUtils.cleanDirectory(cspCacheDir);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                clearJsModuleCache();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private static void clearJsModuleCache() {   //xuameng JS CACHE
+        File externalCacheDir = new File(getExternalCachePath());
+        if (!externalCacheDir.exists() && !externalCacheDir.mkdirs()) {
+            return;
+        }
+        File[] files = externalCacheDir.listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (file != null && file.getName().startsWith("qjscache_")) {
+                deleteFile(file);
+            }
+        }
+    }
+
     public static String read(String path) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(getLocal(path))));
