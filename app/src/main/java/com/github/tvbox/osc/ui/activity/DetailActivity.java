@@ -431,10 +431,6 @@ public class DetailActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
-                if (isPushUrl) {
-                    App.showToastShort(DetailActivity.this, "正在解析推送地址，请稍后再试！");
-                    return;
-                }
                 String text = tvCollect.getText().toString();
                 if ("☆收藏".equals(text)) {
                     RoomDataManger.insertVodCollect(sourceKey, vodInfo);
