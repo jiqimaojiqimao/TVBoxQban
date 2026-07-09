@@ -166,7 +166,11 @@ public class PlayFragment extends BaseLazyFragment {
             setDanmuViewSettings(event.obj instanceof Boolean && (Boolean) event.obj);
         } else if (event.type == RefreshEvent.TYPE_DANMU_REFRESH) { //xuameng 弹幕
             checkDanmu(event.obj instanceof String ? (String) event.obj : "");
-        }
+        }else if (event.type == RefreshEvent.TYPE_PLAY_PUSH_ERROR) {  //xuameng远程推送解析数据为空判断
+	        pauseForHidden();
+            mController.imageHide();  //xuameng隐藏图片
+            errorWithRetry("接收到推送数据为空", false);
+        } 
     }
 
     @Override
@@ -523,10 +527,6 @@ public class PlayFragment extends BaseLazyFragment {
         dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<TrackInfoBean>() {
             @Override
             public void click(TrackInfoBean value, int pos) {
-                if (selectedId == 99999) { // xuameng99999表示未选中
-                    App.showToastShort(mContext, "切换音轨失败！请切换解码方式或刷新重试！");
-                    return;
-                }
                 try {
                     for (TrackInfoBean audio : bean) {
                         audio.selected = audio.trackId == value.trackId;
