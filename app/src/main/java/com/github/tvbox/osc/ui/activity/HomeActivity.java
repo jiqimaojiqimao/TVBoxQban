@@ -134,6 +134,13 @@ public class HomeActivity extends BaseActivity {
         }
     };
 
+    private final Runnable refreshTopInfoTextSizeRunnable = new Runnable() {
+        @Override
+        public void run() {
+            refreshTopInfoTextSize();
+        }
+    };
+
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_home;
@@ -266,12 +273,7 @@ public class HomeActivity extends BaseActivity {
             public boolean onLongClick(View v) {
                 FastClickCheckUtil.check(v);
                 if(dataInitOk && jarInitOk){
-                    Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    Bundle bundle = new Bundle();
-                    bundle.putBoolean("useCache", true);
-                    intent.putExtras(bundle);
-                    HomeActivity.this.startActivity(intent);
+                    restartHomeWithCache();
                     App.showToastShort(HomeActivity.this, "重新加载主页数据！");
                 }else {
                     jumpActivity(SettingActivity.class);   //xuameng加载慢跳转设置
@@ -620,6 +622,9 @@ public class HomeActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        refreshTopInfoTextSize();
+        mHandler.removeCallbacks(refreshTopInfoTextSizeRunnable);
+        mHandler.postDelayed(refreshTopInfoTextSizeRunnable, 350);
         mHandler.post(mRunnable);
     }
 
@@ -627,7 +632,16 @@ public class HomeActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mHandler.removeCallbacksAndMessages(null);
+        mHandler.removeCallbacks(refreshTopInfoTextSizeRunnable);
+        mHandler.removeCallbacks(mRunnable);
+    }
+
+    private void refreshTopInfoTextSize() {
+        if (tvName == null || tvDate == null) {
+            return;
+        }
+        tvName.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.ts_30));
+        tvDate.setTextSize(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.ts_28));
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -792,12 +806,7 @@ public class HomeActivity extends BaseActivity {
                         }
                     }
                     ApiConfig.get().setSourceBean(value);
-                    Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    Bundle bundle = new Bundle();
-                    bundle.putBoolean("useCache", true);
-                    intent.putExtras(bundle);
-                    HomeActivity.this.startActivity(intent);
+                    restartHomeWithCache();
                 }
                 @Override
                 public String getDisplay(SourceBean val) {
@@ -817,6 +826,15 @@ public class HomeActivity extends BaseActivity {
         }else {
             App.showToastLong(HomeActivity.this, "主页暂无数据！联系许大师吧！");
         }
+    }
+
+    private void restartHomeWithCache() {  //xuameng 重启主页
+        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        Bundle bundle = new Bundle();
+        intent.putExtra("useCache", true);
+        intent.putExtras(bundle);
+        HomeActivity.this.startActivity(intent);
     }
 
     private void refreshEmpty(){   //xuameng打断加载优化
