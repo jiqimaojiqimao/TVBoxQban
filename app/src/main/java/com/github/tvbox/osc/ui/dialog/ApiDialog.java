@@ -18,9 +18,6 @@ import com.github.tvbox.osc.server.ControlManager;
 import com.github.tvbox.osc.ui.adapter.ApiHistoryDialogAdapter;
 import com.github.tvbox.osc.ui.tv.QRCodeGen;
 import com.github.tvbox.osc.util.HawkConfig;
-import com.hjq.permissions.OnPermissionCallback;
-import com.hjq.permissions.Permission;
-import com.hjq.permissions.XXPermissions;
 import com.orhanobut.hawk.Hawk;
 
 import org.greenrobot.eventbus.Subscribe;
@@ -33,10 +30,10 @@ import java.util.List;
 import me.jessyan.autosize.utils.AutoSizeUtils;
 
 /**
- * 描述
+ * 描述增加多仓等
  *
- * @author pj567
- * @since 2020/12/27
+ * @author xuameng
+ * @since 2026/07/09
  */
 public class ApiDialog extends BaseDialog {
     private ImageView ivQRCode;
