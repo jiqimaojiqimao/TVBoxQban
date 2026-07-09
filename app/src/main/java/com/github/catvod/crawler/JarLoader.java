@@ -6,7 +6,6 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.github.catvod.net.OkHttp;
-import com.github.catvod.Proxy;
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.server.ControlManager;
 import com.github.tvbox.osc.server.RemoteServer;
@@ -16,19 +15,14 @@ import com.lzy.okgo.OkGo;
 
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import dalvik.system.DexClassLoader;
 import okhttp3.Response;
@@ -46,11 +40,7 @@ public class JarLoader {
     private final ConcurrentHashMap<String, Object> locks = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> siteJarKeys = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> aliases = new ConcurrentHashMap<>();
-
-    // ===== PROTECTED JAR SUPPORT xuameng加固 jar 会自动识别不用注销掉=====
-    private final ConcurrentHashMap<String, Boolean> protectedInitJars = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, String> jarPaths = new ConcurrentHashMap<>();
-
+    private final ProtectedInitJar protectedInitJar = new ProtectedInitJar();
     private volatile String recent = MAIN_KEY;
 
     public boolean load(String cache) {
@@ -86,8 +76,6 @@ public class JarLoader {
         locks.clear();
         siteJarKeys.clear();
         aliases.clear();
-        jarPaths.clear();
-        protectedInitJars.clear();
         recent = MAIN_KEY;
     }
 
@@ -95,25 +83,14 @@ public class JarLoader {
         if (Thread.interrupted()) return false;
         if (!exists(file)) return false;
         if (loaders.containsKey(key)) return true;
-
         try {
             file.setReadOnly();
             String cachePath = jarDir().getAbsolutePath();
-            DexClassLoader loader = new DexClassLoader(
-                    file.getAbsolutePath(),
-                    cachePath,
-                    cachePath,
-                    App.getInstance().getClassLoader()
-            );
-
-            jarPaths.put(key, file.getAbsolutePath());
-
-            invokeInit(loader);
+            DexClassLoader loader = new DexClassLoader(file.getAbsolutePath(), cachePath, cachePath, App.getInstance().getClassLoader());
+            invokeInit(loader, file.getAbsolutePath());
             invokeProxy(key, loader);
             invokeDanmaku(key, loader);
             injectProxyPort(loader);
-            injectProtectedClassLoader(loader); // ===== PROTECTED JAR SUPPORT xuameng加固 jar 会自动识别不用注销掉=====
-
             loaders.put(key, loader);
             Log.i(TAG, "load success key=" + key + ", file=" + file.getAbsolutePath());
             return true;
@@ -124,14 +101,14 @@ public class JarLoader {
         }
     }
 
-    private void invokeInit(DexClassLoader loader) {
+    private void invokeInit(DexClassLoader loader, String jar) {
         try {
             Class<?> clz = loader.loadClass("com.github.catvod.spider.Init");
-            String jarPath = getJarPathByKey(recent);
-            if (isProtectedInitJar(jarPath)) {
-                initProtectedJar(clz);
+            Method method = clz.getMethod("init", Context.class);
+            if (protectedInitJar.check(jar)) {
+                Log.i(TAG, "echo-load initProtectedJar file=" + jar);
+                protectedInitJar.init(clz);
             } else {
-                Method method = clz.getMethod("init", Context.class);
                 method.invoke(null, App.getInstance());
             }
         } catch (Throwable e) {
@@ -167,11 +144,9 @@ public class JarLoader {
     public void parseJar(String key, String jar) {
         if (TextUtils.isEmpty(key) || TextUtils.isEmpty(jar)) return;
         if (loaders.containsKey(key)) return;
-
         Object lock = lock(key);
         synchronized (lock) {
             if (loaders.containsKey(key)) return;
-
             String source = jar;
             String md5 = "";
             String[] texts = jar.split(";md5;");
@@ -179,13 +154,11 @@ public class JarLoader {
                 source = texts[0];
                 md5 = texts[1].trim();
             }
-
             aliases.put(jarKey(source), key);
             if (md5.startsWith("http")) {
                 String value = OkHttp.string(md5, null);
                 md5 = value == null ? "" : value.trim();
             }
-
             File file = fileForJar(source);
             if (!TextUtils.isEmpty(md5) && exists(file) && MD5.getFileMd5(file).equalsIgnoreCase(md5)) {
                 load(key, file);
@@ -237,11 +210,7 @@ public class JarLoader {
             if (!MAIN_KEY.equals(jaKey)) parseJar(jaKey, jar);
             DexClassLoader loader = loaders.get(jaKey);
             if (loader == null) return new SpiderNull();
-
-            Spider spider = (Spider) loader
-                    .loadClass("com.github.catvod.spider." + className(api))
-                    .newInstance();
-
+            Spider spider = (Spider) loader.loadClass("com.github.catvod.spider." + className(api)).newInstance();
             spider.siteKey = key;
             spider.initApi(new SpiderApi());
             spider.init(App.getInstance(), ext);
@@ -257,8 +226,7 @@ public class JarLoader {
 
     public void searchDanmuUi(String name, String episode, boolean longClick) {
         try {
-            ConcurrentHashMap<String, Method> methods =
-                    longClick ? danmuLongClickMethods : danmuClickMethods;
+            ConcurrentHashMap<String, Method> methods = longClick ? danmuLongClickMethods : danmuClickMethods;
             Method method = methods.get(recent);
             if (method == null) method = methods.get("main");
             if (method == null) return;
@@ -269,8 +237,7 @@ public class JarLoader {
     }
 
     public boolean hasDanmuSearchUi() {
-        return danmuClickMethods.containsKey(recent)
-                || danmuLongClickMethods.containsKey(recent);
+        return danmuClickMethods.containsKey(recent) || danmuLongClickMethods.containsKey(recent);
     }
 
     public JSONObject jsonExt(String key, LinkedHashMap<String, String> jxs, String url) {
@@ -284,12 +251,10 @@ public class JarLoader {
         }
     }
 
-    public JSONObject jsonExtMix(String flag, String key, String name,
-                                 LinkedHashMap<String, HashMap<String, String>> jxs, String url) {
+    public JSONObject jsonExtMix(String flag, String key, String name, LinkedHashMap<String, HashMap<String, String>> jxs, String url) {
         try {
             Class<?> clz = loadParserClass("com.github.catvod.parser.Mix" + key);
-            Method method = clz.getMethod("parse",
-                    LinkedHashMap.class, String.class, String.class, String.class);
+            Method method = clz.getMethod("parse", LinkedHashMap.class, String.class, String.class, String.class);
             return (JSONObject) method.invoke(null, jxs, name, flag, url);
         } catch (Throwable e) {
             e.printStackTrace();
@@ -325,8 +290,7 @@ public class JarLoader {
     private DexClassLoader requireRecentLoader() {
         DexClassLoader loader = loaders.get(recent);
         if (loader == null) loader = loaders.get(MAIN_KEY);
-        if (loader == null)
-            throw new IllegalStateException("No jar loaded for recent key: " + recent);
+        if (loader == null) throw new IllegalStateException("No jar loaded for recent key: " + recent);
         return loader;
     }
 
@@ -342,8 +306,6 @@ public class JarLoader {
         if (loader != null) return loader.loadClass(name);
         throw new ClassNotFoundException(name);
     }
-
-    /* ====================== 文件相关 ====================== */
 
     private File download(String url, File file) {
         InputStream is = null;
@@ -446,14 +408,12 @@ public class JarLoader {
 
     private String clanToAddress(String url) {
         if (url.startsWith("clan://localhost/")) {
-            return url.replace("clan://localhost/",
-                    ControlManager.get().getAddress(true) + "file/");
+            return url.replace("clan://localhost/", ControlManager.get().getAddress(true) + "file/");
         }
         if (url.startsWith("clan://")) {
             String text = url.substring(7);
             int index = text.indexOf('/');
-            if (index > 0)
-                return "http://" + text.substring(0, index) + "/file/" + text.substring(index + 1);
+            if (index > 0) return "http://" + text.substring(0, index) + "/file/" + text.substring(index + 1);
         }
         return url;
     }
@@ -486,128 +446,5 @@ public class JarLoader {
             if (closeable != null) closeable.close();
         } catch (Throwable ignored) {
         }
-    }
-
-    /* ====================== PROTECTED JAR SUPPORT xuameng加固 jar 会自动识别不用注销掉====================== */
-
-    private boolean isProtectedInitJar(String jar) {
-        if (TextUtils.isEmpty(jar)) return false;
-        Boolean cached = protectedInitJars.get(jar);
-        if (cached != null) return cached;
-
-        boolean result = false;
-        try {
-            File file = new File(jar);
-            if (file.exists()) {
-                byte[] data = FileUtils.readSimple(file);
-                if (data != null && data.length > 4
-                        && data[0] == 'd' && data[1] == 'e' && data[2] == 'x') {
-                    result = isProtectedInitDex(data);
-                } else {
-                    try (ZipFile zip = new ZipFile(file)) {
-                        java.util.Enumeration<? extends ZipEntry> entries = zip.entries();
-                        while (entries.hasMoreElements()) {
-                            ZipEntry entry = entries.nextElement();
-                            if (!entry.getName().endsWith(".dex")) continue;
-                            try (InputStream is = zip.getInputStream(entry)) {
-                                if (isProtectedInitDex(readBytes(is))) {
-                                    result = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-        protectedInitJars.put(jar, result);
-        return result;
-    }
-
-    private boolean isProtectedInitDex(byte[] data) {
-        if (data == null || data.length == 0) return false;
-        try {
-            String text = new String(data, "UTF-8");
-            return text.contains("包名不匹配")
-                    && text.contains("killProcess")
-                    && !text.contains("com.jvhuiys.player");
-        } catch (Throwable th) {
-            return false;
-        }
-    }
-
-    private byte[] readBytes(InputStream is) throws Exception {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[8192];
-        int len;
-        while ((len = is.read(buffer)) != -1) {
-            baos.write(buffer, 0, len);
-        }
-        return baos.toByteArray();
-    }
-
-    private void initProtectedJar(Class<?> classInit) {
-        try {
-            Method get = classInit.getMethod("get");
-            Object init = get.invoke(null);
-
-            Field context = classInit.getDeclaredField("c");
-            context.setAccessible(true);
-            context.set(init, App.getInstance());
-        } catch (Throwable ignored) {
-        }
-    }
-
-    private void injectProtectedClassLoader(DexClassLoader classLoader) {    // ===== PROTECTED JAR SUPPORT xuameng加固 jar 会自动识别不用注销掉=====
-        if (classLoader == null) return;
-        injectClassLoaderFields(classLoader, "com.github.catvod.spider.Init");
-        injectClassLoaderFields(classLoader, "com.github.catvod.spider.DexNative");
-        injectClassLoaderFields(classLoader, "com.github.catvod.spider.BaseSpiderGuard");
-    }
-
-    private void injectClassLoaderFields(DexClassLoader classLoader, String className) {
-        try {
-            Class<?> cls = classLoader.loadClass(className);
-            setClassLoaderFields(cls, null, classLoader);
-            Object singleton = getSingleton(cls);
-            if (singleton != null) {
-                setClassLoaderFields(cls, singleton, classLoader);
-            }
-        } catch (Throwable ignored) {
-        }
-    }
-
-    private Object getSingleton(Class<?> cls) {
-        try {
-            Method get = cls.getMethod("get");
-            return get.invoke(null);
-        } catch (Throwable ignored) {
-            return null;
-        }
-    }
-
-    private void setClassLoaderFields(Class<?> cls, Object instance, DexClassLoader classLoader) {
-        try {
-            for (Field field : cls.getDeclaredFields()) {
-                if (!ClassLoader.class.isAssignableFrom(field.getType())
-                        && field.getType() != Object.class) continue;
-
-                boolean isStatic = Modifier.isStatic(field.getModifiers());
-                if (instance == null && !isStatic) continue;
-                if (instance != null && isStatic) continue;
-
-                field.setAccessible(true);
-                Object current = field.get(instance);
-                if (current == null) {
-                    field.set(instance, classLoader);
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-    }
-
-    private String getJarPathByKey(String key) {
-        return jarPaths.get(key);
     }
 }
