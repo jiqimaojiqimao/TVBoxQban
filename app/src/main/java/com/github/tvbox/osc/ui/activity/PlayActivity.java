@@ -168,14 +168,14 @@ public class PlayActivity extends BaseActivity {
             mController.mSubtitleView.setTextSize((int) event.obj);
             mController.mLrcView.setNormalTextSize((int) event.obj); //xuameng 设置LRC歌词 全屏非全屏状态同步
             mController.mLrcView.setHighlightTextSize((int) event.obj); //xuameng 设置LRC歌词 全屏非全屏状态同步
-        } else if (event.type == RefreshEvent.TYPE_CLOSE_PLAY_ACTIVITY) {  //xuameng 远程关闭playactivity 用于push推送解析刷新
-            // 收到指令，执行关闭
-            finish(); 
         } else if (event.type == RefreshEvent.TYPE_SET_DANMU_SETTINGS) {  //xuameng 弹幕
             setDanmuViewSettings(event.obj instanceof Boolean && (Boolean) event.obj);
         } else if (event.type == RefreshEvent.TYPE_DANMU_REFRESH) {  //xuameng 弹幕
             checkDanmu(event.obj instanceof String ? (String) event.obj : "");
-        }
+        } else if (event.type == RefreshEvent.TYPE_PLAY_PUSH_ERROR) {  //xuameng远程推送解析数据为空判断
+            mController.imageHide();  //xuameng隐藏图片
+            errorWithRetry("接收到推送数据为空", false);
+        } 
     }
 
     @Override
