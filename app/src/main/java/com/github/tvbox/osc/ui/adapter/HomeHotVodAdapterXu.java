@@ -59,11 +59,11 @@ public class HomeHotVodAdapterXu extends BaseQuickAdapter<Movie.Video, BaseViewH
         }
 
         TextView tvRate = helper.getView(R.id.tvRate);
-        if (Hawk.get(HawkConfig.HOME_REC, 0) == 2 && !this.mShowList && tvRate != null){  //xuameng增加判断item_list中没有tvRate
+        if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 2 && !this.mShowList && tvRate != null){  //xuameng增加判断item_list中没有tvRate
             tvRate.setText(ApiConfig.get().getSource(item.sourceKey).getName());
-        }else if(Hawk.get(HawkConfig.HOME_REC, 0) == 0 && !this.mShowList && tvRate != null){
+        }else if(Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 0 && !this.mShowList && tvRate != null){
             tvRate.setText("聚汇热播");          //xuameng显示主页聚汇热播左上小字
-        }else if(Hawk.get(HawkConfig.HOME_REC, 0) == 1 && !this.mShowList && tvRate != null){
+        }else if(Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && !this.mShowList && tvRate != null){
             tvRate.setText("聚汇推荐");
         }else {
             if (!this.mShowList && tvRate != null){
