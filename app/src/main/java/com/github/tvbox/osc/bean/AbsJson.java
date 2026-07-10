@@ -133,12 +133,13 @@ public class AbsJson implements Serializable {
                 String[] playFlags = vod_play_from.split("\\$\\$\\$");
                 String[] playUrls = vod_play_url.split("\\$\\$\\$");
                 List<Movie.Video.UrlBean.UrlInfo> infoList = new ArrayList<>();
-                for (int i = 0; i < playFlags.length && i < playUrls.length; i++) {
-                    if (playFlags[i].trim().isEmpty() || playUrls[i].trim().isEmpty())
-                        continue;
+                for (int i = 0; i < playFlags.length; i++) {
                     Movie.Video.UrlBean.UrlInfo urlInfo = new Movie.Video.UrlBean.UrlInfo();
-                    urlInfo.flag = playFlags[i].trim();
-                    urlInfo.urls = playUrls[i];
+                    urlInfo.flag = playFlags[i];
+                    if (i < playUrls.length)
+                        urlInfo.urls = playUrls[i];
+                    else
+                        urlInfo.urls = "";
                     infoList.add(urlInfo);
                 }
                 urlBean.infoList = infoList;
