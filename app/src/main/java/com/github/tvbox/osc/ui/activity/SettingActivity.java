@@ -111,7 +111,7 @@ public class SettingActivity extends BaseActivity {
     private void initData() {
         currentApi = Hawk.get(HawkConfig.API_URL, "");
         homeSourceKey = ApiConfig.get().getHomeSourceBean().getKey();
-        homeRec = Hawk.get(HawkConfig.HOME_REC, 0);
+        homeRec = Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC);
         dnsOpt = Hawk.get(HawkConfig.DOH_URL, 0);
         currentLiveApi = Hawk.get(HawkConfig.LIVE_API_URL, "");
         List<String> sortList = new ArrayList<>();
@@ -203,7 +203,7 @@ public class SettingActivity extends BaseActivity {
                 AppManager.getInstance().finishAllActivity();
                 jumpActivity(HomeActivity.class);
                 HawkConfig.ISrestore = false;  //xuameng恢复成功,请重启应用
-            }else if ((Hawk.get(HawkConfig.API_INIT_OK, true) && homeSourceKey != null && !homeSourceKey.equals(Hawk.get(HawkConfig.HOME_API, "")))  || homeRec != Hawk.get(HawkConfig.HOME_REC, 0)) { //xuameng 更改数据源或首页推荐
+            }else if (homeRec != Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC)) {//xuameng 更改数据源或首页推荐
                 jumpActivity(HomeActivity.class, createBundle());
             }
         } else {
