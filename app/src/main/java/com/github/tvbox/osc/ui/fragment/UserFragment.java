@@ -105,7 +105,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             if(isFolederMode()){  //xuameng 增加判断如果style 为 list 就显示文件夹样式
                 tvHotList1.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
             }else{
-                if (style != null && Hawk.get(HawkConfig.HOME_REC, 0) == 1) {
+                if (style != null && Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1) {
                     spanCount = ImgUtilHot.spanCountByStyle(style, spanCount);
                 }
                 tvHotList1.setLayoutManager(new V7GridLayoutManager(this.mContext, spanCount));
@@ -120,7 +120,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             //    tvHotList2.setLayoutManager(new V7GridLayoutManager(this.mContext, 5));
         }
         super.onFragmentResume();
-        if (Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
+        if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 2) {
             List<VodInfo> allVodRecord = RoomDataManger.getAllVodRecord(100); //xuameng首页历史条数   //xuameng 历史记录返回条数
             List<Movie.Video> vodList = new ArrayList<>();
             for (VodInfo vodInfo : allVodRecord) {
@@ -160,7 +160,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 if(isFolederMode()){  //xuameng 增加判断如果style 为 list 就显示文件夹样式
                     tvHotList1.setLayoutManager(new V7LinearLayoutManager(this.mContext, 1, false));
                 }else{
-                    if (style != null && Hawk.get(HawkConfig.HOME_REC, 0) == 1) {
+                    if (style != null && Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1) {
                         spanCount = ImgUtilHot.spanCountByStyle(style, spanCount);
                     }
                     tvHotList1.setLayoutManager(new V7GridLayoutManager(this.mContext, spanCount));
@@ -200,7 +200,7 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         tvHotList1 = findViewById(R.id.tvHotList1);
         tvHotList2 = findViewById(R.id.tvHotList2);
         //if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec != null) {
-        if (Hawk.get(HawkConfig.HOME_REC, 0) == 1) {  //xuameng 无论推荐有没有数据
+        if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1) {  //xuameng 无论推荐有没有数据
             style = ImgUtilHot.initStyle();
         }
 
@@ -212,12 +212,12 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                     return;
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
-                if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
+                if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
                     sourceViewModel.action(vod.sourceKey, vod.action);
                     return;
                 }
                 // takagen99: CHeck if in Delete Mode
-                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, 0) == 2 && HawkConfig.hotVodDelete) {
+                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 2 && HawkConfig.hotVodDelete) {
                     homeHotVodAdapter.remove(position);
                     VodInfo vodInfo = RoomDataManger.getVodInfo(vod.sourceKey, vod.id);
                     RoomDataManger.deleteVodRecord(vod.sourceKey, vodInfo);
@@ -261,12 +261,12 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                     return;
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
-                if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
+                if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
                     sourceViewModel.action(vod.sourceKey, vod.action);
                     return;
                 }
                 // takagen99: CHeck if in Delete Mode
-                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, 0) == 2 && HawkConfig.hotVodDelete) {
+                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 2 && HawkConfig.hotVodDelete) {
                     homeHotVodAdapterxu.remove(position);
                     VodInfo vodInfo = RoomDataManger.getVodInfo(vod.sourceKey, vod.id);
                     RoomDataManger.deleteVodRecord(vod.sourceKey, vodInfo);
@@ -304,13 +304,10 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
             @Override
             public boolean onLongClick(View v) {
                 FastClickCheckUtil.check(v);
-                Intent intent = new Intent(mContext, HomeActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                Bundle bundle = new Bundle();
-                bundle.putBoolean("useCache", true);
-                intent.putExtras(bundle);
-                startActivity(intent);
-                App.showToastShort(mContext, "重新加载主页数据！");
+                if (mActivity instanceof HomeActivity) {
+                    ((HomeActivity) mActivity).refreshHome(false);
+                    App.showToastShort(mContext, "重新加载主页数据！");
+                }
                 return true;
             }
         });
@@ -361,12 +358,12 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 if (ApiConfig.get().getSourceBeanList().isEmpty()) return false;
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
-                if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
+                if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
                     sourceViewModel.action(vod.sourceKey, vod.action);
                     return true;
                 }
                 // Additional Check if : Home Rec 0=豆瓣, 1=推荐, 2=历史
-                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
+                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 2) {
                     HawkConfig.hotVodDelete = !HawkConfig.hotVodDelete;
                     homeHotVodAdapter.notifyDataSetChanged();
                 } else {
@@ -384,12 +381,12 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 if (ApiConfig.get().getSourceBeanList().isEmpty()) return false;
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
-                if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
+                if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
                     sourceViewModel.action(vod.sourceKey, vod.action);
                     return true;
                 }
                 // Additional Check if : Home Rec 0=豆瓣, 1=推荐, 2=历史
-                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
+                if (!TextUtils.isEmpty(vod.id) && Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 2) {
                     HawkConfig.hotVodDelete = !HawkConfig.hotVodDelete;
                     homeHotVodAdapterxu.notifyDataSetChanged();
                 } else {
@@ -452,24 +449,24 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
     }
 
     private void initHomeHotVod(HomeHotVodAdapter adapter) {
-        if (Hawk.get(HawkConfig.HOME_REC, 0) == 1) {
+        if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1) {
             if (homeSourceRec != null) {
                 adapter.setNewData(homeSourceRec);
                 return;
             }
-        } else if (Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
+        } else if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 2) {
             return;
         }
         setDouBanData(adapter);
     }
 
     private void initHomeHotVodXu(HomeHotVodAdapterXu adapter) { //xuameng首页单行
-        if (Hawk.get(HawkConfig.HOME_REC, 0) == 1) {
+        if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1) {
             if (homeSourceRec != null) {
                 adapter.setNewData(homeSourceRec);
                 return;
             }
-        } else if (Hawk.get(HawkConfig.HOME_REC, 0) == 2) {
+        } else if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 2) {
             return;
         }
         setDouBanDataXu(adapter);
