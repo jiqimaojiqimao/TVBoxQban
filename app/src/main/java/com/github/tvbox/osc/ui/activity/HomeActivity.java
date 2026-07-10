@@ -15,6 +15,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.BounceInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.view.Gravity;							//xuameng
@@ -51,6 +53,7 @@ import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.base.BaseActivity;
 import com.github.tvbox.osc.base.BaseLazyFragment;
 import com.github.tvbox.osc.bean.AbsSortXml;
+import com.github.tvbox.osc.bean.Movie;
 import com.github.tvbox.osc.bean.MovieSort;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.event.RefreshEvent;
@@ -114,6 +117,11 @@ public class HomeActivity extends BaseActivity {
     private int sortFocused = 0;
     private int PositionXu = 0;  //xuameng 记忆当前Position
     public View sortFocusView = null;
+    private String loadingSourceKey;
+    private String previousHomeName;
+    private SourceBean previousHomeSource;
+    private boolean homeSortLoading = false;
+    private boolean refreshHomeRec = false;
     private final Handler mHandler = new Handler();
     private long mExitTime = 0;
     private boolean mGridViewHasFocus = false;  //xuameng 判断 mGridView主页是否拥有焦点
@@ -239,6 +247,11 @@ public class HomeActivity extends BaseActivity {
             public boolean onInBorderKeyEvent(int direction, View view) {
                 if (direction == View.FOCUS_UP) {   //XUAMENG上键刷新完
                     BaseLazyFragment baseLazyFragment = fragments.get(sortFocused);
+                    if (baseLazyFragment instanceof UserFragment) {
+                        refreshHomeSort();
+                        App.showToastShort(HomeActivity.this, "主页刷新成功！");	
+                        return true;
+                    }
                     if ((baseLazyFragment instanceof GridFragment)) {
                         ((GridFragment) baseLazyFragment).forceRefresh();
                         App.showToastShort(HomeActivity.this, "页面刷新成功！");	
@@ -273,7 +286,7 @@ public class HomeActivity extends BaseActivity {
             public boolean onLongClick(View v) {
                 FastClickCheckUtil.check(v);
                 if(dataInitOk && jarInitOk){
-                    restartHomeWithCache();
+                    refreshHome(false);
                     App.showToastShort(HomeActivity.this, "重新加载主页数据！");
                 }else {
                     jumpActivity(SettingActivity.class);   //xuameng加载慢跳转设置
@@ -317,13 +330,30 @@ public class HomeActivity extends BaseActivity {
                     skipNextUpdate = false;
                     return;
                 }
-                showSuccess();
-                if (absXml != null && absXml.classes != null && absXml.classes.sortList != null) {
-                    sortAdapter.setNewData(DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), absXml.classes.sortList, true));
-                } else {
-                    sortAdapter.setNewData(DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), new ArrayList<>(), true));
+                if (!homeSortLoading && loadingSourceKey == null) {
+                    return;
                 }
+                if (absXml != null && absXml.sourceKey != null && loadingSourceKey != null && !loadingSourceKey.equals(absXml.sourceKey)) {
+                    return;
+                }
+                SourceBean home = ApiConfig.get().getHomeSourceBean();
+                showSuccess();
+                clearHomePages();
+                List<MovieSort.SortData> newSortData;
+                if (absXml != null && absXml.classes != null && absXml.classes.sortList != null) {
+                    newSortData = DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), absXml.classes.sortList, true);
+                } else {
+                    newSortData = DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), new ArrayList<>(), true);
+                }
+                updateSortData(newSortData);
                 initViewPager(absXml);
+                updateHomeRec(absXml);
+                if (home != null && home.getName() != null && !home.getName().isEmpty()) tvName.setText(home.getName());
+                tvName.clearAnimation();
+                homeSortLoading = false;
+                loadingSourceKey = null;
+                previousHomeName = null;
+                previousHomeSource = null;
             }
         });
     }
@@ -331,16 +361,12 @@ public class HomeActivity extends BaseActivity {
     private boolean dataInitOk = false;
     private boolean jarInitOk = false;
     private boolean searchSpiderWarmStarted = false;
+    private TipDialog mConfigErrorDialog;
 
     private void initData() {
-        Hawk.put(HawkConfig.API_INIT_OK, true);
         refreshEmpty = false;	//xuameng打断加载判断
-        SourceBean home = ApiConfig.get().getHomeSourceBean();
-        if (home != null && home.getName() != null && !home.getName().isEmpty())
-            tvName.setText(home.getName());
         if (dataInitOk && jarInitOk) {
-            //showLoading();
-            sourceViewModel.getSort(ApiConfig.get().getHomeSourceBean().getKey());
+            loadHomeSort(false);
             if (hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 LOG.e("有");
             } else {
@@ -349,6 +375,7 @@ public class HomeActivity extends BaseActivity {
             if(!useCacheConfig)warmSearchSpidersOnce();  //xuameng搜索预热
             return;
         }
+        tvNameAnimation();
         showLoading();
         if (dataInitOk && !jarInitOk) {
             if (!ApiConfig.get().getSpider().isEmpty()) {
@@ -390,21 +417,20 @@ public class HomeActivity extends BaseActivity {
                     public void error(String msg) {
                         jarInitOk = true;
                         dataInitOk = true;
-                        mHandler.post(new Runnable() {
+                        mHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 App.showToastShort(HomeActivity.this, "聚汇影视提示：jar加载失败！");
                                 initData();
                                 checkMicrophonePermission();  //xuameng音频权限
                             }
-                        });
+                        },50);
                     }
                 });
             }
             return;
         }
         ApiConfig.get().loadConfig(useCacheConfig, new ApiConfig.LoadConfigCallback() {
-            TipDialog dialog = null;
 
             @Override
             public void notice(String msg) {
@@ -446,16 +472,18 @@ public class HomeActivity extends BaseActivity {
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        if (dialog == null)
-                            dialog = new TipDialog(HomeActivity.this, msg, "重试", "取消", new TipDialog.OnListener() {
+                        if (isActivityUnavailable()) {
+                            return;
+                        }
+                        if (mConfigErrorDialog == null)
+                            mConfigErrorDialog = new TipDialog(HomeActivity.this, msg, "重试", "取消", new TipDialog.OnListener() {
                                 @Override
                                 public void left() {
                                     mHandler.post(new Runnable() {
                                         @Override
                                         public void run() {
+                                            dismissConfigErrorDialog();
                                             initData();
-                                            //dialog.hide();
-                                            dialog.dismiss();   //xuameng显示BUG
                                         }
                                     });
                                 }
@@ -467,10 +495,8 @@ public class HomeActivity extends BaseActivity {
                                     mHandler.post(new Runnable() {
                                         @Override
                                         public void run() {
+                                            dismissConfigErrorDialog();
                                             initData();
-                                            //dialog.hide();
-                                            Hawk.put(HawkConfig.API_INIT_OK, false);  //判断API加载成功
-                                            dialog.dismiss();  //xuameng显示BUG
                                         }
                                     });
                                 }
@@ -482,17 +508,14 @@ public class HomeActivity extends BaseActivity {
                                     mHandler.post(new Runnable() {
                                         @Override
                                         public void run() {
+                                            dismissConfigErrorDialog();
                                             initData();
-                                            //dialog.hide();
-                                            Hawk.put(HawkConfig.API_INIT_OK, false);  //判断API加载成功
-                                            dialog.dismiss();  //xuameng显示BUG
                                         }
                                     });
                                 }
                             });
-                        if (!dialog.isShowing() && !refreshEmpty){   //xuameng只要打断加载就不显示错误对话框
-                            showSuccess();  //xuameng显示BUG
-                            dialog.show();
+                        if (!mConfigErrorDialog.isShowing() && !refreshEmpty){
+                            mConfigErrorDialog.show();
                         }
                     }
                 });
@@ -506,11 +529,32 @@ public class HomeActivity extends BaseActivity {
         ApiConfig.get().warmSearchSpiders();
     }
 
+    private void loadHomeSort(boolean keepCurrentContent) { //xuameng 获取主页分类数据
+        SourceBean home = ApiConfig.get().getHomeSourceBean();
+        homeSortLoading = keepCurrentContent;
+        if (keepCurrentContent && home != null && home.getName() != null && !home.getName().isEmpty()) {
+            previousHomeName = tvName.getText() == null ? null : tvName.getText().toString();
+            tvName.setText(home.getName());
+        }
+        tvNameAnimation();
+        if (home == null) {
+            loadingSourceKey = null;
+            if (!keepCurrentContent) showLoading();
+            sourceViewModel.getSort(null);
+            return;
+        }
+        loadingSourceKey = home.getKey();
+        if (!keepCurrentContent) {
+            showLoading();
+        }
+        sourceViewModel.getSort(loadingSourceKey);
+    }
+
     private void initViewPager(AbsSortXml absXml) {
         if (sortAdapter.getData().size() > 0) {
             for (MovieSort.SortData data : sortAdapter.getData()) {
                 if (data.id.equals("my0")) {
-                    if (Hawk.get(HawkConfig.HOME_REC, 0) == 1 && absXml != null && absXml.videoList != null && absXml.videoList.size() > 0) {
+                    if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && absXml != null && absXml.videoList != null && absXml.videoList.size() > 0) {
                         fragments.add(UserFragment.newInstance(absXml.videoList));
                     } else {
                         fragments.add(UserFragment.newInstance(null));
@@ -534,9 +578,56 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
+    private void clearHomePages() {   //xuameng 清理主页
+        mHandler.removeCallbacks(mDataRunnable);
+        currentSelected = 0;
+        sortFocused = 0;
+        sortChange = false;
+        sortFocusView = null;
+        currentView = null;
+        if (pageAdapter != null) {
+            mViewPager.setAdapter(null);
+            pageAdapter.removeAll();
+            pageAdapter = null;
+        } else if (!fragments.isEmpty()) {
+            fragments.clear();
+        }
+    }
+
+    private void updateSortData(List<MovieSort.SortData> newSortData) {  //xuameng 更新分类数据
+        if (newSortData == null) {
+            newSortData = new ArrayList<>();
+        }
+        List<MovieSort.SortData> oldSortData = sortAdapter.getData();
+        if (oldSortData.isEmpty()
+                || newSortData.isEmpty()
+                || oldSortData.get(0) == null
+                || newSortData.get(0) == null
+                || !"my0".equals(oldSortData.get(0).id)
+                || !"my0".equals(newSortData.get(0).id)) {
+            sortAdapter.setNewData(newSortData);
+            return;
+        }
+        int oldTailCount = oldSortData.size() - 1;
+        if (oldTailCount > 0) {
+            oldSortData.subList(1, oldSortData.size()).clear();
+            sortAdapter.notifyItemRangeRemoved(1, oldTailCount);
+        }
+        if (newSortData.size() > 1) {
+            oldSortData.addAll(newSortData.subList(1, newSortData.size()));
+            sortAdapter.notifyItemRangeInserted(1, newSortData.size() - 1);
+        }
+    }
+
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onBackPressed() {
+        // 打断加载
+        if (homeSortLoading) {
+            cancelHomeSortLoading();
+            return;
+        }
+		
         if(isLoading()){
             refreshEmpty();     //xuameng打断加载优化
             return;
@@ -663,6 +754,8 @@ public class HomeActivity extends BaseActivity {
                     sortAdapter.notifyItemChanged(pos);
                 }
             }
+        } else if (event.type == RefreshEvent.TYPE_HOME_SOURCE_CHANGE) {
+            refreshHome(false);
         }
     }
 
@@ -713,11 +806,11 @@ public class HomeActivity extends BaseActivity {
         animatorSet.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
-                topHide = (byte) (hide ? 1 : 0);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
+                topHide = (byte) (hide ? 1 : 0);
             }
 
             @Override
@@ -769,6 +862,7 @@ public class HomeActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        dismissHomeDialogs();
         mHandler.removeCallbacksAndMessages(null);
         EventBus.getDefault().unregister(this);
         AppManager.getInstance().appExit(0);
@@ -778,6 +872,7 @@ public class HomeActivity extends BaseActivity {
     private SelectDialog<SourceBean> mSiteSwitchDialog;
 
     void showSiteSwitch() {
+        if (isActivityUnavailable()) return;
         List<SourceBean> sites = ApiConfig.get().getSwitchSourceBeanList();
         if (!sites.isEmpty()){
             int select = sites.indexOf(ApiConfig.get().getHomeSourceBean());
@@ -805,8 +900,10 @@ public class HomeActivity extends BaseActivity {
                             sortData.filterSelect.clear();
                         }
                     }
+                    dismissSiteSwitchDialog();
+                    previousHomeSource = ApiConfig.get().getHomeSourceBean();
                     ApiConfig.get().setSourceBean(value);
-                    restartHomeWithCache();
+                    refreshHome(false);
                 }
                 @Override
                 public String getDisplay(SourceBean val) {
@@ -828,13 +925,97 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
-    private void restartHomeWithCache() {  //xuameng 重启主页
+    private void refreshHome() {
+        refreshHome(true);
+    }
+
+    private void refreshHomeSort() {  //xuameng 刷新 主页默认数据 热播 推荐
+        refreshHomeRec = true;
+        if (Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
+            if (UserFragment.homeHotVodAdapter != null) {
+                UserFragment.homeHotVodAdapter.setNewData(new ArrayList<Movie.Video>());
+            }
+            SourceBean home = ApiConfig.get().getHomeSourceBean();
+            if (home != null) {
+                SourceViewModel.clearSortCache(home.getKey());
+            }
+            refreshHome(false);
+        } else {
+            if (UserFragment.homeHotVodAdapterxu != null) {
+                UserFragment.homeHotVodAdapterxu.setNewData(new ArrayList<Movie.Video>());
+            }
+            SourceBean home = ApiConfig.get().getHomeSourceBean();
+            if (home != null) {
+                SourceViewModel.clearSortCache(home.getKey());
+            }
+            refreshHome(false);
+        }
+
+    }
+
+    private void updateHomeRec(AbsSortXml absXml) {   //xuameng 更新主页默认数据 热播 推荐
+        if (!refreshHomeRec) return;
+        refreshHomeRec = false;
+        if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) != 1) return;
+        if (absXml == null || absXml.videoList == null || UserFragment.homeHotVodAdapter == null || UserFragment.homeHotVodAdapterxu == null) return;
+        if (Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
+            UserFragment.homeHotVodAdapter.setNewData(absXml.videoList);
+        } else { 
+            UserFragment.homeHotVodAdapterxu.setNewData(absXml.videoList);
+        }
+    }
+
+    public void refreshHome(final boolean restart) {    //xuameng 刷新主页
+        if (Thread.currentThread() != android.os.Looper.getMainLooper().getThread()) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    refreshHome(restart);
+                }
+            });
+            return;
+        }
+        if (isActivityUnavailable()) {
+            return;
+        }
+        dismissHomeDialogs();
+        if (!restart) {
+            loadHomeSort(true);
+            return;
+        }
         Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         Bundle bundle = new Bundle();
-        intent.putExtra("useCache", true);
+        bundle.putBoolean("useCache", true);
         intent.putExtras(bundle);
         HomeActivity.this.startActivity(intent);
+    }
+
+    private boolean isActivityUnavailable() {  //xuameng 生命周期
+        return isFinishing() || (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed());
+    }
+
+    private void dismissHomeDialogs() {  //xuameng 关闭主页所有dialog
+        dismissConfigErrorDialog();
+        dismissSiteSwitchDialog();
+    }
+
+    private void dismissConfigErrorDialog() {  //xuameng 关闭错误窗口
+        if (mConfigErrorDialog != null) {
+            if (mConfigErrorDialog.isShowing()) {
+                mConfigErrorDialog.dismiss();
+            }
+            mConfigErrorDialog = null;
+        }
+    }
+
+    private void dismissSiteSwitchDialog() {  //xuameng 关闭换源窗口
+        if (mSiteSwitchDialog != null) {
+            if (mSiteSwitchDialog.isShowing()) {
+                mSiteSwitchDialog.dismiss();
+            }
+            mSiteSwitchDialog = null;
+        }
     }
 
     private void refreshEmpty(){   //xuameng打断加载优化
@@ -844,12 +1025,40 @@ public class HomeActivity extends BaseActivity {
         jarInitOk = true;
         dataInitOk = true;
         skipNextUpdate=true;
+        cancelHomeSortLoading();
+        clearHomePages();
         showSuccess();
         sortAdapter.setNewData(DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), new ArrayList<>(), true));
         initViewPager(null);
+        tvName.clearAnimation();
         App.showToastShort(HomeActivity.this, "聚汇影视提示：已打断当前源加载！");
     }
 
+    private void cancelHomeSortLoading() {  //xuameng打断切换源加载
+        homeSortLoading = false;
+        loadingSourceKey = null;
+        tvName.clearAnimation();
+        if (previousHomeSource != null) {
+            ApiConfig.get().setSourceBean(previousHomeSource);
+        }
+        if (previousHomeName != null && !previousHomeName.isEmpty()) {
+            tvName.setText(previousHomeName);
+        }
+        previousHomeSource = null;
+        previousHomeName = null;
+        App.showToastShort(HomeActivity.this, "聚汇影视提示：已打断当前源加载！");
+    }
+
+    private void tvNameAnimation(){  //xuameng 源名称动画
+        tvName.clearAnimation();
+        AlphaAnimation blinkAnimation = new AlphaAnimation(0.0f, 1.0f);
+        blinkAnimation.setDuration(400);
+        blinkAnimation.setStartOffset(20);
+        blinkAnimation.setRepeatMode(Animation.REVERSE);
+        blinkAnimation.setRepeatCount(Animation.INFINITE);
+        tvName.startAnimation(blinkAnimation);
+    }
+	
     // 触发权限检查的入口方法
     public void checkMicrophonePermission() {
         if (Build.VERSION.SDK_INT >= MARSHMALLOW) {
