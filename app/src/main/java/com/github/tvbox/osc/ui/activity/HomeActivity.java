@@ -931,6 +931,7 @@ public class HomeActivity extends BaseActivity {
 
     private void refreshHomeSort() {  //xuameng 刷新 主页默认数据 热播 推荐
         refreshHomeRec = true;
+        showLoading();
         if (Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
             if (UserFragment.homeHotVodAdapter != null) {
                 UserFragment.homeHotVodAdapter.setNewData(new ArrayList<Movie.Video>());
