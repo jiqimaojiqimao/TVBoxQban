@@ -142,7 +142,7 @@ public class ImgUtilHot {
         int width;
         int height;
 
-        if (Hawk.get(HawkConfig.HOME_REC, 0) != 1) {  //xuameng 如果主页不是聚汇推荐的话 style 为空
+        if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) != 1) {  //xuameng 如果主页不是聚汇推荐的话 style 为空
             style = null;
         }
 
