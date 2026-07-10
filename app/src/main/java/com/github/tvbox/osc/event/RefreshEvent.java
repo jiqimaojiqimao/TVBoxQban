@@ -25,6 +25,7 @@ public class RefreshEvent {
     public static final int TYPE_LIVE_API_URL_CHANGE = 15;  //xuameng 直播API
     public static final int TYPE_SET_DANMU_SETTINGS = 18; //xuameng 弹幕
     public static final int TYPE_DANMU_REFRESH = 19;  //xuameng 弹幕
+    public static final int TYPE_HOME_SOURCE_CHANGE = 20;  //xuameng 更改主页源
     public int type;
     public Object obj;
 
