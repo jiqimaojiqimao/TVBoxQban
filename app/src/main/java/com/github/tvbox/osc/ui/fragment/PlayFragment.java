@@ -169,7 +169,7 @@ public class PlayFragment extends BaseLazyFragment {
         }else if (event.type == RefreshEvent.TYPE_PLAY_PUSH_ERROR) {  //xuameng远程推送解析数据为空判断
 	        pauseForHidden();
             mController.imageHide();  //xuameng隐藏图片
-            errorWithRetry("接收到推送数据为空", false);
+            errorWithRetry("接收到推送数据错误", false);
         } 
     }
 
