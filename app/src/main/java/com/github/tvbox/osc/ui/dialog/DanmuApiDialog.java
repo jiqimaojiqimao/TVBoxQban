@@ -2,28 +2,31 @@ package com.github.tvbox.osc.ui.dialog;
 
 import android.content.Context;
 import android.view.KeyEvent;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.Editable;
-
+import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.DanmakuApi;
 import com.github.tvbox.osc.util.HawkConfig;
+import com.github.tvbox.osc.event.RefreshEvent;
 import com.orhanobut.hawk.Hawk;
 
 import org.jetbrains.annotations.NotNull;
-import android.view.inputmethod.InputMethodManager;
+
+import org.greenrobot.eventbus.EventBus;  //xuameng 接收接口变更通知
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 /**
  * @author xuameng
- * @date :2026/06/27
- * @description:   弹幕地址设置
+ * @date :2026/7/11
+ * @description:   弹幕地址设置  接收接口变更通知
  */
 
 public class DanmuApiDialog extends BaseDialog {
@@ -63,6 +66,27 @@ public class DanmuApiDialog extends BaseDialog {
             }
         });
 
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        EventBus.getDefault().unregister(this);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onRefreshEvent(RefreshEvent event) {    //xuameng 接收接口变更通知
+        if (event.type == RefreshEvent.TYPE_SET_DANMU_SETTINGS) {
+            String api = Hawk.get(HawkConfig.DANMU_API, "");
+            input.setText(api);   //xuameng 接收接口变更通知直接显示
+            input.setHint(getDefaultApi());
+        }
     }
 
     private String getDefaultApi() {
