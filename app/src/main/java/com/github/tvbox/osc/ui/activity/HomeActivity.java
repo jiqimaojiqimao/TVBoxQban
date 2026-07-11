@@ -1021,8 +1021,6 @@ public class HomeActivity extends BaseActivity {
 
     private void refreshEmpty(){   //xuameng打断加载优化
         refreshEmpty = true;	//xuameng打断加载判断
-        OkGo.getInstance().cancelTag("loadjar");    //xuameng打断加载
-        OkGo.getInstance().cancelTag("loadUrl");    //xuameng打断加载
         jarInitOk = true;
         dataInitOk = true;
         skipNextUpdate=true;
