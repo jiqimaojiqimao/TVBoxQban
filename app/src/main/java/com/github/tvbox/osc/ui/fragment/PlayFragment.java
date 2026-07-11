@@ -1299,7 +1299,6 @@ public class PlayFragment extends BaseLazyFragment {
         ClearOtherCache();
         stopLoadWebView(true);
         stopParse();
-        OkGo.getInstance().cancelTag("lrc_load");
         mController.stopOther();
     }
 
@@ -1760,7 +1759,6 @@ public class PlayFragment extends BaseLazyFragment {
         resetDanmuState();
         webHeaderMap = null;
         initParseLoadFound();
-        OkGo.getInstance().cancelTag("lrc_load");
     }
 
     void stopParse() {
@@ -1768,7 +1766,7 @@ public class PlayFragment extends BaseLazyFragment {
         stopLoadWebView(false);
         OkGo.getInstance().cancelTag("play");
         OkGo.getInstance().cancelTag("json_jx");
-      //  OkGo.getInstance().cancelTag("lrc_load");
+        OkGo.getInstance().cancelTag("lrc_load");
         if (parseThreadPool != null) {
             try {
                 parseThreadPool.shutdown();
