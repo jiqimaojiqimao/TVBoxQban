@@ -18,9 +18,9 @@ xuameng
 6，新增音柱分段效果
 */
 public class MusicVisualizerView extends View {
-    private static final int MAX_AMPLITUDE = 6222;
-    private static final int BAR_COUNT = 22;
-    private static final int ANIMATION_DURATION = 80;
+    private static final int MAX_AMPLITUDE = 12222;  //xuameng判断音量大小
+    private static final int BAR_COUNT = 22;   //xuameng 音柱数量
+    private static final int ANIMATION_DURATION = 80; //xuameng 音柱动画时长
     // 改为非静态变量实现动态刷新
     private int[][] colorSchemes = new int[3][3];
     // 新增音柱分段效果相关变量
