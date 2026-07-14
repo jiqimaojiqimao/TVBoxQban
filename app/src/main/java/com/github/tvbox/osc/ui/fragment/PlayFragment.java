@@ -80,8 +80,8 @@ import com.lzy.okgo.model.Response;
 import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.orhanobut.hawk.Hawk;
 
-import androidx.media3.common.Player;
-import androidx.media3.common.text.Cue;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.text.Cue;
 import com.github.tvbox.osc.bean.IJKCode;  //xuamengIJK切换用
 
 import org.greenrobot.eventbus.EventBus;
@@ -1119,7 +1119,6 @@ public class PlayFragment extends BaseLazyFragment {
     private String resolveDataUriSubtitle(String dataUri) {   //xuameng base64字幕转换并缓存
         FileOutputStream fos = null;
         try {
-            if (!dataUri.startsWith("data:")) return dataUri;
 
             // 提取 base64
             String base64 = dataUri.substring(dataUri.indexOf(",") + 1);
