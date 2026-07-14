@@ -53,4 +53,25 @@ public class BaseDialog extends Dialog {
             getWindow().getDecorView().setSystemUiVisibility(uiOptions);
         }
     }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {  //xuameng 重新布局
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            // 切回前台
+            refreshUI();
+        }
+    }
+
+    private void refreshUI() {  //xuameng 重新布局
+        if (getWindow() != null) {
+            hideSysBar(); // 重新隐藏状态栏/导航栏
+            getWindow().getDecorView().post(() -> {
+                // 强制重新布局
+                getWindow().getDecorView().requestLayout();
+                getWindow().getDecorView().invalidate();
+            });
+        }
+    }
+
 }
