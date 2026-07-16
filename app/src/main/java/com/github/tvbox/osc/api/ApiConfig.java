@@ -1753,6 +1753,13 @@ public class ApiConfig {
 
     public SourceBean getSource(String key) {
         if (!sourceBeanList.containsKey(key)) {
+            if ("push_agent".equals(key)) {
+                SourceBean sourceBean = new SourceBean();
+                sourceBean.setKey("push_agent");
+                sourceBean.setName("🥇聚汇推送");
+                sourceBean.setType(-1);
+                return sourceBean;
+            }
             return null;
         }
         return sourceBeanList.get(key);
