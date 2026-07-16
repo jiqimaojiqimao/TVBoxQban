@@ -1560,14 +1560,6 @@ public class ApiConfig {
 
     public void warmSearchSpiders() {  //xuameng搜索预热
         final ArrayList<SourceBean> sources = new ArrayList<>(sourceBeanList.values());
-        final SourceBean home = getHomeSourceBean();
-        final Set<String> sharedSpiderApis = new HashSet<>();
-        Set<String> spiderApis = new HashSet<>();
-        for (SourceBean source : sources) {
-            if (source == null || source.getType() != 3) continue;
-            String spiderApiKey = source.getJar() + "|" + source.getApi();
-            if (!spiderApis.add(spiderApiKey)) sharedSpiderApis.add(spiderApiKey);
-        }
         configLoadExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -1575,10 +1567,7 @@ public class ApiConfig {
                 int eligibleCount = 0;
                 for (SourceBean source : sources) {
                     if (source == null || source.getType() != 3 || !source.isSearchable()) continue;
-                    if (home != null && TextUtils.equals(home.getKey(), source.getKey())) continue;
-                    // 同类 Spider 可能通过静态状态保存 ext，不能在后台预热时交替初始化。
-                    if (sharedSpiderApis.contains(source.getJar() + "|" + source.getApi())) continue;
-                    if (eligibleCount >= 10) break;
+                    if (eligibleCount >= 20) break;
                     eligibleCount++;
                     String warmKey = source.getKey() + "|" + source.getApi() + "|" + source.getJar() + "|" + source.getExt();
                     synchronized (warmedSearchSpiderKeys) {
@@ -1753,13 +1742,6 @@ public class ApiConfig {
 
     public SourceBean getSource(String key) {
         if (!sourceBeanList.containsKey(key)) {
-            if ("push_agent".equals(key)) {
-                SourceBean sourceBean = new SourceBean();
-                sourceBean.setKey("push_agent");
-                sourceBean.setName("推送");
-                sourceBean.setType(-1);
-                return sourceBean;
-            }
             return null;
         }
         return sourceBeanList.get(key);
