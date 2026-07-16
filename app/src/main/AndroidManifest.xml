@@ -89,6 +89,10 @@
 			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
 
+        <service
+            android:name=".dlna.DLNACastService"
+            android:exported="false" />
+
         <receiver android:name=".receiver.SearchReceiver">
             <intent-filter>
                 <action android:name="android.content.movie.search.Action" />
