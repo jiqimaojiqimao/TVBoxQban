@@ -377,6 +377,7 @@ public class VodController extends BaseController {
     public LrcView mLrcView;   //xuameng LRC歌词字幕
     private String mLrcContent = "";  //xuameng LRC歌词字幕
 	private String videoPicUrl; //xuameng 新增给vod显示旋转图片用
+    TextView mCastBtn;  //xuameng 投屏
     private boolean hasDanmu = false; //xuameng弹幕
     private DanmakuView mDanmuView; //xuameng弹幕
     private DanmuLoadController danmuLoadController; //xuameng 弹幕
@@ -606,15 +607,16 @@ public class VodController extends BaseController {
         mAudioTrackBtn = findViewById(R.id.audio_track_select);
         mDanmuSettingBtn = findViewById(R.id.danmu_setting); //xuameng弹幕设置
         mDanmuSearchUiBtn = findViewById(R.id.danmu_search_ui);  //xuameng弹幕搜索
-        updateDanmuSearchUiBtn();  //xuameng弹幕搜索
         mLandscapePortraitBtn = findViewById(R.id.landscape_portrait);
         backBtn = findViewById(R.id.tv_back);
+        mCastBtn = findViewById(R.id.play_cast);   //xuameng 投屏
         mxuPlay = findViewById(R.id.mxuplay); //xuameng  低菜单播放
         mPlayrender = findViewById(R.id.play_render);   //xuameng渲染方式
         mPlayanimation = findViewById(R.id.play_animation);  //xuameng音柱动画
         mExoSubtitleView = findViewById(R.id.exo_subtitle_view); // 用于显示ExoPlayer内置字幕
         mLrcView = findViewById(R.id.lrc_view);  //xuameng LRC歌词字幕
         mDanmuView = findViewById(R.id.danmaku); //xuameng弹幕
+        updateDanmuSearchUiBtn();  //xuameng弹幕搜索
 
         //xuameng音乐播放时图标
         ObjectAnimator animator20 = ObjectAnimator.ofFloat(iv_circle_bg, "rotation", 360.0f);
@@ -1429,6 +1431,21 @@ public class VodController extends BaseController {
                 return true;
             }
         });
+        mCastBtn.setOnClickListener(new OnClickListener() {    //xuameng 投屏
+            @Override
+            public void onClick(View view) {
+                if (listener != null) listener.clickCast();
+                if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
+                    myHandle.removeCallbacks(myRunnable);
+                    hideBottom();
+                }
+            }
+        });
+        if (Build.VERSION.SDK_INT < 30) {
+            mCastBtn.setVisibility(GONE);
+        } else {
+            mCastBtn.setVisibility(VISIBLE);
+        }
         mLandscapePortraitBtn.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -1461,7 +1478,26 @@ public class VodController extends BaseController {
         mZimuBtn.setNextFocusUpId(R.id.mxuplay);
         mAudioTrackBtn.setNextFocusRightId(R.id.play_next);
         mAudioTrackBtn.setNextFocusUpId(R.id.mxuplay); //xuameng底部菜单所有键上键都是播放完
+		mCastBtn.setNextFocusUpId(R.id.mxuplay);
         mPlayrender.setNextFocusUpId(R.id.mxuplay);
+		mPlayanimation.setNextFocusUpId(R.id.mxuplay);
+		mPlayerEXOBtn.setNextFocusUpId(R.id.mxuplay);
+        mDanmuSettingBtn.setNextFocusUpId(R.id.mxuplay);
+        mDanmuSearchUiBtn.setNextFocusUpId(R.id.mxuplay);
+        mLandscapePortraitBtn.setNextFocusUpId(R.id.mxuplay);
+
+        // xuameng防止上键乱跳
+        mxuPlay.setNextFocusUpId(View.NO_ID);
+
+        // xuameng强制拦截上键
+        mxuPlay.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_DPAD_UP
+                    && event.getAction() == KeyEvent.ACTION_DOWN) {
+                return true;
+            }
+            return false;
+        });
+
     }
     private void hideLiveAboutBtn() {
         if(mControlWrapper != null && mControlWrapper.getDuration() <= 1) {
@@ -1640,6 +1676,8 @@ public class VodController extends BaseController {
         void searchDanmuUi(boolean longClick);  //xuameng弹幕搜索
         void hideTipXu(); //xuameng隐藏错误信息
         void startPlayUrl(String url, HashMap < String, String > headers); //xuameng广告过滤
+        void onM3u8ProxyUrl(String proxyUrl, String sourceUrl);  //xuameng广告过滤
+        void clickCast();   //xuameng 投屏
     }
     public void setListener(VodControlListener listener) {
         this.listener = listener;
@@ -1846,6 +1884,9 @@ public class VodController extends BaseController {
             case VideoView.STATE_PAUSED:
                 isVideoPlay = false;
                 mxuPlay.setText("播放"); //xuameng底部菜单显示播放
+				if (fullPreview){   //xuameng 全屏时自动暂停时调用
+				    mPauseIngXu();
+                }
                 break;
             case VideoView.STATE_ERROR:
                 imageHide();  //xuameng 隐藏图片
@@ -1998,12 +2039,28 @@ public class VodController extends BaseController {
     public void mPauseIngXu() {        //xuameng 全屏时如果是暂停状态就显示暂停图标
 		if(isInPlaybackState()){
             if (!mControlWrapper.isPlaying() && mTvPausexu.getVisibility() == View.GONE){
+                if(mBottomRoot.getVisibility() == View.VISIBLE) {
+                    myHandle.removeCallbacks(myRunnable);
+                    mBottomRoot.setVisibility(GONE);   //动画结束后隐藏下菜单
+                    mTopRoot1.setVisibility(GONE);    //动画结束后隐藏上菜单
+                    mTopRoot2.setVisibility(GONE);   //动画结束后隐藏上菜单
+                }
+                mTvPausexu.setTranslationX(0f);
+                mTvPausexu.setTranslationY(0f);
+                mPauseContainer.setTranslationX(0f);
+                mPauseContainer.setTranslationY(0f);
                 mTvPausexu.setVisibility(VISIBLE);
                 mPauseContainer.setVisibility(VISIBLE);  // xuameng播放标题、暂停时间
                 mxuPlay.setText("播放"); //xuameng底部菜单显示播放
                 mHandler.postDelayed(mUpdatePauseLayout, 50);   // Workaround Fix : SurfaceView
             }
         }
+    }
+
+    private boolean fullPreview = false;   //xuameng 判断当前是否全屏
+
+    public void setFullPreview(boolean fullPreview) {  //xuameng 判断当前是否全屏
+        this.fullPreview = fullPreview;
     }
 
 	public void mHidePauseIng() { //xuameng 隐藏暂停图标
@@ -2033,7 +2090,9 @@ public class VodController extends BaseController {
         @Override
         public void run() {
             mTvPausexu.requestLayout();  //xuameng暂停图标
+            mTvPausexu.invalidate(); 
             mPauseContainer.requestLayout();  // xuameng播放标题、暂停时间
+            mPauseContainer.invalidate();
         }
     };
 
@@ -2390,57 +2449,64 @@ public class VodController extends BaseController {
         switchPlayerCount++;
         return false;
     }
-    public void playM3u8(final String url, final HashMap < String, String > headers) {
-        if(url.contains("url=")) {
+
+    public void playM3u8(final String url, final HashMap<String, String> headers) {
+        if(url.contains("url=")){
             listener.startPlayUrl(url, headers);
             return;
         }
         OkGo.getInstance().cancelTag("m3u8-1");
         OkGo.getInstance().cancelTag("m3u8-2");
         final HttpHeaders okGoHeaders = new HttpHeaders();
-        if(headers != null) {
-            for(Map.Entry < String, String > entry: headers.entrySet()) {
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
                 okGoHeaders.put(entry.getKey(), entry.getValue());
             }
         }
-        OkGo. < String > get(url).tag("m3u8-1").headers(okGoHeaders).execute(new AbsCallback < String > () {
-            @Override
-            public void onSuccess(Response < String > response) {
-                String content = response.body();
-                if(!content.startsWith("#EXTM3U")) {
-                    listener.startPlayUrl(url, headers);
-                    return;
-                }
-                String forwardUrl = extractForwardUrl(url, content);
-                if(forwardUrl.isEmpty()) {
-                    LOG.i("echo-m3u81-to-play");
-                    processM3u8Content(url, content, headers);
-                } else {
-                    fetchAndProcessForwardUrl(forwardUrl, headers, okGoHeaders, url);
-                }
-            }
-            @Override
-            public String convertResponse(okhttp3.Response response) throws Throwable {
-                return response.body().string();
-            }
-            @Override
-            public void onError(Response < String > response) {
-                super.onError(response);
-                LOG.e("echo-m3u8请求错误1: " + response.getException());
-                listener.startPlayUrl(url, headers);
-            }
-        });
+        OkGo.<String>get(url)
+                .tag("m3u8-1")
+                .headers(okGoHeaders)
+                .execute(new AbsCallback<String>() {
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        String content = response.body();
+                        if (!content.startsWith("#EXTM3U")) {
+                            listener.startPlayUrl(url, headers);
+                            return;
+                        }
+                        String forwardUrl = extractForwardUrl(url, content);
+                        if (forwardUrl.isEmpty()) {
+                            LOG.i("echo-m3u81-to-play");
+                            processM3u8Content(url, content, headers);
+                        } else {
+                            fetchAndProcessForwardUrl(forwardUrl, headers, okGoHeaders, url);
+                        }
+                    }
+
+                    @Override
+                    public String convertResponse(okhttp3.Response response) throws Throwable {
+                        return response.body().string();
+                    }
+
+                    @Override
+                    public void onError(Response<String> response) {
+                        super.onError(response);
+                        LOG.e("echo-m3u8请求错误1: " + response.getException());
+                        listener.startPlayUrl(url, headers);
+                    }
+                });
     }
+
     private String extractForwardUrl(String baseUrl, String content) {
-        String[] lines = content.split("\\r?\\n", 50);
-        for(int i = 0; i < lines.length; i++) {
+        String[] lines = content.split("\\r?\\n",50);
+        for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
-            if(line.startsWith("#EXT-X-STREAM-INF")) {
+            if (line.startsWith("#EXT-X-STREAM-INF")) {
                 // 只需要找接下来的几行
-                for(int j = i + 1; j < lines.length; j++) {
+                for (int j = i + 1; j < lines.length; j++) {
                     String targetLine = lines[j].trim();
-                    if(targetLine.isEmpty()) continue;
-                    if(isValidM3u8Line(targetLine)) {
+                    if (targetLine.isEmpty()) continue;
+                    if (isValidM3u8Line(targetLine)) {
                         return resolveForwardUrl(baseUrl, targetLine);
                     }
                 }
@@ -2448,44 +2514,55 @@ public class VodController extends BaseController {
         }
         return "";
     }
+
     private boolean isValidM3u8Line(String line) {
         return !line.startsWith("#") && (line.endsWith(".m3u8") || line.contains(".m3u8?"));
     }
-    private void processM3u8Content(String url, String content, HashMap < String, String > headers) {
+
+    private void processM3u8Content(String url, String content, HashMap<String, String> headers) {
         String basePath = getBasePath(url);
         RemoteServer.m3u8Content = M3u8.purify(basePath, content);
-        if(RemoteServer.m3u8Content == null || M3u8.currentAdCount == 0) {
+        if (RemoteServer.m3u8Content == null || M3u8.currentAdCount==0) {
             LOG.i("echo-m3u8内容解析：未检测到广告");
             listener.startPlayUrl(url, headers);
         } else {
-            listener.startPlayUrl(ControlManager.get().getAddress(true) + "proxyM3u8", headers);
+            String proxyUrl = ControlManager.get().getAddress(true) + "proxyM3u8";
+            listener.onM3u8ProxyUrl(proxyUrl, url);
+            listener.startPlayUrl(proxyUrl, headers);
             App.showToastShort(getContext(), "聚汇影视已移除" + M3u8.currentAdCount + "条视频广告！");
         }
     }
-    private void fetchAndProcessForwardUrl(final String forwardUrl, final HashMap < String, String > headers, HttpHeaders okGoHeaders, final String fallbackUrl) {
-        OkGo. < String > get(forwardUrl).tag("m3u8-2").headers(okGoHeaders).execute(new AbsCallback < String > () {
-            @Override
-            public void onSuccess(Response < String > response) {
-                String content = response.body();
-                LOG.i("echo-m3u82-to-play");
-                processM3u8Content(forwardUrl, content, headers);
-            }
-            @Override
-            public String convertResponse(okhttp3.Response response) throws Throwable {
-                return response.body().string();
-            }
-            @Override
-            public void onError(Response < String > response) {
-                super.onError(response);
-                LOG.e("echo-重定向 m3u8 请求错误: " + response.getException());
-                listener.startPlayUrl(fallbackUrl, headers);
-            }
-        });
+
+    private void fetchAndProcessForwardUrl(final String forwardUrl, final HashMap<String, String> headers,
+                                           HttpHeaders okGoHeaders, final String fallbackUrl) {
+        OkGo.<String>get(forwardUrl)
+                .tag("m3u8-2")
+                .headers(okGoHeaders)
+                .execute(new AbsCallback<String>() {
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        String content = response.body();
+                        LOG.i("echo-m3u82-to-play");
+                        processM3u8Content(forwardUrl, content, headers);
+                    }
+                    @Override
+                    public String convertResponse(okhttp3.Response response) throws Throwable {
+                        return response.body().string();
+                    }
+                    @Override
+                    public void onError(Response<String> response) {
+                        super.onError(response);
+                        LOG.e("echo-重定向 m3u8 请求错误: " + response.getException());
+                        listener.startPlayUrl(fallbackUrl, headers);
+                    }
+                });
     }
+
     private String getBasePath(String url) {
         int ilast = url.lastIndexOf('/');
         return url.substring(0, ilast + 1);
     }
+
     private String resolveForwardUrl(String baseUrl, String line) {
         try {
             // 使用 URL 构造器自动解析相对路径
@@ -2498,8 +2575,8 @@ public class VodController extends BaseController {
             return line;
         }
     }
-    public String firstUrlByArray(String url) //xuameng B站
-    {
+
+    public String firstUrlByArray(String url) {  //xuameng B站
         try {
             JSONArray urlArray = new JSONArray(url);
             for(int i = 0; i < urlArray.length(); i++) {
@@ -2512,6 +2589,7 @@ public class VodController extends BaseController {
         } catch (JSONException e) {}
         return url;
     }
+
     public void evaluateScript(SourceBean sourceBean, String url, WebView web_view, XWalkView xWalk_view) {
         String clickSelector = sourceBean.getClickSelector().trim();
         clickSelector = clickSelector.isEmpty() ? VideoParseRuler.getHostScript(url) : clickSelector;
@@ -2544,6 +2622,7 @@ public class VodController extends BaseController {
             }
         }
     }
+	
     public void stopOther(){ //xuameng停止磁力下载
         Thunder.stop(false); //停止磁力下载
         Jianpian.finish(); //停止p2p下载
