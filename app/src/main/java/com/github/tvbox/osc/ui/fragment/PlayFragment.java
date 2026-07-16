@@ -49,6 +49,7 @@ import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.bean.Subtitle;
 import com.github.tvbox.osc.bean.VodInfo;
 import com.github.tvbox.osc.cache.CacheManager;
+import com.github.tvbox.osc.dlna.CastVideo;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.player.IjkMediaPlayer;
 import com.github.tvbox.osc.player.EXOmPlayer;
@@ -58,6 +59,7 @@ import com.github.tvbox.osc.player.TrackInfoBean;
 import com.github.tvbox.osc.player.controller.VodController;
 import com.github.tvbox.osc.server.ControlManager;
 import com.github.tvbox.osc.ui.adapter.SelectDialogAdapter;
+import com.github.tvbox.osc.ui.dialog.CastDeviceDialog;
 import com.github.tvbox.osc.ui.dialog.SearchSubtitleDialog;
 import com.github.tvbox.osc.ui.dialog.SelectDialog;
 import com.github.tvbox.osc.ui.dialog.SubtitleDialog;
@@ -194,10 +196,14 @@ public class PlayFragment extends BaseLazyFragment {
         if (danmuLoadController != null) danmuLoadController.applySettings(reload);
     }
 
-    private void checkDanmu(String danmu) { //xuameng 弹幕
+    private void checkDanmu(String danmu) {  //xuameng 弹幕
+        checkDanmu(danmu, null);
+    }
+
+    private void checkDanmu(String danmu, DanmuLoadController.LoadCallback callback) {  //xuameng 弹幕
         if (danmuLoadController != null) {
             VodInfo.VodSeries series = mVodInfo == null ? null : getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
-            danmuLoadController.check(danmu, mVodInfo == null ? "" : mVodInfo.name, series == null ? "" : series.name);
+            danmuLoadController.check(danmu, mVodInfo == null ? "" : mVodInfo.name, series == null ? "" : series.name, callback);
         }
     }
 
@@ -373,12 +379,84 @@ public class PlayFragment extends BaseLazyFragment {
                     setDanmuViewSettings(true);
 				}
             }
+
             @Override
-            public void startPlayUrl(String url, HashMap<String, String> headers) {
+            public void startPlayUrl(String url, HashMap<String, String> headers) {  //xuameng广告过滤
+                if (!TextUtils.isEmpty(m3u8SourceUrl) && !isM3u8ProxyUrl(url)) clearM3u8ProxyUrl();
                 goPlayUrl(url, headers);
+            }
+
+            @Override
+            public void onM3u8ProxyUrl(String proxyUrl, String sourceUrl) {  //xuameng广告过滤
+                m3u8ProxyUrl = proxyUrl;
+                m3u8SourceUrl = sourceUrl;
+            }
+
+            @Override
+            public void clickCast() {   //xuameng 投屏
+                showCastDialog();
             }
         });
         mVideoView.setVideoController(mController);
+    }
+
+    private void showCastDialog() {
+        if (TextUtils.isEmpty(webPlayUrl)) {
+            App.showToastShort(mContext, "播放地址为空！无法投屏！");
+            return;
+        }
+        HashMap<String, String> headers = webHeaderMap == null ? null : new HashMap<>(webHeaderMap);
+        CastVideo video = new CastVideo(getCastUrl(webPlayUrl), getCastTitle(), headers, getCastPosition());
+        CastDeviceDialog dialog = new CastDeviceDialog(requireActivity(), video);
+        dialog.setOnCastListener(new CastDeviceDialog.OnCastListener() {
+            @Override
+            public void onCastSuccess() {
+                if (mVideoView != null) mVideoView.pause();
+            }
+
+            @Override
+            public void onCastFailed() {
+            }
+        });
+        dialog.show();
+    }
+
+	    private String getCastTitle() {
+        if (mVodInfo == null) return "TVBox";
+        try {
+            VodInfo.VodSeries series = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
+            return mVodInfo.name + " " + series.name;
+        } catch (Exception e) {
+            return TextUtils.isEmpty(mVodInfo.name) ? "TVBox" : mVodInfo.name;
+        }
+    }
+
+    private long getCastPosition() {
+        try {
+            return mVideoView == null ? 0 : mVideoView.getCurrentPosition();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private String getCastUrl(String url) {
+        if (TextUtils.isEmpty(url)) return url;
+        if (isM3u8ProxyUrl(url) && !TextUtils.isEmpty(m3u8SourceUrl)) return m3u8SourceUrl;
+        String local = ControlManager.get().getAddress(true);
+        String server = ControlManager.get().getAddress(false);
+        if (!TextUtils.isEmpty(local) && !TextUtils.isEmpty(server) && url.startsWith(local)) {
+            return server + url.substring(local.length());
+        }
+        return url;
+    }
+
+    private boolean isM3u8ProxyUrl(String url) {
+        return !TextUtils.isEmpty(m3u8ProxyUrl) && url.equals(m3u8ProxyUrl);
+    }
+
+    private void clearM3u8ProxyUrl() {
+        m3u8ProxyUrl = null;
+        m3u8SourceUrl = null;
     }
 
     //设置字幕
@@ -443,6 +521,9 @@ public class PlayFragment extends BaseLazyFragment {
                             public void run() {
                                 String zimuUrl = subtitle.getUrl();
                                 LOG.i("echo-Remote Subtitle Url: " + zimuUrl);
+                                mController.mSubtitleView.destroy();
+                                mController.mSubtitleView.clearSubtitleCache();
+                                mController.mSubtitleView.isInternal = true;
                                 setSubtitle(zimuUrl);//设置字幕
                                 if (mController.mExoSubtitleView.getVisibility() == View.VISIBLE){  //xuameng 使用搜索字幕隐藏EXO PGS字幕
                                     mController.mExoSubtitleView.setVisibility(View.GONE);
@@ -474,6 +555,9 @@ public class PlayFragment extends BaseLazyFragment {
                             @Override
                             public void onChoosePath(String path, File pathFile) {
                                 LOG.i("echo-Local Subtitle Path: " + path);
+                                mController.mSubtitleView.destroy();
+                                mController.mSubtitleView.clearSubtitleCache();
+                                mController.mSubtitleView.isInternal = true;
                                 setSubtitle(path);//设置字幕
                                 if (mController.mExoSubtitleView.getVisibility() == View.VISIBLE){  //xuameng 使用搜索字幕隐藏EXO PGS字幕
                                     mController.mExoSubtitleView.setVisibility(View.GONE);
@@ -739,6 +823,7 @@ public class PlayFragment extends BaseLazyFragment {
             errorWithRetry("播放地址为空", false);
             return;
         }
+        webPlayUrl=url;
         LOG.i("playUrl:" + url);
         final String finalUrl = url;
         requireActivity().runOnUiThread(new Runnable() {
@@ -1006,6 +1091,7 @@ public class PlayFragment extends BaseLazyFragment {
                             LOG.i("echo-ignore stale play result");
                             return;
                         }
+                        webPlayUrl = null;
                         progressKey = info.optString("proKey", null);
                         boolean parse = info.optString("parse", "1").equals("1");
                         boolean jx = info.optString("jx", "0").equals("1");
@@ -1084,6 +1170,9 @@ public class PlayFragment extends BaseLazyFragment {
                         String flag = info.optString("flag");
                         String url = info.getString("url");
                         String danmaku = info.optString("danmaku", ""); //xuameng 弹幕
+                        if (DanmakuApi.hasCustomApi()) danmaku = "";
+                        final String danmuProgressKey = progressKey;
+                        boolean fallbackToDefaultSearch = DanmakuApi.isUseDefault() && danmaku.trim().startsWith("http");
                         if(url.startsWith("[")){
                             url=mController.firstUrlByArray(url);
                         }
@@ -1103,8 +1192,12 @@ public class PlayFragment extends BaseLazyFragment {
                             mController.showParse(false);
                             playUrl(playUrl + url, headers);
                         }
-                        checkDanmu(danmaku); //xuameng 弹幕
-                        searchDanmu(danmaku); //xuameng 弹幕
+                        checkDanmu(danmaku, fallbackToDefaultSearch ? () -> {   //xuameng 弹幕
+                            if (DanmakuApi.isUseDefault() && TextUtils.equals(danmuProgressKey, progressKey)) {
+                                searchDanmu("");
+                            }
+                        } : null);
+                        searchDanmu(danmaku);   //xuameng 弹幕
                     } catch (Throwable th) {
                         errorWithRetry("获取播放信息错误", true);
                     }
@@ -1270,6 +1363,9 @@ public class PlayFragment extends BaseLazyFragment {
 
     public void isFullPreview(boolean fullPreview) {  //xuameng 非小窗口模式返回后播放BUG
         this.fullPreview = fullPreview;
+        if (mController != null) {
+            mController.setFullPreview(fullPreview);   //xuameng 判断当前是否全屏
+        }
     }
 
     public void setExitingPreview(boolean exitingPreview) {  //xuameng是否彻底退出页面
@@ -1612,6 +1708,7 @@ public class PlayFragment extends BaseLazyFragment {
             mController.setTitle(playTitleInfo);
         }
         stopParse();
+        webPlayUrl = null;
         webHeaderMap = null;
         initParseLoadFound();
         resetDanmuState(); //xuameng 弹幕
@@ -1671,6 +1768,9 @@ public class PlayFragment extends BaseLazyFragment {
     private String webUrl;
     private String webUserAgent;
     private HashMap<String, String > webHeaderMap;
+    private String webPlayUrl;
+    private String m3u8ProxyUrl;
+    private String m3u8SourceUrl;
 
     private void initParse(String flag, boolean useParse, String playUrl, final String url) {
         parseFlag = flag;
@@ -1808,6 +1908,7 @@ public class PlayFragment extends BaseLazyFragment {
         }
         mController.stopOther();
         resetDanmuState();
+        webPlayUrl = null;
         webHeaderMap = null;
         initParseLoadFound();
     }
