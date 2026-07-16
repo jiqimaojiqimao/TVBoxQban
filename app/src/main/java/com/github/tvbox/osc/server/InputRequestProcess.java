@@ -57,10 +57,8 @@ public class InputRequestProcess implements RequestProcess {
                             break;
                         }
                         case "push": {
-                            String url = params.get("url");
-                            if (url != null && url.trim().length() > 0) {
-                                mDataReceiver.onPushReceived(url.trim());
-                            }
+                            // 暂未实现
+                            mDataReceiver.onPushReceived(params.get("url").trim());
                             break;
                         }
                         case "mirror": {
