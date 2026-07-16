@@ -466,6 +466,19 @@
                     android:singleLine="true"
                     android:layout_marginEnd="@dimen/vs_5"/>
                 <TextView
+                    android:id="@+id/play_cast"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/vs_5"
+                    android:layout_marginRight="@dimen/vs_5"
+                    android:background="@drawable/button_dialog_main_1"
+                    android:focusable="true"
+                    android:padding="@dimen/vs_10"
+                    android:visibility="visible"
+                    android:text="投屏"
+                    android:textColor="@android:color/white"
+                    android:textSize="@dimen/ts_20"/>
+                <TextView
                     android:id="@+id/danmu_setting"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
