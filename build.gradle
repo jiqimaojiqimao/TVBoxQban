@@ -32,6 +32,10 @@ allprojects {
         maven { url = "https://maven.aliyun.com/repository/public" }
         maven { url = "https://maven.aliyun.com/repository/releases" }
         gradlePluginPortal()
+        maven {
+            url "http://4thline.org/m2"
+            allowInsecureProtocol = true
+        }
     }
 }
 
