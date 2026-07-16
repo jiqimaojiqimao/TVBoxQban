@@ -3,19 +3,17 @@ package com.github.tvbox.osc.player.thirdparty;
 import android.app.Activity;
 import android.text.TextUtils;
 import com.github.tvbox.osc.base.App;
-import com.github.tvbox.osc.bean.IpScanningVo;
 import com.github.tvbox.osc.server.RemoteServer;
 import com.github.tvbox.osc.util.HawkConfig;
-import com.github.tvbox.osc.util.IpScanning;
 import com.github.tvbox.osc.util.OkGoHelper;
 import com.orhanobut.hawk.Hawk;
 
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import okhttp3.Call;
 import okhttp3.FormBody;
@@ -40,7 +38,7 @@ public class RemoteTVBox {
                 url = url + "|";
                 int idx = 0;
                 for (String hk : headers.keySet()) {
-                    url += hk + "=" + URLEncoder.encode(headers.get(hk), "UTF-8");
+                    url += URLEncoder.encode(hk, "UTF-8") + "=" + URLEncoder.encode(headers.get(hk), "UTF-8");
                     if (idx < headers.keySet().size() -1) {
                         url += "&";
                     }
@@ -68,57 +66,73 @@ public class RemoteTVBox {
         return true;
     }
 
-    private static int avalibleFailNum;
-    private static int avalibleSuccessNum;
-    private static int avalibleIpNum;
-
     public static void searchAvalible(Callback callback) {
-        avalibleFailNum = 0;
-        avalibleSuccessNum = 0;
-        String localIp = RemoteServer.getLocalIPAddress(App.getInstance());
-        List<IpScanningVo> searchList = new IpScanning().search(localIp, false);
-        avalibleIpNum = searchList.size();
-        int port = 9978;
-        for(IpScanningVo one : searchList) {
-            String ip = one.getIp();
+        final String localIp = RemoteServer.getLocalIPAddress(App.getInstance());
+        int divisionIp = TextUtils.isEmpty(localIp) ? -1 : localIp.lastIndexOf(".");
+        if (divisionIp <= 0) {
+            callback.fail(true, true);
+            return;
+        }
+        final String prefix = localIp.substring(0, divisionIp + 1);
+        final int port = 9978;
+        final AtomicInteger finishedNum = new AtomicInteger(0);
+        final AtomicInteger foundNum = new AtomicInteger(0);
+        final int total = 254;
+        for (int i = 1; i <= 255; i++) {
+            String ip = prefix + i;
             if (ip.equals(localIp)) {
-                avalibleIpNum --;
                 continue;
             }
-            String actionUrl = "http://" + ip + ":" + port + "/action";
-            String viewHost = ip + ":" + port;
-            
+            final String actionUrl = "http://" + ip + ":" + port + "/action";
+            final String viewHost = ip + ":" + port;
             try {
                 post(actionUrl, null, new okhttp3.Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
-                        avalibleFailNum++;
-                        callback.fail(avalibleFailNum == avalibleIpNum, (avalibleSuccessNum + avalibleFailNum) == avalibleIpNum);
+                        notifySearchFail(callback, foundNum, finishedNum, total);
                     }
+
                     @Override
                     public void onResponse(Call call, Response response) throws IOException {
-                        avalibleSuccessNum ++;
-                        // 1. xuameng获取远端返回的内容，例如 "ok|Xiaomi Box"  result包包含远端主机名
-                        String result = response.body().string();
-                        
-                        // 2. xuameng判断是否成功（只要以 ok 开头就算成功）
-                        if (result.startsWith("ok")) {
-                            String deviceName = "聚汇影视"; // 默认名字
-                            
-                            // 3. xuameng解析设备名：如果包含 "|"，就分割取第二部分  因为result返回的是 "ok|" + App.deviceName);
-                            if (result.contains("|")) {
-                                deviceName = result.split("\\|")[1];
+                        try {
+		                    // 1. xuameng获取远端返回的内容，例如 "ok|Xiaomi Box"  result包包含远端主机名
+                            String result = response.body() == null ? "" : response.body().string();
+                            boolean end = finishedNum.incrementAndGet() == total;
+
+                            // 2. xuameng判断是否成功（只要以 ok 开头就算成功）
+                            if (result.startsWith("ok")) {
+                                String deviceName = "聚汇影视"; // 默认名字
+                                // 3. xuameng解析设备名：如果包含 "|"，就分割取第二部分  因为result返回的是 "ok|" + App.deviceName);
+                                if (result.contains("|")) {
+                                    deviceName = result.split("\\|")[1];
+                                }
+
+                                // 4. xuameng找到设备，数量+1
+                                foundNum.incrementAndGet();
+
+                                // 5. xuameng传给回调
+                                callback.found(viewHost, deviceName, end);
+                            } else {
+                                callback.fail(foundNum.get() == 0 && end, end);
                             }
-                            
-                            // 4. xuameng传给回调
-                            callback.found(viewHost, deviceName, (avalibleSuccessNum + avalibleFailNum) == avalibleIpNum);
+                            // ===== xuameng结束 =====
+
+                        } finally {
+                            response.close();
                         }
                     }
                 });
-            } catch (Exception e) { }
+            } catch (Exception e) {
+                notifySearchFail(callback, foundNum, finishedNum, total);
+            }
         }
-        return;
     }
+
+    private static void notifySearchFail(Callback callback, AtomicInteger foundNum, AtomicInteger finishedNum, int total) {
+        boolean end = finishedNum.incrementAndGet() == total;
+        callback.fail(foundNum.get() == 0 && end, end);
+    }
+
 
 /*    public static String getAvalible() {
         return Hawk.get(HawkConfig.REMOTE_TVBOX, null);
