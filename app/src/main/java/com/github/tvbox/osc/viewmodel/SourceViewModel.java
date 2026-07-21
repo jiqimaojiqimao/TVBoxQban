@@ -1378,7 +1378,7 @@ public class SourceViewModel extends ViewModel {
         Movie.Video video = new Movie.Video();
         video.id = url;
         video.name = url;
-        video.type = "推送";
+        video.type = "🥇聚汇推送";
         video.sourceKey = sourceKey;
         video.urlBean = new Movie.Video.UrlBean();
         video.urlBean.infoList = new ArrayList<>();
