@@ -20,6 +20,7 @@ import com.github.tvbox.osc.ui.adapter.SettingPageAdapter;
 import com.github.tvbox.osc.ui.fragment.ModelSettingFragment;
 import com.github.tvbox.osc.util.AppManager;
 import com.github.tvbox.osc.util.HawkConfig;
+import com.github.tvbox.osc.viewmodel.SourceViewModel;
 import com.orhanobut.hawk.Hawk;
 import com.owen.tvrecyclerview.widget.TvRecyclerView;
 import com.owen.tvrecyclerview.widget.V7LinearLayoutManager;
@@ -156,6 +157,14 @@ public class SettingActivity extends BaseActivity {
 
     String devMode = "";
 
+    private void clearConfigSwitchCache() {  //xuameng 清除配置切换缓存
+        try {
+            SourceViewModel.clearRuntimeCache();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -194,19 +203,23 @@ public class SettingActivity extends BaseActivity {
 		}
         if (currentApi.equals(Hawk.get(HawkConfig.API_URL, ""))) {   //xuameng 如何配置地址没变
             if(dnsOpt != Hawk.get(HawkConfig.DOH_URL, 0)){  //xuameng DNS更改重启
+                clearConfigSwitchCache();
                 AppManager.getInstance().finishAllActivity();
                 jumpActivity(HomeActivity.class);
             }else if (!currentLiveApi.equals(Hawk.get(HawkConfig.LIVE_API_URL, ""))){    //xuameng修复直播API不刷新问题   重启
+                clearConfigSwitchCache();
                 AppManager.getInstance().finishAllActivity();
                 jumpActivity(HomeActivity.class);
             }else if (HawkConfig.ISrestore){     //xuameng 恢复重启
+                HawkConfig.ISrestore = false;  //xuameng恢复成功,请重启应用
+                clearConfigSwitchCache();
                 AppManager.getInstance().finishAllActivity();
                 jumpActivity(HomeActivity.class);
-                HawkConfig.ISrestore = false;  //xuameng恢复成功,请重启应用
             }else if (homeRec != Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC)) {//xuameng 更改数据源或首页推荐
                 jumpActivity(HomeActivity.class, createBundle());
             }
         } else {
+            clearConfigSwitchCache();
             AppManager.getInstance().finishAllActivity();
             jumpActivity(HomeActivity.class);
         }
