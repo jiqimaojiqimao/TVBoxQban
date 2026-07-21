@@ -536,17 +536,15 @@ public class HomeActivity extends BaseActivity {
             previousHomeName = tvName.getText() == null ? null : tvName.getText().toString();
             tvName.setText(home.getName());
         }
-        tvNameAnimation();
+		if (keepCurrentContent){
+            tvNameAnimation();
+		}
         if (home == null) {
             loadingSourceKey = null;
-            if (!keepCurrentContent) showLoading();
             sourceViewModel.getSort(null);
             return;
         }
         loadingSourceKey = home.getKey();
-        if (!keepCurrentContent) {
-            showLoading();
-        }
         sourceViewModel.getSort(loadingSourceKey);
     }
 
