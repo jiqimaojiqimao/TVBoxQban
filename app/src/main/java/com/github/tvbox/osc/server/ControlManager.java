@@ -8,7 +8,8 @@ import android.text.TextUtils;
 
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.receiver.SearchReceiver;
-import com.github.tvbox.osc.receiver.DetailReceiver;  //xuameng推送
+import com.github.tvbox.osc.receiver.DetailReceiver;  //xuameng远程推送
+import com.github.tvbox.osc.receiver.PushReceiver;  //xuameng 内部推送
 import com.github.tvbox.osc.util.HistoryHelper;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.orhanobut.hawk.Hawk;
@@ -103,10 +104,10 @@ public class ControlManager {
 
                 @Override
                 public void onPushReceived(String url) {
-                    EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_PUSH_URL, url));
+                    PushReceiver.send(mContext, url);  //xuameng 内部推送
                 }
                 @Override
-                public void onMirrorReceived(String id, String sourceKey) {         //xuameng 推送
+                public void onMirrorReceived(String id, String sourceKey) {         //xuameng 远程推送
                     if (!TextUtils.isEmpty(id) && !TextUtils.isEmpty(sourceKey)) {
                         Intent intent = new Intent();
                         Bundle bundle = new Bundle();
