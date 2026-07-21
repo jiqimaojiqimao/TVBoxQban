@@ -695,7 +695,29 @@ public class VodController extends BaseController {
                 mHandler.post(xuRunnable);
             }
         });
-        mGridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false));
+        //mGridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false));
+        mGridView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false) {  //xuameng 设置解析列表上下键默认焦点 下一键、播放
+            @Override
+            public View onInterceptFocusSearch(View focused, int direction) {
+                View root = focused.getRootView();
+
+                if (direction == View.FOCUS_UP) {
+                    View target = root.findViewById(R.id.play_next);
+                    if (target != null && target.isShown() && target.isFocusable()) {
+                        return target;
+                    }
+                }
+
+/*                if (direction == View.FOCUS_DOWN) {
+                    View target = root.findViewById(R.id.mxuplay);
+                    if (target != null && target.isShown() && target.isFocusable()) {
+                        return target;
+                    }
+                }
+*/
+                return super.onInterceptFocusSearch(focused, direction);
+            }
+        });
         ParseAdapter parseAdapter = new ParseAdapter();
         parseAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
