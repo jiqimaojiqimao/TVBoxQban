@@ -15,6 +15,7 @@ import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.bean.VodInfo;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.event.ServerEvent;
+import com.github.tvbox.osc.receiver.PushReceiver;
 import com.github.tvbox.osc.util.FileUtils;
 import com.github.tvbox.osc.util.LOG;
 import com.github.tvbox.osc.util.OkGoHelper;
@@ -193,7 +194,7 @@ public class RemoteServer extends NanoHTTPD {
                     } else {
                         url = URLDecoder.decode(url);
                     }
-                    EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_PUSH_URL, url));
+                    PushReceiver.send(mContext, url);
                     return NanoHTTPD.newFixedLengthResponse(NanoHTTPD.Response.Status.OK, NanoHTTPD.MIME_PLAINTEXT, "ok");    
                 } else if (fileName.equals("/action")) {
                     return handleAction(session.getParms());
