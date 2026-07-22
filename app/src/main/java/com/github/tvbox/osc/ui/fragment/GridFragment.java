@@ -404,6 +404,7 @@ public class GridFragment extends BaseLazyFragment {
                 if (pullRefreshReady) {
                     pullRefreshReady = false;
                     forceRefresh();
+                    App.showToastShort(getContext(), "页面刷新！");
                     return true;
                 }
                 break;
