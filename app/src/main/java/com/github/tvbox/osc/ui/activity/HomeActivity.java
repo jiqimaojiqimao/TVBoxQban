@@ -158,7 +158,6 @@ public class HomeActivity extends BaseActivity {
 
     @Override
     protected void init() {
-//        setupExceptionHandler(); // xuameng异常捕获
         EventBus.getDefault().register(this);
         ControlManager.get().startServer();
         initView();
@@ -187,9 +186,7 @@ public class HomeActivity extends BaseActivity {
         sortAdapter.registerAdapterDataObserver(new TvRecyclerView.AdapterDataObserver() {
             @Override
             public void onChanged() {
-                if (!mGridViewHasFocus) {  //xuameng主页没有拥有焦点时执行
-                    mGridView.setSelection(0);   //xuameng setSelectedPosition不能获取焦点
-                }
+                selectGridViewHome(); //xuameng主页焦点
             }
         });
 
@@ -249,12 +246,12 @@ public class HomeActivity extends BaseActivity {
                     BaseLazyFragment baseLazyFragment = fragments.get(sortFocused);
                     if (baseLazyFragment instanceof UserFragment) {
                         refreshHomeSort();
-                        App.showToastShort(HomeActivity.this, "主页刷新成功！");	
+                        App.showToastShort(HomeActivity.this, "主页刷新！");	
                         return true;
                     }
                     if ((baseLazyFragment instanceof GridFragment)) {
                         ((GridFragment) baseLazyFragment).forceRefresh();
-                        App.showToastShort(HomeActivity.this, "页面刷新成功！");	
+                        App.showToastShort(HomeActivity.this, "页面刷新！");	
                     }
                 }
                 if (direction != View.FOCUS_DOWN) {
@@ -287,7 +284,7 @@ public class HomeActivity extends BaseActivity {
                 FastClickCheckUtil.check(v);
                 if(dataInitOk && jarInitOk){
                     refreshHome(false);
-                    App.showToastShort(HomeActivity.this, "重新加载主页数据！");
+                    App.showToastShort(HomeActivity.this, "重载数据！");
                 }else {
                     jumpActivity(SettingActivity.class);   //xuameng加载慢跳转设置
                 }
@@ -316,7 +313,6 @@ public class HomeActivity extends BaseActivity {
             }
         });
         setLoadSir(this.contentLayout);
-        //mHandler.postDelayed(mFindFocus, 500);
     }
 
     private boolean skipNextUpdate = false;
@@ -330,7 +326,7 @@ public class HomeActivity extends BaseActivity {
                     skipNextUpdate = false;
                     return;
                 }
-                if (!homeSortLoading && loadingSourceKey == null) {
+                if (!homeSortLoading && loadingSourceKey == null && !refreshHomeRec) {
                     return;
                 }
                 if (absXml != null && absXml.sourceKey != null && loadingSourceKey != null && !loadingSourceKey.equals(absXml.sourceKey)) {
@@ -349,11 +345,11 @@ public class HomeActivity extends BaseActivity {
                 initViewPager(absXml);
                 updateHomeRec(absXml);
                 if (home != null && home.getName() != null && !home.getName().isEmpty()) tvName.setText(home.getName());
-                tvName.clearAnimation();
                 homeSortLoading = false;
                 loadingSourceKey = null;
                 previousHomeName = null;
                 previousHomeSource = null;
+                selectGridViewHome(); //xuameng主页焦点
             }
         });
     }
@@ -375,7 +371,6 @@ public class HomeActivity extends BaseActivity {
             if(!useCacheConfig)warmSearchSpidersOnce();  //xuameng搜索预热
             return;
         }
-        tvNameAnimation();
         showLoading();
         if (dataInitOk && !jarInitOk) {
             if (!ApiConfig.get().getSpider().isEmpty()) {
@@ -530,15 +525,14 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void loadHomeSort(boolean keepCurrentContent) { //xuameng 获取主页分类数据
+        showLoading();
         SourceBean home = ApiConfig.get().getHomeSourceBean();
         homeSortLoading = keepCurrentContent;
         if (keepCurrentContent && home != null && home.getName() != null && !home.getName().isEmpty()) {
             previousHomeName = tvName.getText() == null ? null : tvName.getText().toString();
             tvName.setText(home.getName());
         }
-		if (keepCurrentContent){
-            tvNameAnimation();
-		}
+
         if (home == null) {
             loadingSourceKey = null;
             sourceViewModel.getSort(null);
@@ -752,8 +746,11 @@ public class HomeActivity extends BaseActivity {
                     sortAdapter.notifyItemChanged(pos);
                 }
             }
-        } else if (event.type == RefreshEvent.TYPE_HOME_SOURCE_CHANGE) {
+        } else if (event.type == RefreshEvent.TYPE_HOME_SOURCE_CHANGE) {  //xuameng 换源刷新数据
             refreshHome(false);
+        } else if (event.type == RefreshEvent.TYPE_SET_PREVIOUS_HOME_SOURCE) {  //xuameng 上次的主页源
+            SourceBean bean = (SourceBean) event.obj;
+            this.previousHomeSource = bean;  //xuameng 上次的主页源
         }
     }
 
@@ -923,13 +920,13 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
-    private void refreshHome() {
+    public void refreshHome() {
+        FileUtils.clearSpiderCacheFiles();
         refreshHome(true);
     }
 
-    private void refreshHomeSort() {  //xuameng 刷新 主页默认数据 热播 推荐
+    public void refreshHomeSort() {  //xuameng 刷新 主页默认数据 热播 推荐
         refreshHomeRec = true;
-        showLoading();
         if (Hawk.get(HawkConfig.HOME_REC_STYLE, false)) {
             if (UserFragment.homeHotVodAdapter != null) {
                 UserFragment.homeHotVodAdapter.setNewData(new ArrayList<Movie.Video>());
@@ -1027,14 +1024,13 @@ public class HomeActivity extends BaseActivity {
         showSuccess();
         sortAdapter.setNewData(DefaultConfig.adjustSort(ApiConfig.get().getHomeSourceBean().getKey(), new ArrayList<>(), true));
         initViewPager(null);
-        tvName.clearAnimation();
         App.showToastShort(HomeActivity.this, "聚汇影视提示：已打断当前源加载！");
     }
 
     private void cancelHomeSortLoading() {  //xuameng打断切换源加载
+        showSuccess();
         homeSortLoading = false;
         loadingSourceKey = null;
-        tvName.clearAnimation();
         if (previousHomeSource != null) {
             ApiConfig.get().setSourceBean(previousHomeSource);
         }
@@ -1044,18 +1040,17 @@ public class HomeActivity extends BaseActivity {
         previousHomeSource = null;
         previousHomeName = null;
         App.showToastShort(HomeActivity.this, "聚汇影视提示：已打断当前源加载！");
-    }
-
-    private void tvNameAnimation(){  //xuameng 源名称动画
-        tvName.clearAnimation();
-        AlphaAnimation blinkAnimation = new AlphaAnimation(0.0f, 1.0f);
-        blinkAnimation.setDuration(400);
-        blinkAnimation.setStartOffset(20);
-        blinkAnimation.setRepeatMode(Animation.REVERSE);
-        blinkAnimation.setRepeatCount(Animation.INFINITE);
-        tvName.startAnimation(blinkAnimation);
+        selectGridViewHome(); //xuameng主页焦点
     }
 	
+    private void selectGridViewHome() {  //xuameng主页焦点
+        mGridView.post(() -> {
+            if (!mGridViewHasFocus) {  //xuameng主页没有拥有焦点时执行
+                mGridView.setSelection(0); //xuameng setSelectedPosition不能获取焦点
+            }
+        });
+    }
+
     // 触发权限检查的入口方法
     public void checkMicrophonePermission() {
         if (Build.VERSION.SDK_INT >= MARSHMALLOW) {
@@ -1173,29 +1168,4 @@ public class HomeActivity extends BaseActivity {
         }
     }
 
-/*    // xuameng添加全局异常处理器
-    private void setupExceptionHandler() {
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable throwable) {
-                LOG.e("HomeActivity未捕获异常: ");
-                throwable.printStackTrace();
-            
-                // 如果是LayoutManager相关的空指针异常，重启
-                if (throwable instanceof NullPointerException) {
-                    String stackTrace = Log.getStackTraceString(throwable);
-                    if (stackTrace.contains("findViewByPosition") || 
-                        stackTrace.contains("LayoutManager")) {
-                        Intent intent = new Intent(App.getInstance(), HomeActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
-                        // 强制停止当前进程
-                        android.os.Process.killProcess(android.os.Process.myPid());
-                        System.exit(0);
-                    }
-                }            
-            }
-        });
-    }
-*/
 }
