@@ -59,6 +59,8 @@ import com.hjq.permissions.Permission;
 import com.hjq.permissions.XXPermissions;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -129,6 +131,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
 
     @Override
     protected void init() {
+        EventBus.getDefault().register(this);
         tvFastSearchText = findViewById(R.id.showFastSearchText);
         tvm3u8AdText = findViewById(R.id.m3u8AdText);    //xuameng去广告
         tvSwitchDecode = findViewById(R.id.tvSwitchDecode);    //解码切换
@@ -326,8 +329,10 @@ public class ModelSettingFragment extends BaseLazyFragment {
                         @Override
                         public void click(SourceBean value, int pos) {
                             mSiteSwitchDialog.dismiss();
+                            SourceBean targetSource = ApiConfig.get().getHomeSourceBean(); //xuameng 上次的主页源
                             ApiConfig.get().setSourceBean(value);
                             tvHomeApi.setText(ApiConfig.get().getHomeSourceBean().getName());
+                            EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SET_PREVIOUS_HOME_SOURCE, targetSource)); //xuameng告诉HOME上次的主页源以便恢复
                             EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_HOME_SOURCE_CHANGE));
                         }
                         @Override
@@ -928,8 +933,9 @@ public class ModelSettingFragment extends BaseLazyFragment {
     @Override
     public void onDestroyView() {
         OkGo.getInstance().cancelTag("wallpaperDown");   //xuameng打断下载
-        super.onDestroyView();
+        EventBus.getDefault().unregister(this);
         SettingActivity.callback = null;
+        super.onDestroyView();
     }
 
     String getHomeRecName(int type) {
@@ -1131,6 +1137,20 @@ public class ModelSettingFragment extends BaseLazyFragment {
         }
         String config = ApiConfig.get().getDanmaku();
         tvDanmuApiText.setText(config.isEmpty() ? "默认" : "接口");
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void refresh(RefreshEvent event) {     //xuameng 远程聚汇影视变更后更新UI
+        if (event.type == RefreshEvent.TYPE_REMOTE_TVBOX_CHANGE) {
+            refreshPlayName();
+        }
+    }
+
+    private void refreshPlayName() {   //xuameng 远程聚汇影视变更后更新UI播放器
+        if (tvPlay != null) {
+            int playType = Hawk.get(HawkConfig.PLAY_TYPE, 0);
+            tvPlay.setText(PlayerHelper.getPlayerName(playType));
+        }
     }
 
     @Override
