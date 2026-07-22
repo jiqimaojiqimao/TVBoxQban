@@ -306,7 +306,31 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
                 FastClickCheckUtil.check(v);
                 if (mActivity instanceof HomeActivity) {
                     ((HomeActivity) mActivity).refreshHome(false);
-                    App.showToastShort(mContext, "重新加载主页数据！");
+                    App.showToastShort(mContext, "重载数据！");
+                }
+                return true;
+            }
+        });
+
+        findViewById(R.id.tvSearch).setOnLongClickListener(new View.OnLongClickListener() { //xuameng长按搜索键刷新主页数据
+            @Override
+            public boolean onLongClick(View v) {
+                FastClickCheckUtil.check(v);
+                if (mActivity instanceof HomeActivity) {
+                    ((HomeActivity) mActivity).refreshHomeSort();
+                    App.showToastShort(mContext, "主页刷新！");
+                }
+                return true;
+            }
+        });
+
+        findViewById(R.id.tvPush).setOnLongClickListener(new View.OnLongClickListener() { //xuameng长按推送键清空缓存并重载主页数据
+            @Override
+            public boolean onLongClick(View v) {
+                FastClickCheckUtil.check(v);
+                if (mActivity instanceof HomeActivity) {
+                    ((HomeActivity) mActivity).refreshHome();
+                    App.showToastShort(mContext, "缓存已清空，并重载主页！");
                 }
                 return true;
             }
