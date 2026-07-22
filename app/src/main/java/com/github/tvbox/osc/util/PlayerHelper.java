@@ -165,13 +165,21 @@ public class PlayerHelper {
         }
     }
 
-    public static String getPlayerName(int playType) {
+    public static String getPlayerName(int playType) {  //xuameng 显示当前选中的远端聚汇影视真正名称
+        if (playType == 13) {
+            // 远端聚汇影视：优先显示当前选中的设备
+            String selected = Hawk.get(HawkConfig.REMOTE_TVBOX, null);
+            if (selected != null && !selected.isEmpty()) {
+                return selected; // 例如：redmi(1.1.1.1:2222)
+            }
+            return "附近聚汇影视";
+        }
+
         HashMap<Integer, String> playersInfo = getPlayersInfo();
         if (playersInfo.containsKey(playType)) {
             return playersInfo.get(playType);
-        } else {
-            return "系统播放器";
         }
+        return "系统播放器";
     }
 
     private static HashMap<Integer, String> mPlayersInfo = null;
@@ -308,6 +316,10 @@ public class PlayerHelper {
             // 直接操作静态变量，将其置空
             mPlayersExistInfo = null; // 这个变量存储了远程TV Box是否存在
             mPlayersInfo = null;      // 这个变量存储了播放器名称映射
+            // xuameng如果当前选的是远程聚汇影视，就切回系统播放器 防止显示BUG
+            if (Hawk.get(HawkConfig.PLAY_TYPE, 0) == 13) {
+                Hawk.put(HawkConfig.PLAY_TYPE, 0);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
