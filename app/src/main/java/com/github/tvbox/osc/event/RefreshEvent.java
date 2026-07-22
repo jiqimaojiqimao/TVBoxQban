@@ -19,13 +19,15 @@ public class RefreshEvent {
     public static final int TYPE_PUSH_URL = 9;
     public static final int TYPE_EPG_URL_CHANGE = 10;
     public static final int TYPE_PLAY_PUSH_ERROR = 11;  //xuameng远程推送解析数据为空判断
-    public static final int TYPE_SUBTITLE_SIZE_CHANGE = 12;
-    public static final int TYPE_FILTER_CHANGE = 13;
+    public static final int TYPE_SUBTITLE_SIZE_CHANGE = 12;  //xuameng 更改字幕大小
+    public static final int TYPE_FILTER_CHANGE = 13;   //xuameng 分类列表
     public static final int TYPE_PAUSE_VOD = 14;   //xuameng 全屏时如果是暂停状态就显示暂停图标
     public static final int TYPE_LIVE_API_URL_CHANGE = 15;  //xuameng 直播API
     public static final int TYPE_SET_DANMU_SETTINGS = 18; //xuameng 弹幕
     public static final int TYPE_DANMU_REFRESH = 19;  //xuameng 弹幕
     public static final int TYPE_HOME_SOURCE_CHANGE = 20;  //xuameng 更改主页源
+    public static final int TYPE_SET_PREVIOUS_HOME_SOURCE = 21;  //xuameng 上次的主页源
+    public static final int TYPE_REMOTE_TVBOX_CHANGE = 22; // //xuameng远端聚汇影视变更
     public int type;
     public Object obj;
 
