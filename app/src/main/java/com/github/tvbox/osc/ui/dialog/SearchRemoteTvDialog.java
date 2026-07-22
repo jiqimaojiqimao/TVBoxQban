@@ -25,6 +25,9 @@ import com.orhanobut.hawk.Hawk;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.greenrobot.eventbus.EventBus;
+import com.github.tvbox.osc.event.RefreshEvent;
+
 /**
  * xuameng
  * 远端聚汇影视全面修改
@@ -90,6 +93,10 @@ public class SearchRemoteTvDialog extends BaseDialog {
             Hawk.delete(HawkConfig.REMOTE_TVBOX);
             // ✅ 添加：清除 PlayerHelper 缓存
             PlayerHelper.clearRemoteTvBoxCache(); 
+            // xuameng通知 UI 刷新
+            EventBus.getDefault().post(
+                new RefreshEvent(RefreshEvent.TYPE_REMOTE_TVBOX_CHANGE)
+            );
             setTip("搜索附近聚汇影视");
             // 关键修改：清空适配器数据并刷新UI
             if (mSelectAdapter != null) {
@@ -131,6 +138,10 @@ public class SearchRemoteTvDialog extends BaseDialog {
         Hawk.delete(HawkConfig.REMOTE_TVBOX);
         // ✅ 添加：清除 PlayerHelper 缓存
         PlayerHelper.clearRemoteTvBoxCache();
+        // xuameng通知 UI 刷新
+        EventBus.getDefault().post(
+            new RefreshEvent(RefreshEvent.TYPE_REMOTE_TVBOX_CHANGE)
+        );
         if (mSelectAdapter != null) {
             mSelectAdapter.setData(new ArrayList<>(), 0);
         }
@@ -176,6 +187,10 @@ public class SearchRemoteTvDialog extends BaseDialog {
                 // ✅ 关键：默认选中第一个
                 RemoteTVBox.setAvalible(remoteTvHostList.get(0));
                 PlayerHelper.clearRemoteTvBoxCache();
+                // xuameng通知 UI 刷新
+                EventBus.getDefault().post(
+                    new RefreshEvent(RefreshEvent.TYPE_REMOTE_TVBOX_CHANGE)
+                );
                 setTip("选择附近聚汇影视");
                 showRemoteTvList();
             } else {
@@ -194,6 +209,10 @@ public class SearchRemoteTvDialog extends BaseDialog {
                 @Override
                 public void click(String value, int pos) {
                     RemoteTVBox.setAvalible(value);
+                    // xuameng通知 UI 刷新
+                    EventBus.getDefault().post(
+                        new RefreshEvent(RefreshEvent.TYPE_REMOTE_TVBOX_CHANGE)
+                    );
                     App.showToastShort(getContext(), "已选择：" + value);
                 }
 
