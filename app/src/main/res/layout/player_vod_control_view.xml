@@ -141,7 +141,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text=""/>
-    <androidx.media3.ui.SubtitleView
+    <com.google.android.exoplayer2.ui.SubtitleView
         android:id="@+id/exo_subtitle_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -358,6 +358,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginRight="@dimen/vs_5"
                     android:text="系统播放器"
+                    android:maxWidth="@dimen/vs_140"
+                    android:ellipsize="end"
+		            android:marqueeRepeatLimit="marquee_forever"
                     android:singleLine="true"
                     android:layout_marginEnd="@dimen/vs_5"/>
                 <TextView
