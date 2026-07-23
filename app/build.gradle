@@ -67,12 +67,12 @@ android {
 
     flavorDimensions += ["abi"]
     productFlavors {
-    //    armeabi {
-    //        dimension = "abi"
-    //        ndk {
-    //            abiFilters 'armeabi-v7a'
-    //        }
-    //    }
+        armeabi {
+            dimension = "abi"
+            ndk {
+                abiFilters 'armeabi-v7a'
+            }
+        }
         arm64 {
             dimension = "abi"
             ndk {
@@ -179,5 +179,6 @@ dependencies {
     implementation "androidx.media3:media3-extractor:$exoplayerVersion"
     implementation "androidx.media3:media3-ui:$exoplayerVersion"
     implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'    //xuameng ffmpeg扩展
-    implementation "io.github.anilbeesetti:nextlib-media3ext:1.10.1-0.13.0"
+    implementation "io.github.anilbeesetti:nextlib-media3ext:1.10.1-0.13.0"  //xuameng nextlib扩展
+
 }
