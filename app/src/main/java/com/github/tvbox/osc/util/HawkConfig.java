@@ -74,9 +74,6 @@ public class HawkConfig {
     public static final String DANMU_API = "danmu_api"; //xuameng 弹幕接口
     public static final int DEFAULT_HOME_REC = 1;  //xuameng 默认 0 豆瓣热播 1 数据源推荐 2 历史 兜底 用处不大
 
-    public static final String EXO_VIDEO_SOFT_DECODE = "exo_video_soft_decode"; //xuameng 
-    public static final String EXO_AUDIO_SOFT_DECODE = "exo_audio_soft_decode"; //xuameng 
-
 	public static boolean intLIVEPLAYTYPE = false;  //xuameng是否有直播默认播放器
 	public static boolean intSYSplayer = false;  //xuameng是否进入系统播放器
 	public static boolean intVod = false;  //xuameng判断是否进入VOD界面
