@@ -122,8 +122,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 .setBufferDurationsMs(
                     15000,    // minBufferMs - 减小最小缓冲时间
                     30000,   // maxBufferMs - 减小最大缓冲时间
-                    3000,    // bufferForPlaybackMs - 减小播放前缓冲时间
-                    5000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
+                    1500,    // bufferForPlaybackMs - 减小播放前缓冲时间
+                    3000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
                 )
                 .setTargetBufferBytes(30 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
                 .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
@@ -134,7 +134,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
-            .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
+            .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")          // 设置首选音频语言为中文
             .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
 
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
@@ -380,7 +380,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {   //出现错误直播用M3U8方式解码
             if (mRetryCount < MAX_RETRY_COUNT) {                // xuameng检查是否超过最大重试次数
                 mRetryCount++;                                  // xuameng未超过，执行重试 增加重试计数
-                if (mMediaPlayer != null) {                        // xuameng重置播放器状态
+                if (mMediaPlayer != null) {                     // xuameng重置播放器状态
                     mMediaPlayer.stop();
                     mMediaPlayer.clearMediaItems();
                     mIsPreparing = false;                       // xuameng可选：重置一些状态变量
