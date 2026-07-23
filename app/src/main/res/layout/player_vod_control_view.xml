@@ -141,7 +141,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text=""/>
-    <com.google.android.exoplayer2.ui.SubtitleView
+    <androidx.media3.ui.SubtitleView
         android:id="@+id/exo_subtitle_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
