@@ -359,7 +359,7 @@
                     android:layout_marginRight="@dimen/vs_5"
                     android:text="系统播放器"
                     android:maxWidth="@dimen/vs_140"
-                    android:ellipsize="end"
+                    android:ellipsize="marquee"
 		            android:marqueeRepeatLimit="marquee_forever"
                     android:singleLine="true"
                     android:layout_marginEnd="@dimen/vs_5"/>
