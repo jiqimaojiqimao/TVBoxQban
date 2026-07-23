@@ -1,86 +1,597 @@
-package com.github.tvbox.osc.util;
+package xyz.doikki.videoplayer.exo;
+
+import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.net.TrafficStats;
+import android.util.Log;
+import android.view.Surface;
+import android.view.SurfaceHolder;
+import android.app.ActivityManager;  //xuameng加载策略控制
+
+import androidx.annotation.NonNull;
+
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.PlaybackParameters;
+import androidx.media3.common.Player;
+import androidx.media3.common.Tracks;
+import androidx.media3.common.VideoSize;
+import androidx.media3.exoplayer.DefaultLoadControl;
+import androidx.media3.exoplayer.RenderersFactory;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.LoadControl;
+import androidx.media3.exoplayer.source.MediaSource;
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
+import androidx.media3.ui.PlayerView;
+import androidx.media3.ui.SubtitleView;   //xuameng用于显示字幕
+import androidx.media3.common.text.Cue;   //xuameng用于显示字幕
+import androidx.media3.ui.CaptionStyleCompat;
+import android.graphics.Color;
+import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
+import com.orhanobut.hawk.Hawk; //xuameng EXO解码
+import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
+import com.github.tvbox.osc.base.App;  //xuameng 提示消息
+import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory; //xuameng  NextRenderers
+
+import java.util.List;   //xuameng用于显示字幕
+import java.util.Map;
+
+import xyz.doikki.videoplayer.player.AbstractPlayer;
+import xyz.doikki.videoplayer.util.PlayerUtils;
 
 /**
- * @author pj567
- * @date :2020/12/23
- * @description:
+ * 扩展NextRenderersFactory，支持禁用视频软解码
  */
-public class HawkConfig {
-    public static final String PUSH_TO_ADDR = "push_to_addr"; // xuameng推送到地址的IP
-    public static final String PUSH_TO_PORT = "push_to_port"; // xuameng推送到地址的端口
-    public static final String API_URL = "api_url";   //xuameng配置地址
-    public static final String EPG_URL = "epg_url";  //xuameng EPG地址
-    public static final String SHOW_PREVIEW = "show_preview";   //xuameng窗口播放
-    public static final String API_HISTORY = "api_history";  //xuameng配置地址历史
-    public static final String EPG_HISTORY = "epg_history";
-    public static final String HOME_API = "home_api";     //xuameng首页数据源
-    public static final String DEFAULT_PARSE = "parse_default";     //xuameng 默认解析
-    public static final String DEBUG_OPEN = "debug_open"; //xuameng调试
-    public static final String PARSE_WEBVIEW = "parse_webview"; // true 系统 false xwalk
-    public static final String IJK_CODEC = "ijk_codec";   //硬解软解
-    public static final String PLAY_TYPE = "play_type";//0 系统 1 ijk 2 exo 10 MXPlayer
-	public static final String LIVE_PLAY_TYPE = "live_play_type";//0 系统 1 ijk 2 exo 10 MXPlayer     xuameng升级直播JSON中可以指定播放器类型
-    public static final String PLAY_RENDER = "play_render"; //0 texture surface渲染
-    public static final String PLAY_SCALE = "play_scale"; //xuameng 画面缩放
-    public static final String PLAY_TIME_STEP = "play_time_step"; //0 texture 2
-    public static final String DOH_URL = "doh_url";      //xuameng DNS   
-    public static final String HOME_REC = "home_rec"; // 0 豆瓣热播 1 数据源推荐 2 历史
-    public static final String HISTORY_NUM = "history_num";
-    public static final String SEARCH_VIEW = "search_view"; // 0 列表 1 缩略图
-    public static final String LIVE_CHANNEL = "last_live_channel_name";    
-    public static final String LIVE_CHANNEL_REVERSE = "live_channel_reverse";  //xuameng换台反转
-    public static final String LIVE_CROSS_GROUP = "live_cross_group";   //xuameng跨选分类
-    public static final String LIVE_CONNECT_TIMEOUT = "live_connect_timeout";   //xuameng直播超时
-    public static final String LIVE_SHOW_NET_SPEED = "live_show_net_speed";  //xuameng显示直播网速
-    public static final String LIVE_SHOW_TIME = "live_show_time";   //xuameng显示直播时间
-    public static final String FAST_SEARCH_MODE = "fast_search_mode";   //聚合模式
-    public static final String SUBTITLE_TEXT_SIZE = "subtitle_text_size";   //xuameng字幕大小
-    public static final String SUBTITLE_TIME_DELAY = "subtitle_time_delay";   //xuameng 字幕显示延迟时间
-    public static final String SOURCES_FOR_SEARCH = "checked_sources_for_search";   //xuameng搜索源
-    public static final String HOME_REC_STYLE = "home_rec_style";   //xuameng首页单行
-    public static final String NOW_DATE = "now_date"; //当前日期
-    public static final String REMOTE_TVBOX = "remote_tvbox_host";    //xuameng远源TVBOX 
-    public static final String IJK_CACHE_PLAY = "ijk_cache_play";       //IJK缓存
-	public static final String HOME_DEFAULT_SHOW = "home_default_show";  //xuameng 启动时直接进直播的开关
-	public static final String LIVE_CHANNEL_GROUP = "last_live_channel_group_name";  //xuameng记忆上次播放频道组
-	public static final String PLAYER_IS_LIVE = "player_is_live";   //xuameng判断是否进入直播
-	public static final String DOH_JSON = "doh_json";    //xuameng DNS JSON
-    public static final String LIVE_GROUP_INDEX = "live_group_index";    //XUAMENG直播源index
-    public static final String LIVE_GROUP_LIST = "live_group_list";  //XUAMENG直播源list
-    public static final String LIVE_API_URL = "live_api_url";     //xuameng直播接口地址
-	public static final String M3U8_PURIFY = "m3u8_purify";  //xuameng广告过滤
-	public static final String LIVE_API_HISTORY = "live_api_history";   //xuameng直播历史列表
-	public static final String LIVE_WEB_HEADER = "live_web_header";    //xuameng直播定义UA
-    public static final String LIVE_MUSIC_ANIMATION = "live_music_animation";  //xuameng直播音乐动画
-    public static final String VOD_MUSIC_ANIMATION = "vod_music_animation";  //xuameng点播音乐动画
-    public static final String EXO_PLAYER_DECODE = "exo_player_decode";  //xuameng exo解码方式
-    public static final String EXO_PLAY_SELECTCODE = "exo_play_selectcode"; //xuameng exo解码动态选择  
-    public static final String EXO_PROGRESS_KEY = "exo_progress_key"; //xuameng 进程KEY
-    public static final String IJK_PROGRESS_KEY = "ijk_progress_key"; //xuameng 进程KEY
-	public static final String VOD_SWITCHDECODE = "vod_switchdecode";  //xuameng解码切换
-	public static final String VOD_SWITCHPLAYER = "vod_switchplayer";  //xuameng播放器切换
-    public static final String LIVE_FAVORITE_CHANNELS = "live_favorite_channels"; // xuameng存储收藏频道列表的键
-	public static final String SUBTITLE_TEXT_STYLE = "subtitle_text_style";   //xuameng 存储字幕颜色信息
-	public static final String REMOTE_TV_LIST = "remote_tv_list";  //xuameng  存储远端聚汇影视列表
-    public static final String API_LINE_LIST = "api_line_list";  //xuameng 多仓
-    public static final String API_LINE_SOURCE = "api_line_source"; //xuameng 多仓
-    public static final String API_LINE_TAG_SET = "api_line_tag_set"; //xuameng 多仓
-    public static final String DANMU_OPEN = "danmu_open";  //xuameng 弹幕打开
-    public static final String DANMU_MAX_LINE = "danmu_max_line"; //xuameng 弹幕行数
-    public static final String DANMU_SPEED = "danmu_speed"; //xuameng 弹幕速度
-    public static final String DANMU_ALPHA = "danmu_alpha"; //xuameng 弹幕透明度
-    public static final String DANMU_SIZE_SCALE = "danmu_size_scale"; //xuameng 弹幕大小
-    public static final String DANMU_RANDOM_COLOR = "danmu_random_color"; //xuameng 弹幕颜色
-    public static final String DANMU_API = "danmu_api"; //xuameng 弹幕接口
-    public static final int DEFAULT_HOME_REC = 1;  //xuameng 默认 0 豆瓣热播 1 数据源推荐 2 历史 兜底 用处不大
+class CustomNextRenderersFactory extends NextRenderersFactory {
+    // 是否启用视频软解码
+    private boolean enableVideoSoftDecode = true;
+    // 是否启用音频软解码
+    private boolean enableAudioSoftDecode = true;
+    
+    public CustomNextRenderersFactory(Context context) {
+        super(context);
+    }
+    
+    /**
+     * 设置是否启用视频软解码
+     * @param enable 是否启用
+     * @return this
+     */
+    public CustomNextRenderersFactory setEnableVideoSoftDecode(boolean enable) {
+        this.enableVideoSoftDecode = enable;
+        return this;
+    }
+    
+    /**
+     * 设置是否启用音频软解码
+     * @param enable 是否启用
+     * @return this
+     */
+    public CustomNextRenderersFactory setEnableAudioSoftDecode(boolean enable) {
+        this.enableAudioSoftDecode = enable;
+        return this;
+    }
+    
+    @Override
+    public void buildVideoRenderers(
+        Context context,
+        int extensionRendererMode,
+        androidx.media3.exoplayer.mediacodec.MediaCodecSelector mediaCodecSelector,
+        boolean enableDecoderFallback,
+        android.os.Handler eventHandler,
+        androidx.media3.exoplayer.video.VideoRendererEventListener eventListener,
+        long allowedVideoJoiningTimeMs,
+        java.util.ArrayList<androidx.media3.exoplayer.Renderer> out
+    ) {
+        // 先调用父类的方法
+        super.buildVideoRenderers(
+            context,
+            extensionRendererMode,
+            mediaCodecSelector,
+            enableDecoderFallback,
+            eventHandler,
+            eventListener,
+            allowedVideoJoiningTimeMs,
+            out
+        );
+        
+        // 如果禁用了视频软解码，移除FFmpeg视频解码器
+        if (!enableVideoSoftDecode && extensionRendererMode != EXTENSION_RENDERER_MODE_OFF) {
+            // 遍历并移除FFmpeg视频解码器
+            for (int i = 0; i < out.size(); i++) {
+                androidx.media3.exoplayer.Renderer renderer = out.get(i);
+                String className = renderer.getClass().getName();
+                if (className.contains("FfmpegVideoRenderer")) {
+                    out.remove(i);
+                    Log.d("CustomNextRenderersFactory", "Removed FfmpegVideoRenderer (video soft decode disabled)");
+                    break;
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void buildAudioRenderers(
+        Context context,
+        int extensionRendererMode,
+        androidx.media3.exoplayer.mediacodec.MediaCodecSelector mediaCodecSelector,
+        boolean enableDecoderFallback,
+        androidx.media3.exoplayer.audio.AudioSink audioSink,
+        android.os.Handler eventHandler,
+        androidx.media3.exoplayer.audio.AudioRendererEventListener eventListener,
+        java.util.ArrayList<androidx.media3.exoplayer.Renderer> out
+    ) {
+        // 先调用父类的方法
+        super.buildAudioRenderers(
+            context,
+            extensionRendererMode,
+            mediaCodecSelector,
+            enableDecoderFallback,
+            audioSink,
+            eventHandler,
+            eventListener,
+            out
+        );
+        
+        // 如果禁用了音频软解码，移除FFmpeg音频解码器
+        if (!enableAudioSoftDecode && extensionRendererMode != EXTENSION_RENDERER_MODE_OFF) {
+            // 遍历并移除FFmpeg音频解码器
+            for (int i = 0; i < out.size(); i++) {
+                androidx.media3.exoplayer.Renderer renderer = out.get(i);
+                String className = renderer.getClass().getName();
+                if (className.contains("FfmpegAudioRenderer")) {
+                    out.remove(i);
+                    Log.d("CustomNextRenderersFactory", "Removed FfmpegAudioRenderer (audio soft decode disabled)");
+                    break;
+                }
+            }
+        }
+    }
+}
 
-	public static boolean intLIVEPLAYTYPE = false;  //xuameng是否有直播默认播放器
-	public static boolean intSYSplayer = false;  //xuameng是否进入系统播放器
-	public static boolean intVod = false;  //xuameng判断是否进入VOD界面
-	public static boolean ISrestore = false;  //xuameng判断是否进行恢复操作
-	public static boolean isGetWp = false;  //xuameng下载壁纸
-    public static boolean saveHistory = false;  //xuameng 存储历史记录
-    public static boolean exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
+public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
-    public static boolean hotVodDelete;
+    protected Context mAppContext;
+    protected ExoPlayer mMediaPlayer;
+    protected MediaSource mMediaSource;
+    protected ExoMediaSourceHelper mMediaSourceHelper;
+    protected ExoTrackNameProvider trackNameProvider;
+    protected TrackSelectionArray mTrackSelections;
+    private PlaybackParameters mSpeedPlaybackParameters;
+    private boolean mIsPreparing;
+
+    private LoadControl mLoadControl;
+    private RenderersFactory mRenderersFactory;
+    private DefaultTrackSelector mTrackSelector;
+    private static AudioTrackMemory memory;    //xuameng记忆选择音轨
+    private SubtitleView mExoSubtitleView; // 用于显示ExoPlayer内置字幕
+
+    private int errorCode = -100;
+    private String mLastUri;   //xuameng 上次播放地址
+    private Map<String, String> mLastHeaders;  //xuameng 上次头部
+    private int mRetryCount = 0; // xuameng当前重试次数
+    private static final int MAX_RETRY_COUNT = 3; // xuameng最大重试次数
+
+    // 新增：解码控制参数
+    private boolean enableVideoSoftDecode = false; // 默认禁用视频软解码
+    private boolean enableAudioSoftDecode = true;  // 默认启用音频软解码
+    
+    public ExoMediaPlayer(Context context) {
+        mAppContext = context.getApplicationContext();
+        mMediaSourceHelper = ExoMediaSourceHelper.getInstance(context);
+    }
+    
+    /**
+     * 设置是否启用视频软解码
+     * @param enable 是否启用视频软解码
+     * @return this
+     */
+    public ExoMediaPlayer setEnableVideoSoftDecode(boolean enable) {
+        this.enableVideoSoftDecode = enable;
+        return this;
+    }
+    
+    /**
+     * 设置是否启用音频软解码
+     * @param enable 是否启用音频软解码
+     * @return this
+     */
+    public ExoMediaPlayer setEnableAudioSoftDecode(boolean enable) {
+        this.enableAudioSoftDecode = enable;
+        return this;
+    }
+    
+    /**
+     * 获取是否启用视频软解码
+     * @return 是否启用视频软解码
+     */
+    public boolean isVideoSoftDecodeEnabled() {
+        return enableVideoSoftDecode;
+    }
+    
+    /**
+     * 获取是否启用音频软解码
+     * @return 是否启用音频软解码
+     */
+    public boolean isAudioSoftDecodeEnabled() {
+        return enableAudioSoftDecode;
+    }
+
+    @Override
+    public void initPlayer() {
+        // xuameng释放旧实例
+        if (mMediaPlayer != null) {
+            mMediaPlayer.removeListener(this);
+            mMediaPlayer.release();
+        }
+
+        // xuameng渲染器配置
+        boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
+        int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
+        
+        // 从配置读取默认软解码设置
+        boolean defaultVideoSoftDecode = Hawk.get(HawkConfig.EXO_VIDEO_SOFT_DECODE, false);
+        boolean defaultAudioSoftDecode = Hawk.get(HawkConfig.EXO_AUDIO_SOFT_DECODE, true);
+        
+        // 如果用户没有通过set方法设置，则使用配置中的默认值
+        if (enableVideoSoftDecode != defaultVideoSoftDecode || enableAudioSoftDecode != defaultAudioSoftDecode) {
+            // 用户已通过set方法设置，使用用户设置的值
+        } else {
+            enableVideoSoftDecode = defaultVideoSoftDecode;
+            enableAudioSoftDecode = defaultAudioSoftDecode;
+        }
+        
+        // ExoPlayer 解码模式选择逻辑
+        if (exoSelect == 2 || (exoSelect == 0 && exoDecode)) {
+            // 软解场景：exoSelect=2 或 exoSelect=0且exoDecode=true
+            mRenderersFactory = new CustomNextRenderersFactory(mAppContext)
+                .setEnableDecoderFallback(true)
+                .setExtensionRendererMode(NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+                .setEnableVideoSoftDecode(enableVideoSoftDecode)
+                .setEnableAudioSoftDecode(enableAudioSoftDecode);
+        } else {
+            // 硬解场景
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+                .setEnableDecoderFallback(true)
+                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+        }
+
+        // xuameng轨道选择器配置
+        mTrackSelector = new DefaultTrackSelector(mAppContext);
+
+        //xuameng加载策略控制
+        ActivityManager activityManager = (ActivityManager) mAppContext.getSystemService(Context.ACTIVITY_SERVICE);
+        int memoryClass = activityManager.getMemoryClass();
+        
+        // 判断内存大小
+        if (memoryClass <= 2048) { // 2G = 2048MB
+            // 内存小于等于2G时使用低内存策略
+            mLoadControl = new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    15000,    // minBufferMs - 减小最小缓冲时间
+                    30000,   // maxBufferMs - 减小最大缓冲时间
+                    3000,    // bufferForPlaybackMs - 减小播放前缓冲时间
+                    5000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
+                )
+                .setTargetBufferBytes(30 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
+                .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
+                .build();
+        } else {
+            mLoadControl = new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    20000,    // minBufferMs - 减小最小缓冲时间
+                    30000,   // maxBufferMs - 减小最大缓冲时间
+                    10000,    // bufferForPlaybackMs - 减小播放前缓冲时间
+                    15000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
+                )
+                .setTargetBufferBytes(300 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
+                .setPrioritizeTimeOverSizeThresholds(true)  // 优先考虑字节数阈值
+                .build();
+        }
+
+        mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
+            .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
+            .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
+            .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
+
+        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+                .setLoadControl(mLoadControl)
+                .setRenderersFactory(mRenderersFactory)
+                .setTrackSelector(mTrackSelector).build();
+
+        setOptions();
+        mMediaPlayer.addListener(this);
+    }
+
+    public DefaultTrackSelector getTrackSelector() {
+        return mTrackSelector;
+    }
+
+    @Override
+    public void setDataSource(String path, Map<String, String> headers) {
+        mLastUri = path;   //xuameng 记录上次播放地址
+        mLastHeaders = headers;  //xuameng 记录上次头部
+        mMediaSource = mMediaSourceHelper.getMediaSource(path, headers, false, errorCode);
+    }
+
+    @Override
+    public void setDataSource(AssetFileDescriptor fd) {
+        //no support
+    }
+
+    @Override
+    public void start() {
+        if (mMediaPlayer == null)
+            return;
+        mMediaPlayer.setPlayWhenReady(true);
+    }
+
+    @Override
+    public void pause() {
+        if (mMediaPlayer == null)
+            return;
+        mMediaPlayer.setPlayWhenReady(false);
+    }
+
+    @Override
+    public void stop() {
+        if (mMediaPlayer == null)
+            return;
+        mMediaPlayer.stop();
+    }
+
+    @Override
+    public void prepareAsync() {
+        if (mMediaPlayer == null)
+            return;
+        if (mMediaSource == null) return;
+        if (mSpeedPlaybackParameters != null) {
+            mMediaPlayer.setPlaybackParameters(mSpeedPlaybackParameters);
+        }
+        mIsPreparing = true;
+        mMediaPlayer.setMediaSource(mMediaSource);
+        mMediaPlayer.prepare();
+    }
+
+    @Override
+    public void reset() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.stop();
+            mMediaPlayer.clearMediaItems();
+            mMediaPlayer.setVideoSurface(null);
+            mIsPreparing = false;
+        }
+    }
+
+    @Override
+    public boolean isPlaying() {
+        if (mMediaPlayer == null)
+            return false;
+        int state = mMediaPlayer.getPlaybackState();
+        switch (state) {
+            case Player.STATE_BUFFERING:
+            case Player.STATE_READY:
+                return mMediaPlayer.getPlayWhenReady();
+            case Player.STATE_IDLE:
+            case Player.STATE_ENDED:
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public void seekTo(long time) {
+        if (mMediaPlayer == null)
+            return;
+        mMediaPlayer.seekTo(time);
+    }
+
+    @Override
+    public void release() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.removeListener(this);
+            mMediaPlayer.release();
+            mMediaPlayer = null;
+        }
+
+        mIsPreparing = false;
+        mSpeedPlaybackParameters = null;
+    }
+
+    @Override
+    public long getCurrentPosition() {
+        if (mMediaPlayer == null)
+            return 0;
+        return mMediaPlayer.getCurrentPosition();
+    }
+
+    @Override
+    public long getDuration() {
+        if (mMediaPlayer == null)
+            return 0;
+        return mMediaPlayer.getDuration();
+    }
+
+    @Override
+    public int getAudioSessionId() {       //XUAMENG 获取音频ID
+        return mMediaPlayer.getAudioSessionId();
+    }
+
+    @Override
+    public int getBufferedPercentage() {
+        return mMediaPlayer == null ? 0 : mMediaPlayer.getBufferedPercentage();
+    }
+
+    @Override
+    public void setSurface(Surface surface) {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.setVideoSurface(surface);
+        }
+    }
+
+    @Override
+    public void setDisplay(SurfaceHolder holder) {
+        if (holder == null)
+            setSurface(null);
+        else
+            setSurface(holder.getSurface());
+    }
+
+    @Override
+    public void setVolume(float leftVolume, float rightVolume) {
+        if (mMediaPlayer != null)
+            mMediaPlayer.setVolume((leftVolume + rightVolume) / 2);
+    }
+
+    @Override
+    public void setLooping(boolean isLooping) {
+        if (mMediaPlayer != null)
+            mMediaPlayer.setRepeatMode(isLooping ? Player.REPEAT_MODE_ALL : Player.REPEAT_MODE_OFF);
+    }
+
+    @Override
+    public void setOptions() {
+        //准备好就开始播放
+        mMediaPlayer.setPlayWhenReady(true);
+    }
+
+    @Override
+    public void setSpeed(float speed) {
+        PlaybackParameters playbackParameters = new PlaybackParameters(speed);
+        mSpeedPlaybackParameters = playbackParameters;
+        if (mMediaPlayer != null) {
+            mMediaPlayer.setPlaybackParameters(playbackParameters);
+        }
+    }
+
+    @Override
+    public float getSpeed() {
+        if (mSpeedPlaybackParameters != null) {
+            return mSpeedPlaybackParameters.speed;
+        }
+        return 1f;
+    }
+
+    @Override
+    public long getTcpSpeed() {
+        return PlayerUtils.getNetSpeed(mAppContext);
+    }
+
+    @Override
+    public void onTracksChanged(Tracks tracks) {
+        if (trackNameProvider == null)
+            trackNameProvider = new ExoTrackNameProvider(mAppContext.getResources());
+    }
+
+    @Override
+    public void onPlaybackStateChanged(int playbackState) {
+        if (mPlayerEventListener == null) return;
+        if (mIsPreparing) {
+            if (playbackState == Player.STATE_READY) {
+                mPlayerEventListener.onPrepared();
+                mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
+                mIsPreparing = false;
+            }
+            return;
+        }
+        switch (playbackState) {
+            case Player.STATE_BUFFERING:
+                mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, getBufferedPercentage());
+                break;
+            case Player.STATE_READY:
+                mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
+                break;
+            case Player.STATE_ENDED:
+                mPlayerEventListener.onCompletion();
+                break;
+            case Player.STATE_IDLE:
+                break;
+        }
+    }
+
+    @Override
+    public void onPlayerError(@NonNull PlaybackException error) {
+        String progressKey = Hawk.get(HawkConfig.EXO_PROGRESS_KEY, "");
+        errorCode = error.errorCode;
+        Log.e("EXOPLAYER", "" + error.errorCode);      //xuameng音频出错后尝试重播
+
+        if (errorCode == 5001 || errorCode == 5002 || errorCode == 4001){
+            memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
+        }
+
+        // ====== xuameng 新增：处理 BehindLiveWindowException 错误======
+        if (errorCode == 1002) {
+            // 将播放器定位到直播窗口的默认（实时）位置
+            if (mMediaPlayer != null) {
+                mMediaPlayer.seekToDefaultPosition();
+                // 可选：重新准备并开始播放
+                mMediaPlayer.prepare();
+                mMediaPlayer.setPlayWhenReady(true);
+            }
+            // 重置通用重试计数器，避免与下面的重试逻辑冲突
+            mRetryCount = 0;
+            return; // 直接返回，不触发外层的 onError 回调
+        }
+        // ====== 新增结束 ======
+
+        if (errorCode == 3003 || errorCode == 3001 || errorCode == 2000) {   //出现错误直播用M3U8方式解码
+            if (mRetryCount < MAX_RETRY_COUNT) {                // xuameng检查是否超过最大重试次数
+                mRetryCount++;                                  // xuameng未超过，执行重试 增加重试计数
+                if (mMediaPlayer != null) {                        // xuameng重置播放器状态
+                    mMediaPlayer.stop();
+                    mMediaPlayer.clearMediaItems();
+                    mIsPreparing = false;                       // xuameng可选：重置一些状态变量
+                }
+                // xuameng重新尝试播放
+                if (mLastUri != null) {
+                    setDataSource(mLastUri, mLastHeaders);
+                    prepareAsync();
+                    start();
+                    return; // 避免触发外层 onError 回调
+                }
+            } else {
+                mRetryCount = 0;    // 重置重试次数，避免影响下一次播放
+            }
+        }
+
+        if (mPlayerEventListener != null) {
+            mPlayerEventListener.onError();
+        }
+    }
+
+    @Override
+    public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
+        if (mPlayerEventListener != null) {
+            mPlayerEventListener.onVideoSizeChanged(videoSize.width, videoSize.height);
+            if (videoSize.unappliedRotationDegrees > 0) {
+                mPlayerEventListener.onInfo(MEDIA_INFO_VIDEO_ROTATION_CHANGED, videoSize.unappliedRotationDegrees);
+            }
+        }
+    }
+
+    public void setSubtitleView(SubtitleView subtitleView) {       // 用于显示ExoPlayer内置字幕
+        this.mExoSubtitleView = subtitleView;
+        // 设置字幕样式，添加黑色边框效果
+        if (subtitleView != null) {
+            CaptionStyleCompat style = new CaptionStyleCompat(
+            Color.WHITE,        // 文字颜色
+            Color.TRANSPARENT,  // 背景颜色（透明）
+            Color.TRANSPARENT,  // 窗口颜色（也设为透明）
+            CaptionStyleCompat.EDGE_TYPE_OUTLINE, // 边缘类型为轮廓
+            Color.BLACK,        // 边缘颜色（黑色边框）
+            null                // 字体族
+            );
+            subtitleView.setStyle(style);
+        }
+    }
+
+
+    @Override
+    public void onCues(@NonNull List<Cue> cues) {   //xuameng用于显示ExoPlayer内置字幕
+        if (mExoSubtitleView != null) {
+            mExoSubtitleView.setCues(cues); 
+        }
+    }
+
 }
