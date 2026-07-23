@@ -182,25 +182,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mMediaSourceHelper = ExoMediaSourceHelper.getInstance(context);
     }
     
-    /**
-     * 设置是否启用视频软解码
-     * @param enable 是否启用视频软解码
-     * @return this
-     */
-    public ExoMediaPlayer setEnableVideoSoftDecode(boolean enable) {
-        this.enableVideoSoftDecode = enable;
-        return this;
-    }
-    
-    /**
-     * 设置是否启用音频软解码
-     * @param enable 是否启用音频软解码
-     * @return this
-     */
-    public ExoMediaPlayer setEnableAudioSoftDecode(boolean enable) {
-        this.enableAudioSoftDecode = enable;
-        return this;
-    }
     
     /**
      * 获取是否启用视频软解码
