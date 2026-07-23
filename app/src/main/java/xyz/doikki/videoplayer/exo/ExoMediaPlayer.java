@@ -40,116 +40,6 @@ import java.util.Map;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 
-/**
- * 扩展NextRenderersFactory，支持禁用视频软解码
- */
-class CustomNextRenderersFactory extends NextRenderersFactory {
-    // 是否启用视频软解码
-    private boolean enableVideoSoftDecode = true;
-    // 是否启用音频软解码
-    private boolean enableAudioSoftDecode = true;
-    
-    public CustomNextRenderersFactory(Context context) {
-        super(context);
-    }
-    
-    /**
-     * 设置是否启用视频软解码
-     * @param enable 是否启用
-     * @return this
-     */
-    public CustomNextRenderersFactory setEnableVideoSoftDecode(boolean enable) {
-        this.enableVideoSoftDecode = enable;
-        return this;
-    }
-    
-    /**
-     * 设置是否启用音频软解码
-     * @param enable 是否启用
-     * @return this
-     */
-    public CustomNextRenderersFactory setEnableAudioSoftDecode(boolean enable) {
-        this.enableAudioSoftDecode = enable;
-        return this;
-    }
-    
-    @Override
-    public void buildVideoRenderers(
-        Context context,
-        int extensionRendererMode,
-        androidx.media3.exoplayer.mediacodec.MediaCodecSelector mediaCodecSelector,
-        boolean enableDecoderFallback,
-        android.os.Handler eventHandler,
-        androidx.media3.exoplayer.video.VideoRendererEventListener eventListener,
-        long allowedVideoJoiningTimeMs,
-        java.util.ArrayList<androidx.media3.exoplayer.Renderer> out
-    ) {
-        // 先调用父类的方法
-        super.buildVideoRenderers(
-            context,
-            extensionRendererMode,
-            mediaCodecSelector,
-            enableDecoderFallback,
-            eventHandler,
-            eventListener,
-            allowedVideoJoiningTimeMs,
-            out
-        );
-        
-        // 如果禁用了视频软解码，移除FFmpeg视频解码器
-        if (!enableVideoSoftDecode && extensionRendererMode != EXTENSION_RENDERER_MODE_OFF) {
-            // 遍历并移除FFmpeg视频解码器
-            for (int i = 0; i < out.size(); i++) {
-                androidx.media3.exoplayer.Renderer renderer = out.get(i);
-                String className = renderer.getClass().getName();
-                if (className.contains("FfmpegVideoRenderer")) {
-                    out.remove(i);
-                    Log.d("CustomNextRenderersFactory", "Removed FfmpegVideoRenderer (video soft decode disabled)");
-                    break;
-                }
-            }
-        }
-    }
-    
-    @Override
-    public void buildAudioRenderers(
-        Context context,
-        int extensionRendererMode,
-        androidx.media3.exoplayer.mediacodec.MediaCodecSelector mediaCodecSelector,
-        boolean enableDecoderFallback,
-        androidx.media3.exoplayer.audio.AudioSink audioSink,
-        android.os.Handler eventHandler,
-        androidx.media3.exoplayer.audio.AudioRendererEventListener eventListener,
-        java.util.ArrayList<androidx.media3.exoplayer.Renderer> out
-    ) {
-        // 先调用父类的方法
-        super.buildAudioRenderers(
-            context,
-            extensionRendererMode,
-            mediaCodecSelector,
-            enableDecoderFallback,
-            audioSink,
-            eventHandler,
-            eventListener,
-            out
-        );
-        
-        // 如果禁用了音频软解码，移除FFmpeg音频解码器
-        if (!enableAudioSoftDecode && extensionRendererMode != EXTENSION_RENDERER_MODE_OFF) {
-            // 遍历并移除FFmpeg音频解码器
-            for (int i = 0; i < out.size(); i++) {
-                androidx.media3.exoplayer.Renderer renderer = out.get(i);
-                String className = renderer.getClass().getName();
-                if (className.contains("FfmpegAudioRenderer")) {
-                    out.remove(i);
-                    Log.d("CustomNextRenderersFactory", "Removed FfmpegAudioRenderer (audio soft decode disabled)");
-                    break;
-                }
-            }
-        }
-    }
-}
-
 public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     protected Context mAppContext;
@@ -165,7 +55,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private RenderersFactory mRenderersFactory;
     private DefaultTrackSelector mTrackSelector;
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
-    private SubtitleView mExoSubtitleView; // 用于显示ExoPlayer内置字幕
+	private SubtitleView mExoSubtitleView; // 用于显示ExoPlayer内置字幕
 
     private int errorCode = -100;
     private String mLastUri;   //xuameng 上次播放地址
@@ -173,30 +63,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     private int mRetryCount = 0; // xuameng当前重试次数
     private static final int MAX_RETRY_COUNT = 3; // xuameng最大重试次数
 
-    // 新增：解码控制参数
-    private boolean enableVideoSoftDecode = false; // 默认禁用视频软解码
-    private boolean enableAudioSoftDecode = true;  // 默认启用音频软解码
-    
     public ExoMediaPlayer(Context context) {
         mAppContext = context.getApplicationContext();
         mMediaSourceHelper = ExoMediaSourceHelper.getInstance(context);
-    }
-    
-    
-    /**
-     * 获取是否启用视频软解码
-     * @return 是否启用视频软解码
-     */
-    public boolean isVideoSoftDecodeEnabled() {
-        return enableVideoSoftDecode;
-    }
-    
-    /**
-     * 获取是否启用音频软解码
-     * @return 是否启用音频软解码
-     */
-    public boolean isAudioSoftDecodeEnabled() {
-        return enableAudioSoftDecode;
     }
 
     @Override
@@ -207,35 +76,36 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             mMediaPlayer.release();
         }
 
-        // xuameng渲染器配置
+        // xuameng渲染器配置  自动exoDecode=true为软解  false为硬解  手动exoSelect 0为没记录 1为硬解 2为软解。exoSelect优先
         boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
         int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
-        
-        // 从配置读取默认软解码设置
-        boolean defaultVideoSoftDecode = Hawk.get(HawkConfig.EXO_VIDEO_SOFT_DECODE, false);
-        boolean defaultAudioSoftDecode = Hawk.get(HawkConfig.EXO_AUDIO_SOFT_DECODE, true);
-        
-        // 如果用户没有通过set方法设置，则使用配置中的默认值
-        if (enableVideoSoftDecode != defaultVideoSoftDecode || enableAudioSoftDecode != defaultAudioSoftDecode) {
-            // 用户已通过set方法设置，使用用户设置的值
-        } else {
-            enableVideoSoftDecode = defaultVideoSoftDecode;
-            enableAudioSoftDecode = defaultAudioSoftDecode;
-        }
-        
+
         // ExoPlayer 解码模式选择逻辑
-        if (exoSelect == 2 || (exoSelect == 0 && exoDecode)) {
-            // 软解场景：exoSelect=2 或 exoSelect=0且exoDecode=true
-            mRenderersFactory = new CustomNextRenderersFactory(mAppContext)
-                .setEnableDecoderFallback(true)
-                .setExtensionRendererMode(NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
-                .setEnableVideoSoftDecode(enableVideoSoftDecode)
-                .setEnableAudioSoftDecode(enableAudioSoftDecode);
+        boolean useSoftDecode;
+
+        if (exoSelect > 0) {
+            // 手动选择模式
+            useSoftDecode = (exoSelect == 2); // 1=硬解，2=软解
+        } else {
+            // 自动模式：由 exoDecode 决定
+            useSoftDecode = exoDecode;
+        }
+
+        // 构建 RendererFactory
+        if (useSoftDecode) {
+            // 软解场景
+            mRenderersFactory = new NextRenderersFactory(mAppContext)
+                    .setEnableDecoderFallback(true)
+                    .setExtensionRendererMode(
+                            NextRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+                    );
         } else {
             // 硬解场景
             mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-                .setEnableDecoderFallback(true)
-                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+                    .setEnableDecoderFallback(true)
+                    .setExtensionRendererMode(
+                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+                    );
         }
 
         // xuameng轨道选择器配置
@@ -259,19 +129,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
                 .build();
         } else {
-            mLoadControl = new DefaultLoadControl.Builder()
-                .setBufferDurationsMs(
-                    20000,    // minBufferMs - 减小最小缓冲时间
-                    30000,   // maxBufferMs - 减小最大缓冲时间
-                    10000,    // bufferForPlaybackMs - 减小播放前缓冲时间
-                    15000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
-                )
-                .setTargetBufferBytes(300 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
-                .setPrioritizeTimeOverSizeThresholds(true)  // 优先考虑字节数阈值
-                .build();
+            mLoadControl = new DefaultLoadControl();
         }
 
-        mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
+		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
             .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")                        // 设置首选音频语言为中文
             .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
@@ -365,7 +226,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     public void seekTo(long time) {
         if (mMediaPlayer == null)
             return;
-        mMediaPlayer.seekTo(time);
+        mMediaPlayer.seekTo(PlayerUtils.safeTimeMs(time));
     }
 
     @Override
@@ -497,7 +358,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         errorCode = error.errorCode;
         Log.e("EXOPLAYER", "" + error.errorCode);      //xuameng音频出错后尝试重播
 
-        if (errorCode == 5001 || errorCode == 5002 || errorCode == 4001){
+        if (errorCode == 5001 || errorCode == 5002 || errorCode == 4001 || errorCode == 4002 || errorCode == 4003){
             memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
         }
 
@@ -516,7 +377,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
         // ====== 新增结束 ======
 
-        if (errorCode == 3003 || errorCode == 3001 || errorCode == 2000) {   //出现错误直播用M3U8方式解码
+        if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {   //出现错误直播用M3U8方式解码
             if (mRetryCount < MAX_RETRY_COUNT) {                // xuameng检查是否超过最大重试次数
                 mRetryCount++;                                  // xuameng未超过，执行重试 增加重试计数
                 if (mMediaPlayer != null) {                        // xuameng重置播放器状态
