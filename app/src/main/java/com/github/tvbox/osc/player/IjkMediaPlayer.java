@@ -29,13 +29,13 @@ import xyz.doikki.videoplayer.ijk.IjkPlayer;
 public class IjkMediaPlayer extends IjkPlayer {
 
     private IJKCode codec = null;
-	private static AudioTrackMemory memory;
+    private static AudioTrackMemory memory;
     private static final String DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
     private static final String DEFAULT_ACCEPT = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/json;q=0.9";
     public IjkMediaPlayer(Context context, IJKCode codec) {
         super(context);
         this.codec = codec;
-		memory = AudioTrackMemory.getInstance(context);  //xuameng记忆选择音轨
+        memory = AudioTrackMemory.getInstance(context);  //xuameng记忆选择音轨
     }
 
     @Override
@@ -75,7 +75,7 @@ public class IjkMediaPlayer extends IjkPlayer {
             mMediaPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max-buffer-size", 1024 * 512);
         }else{
             LOG.i("type-点播");
-			// 降低延迟
+            // 降低延迟
             mMediaPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_PLAYER, "max_cached_duration", 3000);
             mMediaPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "infbuf", 0);
             mMediaPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_CODEC, "threads", "2");
@@ -133,7 +133,7 @@ public class IjkMediaPlayer extends IjkPlayer {
         }
         setDataSourceHeader(headers);
         mMediaPlayer.setOption(tv.danmaku.ijk.media.player.IjkMediaPlayer.OPT_CATEGORY_FORMAT, "protocol_whitelist", "ijkio,ffio,async,cache,crypto,file,dash,http,https,ijkhttphook,ijkinject,ijklivehook,ijklongurl,ijksegment,ijktcphook,pipe,rtp,tcp,tls,udp,ijkurlhook,data");
-		super.setDataSource(path, null);
+        super.setDataSource(path, null);
     }
 
     /**
@@ -222,7 +222,7 @@ public class IjkMediaPlayer extends IjkPlayer {
                         continue; // xuameng跳过该音轨
                     }
                 }
-				String trackName = (data.getAudio().size() + 1) + "：" + info.getInfoInline();       //xuameng 音轨信息
+                String trackName = (data.getAudio().size() + 1) + "：" + info.getInfoInline();       //xuameng 音轨信息
                 TrackInfoBean a = new TrackInfoBean();
                 a.name = trackName;
                 a.language = "";
@@ -232,7 +232,7 @@ public class IjkMediaPlayer extends IjkPlayer {
                 data.addAudio(a);
             }
             if (info.getTrackType() == ITrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT) {//内置字幕
-				String trackName = "";
+                String trackName = "";
                 TrackInfoBean t = new TrackInfoBean();
                 t.name = trackName;
                 t.language = (data.getSubtitle().size() + 1) + "：" + info.getInfoInline();   //xuameng 字幕信息
