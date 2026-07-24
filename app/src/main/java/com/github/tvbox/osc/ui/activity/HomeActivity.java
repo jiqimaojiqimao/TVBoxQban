@@ -322,6 +322,7 @@ public class HomeActivity extends BaseActivity {
         sourceViewModel.sortResult.observe(this, new Observer<AbsSortXml>() {
             @Override
             public void onChanged(AbsSortXml absXml) {
+                showSuccess();
                 if (skipNextUpdate) {
                     skipNextUpdate = false;
                     return;
@@ -333,7 +334,6 @@ public class HomeActivity extends BaseActivity {
                     return;
                 }
                 SourceBean home = ApiConfig.get().getHomeSourceBean();
-                showSuccess();
                 clearHomePages();
                 List<MovieSort.SortData> newSortData;
                 if (absXml != null && absXml.classes != null && absXml.classes.sortList != null) {
@@ -360,6 +360,7 @@ public class HomeActivity extends BaseActivity {
     private TipDialog mConfigErrorDialog;
 
     private void initData() {
+        checkMicrophonePermission();  //xuameng音频权限
         refreshEmpty = false;	//xuameng打断加载判断
         if (dataInitOk && jarInitOk) {
             loadHomeSort(false);
@@ -393,7 +394,6 @@ public class HomeActivity extends BaseActivity {
                                     }
                                 }
                                 initData();
-                                checkMicrophonePermission();  //xuameng音频权限
                             }
                         }, 50);
                     }
@@ -417,7 +417,6 @@ public class HomeActivity extends BaseActivity {
                             public void run() {
                                 App.showToastShort(HomeActivity.this, "聚汇影视提示：jar加载失败！");
                                 initData();
-                                checkMicrophonePermission();  //xuameng音频权限
                             }
                         },50);
                     }
@@ -525,7 +524,10 @@ public class HomeActivity extends BaseActivity {
     }
 
     private void loadHomeSort(boolean keepCurrentContent) { //xuameng 获取主页分类数据
-        showLoading();
+        skipNextUpdate = false;  //xuameng 重置打断
+        if (keepCurrentContent){ //xuameng 重载时才显示showloading
+            showLoading();
+        }
         SourceBean home = ApiConfig.get().getHomeSourceBean();
         homeSortLoading = keepCurrentContent;
         if (keepCurrentContent && home != null && home.getName() != null && !home.getName().isEmpty()) {
