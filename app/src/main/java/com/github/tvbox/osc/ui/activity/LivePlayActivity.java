@@ -222,7 +222,6 @@ public class LivePlayActivity extends BaseActivity {
     private boolean isVideoplaying = false; //xuameng判断视频开始播放
     private boolean XuSource = false; //xuameng退出回看
     private boolean TimeoutChangeSource = false; //xuameng是否自动换源
-    private boolean useDefaultLiveChannelList = false; //xuameng 使用默认判断列表
     private int selectedChannelNumber = 0; // xuameng遥控器数字键输入的要切换的频道号码
     private TextView tvSelectedChannel; //xuameng频道编号
     private ImageView iv_circle_bg_xu; //xuameng音乐播放时图标
@@ -3043,27 +3042,23 @@ public class LivePlayActivity extends BaseActivity {
                 // 1. 从Hawk获取直播组列表（关键：确保不为null）
                 JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
                 if (live_groups == null) {
-                    App.showToastShort(mContext, "聚汇直播提示您：直播源为空！");
                     return;
                 }
     
                 // 2. 检查position是否在有效范围内（避免索引越界）
                 if (position < 0 || position >= live_groups.size()) {
-                    App.showToastShort(mContext, "聚汇直播提示您：直播源为空！");
                     return;
                 }
     
                 // 3. 检查JsonElement是否为null或JsonNull（避免解析错误）
                 JsonElement element = live_groups.get(position);
                 if (element == null || element.isJsonNull()) {
-                    App.showToastShort(mContext, "聚汇直播提示您：直播源为空！");
                     return;
                 }
     
                 // 4. 解析为JsonObject（此时已确保安全）
                 JsonObject livesOBJxU = element.getAsJsonObject();
                 if (livesOBJxU == null || livesOBJxU.isJsonNull()) {
-                    App.showToastShort(mContext, "聚汇直播提示您：直播源为空！");
                     return;
                 }
                 if(position == liveSettingItemAdapter.getSelectedItemIndex()) return;
@@ -3073,7 +3068,6 @@ public class LivePlayActivity extends BaseActivity {
                     mVideoView.release();
                     mVideoView = null;
                 }
-              //  JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
                 JsonObject livesOBJ = live_groups.get(position).getAsJsonObject();
                 liveSettingItemAdapter.selectItem(position, true, true);
                 Hawk.put(HawkConfig.LIVE_GROUP_INDEX, position);
@@ -3081,7 +3075,6 @@ public class LivePlayActivity extends BaseActivity {
                 mHandler.removeCallbacks(mConnectTimeoutChangeSourceRun);  //xuameng BUG
                 mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBack);  //xuameng BUG
                 mHandler.removeCallbacks(mConnectTimeoutChangeSourceRunBuffer);  //xuameng BUG
-				useDefaultLiveChannelList = false;
                 recreate();
                 return;
             case 6: //xuameng渲染方式
@@ -3122,8 +3115,12 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     private void initLiveChannelList() {
-        List < LiveChannelGroup > list = ApiConfig.get().getChannelGroupList();
+        if (ApiConfig.get().shouldReloadLiveConfig()) {   //xuameng 直播配置单独加载
+            loadLiveConfigOnEnter();
+            return;
+        }
 
+        List<LiveChannelGroup> list = ApiConfig.get().getChannelGroupList();
         // xuameng排除"我的收藏"组，检查剩余组是否为空
         boolean hasValidGroups = false;
         for (LiveChannelGroup group : list) {
@@ -3156,6 +3153,50 @@ public class LivePlayActivity extends BaseActivity {
             initLiveState();
         }
     }
+
+    private boolean loadingLiveConfigOnEnter = false;
+
+    private void loadLiveConfigOnEnter() {    //xuameng 直播配置单独加载
+        if (loadingLiveConfigOnEnter) return;
+        loadingLiveConfigOnEnter = true;
+        showLoading();
+        ApiConfig.get().loadLiveConfig(false, new ApiConfig.LoadConfigCallback() {
+            @Override
+            public void success() {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadingLiveConfigOnEnter = false;
+                        initLiveChannelList();
+                        initLiveSettingGroupList();
+                    }
+                });
+            }
+
+            @Override
+            public void error(String msg) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadingLiveConfigOnEnter = false;
+                        setDefaultLiveChannelList();
+                        App.showToastShort(mContext, "聚汇直播提示您：直播列表获取错误！");
+                    }
+                });
+            }
+
+            @Override
+            public void notice(String msg) {
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        App.showToastShort(mContext, msg);
+                    }
+                });
+            }
+        });
+    }
+
     public void loadProxyLives(String url) {
         try {
             Uri parsedUrl = Uri.parse(url);
@@ -3399,14 +3440,24 @@ public class LivePlayActivity extends BaseActivity {
             ? apiSettingGroups 
             : ApiConfig.get().createDefaultLiveSettingGroupList(); // 接口失败，用默认数据
         if(!listxu.isEmpty()) {
-          //  if(liveChannelGroupList.size() - 1 < 2) { //xuameng 只有两个频道组跨选分类BUG
-          //      Hawk.put(HawkConfig.LIVE_CROSS_GROUP, false);
-          //  }
             liveSettingGroupList.get(3).getLiveSettingItems().get(Hawk.get(HawkConfig.LIVE_CONNECT_TIMEOUT, 1)).setItemSelected(true);
             liveSettingGroupList.get(4).getLiveSettingItems().get(0).setItemSelected(Hawk.get(HawkConfig.LIVE_SHOW_TIME, false));
             liveSettingGroupList.get(4).getLiveSettingItems().get(1).setItemSelected(Hawk.get(HawkConfig.LIVE_SHOW_NET_SPEED, false));
             liveSettingGroupList.get(4).getLiveSettingItems().get(2).setItemSelected(Hawk.get(HawkConfig.LIVE_CHANNEL_REVERSE, false));
             liveSettingGroupList.get(4).getLiveSettingItems().get(3).setItemSelected(Hawk.get(HawkConfig.LIVE_CROSS_GROUP, false));
+
+            // ===== xuameng：换源设置，防止旧索引大于新列表长度 =====
+            List<LiveSettingItem> sourceItems = liveSettingGroupList.get(5).getLiveSettingItems();
+            if (sourceItems != null && !sourceItems.isEmpty()) {
+                int savedIndex = Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0);
+                // 关键：旧索引超出新列表长度时自动纠正
+                if (savedIndex >= sourceItems.size()) {
+                    savedIndex = 0;
+                    Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0); // 回写，防止下次再炸
+                }
+                sourceItems.get(savedIndex).setItemSelected(true);   //xuameng新增 换源
+            }
+
             if(live_groups != null) {
                 for(JsonElement element: live_groups) {
                     if(element.isJsonNull()) {
@@ -3415,7 +3466,6 @@ public class LivePlayActivity extends BaseActivity {
                     }
                 }
             }
-            liveSettingGroupList.get(5).getLiveSettingItems().get(Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0)).setItemSelected(true); //xuameng新增 换源
         }
     }
 
@@ -4087,7 +4137,6 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     private void setDefaultLiveChannelList() {      //xuameng 加载失败默认频道列表
-        useDefaultLiveChannelList = true;
         liveChannelGroupList.clear();
     
         // 1. xuameng先添加收藏组（即使为空）
@@ -4124,11 +4173,11 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     private void initLiveObj(){   //xuameng 直播配置里有没有logo配置
-		if (useDefaultLiveChannelList){
-            return;
-		}
         int position=Hawk.get(HawkConfig.LIVE_GROUP_INDEX, 0);
         JsonArray live_groups=Hawk.get(HawkConfig.LIVE_GROUP_LIST,new JsonArray());
+        if (live_groups == null || live_groups.size() == 0 || position < 0 || position >= live_groups.size()) {
+            return;
+        }
         JsonObject livesOBJ = live_groups.get(position).getAsJsonObject();
         if(livesOBJ.has("logo")){
             logoUrl = livesOBJ.get("logo").getAsString();    //xuameng 直播配置里有没有logo配置
