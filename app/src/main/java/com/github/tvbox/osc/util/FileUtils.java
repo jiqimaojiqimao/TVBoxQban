@@ -240,19 +240,28 @@ public class FileUtils {
         }
     }
 
+    public static File getLiveCacheDir() {
+        File dir = new File(
+                App.getInstance().getFilesDir(),
+                "live_cache"
+        );
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
+
     public static void clearSpiderCacheFiles() {  //xuameng点击清空缓存
         String cachePath = FileUtils.getCachePath();          
         String cspCachePath = FileUtils.getFilePath()+"/csp/";
         File cspCacheDir = new File(cspCachePath);
         File cacheDir = new File(cachePath);
+        File liveCacheDir = getLiveCacheDir();  // xuameng直播缓存目录（重点）
         new Thread(() -> {
             try {
                 if(cacheDir.exists()) FileUtils.cleanDirectory(cacheDir);
                 if(cspCacheDir.exists()) FileUtils.cleanDirectory(cspCacheDir);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            try {
+                if (liveCacheDir.exists()) FileUtils.cleanDirectory(liveCacheDir);
                 clearJsModuleCache();
             } catch (Exception e) {
                 e.printStackTrace();
