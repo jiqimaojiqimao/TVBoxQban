@@ -82,12 +82,11 @@ public class ApiConfig {
     private List<IJKCode> ijkCodes;
     private String spider = null;
     private String currentPlaySourceKey = "";
-    private String loadedLiveConfigUrl = "";
+    private String loadedLiveConfigUrl = "";  //xuameng直播默认地址等于API地址
     public String wallpaper = "";
     private String danmaku = ""; // xuameng 弹幕
     public String musicwallpaper = "";   // xuameng背景图
     public String JvhuiWarning = "";   // xuameng版权提示
-
     private final SourceBean emptyHome = new SourceBean();
 
     private final JarLoader jarLoader = new JarLoader();
@@ -190,6 +189,7 @@ public class ApiConfig {
 
     public void loadConfig(boolean useCache, LoadConfigCallback callback, Activity activity) {
         String apiUrl = Hawk.get(HawkConfig.API_URL, "http://xuameng.vicp.net:8082/jvhuiys/1/xu.json");
+        loadedLiveConfigUrl = apiUrl;
         if (apiUrl.isEmpty()) {
             callback.error("-1");
             return;
@@ -267,13 +267,12 @@ public class ApiConfig {
         final String liveApiUrl = apiUrl;
         String liveApiConfigUrl = configUrl(liveApiUrl);
         final String liveConfigKey = TempKey;
-        File live_cache = new File(App.getInstance().getFilesDir().getAbsolutePath() + "/" + MD5.encode(liveApiUrl));
+        File live_cache = new File(FileUtils.getLiveCacheDir(),MD5.encode(liveApiUrl));
         LOG.i("echo-load live config " + liveApiUrl);
         if (useCache && live_cache.exists()) {
             try {
                 parseLiveConfigContent(liveApiUrl, live_cache);
                 if (hasLiveConfigResult()) {
-                    loadedLiveConfigUrl = liveApiUrl;
                     callback.success();
                     return;
                 }
@@ -293,7 +292,6 @@ public class ApiConfig {
                         Hawk.put(HawkConfig.LIVE_GROUP_INDEX, 0);
                         return;
                     }
-                    loadedLiveConfigUrl = liveApiUrl;
                     FileUtils.saveCache(live_cache, json);
                     callback.success();
                 } catch (Throwable th) {
@@ -311,7 +309,6 @@ public class ApiConfig {
                     try {
                         parseLiveConfigContent(liveApiUrl, live_cache);
                         if (hasLiveConfigResult()) {
-                            loadedLiveConfigUrl = liveApiUrl;
                             callback.success();
                             return;
                         }
@@ -332,9 +329,9 @@ public class ApiConfig {
     }
 
     public boolean shouldReloadLiveConfig() {
-        String apiUrl = Hawk.get(HawkConfig.LIVE_API_URL, "");
-        if (apiUrl.isEmpty()) apiUrl = Hawk.get(HawkConfig.API_URL, "");
-        return liveChannelGroupList == null || liveChannelGroupList.isEmpty() || !apiUrl.equals(loadedLiveConfigUrl);
+        String liveApiUrl = Hawk.get(HawkConfig.LIVE_API_URL, "");
+        if (liveApiUrl.isEmpty()) liveApiUrl = loadedLiveConfigUrl;
+        return !liveApiUrl.equals(loadedLiveConfigUrl);
     }
 
     private static final int LOAD_JAR_MAX_RETRY = 1;
