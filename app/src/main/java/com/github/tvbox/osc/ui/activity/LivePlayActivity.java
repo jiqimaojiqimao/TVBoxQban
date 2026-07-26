@@ -3115,7 +3115,7 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     private void initLiveChannelList() {
-        if (ApiConfig.get().shouldReloadLiveConfig()) {   //xuameng 直播配置单独加载
+        if (ApiConfig.get().shouldReloadLiveConfig() && !loadingLiveSuccess) {   //xuameng 直播配置单独加载
             loadLiveConfigOnEnter();
             return;
         }
@@ -3155,46 +3155,42 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     private boolean loadingLiveConfigOnEnter = false;
+    private boolean loadingLiveSuccess = false;
 
-    private void loadLiveConfigOnEnter() {    //xuameng 直播配置单独加载
+    private void loadLiveConfigOnEnter() { // xuameng 直播配置单独加载
         if (loadingLiveConfigOnEnter) return;
         loadingLiveConfigOnEnter = true;
         showLoading();
-        ApiConfig.get().loadLiveConfig(false, new ApiConfig.LoadConfigCallback() {
+
+        // xuameng放进子线程
+        new Thread(() -> ApiConfig.get().loadLiveConfig(true, new ApiConfig.LoadConfigCallback() {
+
             @Override
             public void success() {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        loadingLiveConfigOnEnter = false;
-                        initLiveChannelList();
-                        initLiveSettingGroupList();
-                    }
+                mHandler.post(() -> {
+                    loadingLiveConfigOnEnter = false;
+                    loadingLiveSuccess = true;
+                    initLiveChannelList();
+                    initLiveSettingGroupList();
                 });
             }
 
             @Override
             public void error(String msg) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        loadingLiveConfigOnEnter = false;
-                        setDefaultLiveChannelList();
-                        App.showToastShort(mContext, "聚汇直播提示您：直播列表获取错误！");
-                    }
+                mHandler.post(() -> {
+                    loadingLiveConfigOnEnter = false;
+                    setDefaultLiveChannelList();
+                    App.showToastShort(mContext, "聚汇直播提示您：直播列表获取错误！");
                 });
             }
 
             @Override
             public void notice(String msg) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        App.showToastShort(mContext, msg);
-                    }
-                });
+                mHandler.post(() ->
+                    App.showToastShort(mContext, msg)
+                );
             }
-        });
+        })).start();
     }
 
     public void loadProxyLives(String url) {
