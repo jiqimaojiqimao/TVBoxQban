@@ -240,10 +240,21 @@ public class FileUtils {
         }
     }
 
-    public static File getLiveCacheDir() {
+    public static File getLiveCacheDir() {   // xuameng直播缓存目录
         File dir = new File(
                 App.getInstance().getFilesDir(),
                 "live_cache"
+        );
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
+
+    public static File getConfigCacheDir() {  // xuameng配置缓存目录
+        File dir = new File(
+                App.getInstance().getFilesDir(),
+                "config_cache"
         );
         if (!dir.exists()) {
             dir.mkdirs();
@@ -256,12 +267,14 @@ public class FileUtils {
         String cspCachePath = FileUtils.getFilePath()+"/csp/";
         File cspCacheDir = new File(cspCachePath);
         File cacheDir = new File(cachePath);
-        File liveCacheDir = getLiveCacheDir();  // xuameng直播缓存目录（重点）
+        File liveCacheDir = getLiveCacheDir();  // xuameng直播缓存目录
+        File configCacheDir = getConfigCacheDir();  // xuameng配置缓存目录
         new Thread(() -> {
             try {
                 if(cacheDir.exists()) FileUtils.cleanDirectory(cacheDir);
                 if(cspCacheDir.exists()) FileUtils.cleanDirectory(cspCacheDir);
                 if (liveCacheDir.exists()) FileUtils.cleanDirectory(liveCacheDir);
+                if (configCacheDir.exists()) FileUtils.cleanDirectory(configCacheDir);
                 clearJsModuleCache();
             } catch (Exception e) {
                 e.printStackTrace();
