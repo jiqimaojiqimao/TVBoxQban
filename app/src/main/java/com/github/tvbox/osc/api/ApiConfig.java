@@ -93,9 +93,11 @@ public class ApiConfig {
     private final JsLoader jsLoader = new JsLoader();
     private final Gson gson;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final ExecutorService configLoadExecutor = Executors.newSingleThreadExecutor();
-    private final ExecutorService jarLoadExecutor = Executors.newSingleThreadExecutor();
-    private final ExecutorService danmuSearchExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService configLoadExecutor = Executors.newSingleThreadExecutor();  //xuameng配置线程池
+    private final ExecutorService configLoadLiveExecutor = Executors.newSingleThreadExecutor(); //xuameng直播线程池
+    private final ExecutorService warmSearchSpiders = Executors.newSingleThreadExecutor();  //xuameng预热搜索线程池
+    private final ExecutorService jarLoadExecutor = Executors.newSingleThreadExecutor();  //xuameng loadjar线程池
+    private final ExecutorService danmuSearchExecutor = Executors.newSingleThreadExecutor();  //xuameng 弹幕线程池
     private final Set<String> warmedSearchSpiderKeys = new HashSet<>();
 
     private final String userAgent = "okhttp/3.15";
@@ -194,7 +196,7 @@ public class ApiConfig {
             callback.error("-1");
             return;
         }
-        File cache = new File(App.getInstance().getFilesDir().getAbsolutePath() + "/" + MD5.encode(apiUrl));
+        File cache = new File(FileUtils.getLiveCacheDir(),MD5.encode(apiUrl));
         if (useCache && cache.exists()) {
             try {
                 String json = readConfigFile(cache);
@@ -280,7 +282,7 @@ public class ApiConfig {
                 th.printStackTrace();
             }
         }
-        fetchConfigAsync(liveApiUrl, liveApiConfigUrl, liveConfigKey, new ConfigFetchCallback() {
+        fetchConfigLiveAsync(liveApiUrl, liveApiConfigUrl, liveConfigKey, new ConfigFetchCallback() {
             @Override
             public void success(String json) {
                 try {
@@ -356,6 +358,53 @@ public class ApiConfig {
 
     private void fetchConfigAsync(final String apiUrl, final String requestUrl, final String configKey, final ConfigFetchCallback callback) {
         configLoadExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                String result = "";
+                String error = "";
+                okhttp3.Response response = null;
+                try {
+                    okhttp3.Request request = new okhttp3.Request.Builder()
+                            .url(requestUrl)
+                            .build();
+                    okhttp3.OkHttpClient client = OkGoHelper.getDefaultClient();
+                    if (client == null) client = com.github.catvod.net.OkHttp.client();
+                    response = client.newCall(request).execute();
+                    if (!response.isSuccessful()) {
+                        error = "HTTP " + response.code();
+                    } else if (response.body() == null) {
+                        error = "empty body";
+                    } else {
+                        result = FindResult(response.body().string(), configKey);
+                        if (apiUrl.startsWith("clan")) {
+                            result = clanContentFix(clanToAddress(apiUrl), result);
+                        }
+                        result = fixContentPath(apiUrl, result);
+                    }
+                } catch (Throwable th) {
+                    error = th.getMessage();
+                    if (TextUtils.isEmpty(error)) error = th.toString();
+                } finally {
+                    if (response != null) closeQuietly(response.body());
+                }
+                final String finalResult = result;
+                final String finalError = error;
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (TextUtils.isEmpty(finalError)) {
+                            callback.success(finalResult);
+                        } else {
+                            callback.error(finalError);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    private void fetchConfigLiveAsync(final String apiUrl, final String requestUrl, final String configKey, final ConfigFetchCallback callback) {  //xuameng 主要防止与配置的线程池冲突
+        configLoadLiveExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 String result = "";
