@@ -3115,11 +3115,6 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     private void initLiveChannelList() {
-        if (ApiConfig.get().shouldReloadLiveConfig() && !loadingLiveSuccess) {   //xuameng 直播配置单独加载
-            loadLiveConfigOnEnter();
-            return;
-        }
-
         List<LiveChannelGroup> list = ApiConfig.get().getChannelGroupList();
         // xuameng排除"我的收藏"组，检查剩余组是否为空
         boolean hasValidGroups = false;
@@ -3130,8 +3125,18 @@ public class LivePlayActivity extends BaseActivity {
             }
         }
 
+        boolean liveListInvalid = list.isEmpty() || !hasValidGroups;
+
+        // xuameng两个条件同时满足才重新加载
+        if (ApiConfig.get().shouldReloadLiveConfig()
+                && !loadingLiveSuccess
+                && liveListInvalid) {
+            loadLiveConfigOnEnter();
+            return;
+        }
+
         // xuameng如果原列表为空，或排除收藏组后没有其他组，则显示默认列表
-        if (list.isEmpty() || !hasValidGroups) {
+        if (liveListInvalid) {
             JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
             if(live_groups.size() > 1) {
                 setDefaultLiveChannelList();
