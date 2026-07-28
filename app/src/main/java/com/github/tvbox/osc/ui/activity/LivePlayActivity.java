@@ -3140,11 +3140,9 @@ public class LivePlayActivity extends BaseActivity {
             JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
             if(live_groups.size() > 1) {
                 setDefaultLiveChannelList();
-                showSuccess();
                 App.showToastShort(mContext, "聚汇直播提示您：直播列表为空！请切换线路！");
             } else {
                 setDefaultLiveChannelList();
-                showSuccess();
                 App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
             }
             return;
@@ -3207,11 +3205,9 @@ public class LivePlayActivity extends BaseActivity {
                 JsonArray live_groups = Hawk.get(HawkConfig.LIVE_GROUP_LIST, new JsonArray());
                 if(live_groups.size() > 1) {
                     setDefaultLiveChannelList();
-                    showSuccess();
                     App.showToastShort(mContext, "聚汇直播提示您：直播文件错误！请切换线路！");
                 } else {
                     setDefaultLiveChannelList();
-                    showSuccess();
                     App.showToastShort(mContext, "聚汇直播提示您：直播文件错误！");
                 }
                 return;
@@ -3223,7 +3219,6 @@ public class LivePlayActivity extends BaseActivity {
             if ((!hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
                 // 权限不足时，直接设置默认播放列表
                 setDefaultLiveChannelList();
-                showSuccess();
                 App.showToastShort(mContext, "该源需要存储权限！");
                 return;
             }
@@ -3256,7 +3251,6 @@ public class LivePlayActivity extends BaseActivity {
                                 @Override
                                 public void run() {
                                     setDefaultLiveChannelList();
-                                    showSuccess();
                                     App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
                                 }
                             });
@@ -3271,7 +3265,6 @@ public class LivePlayActivity extends BaseActivity {
                                 @Override
                                 public void run() {
                                     setDefaultLiveChannelList();
-                                    showSuccess();
                                     App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
                                 }
                             });
@@ -3326,11 +3319,9 @@ public class LivePlayActivity extends BaseActivity {
                                 if (list.isEmpty() || !hasValidGroups) {
                                     if(live_groups.size() > 1) {
                                         setDefaultLiveChannelList();
-                                        showSuccess();
                                         App.showToastShort(mContext, "聚汇直播提示您：直播列表为空！请切换线路！");
                                     } else {
                                         setDefaultLiveChannelList();
-                                        showSuccess();
                                         App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
                                     }
                                     return;
@@ -3344,7 +3335,6 @@ public class LivePlayActivity extends BaseActivity {
                         } catch (Exception e) {
                             e.printStackTrace();
                             setDefaultLiveChannelList();
-                            showSuccess();
                             App.showToastShort(mContext, "聚汇直播提示您：频道列表为空！");
                         }
                     }).start();
@@ -3357,11 +3347,9 @@ public class LivePlayActivity extends BaseActivity {
                         public void run() {
                             if(live_groups.size() > 1) {
                                 setDefaultLiveChannelList();
-                                showSuccess();
                                 App.showToastShort(mContext, "聚汇直播提示您：直播列表获取错误！请切换线路！");
                             } else {
                                 setDefaultLiveChannelList();
-                                showSuccess();
                                 App.showToastShort(mContext, "聚汇直播提示您：直播列表获取错误！");
                             }
                         }
