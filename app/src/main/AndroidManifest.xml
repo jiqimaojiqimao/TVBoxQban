@@ -57,6 +57,10 @@
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
         <activity
+            android:name=".ui.activity.VideoActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
+            android:screenOrientation="sensorLandscape" />
+        <activity
             android:name=".ui.activity.PushActivity"
 			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
             android:screenOrientation="sensorLandscape" />
