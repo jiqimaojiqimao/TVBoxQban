@@ -6,7 +6,7 @@ android {
     compileSdk 36
 
     buildFeatures {
-        buildConfig false
+        buildConfig = false
     }
     
     defaultConfig {
