@@ -6,6 +6,10 @@ import com.github.tvbox.osc.util.OkGoHelper;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.Collections;
+import java.util.List;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 import okhttp3.Call;
 import okhttp3.FormBody;
@@ -102,6 +106,21 @@ public class OkHttp {
         } catch (Exception e) {
             e.printStackTrace();
             return "";
+        }
+    }
+
+    /**
+     * 兼容旧版 spider 调用的 get 方法
+     */
+    public static OkResult get(String url, Map<String, String> headers) {
+        try {
+            Response response = newCall(url, headers);
+            int code = response.code();
+            String body = response.body() != null ? response.body().string() : "";
+            return new OkResult(code, body, response.headers().toMultimap());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new OkResult(500, "", Collections.emptyMap());
         }
     }
 
