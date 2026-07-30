@@ -766,12 +766,12 @@ public class HomeActivity extends BaseActivity {
                     currentSelected = sortFocused;
                     mViewPager.setCurrentItem(sortFocused, false); 
                     changeTop(sortFocused != 0);
-                    if (baseLazyFragment instanceof GridFragment && ((GridFragment) baseLazyFragment).shouldReloadOnSelect()) {
+                 /*   if (baseLazyFragment instanceof GridFragment && ((GridFragment) baseLazyFragment).shouldReloadOnSelect()) {
                         ((GridFragment) baseLazyFragment).forceRefresh();
-                    }
-                } else if (baseLazyFragment instanceof GridFragment && ((GridFragment) baseLazyFragment).shouldReloadOnSelect()) {
+                    }   */
+                } /* else if (baseLazyFragment instanceof GridFragment && ((GridFragment) baseLazyFragment).shouldReloadOnSelect()) {
                     ((GridFragment) baseLazyFragment).forceRefresh();
-                }
+                }  */
             }
         }
     };
