@@ -2,7 +2,7 @@ package com.github.catvod.crawler;
 
 import android.content.Context;
 
-import com.github.catvod.net.OkHttp;
+import com.github.tvbox.osc.util.urlhttp.OkHttp;
 
 import org.json.JSONObject;
 
