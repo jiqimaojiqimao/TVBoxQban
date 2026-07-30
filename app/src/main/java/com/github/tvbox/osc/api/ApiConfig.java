@@ -368,7 +368,7 @@ public class ApiConfig {
                             .url(requestUrl)
                             .build();
                     okhttp3.OkHttpClient client = OkGoHelper.getDefaultClient();
-                    if (client == null) client = com.github.catvod.net.OkHttp.client();
+                    if (client == null) client = com.github.tvbox.osc.util.urlhttp.OkHttp.client();
                     response = client.newCall(request).execute();
                     if (!response.isSuccessful()) {
                         error = "HTTP " + response.code();
@@ -415,7 +415,7 @@ public class ApiConfig {
                             .url(requestUrl)
                             .build();
                     okhttp3.OkHttpClient client = OkGoHelper.getDefaultClient();
-                    if (client == null) client = com.github.catvod.net.OkHttp.client();
+                    if (client == null) client = com.github.tvbox.osc.util.urlhttp.OkHttp.client();
                     response = client.newCall(request).execute();
                     if (!response.isSuccessful()) {
                         error = "HTTP " + response.code();
@@ -490,7 +490,7 @@ public class ApiConfig {
                             .header("User-Agent", userAgent)
                             .build();
                     okhttp3.OkHttpClient client = OkGoHelper.getDefaultClient();
-                    if (client == null) client = com.github.catvod.net.OkHttp.client();
+                    if (client == null) client = com.github.tvbox.osc.util.urlhttp.OkHttp.client();
                     response = client.newCall(request).execute();
                     if (!response.isSuccessful()) {
                         error = "HTTP " + response.code();
