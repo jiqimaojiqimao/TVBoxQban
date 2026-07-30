@@ -5,7 +5,7 @@ import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.github.catvod.net.OkHttp;
+import com.github.tvbox.osc.util.urlhttp.OkHttp;
 import com.github.catvod.Proxy;
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.server.ControlManager;
