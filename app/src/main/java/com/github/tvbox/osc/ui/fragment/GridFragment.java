@@ -608,8 +608,16 @@ public class GridFragment extends BaseLazyFragment {
             App.showToastShort(getContext(), "数据加载中，请稍候！");
             return;
         }
+        // xuameng关键：已经在 LoadSir 托管状态下，不要再 showLoading
+        if (!isLoad) {
+            showLoading();
+        }
         page = 1;
-        initData();
+        isRequesting = true;
+        isLoad = false;
+        hasActionItems = false;
+        scrollTop();
+        sourceViewModel.getList(sortData, page);
     }
 
 }
