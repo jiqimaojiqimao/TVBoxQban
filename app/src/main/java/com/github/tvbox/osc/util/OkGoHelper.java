@@ -77,7 +77,7 @@ public class OkGoHelper {
     public static synchronized void setProxyList(List<ProxyRule> proxyRules) {
         proxySelector().clear();
         if (proxyRules != null && !proxyRules.isEmpty()) proxySelector().addAll(proxyRules);
-        com.github.catvod.net.OkHttp.reset();
+        com.github.tvbox.osc.util.urlhttp.OkHttp.reset();
     }
 
     static void initExoOkHttpClient() {
@@ -396,7 +396,7 @@ public class OkGoHelper {
 
         initExoOkHttpClient();
         Parser.resetHttpClient();
-        com.github.catvod.net.OkHttp.resetClient();
+        com.github.tvbox.osc.util.urlhttp.OkHttp.resetClient();
     }
 
     static void initPicasso(OkHttpClient client) {
