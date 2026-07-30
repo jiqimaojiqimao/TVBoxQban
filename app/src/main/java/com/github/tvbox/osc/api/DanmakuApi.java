@@ -7,7 +7,7 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.collection.ArrayMap;
 
-import com.github.catvod.net.OkHttp;
+import com.github.tvbox.osc.util.urlhttp.OkHttp;
 import com.github.tvbox.osc.util.DanmuHelper;
 import com.github.tvbox.osc.util.HawkConfig;
 import com.github.tvbox.osc.util.LOG;
