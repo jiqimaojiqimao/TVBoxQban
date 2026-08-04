@@ -217,27 +217,26 @@ public class FileUtils {
         File thunderCacheDir = new File(thunderCachePath);
 		File exoCachePathDir = new File(exoCachePath);       //xuameng exo缓存
 		File jpaCachePathDir = new File(jpaCachePath + File.separator + "Downloads");       //xuameng jp缓存
-
         try {
             if (ijkCacheDir.exists()) cleanDirectory(ijkCacheDir);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        try {
             if (thunderCacheDir.exists()) cleanDirectory(thunderCacheDir);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        try {
             if (exoCachePathDir.exists()) cleanDirectory(exoCachePathDir);    //xuameng exo缓存
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-		try {
             if (jpaCachePathDir.exists()) cleanDirectory(jpaCachePathDir);    //xuameng jp缓存
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void clearCacheFiles() {  //xuameng点击清空缓存
+        String cachePath = getCachePath();   
+        File cacheDir = new File(cachePath);
+        new Thread(() -> {
+            try {
+                if(cacheDir.exists()) cleanDirectory(cacheDir);  //xuameng 缓存目录
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     public static File getLiveCacheDir() {   // xuameng直播缓存目录
@@ -263,26 +262,26 @@ public class FileUtils {
     }
 
     public static void clearSpiderCacheFiles() {  //xuameng点击清空缓存
-        String cachePath = FileUtils.getCachePath();          
-        String cspCachePath = FileUtils.getFilePath()+"/csp/";
+        String cachePath = getCachePath();    // xuameng缓存目录      
+        String cspCachePath = getFilePath()+"/csp/";  // xuamengJAR缓存目录
         File cspCacheDir = new File(cspCachePath);
         File cacheDir = new File(cachePath);
         File liveCacheDir = getLiveCacheDir();  // xuameng直播缓存目录
         File configCacheDir = getConfigCacheDir();  // xuameng配置缓存目录
         new Thread(() -> {
             try {
-                if(cacheDir.exists()) FileUtils.cleanDirectory(cacheDir);
-                if(cspCacheDir.exists()) FileUtils.cleanDirectory(cspCacheDir);
-                if (liveCacheDir.exists()) FileUtils.cleanDirectory(liveCacheDir);
-                if (configCacheDir.exists()) FileUtils.cleanDirectory(configCacheDir);
-                clearJsModuleCache();
+                if(cacheDir.exists()) cleanDirectory(cacheDir);
+                if(cspCacheDir.exists()) cleanDirectory(cspCacheDir);
+                if (liveCacheDir.exists()) cleanDirectory(liveCacheDir);
+                if (configCacheDir.exists()) cleanDirectory(configCacheDir);
+                clearJsModuleCache(); //xuameng JS CACHE
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
     }
 
-    private static void clearJsModuleCache() {   //xuameng JS CACHE
+    private static void clearJsModuleCache() {   //xuameng JS 缓存
         File externalCacheDir = new File(getExternalCachePath());
         if (!externalCacheDir.exists() && !externalCacheDir.mkdirs()) {
             return;
