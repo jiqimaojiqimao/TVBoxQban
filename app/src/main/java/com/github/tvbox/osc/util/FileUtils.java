@@ -7,7 +7,7 @@ import android.util.Base64;
 import com.github.tvbox.osc.base.App;
 
 import com.github.tvbox.osc.server.ControlManager;
-import com.github.tvbox.osc.util.urlhttp.OkHttp;
+import com.github.catvod.net.OkHttp;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.orhanobut.hawk.Hawk;
