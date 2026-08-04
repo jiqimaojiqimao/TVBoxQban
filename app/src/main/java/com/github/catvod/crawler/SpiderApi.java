@@ -115,7 +115,7 @@ public class SpiderApi {
             Headers headers = headers(obj.get("headers"));
             Request.Builder builder = new Request.Builder().url(url).headers(headers);
             if ("POST".equalsIgnoreCase(method)) builder.post(body(obj));
-            OkHttpClient client = com.github.tvbox.osc.util.urlhttp.OkHttp.client();
+            OkHttpClient client = com.github.catvod.net.OkHttp.client();
             try (Response response = client.newCall(builder.build()).execute()) {
                 return response.body() != null ? response.body().string() : "";
             }
