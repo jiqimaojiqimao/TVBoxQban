@@ -154,7 +154,7 @@ dependencies {
     //支持http3
     implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
     implementation("org.chromium.net:cronet-embedded:101.4951.41") {
-        exclude(group = "com.squareup.okhttp3")
+        exclude group: 'com.squareup.okhttp3'
     }
     //安卓工具类
     implementation 'com.blankj:utilcodex:1.31.0'   
