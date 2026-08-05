@@ -329,8 +329,28 @@ public class DnsOverHttps implements Dns {
         return requestBuilder.build();
     }
 
-    static boolean isPrivateHost(String host) {   //xuameng 改了一下适配okhttp4
-        return false;
+    static boolean isPrivateHost(String host) {  //xuameng 改了一下适配okhttp4
+        if (host == null) return true;
+
+        // 1. localhost / 本地域名
+        if (host.equalsIgnoreCase("localhost")
+                || host.endsWith(".local")
+                || host.endsWith(".internal")
+                || host.endsWith(".lan")) {
+            return true;
+        }
+
+        // 2. IP 字面量（IPv4 / IPv6）
+        try {
+            InetAddress addr = InetAddress.getByName(host);
+            return addr.isLoopbackAddress()
+                    || addr.isLinkLocalAddress()
+                    || addr.isSiteLocalAddress()
+                    || addr.isAnyLocalAddress();
+        } catch (UnknownHostException e) {
+            // 3. 解析失败，保守认为是私有 / 不可信
+            return true;
+        }
     }
 
     public static final class Builder {
