@@ -118,7 +118,7 @@ dependencies {
     implementation 'com.google.zxing:core:3.5.1'            //xuameng 二维码
     implementation 'androidx.appcompat:appcompat:1.7.1'     //xuameng UI 组件
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'   //xuameng响应布局
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0"  //xuameng生命周期管理
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0'  //xuameng生命周期管理
     implementation 'androidx.recyclerview:recyclerview:1.4.0'      //xuaemng列表展示
     implementation files('libs/thunder.jar')
     implementation files('libs/commons-lang3-3.12.0.jar')
@@ -129,7 +129,7 @@ dependencies {
     implementation 'com.squareup.okio:okio:3.3.0'          //xuameng数据处理
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.49-androidx'    //xuameng RecyclerView 的适配器
     implementation 'com.kingja.loadsir:loadsir:1.3.8'    //xuameng 页面加载   
-    implementation 'com.google.code.gson:gson:2.14.0'    //xuameng json序列化
+    implementation 'com.google.code.gson:gson:2.10.1'    //xuameng json序列化
     implementation 'com.squareup.picasso:picasso:2.71828'  //xuameng 图片加载
     implementation 'me.jessyan:autosize:1.2.1'      //xuameng自动适配屏幕尺寸
     implementation('com.thoughtworks.xstream:xstream:1.4.20') {      //xuameng xml json互转
