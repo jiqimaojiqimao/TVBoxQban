@@ -12,7 +12,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
-        versionName '20260805-2222'
+        versionName '20260804-2222'
         multiDexEnabled = true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -147,7 +147,7 @@ dependencies {
 
     implementation project(":player")
     implementation project(":quickjs")
-    implementation 'com.lzy.net:okgo:3.0.4'
+    implementation 'com.lzy.net:okgo:3.0.4'           //xuameng  基于okhttp3实现
     implementation 'com.owen:tv-recyclerview:3.0.0'   //xuameng  recyclerview
     implementation 'com.github.getActivity:XXPermissions:18.5'     //xuameng权限
     implementation 'org.jsoup:jsoup:1.16.1'  //xuameng 解析html
