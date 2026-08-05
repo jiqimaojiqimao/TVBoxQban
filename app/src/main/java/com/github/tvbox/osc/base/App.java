@@ -17,7 +17,7 @@ import com.github.tvbox.osc.util.LOG;
 import com.github.tvbox.osc.util.OkGoHelper;
 import com.github.tvbox.osc.util.PlayerHelper;
 import com.whl.quickjs.android.QuickJSLoader;
- import com.github.catvod.crawler.JsLoader;
+import com.github.catvod.crawler.JsLoader;
 import com.kingja.loadsir.core.LoadSir;
 import com.github.tvbox.osc.crash.CrashHandler;  //xuameng 崩溃信息
 import com.orhanobut.hawk.Hawk;
