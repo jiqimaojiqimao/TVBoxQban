@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    compileSdk 36
+    compileSdk 37
 
     buildFeatures {
         buildConfig = false
@@ -12,7 +12,7 @@ android {
     defaultConfig {
         namespace = 'com.whl.quickjs.android'
         minSdk 24
-        targetSdk 28
+        targetSdk 37
     }
 
     buildTypes {
@@ -31,6 +31,5 @@ android {
 }
 
 dependencies {
-    api 'wang.harlon.quickjs:wrapper-android:3.2.3'
-    api 'wang.harlon.quickjs:wrapper-java:3.2.3'    
+    api 'wang.harlon.quickjs:wrapper-android:3.2.3'  
 }
