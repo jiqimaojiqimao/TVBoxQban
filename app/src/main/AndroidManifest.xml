@@ -40,7 +40,8 @@
         <activity
             android:name=".ui.activity.HomeActivity"
 			android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|density|fontScale"
-            android:screenOrientation="sensorLandscape">
+            android:screenOrientation="sensorLandscape"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -97,7 +98,8 @@
             android:name=".dlna.DLNACastService"
             android:exported="false" />
 
-        <receiver android:name=".receiver.SearchReceiver">
+        <receiver android:name=".receiver.SearchReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.content.movie.search.Action" />
             </intent-filter>
@@ -115,7 +117,8 @@
                 <action android:name="android.content.movie.push.Action" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".receiver.CustomWebReceiver">
+        <receiver android:name=".receiver.CustomWebReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.content.movie.custom.web.Action" />
             </intent-filter>
