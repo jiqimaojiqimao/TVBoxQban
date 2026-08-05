@@ -118,7 +118,7 @@ dependencies {
     implementation 'com.google.zxing:core:3.5.1'            //xuameng 二维码
     implementation 'androidx.appcompat:appcompat:1.7.1'     //xuameng UI 组件
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'   //xuameng响应布局
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'   //xuameng生命周期管理
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0"  //xuameng生命周期管理
     implementation 'androidx.recyclerview:recyclerview:1.4.0'      //xuaemng列表展示
     implementation files('libs/thunder.jar')
     implementation files('libs/commons-lang3-3.12.0.jar')
@@ -152,7 +152,7 @@ dependencies {
     implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
     implementation 'com.github.ctiao:DanmakuFlameMaster:0.9.25'
     //支持http3
-    implementation("org.chromium.net:cronet-embedded:101.4951.41") {
+    implementation("org.chromium.net:cronet-embedded:119.6045.31") {
         exclude group: 'com.squareup.okhttp3'
     }
     //安卓工具类
