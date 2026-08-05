@@ -10,7 +10,7 @@ android {
         namespace = 'com.github.tvbox.osc'
         applicationId 'com.jvhuiys.player'
         minSdkVersion 24
-        targetSdkVersion 37
+        targetSdkVersion 28
         versionCode 1
         versionName '20260804-2222'
         multiDexEnabled = true
@@ -67,12 +67,6 @@ android {
 
     flavorDimensions += ["abi"]
     productFlavors {
-        armeabi {
-            dimension = "abi"
-            ndk {
-                abiFilters 'armeabi-v7a'
-            }
-        }
         arm64 {
             dimension = "abi"
             ndk {
