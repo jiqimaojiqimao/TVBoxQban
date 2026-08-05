@@ -165,7 +165,7 @@ public class OkGoHelper {
         String version = OkHttpClient.class
                 .getPackage()
                 .getImplementationVersion();
-        return "OkHttp/" + (version != null ? version : "4.12.0");
+        return "OkHttp/" + (version != null ? version : "5.4.0");
     }
 
     static void initDnsOverHttps() {
