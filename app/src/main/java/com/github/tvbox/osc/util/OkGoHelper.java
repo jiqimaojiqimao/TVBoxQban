@@ -161,6 +161,13 @@ public class OkGoHelper {
         return inetAddresses;
     }
 
+    private static String getUserAgent() {  //xuameng 获取okhttp版本号
+        String version = OkHttpClient.class
+                .getPackage()
+                .getImplementationVersion();
+        return "OkHttp/" + (version != null ? version : "4.12.0");
+    }
+
     static void initDnsOverHttps() {
         Integer dohSelector=Hawk.get(HawkConfig.DOH_URL, 0);
         JsonArray ips=null;
@@ -338,7 +345,7 @@ public class OkGoHelper {
             th.printStackTrace();
         }
 
-        HttpHeaders.setUserAgent("OkHttp/5.4.0");
+        HttpHeaders.setUserAgent(getUserAgent());  //xuameng 获取okhttp版本号
 
         OkHttpClient okHttpClient = builder.build();
         OkGo.getInstance().setOkHttpClient(okHttpClient);
@@ -382,7 +389,7 @@ public class OkGoHelper {
             th.printStackTrace();
         }
 
-        HttpHeaders.setUserAgent("OkHttp/5.4.0");
+        HttpHeaders.setUserAgent(getUserAgent());
 
         OkHttpClient okHttpClient = builder.build();
         OkGo.getInstance().setOkHttpClient(okHttpClient);
