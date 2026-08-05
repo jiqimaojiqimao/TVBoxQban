@@ -336,7 +336,7 @@ for (int i = 1; i < failures.size(); i++) {
     }
 
     static boolean isPrivateHost(String host) {
-        return PublicSuffixDatabase.get().getEffectiveTldPlusOne(host) == null;
+        return false;
     }
 
     public static final class Builder {
