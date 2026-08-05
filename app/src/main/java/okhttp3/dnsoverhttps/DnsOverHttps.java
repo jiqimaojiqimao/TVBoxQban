@@ -332,7 +332,7 @@ public class DnsOverHttps implements Dns {
         return requestBuilder.build();
     }
 
-    static boolean isPrivateHost(String host) {
+    static boolean isPrivateHost(String host) {   //xuameng 改了一下适配okhttp4
         return false;
     }
 
