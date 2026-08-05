@@ -256,9 +256,13 @@ public class DnsOverHttps implements Dns {
         UnknownHostException unknownHostException = new UnknownHostException(hostname);
         unknownHostException.initCause(failure);
 
-        for (int i = 1; i < failures.size(); i++) {
-            Util.addSuppressedIfPossible(unknownHostException, failures.get(i));
-        }
+for (int i = 1; i < failures.size(); i++) {
+    Throwable e1 = unknownHostException;
+    Throwable e2 = failures.get(i);
+    if (e1 != null && e2 != null && e1 != e2) {
+        e1.addSuppressed(e2);
+    }
+}
 
         throw unknownHostException;
     }
@@ -285,7 +289,10 @@ public class DnsOverHttps implements Dns {
 
     private List<InetAddress> readResponse(String hostname, Response response) throws Exception {
         if (response.cacheResponse() == null && response.protocol() != Protocol.HTTP_2) {
-            Platform.get().log(Platform.WARN, "Incorrect protocol: " + response.protocol(), null);
+            android.util.Log.w(
+    "DnsOverHttps",
+    "Incorrect protocol: " + response.protocol()
+);
         }
 
         try {
