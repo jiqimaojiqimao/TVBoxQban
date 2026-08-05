@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    compileSdkVersion 37
+    compileSdkVersion 36
 
     defaultConfig {
         namespace = 'com.github.tvbox.osc'
         applicationId 'com.jvhuiys.player'
         minSdkVersion 24
-        targetSdkVersion 30
+        targetSdkVersion 28
         versionCode 1
         versionName '20260804-2222'
         multiDexEnabled = true
@@ -67,6 +67,12 @@ android {
 
     flavorDimensions += ["abi"]
     productFlavors {
+        armeabi {
+            dimension = "abi"
+            ndk {
+                abiFilters 'armeabi-v7a'
+            }
+        }
         arm64 {
             dimension = "abi"
             ndk {
@@ -152,7 +158,8 @@ dependencies {
     implementation(name:'xwalk_shared_library-23.53.589.4',ext:'aar')   //xuameng   xwalk
     implementation 'com.github.ctiao:DanmakuFlameMaster:0.9.25'
     //支持http3
-    implementation "org.chromium.net:cronet-embedded:119.6045.31"
+    implementation ('com.google.net.cronet:cronet-okhttp:0.1.0')
+    implementation ('org.chromium.net:cronet-embedded:101.4951.41')
     //安卓工具类
     implementation 'com.blankj:utilcodex:1.31.0'   
     //xuameng exo
