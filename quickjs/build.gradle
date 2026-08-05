@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    compileSdk 37
+    compileSdk 36
 
     buildFeatures {
         buildConfig = false
@@ -12,7 +12,7 @@ android {
     defaultConfig {
         namespace = 'com.whl.quickjs.android'
         minSdk 24
-        targetSdk 30
+        targetSdk 28
     }
 
     buildTypes {
