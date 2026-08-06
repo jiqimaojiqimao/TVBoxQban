@@ -82,8 +82,8 @@ import com.lzy.okgo.model.Response;
 import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.orhanobut.hawk.Hawk;
 
-import androidx.media3.common.Player;
-import androidx.media3.common.text.Cue;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.text.Cue;
 import com.github.tvbox.osc.bean.IJKCode;  //xuamengIJK切换用
 
 import org.greenrobot.eventbus.EventBus;
@@ -865,7 +865,7 @@ public class PlayFragment extends BaseLazyFragment {
                                         App.getInstance().setDashData(base64);
                                         url = ControlManager.get().getAddress(true) + "dash/proxy.mpd";
                                         break;
-                                    } else if (s.contains("proxy://")) {   //xuameng 另一种写法
+                                    } else if (s.startsWith("proxy://")) {   //xuameng 另一种写法
                                         String base = ControlManager.get().getAddress(true);
                                         url = base + "proxy?" + s.substring("proxy://".length());
                                         break;
