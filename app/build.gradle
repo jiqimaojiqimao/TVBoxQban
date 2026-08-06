@@ -89,12 +89,6 @@ android {
     }
 }
 
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
-}
-
 configurations.all {            //xuameng新增解决编译
     resolutionStrategy {
           force 'org.dom4j:dom4j:2.1.4'
@@ -150,6 +144,7 @@ dependencies {
     implementation("org.chromium.net:cronet-embedded:119.6045.31") {
         exclude group: 'com.squareup.okhttp3'
     }
+    implementation 'org.brotli:dec:0.1.2'
     //安卓工具类
     implementation 'com.blankj:utilcodex:1.31.0'   
     //xuameng exo
