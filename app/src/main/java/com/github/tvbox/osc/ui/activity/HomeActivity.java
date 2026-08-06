@@ -169,6 +169,7 @@ public class HomeActivity extends BaseActivity {
             useCacheConfig = bundle.getBoolean("useCache", false);
         }
         initData();
+        checkMicrophonePermission();  //xuameng音频权限
     }
 
     private void initView() {
@@ -360,7 +361,6 @@ public class HomeActivity extends BaseActivity {
     private TipDialog mConfigErrorDialog;
 
     private void initData() {
-        checkMicrophonePermission();  //xuameng音频权限
         refreshEmpty = false;	//xuameng打断加载判断
         if (dataInitOk && jarInitOk) {
             loadHomeSort(false);
@@ -1053,6 +1053,20 @@ public class HomeActivity extends BaseActivity {
         });
     }
 
+    /**
+     * xuameng安全更新SortAdapter的选中位置
+     * 核心：避免在RecyclerView.isComputingLayout()时调用notifyItemChanged()
+     */
+    private void safeUpdateSortAdapterSelection(int position, TvRecyclerView recyclerView) {
+        if (recyclerView.isComputingLayout() || recyclerView.isScrolling()) {
+            recyclerView.post(() -> {
+                sortAdapter.setSelectedPosition(position);
+            });
+        } else {
+            sortAdapter.setSelectedPosition(position);
+        }
+    }
+
     // 触发权限检查的入口方法
     public void checkMicrophonePermission() {
         if (Build.VERSION.SDK_INT >= MARSHMALLOW) {
@@ -1153,20 +1167,6 @@ public class HomeActivity extends BaseActivity {
             Log.e(TAG, "跳转设置失败: " + e.getMessage());
             // 备用方案：跳转到应用列表
             startActivity(new Intent(Settings.ACTION_APPLICATION_SETTINGS));
-        }
-    }
-
-    /**
-     * xuameng安全更新SortAdapter的选中位置
-     * 核心：避免在RecyclerView.isComputingLayout()时调用notifyItemChanged()
-     */
-    private void safeUpdateSortAdapterSelection(int position, TvRecyclerView recyclerView) {
-        if (recyclerView.isComputingLayout() || recyclerView.isScrolling()) {
-            recyclerView.post(() -> {
-                sortAdapter.setSelectedPosition(position);
-            });
-        } else {
-            sortAdapter.setSelectedPosition(position);
         }
     }
 
