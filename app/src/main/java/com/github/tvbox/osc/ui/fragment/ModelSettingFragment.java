@@ -266,9 +266,15 @@ public class ModelSettingFragment extends BaseLazyFragment {
                         public void onSuccess(Response<File> response) {
                             if (HawkConfig.isGetWp){
                                 String mimeType = response.headers().get("Content-Type");
+                                File file = response.body();
+                                if (file == null || !file.exists()) {
+                                    App.showToastShort(getContext(), "壁纸文件下载失败！");
+                                    HawkConfig.isGetWp = false;
+                                    return;
+                                }
                                 BitmapFactory.Options opts = new BitmapFactory.Options();
                                 opts.inJustDecodeBounds = true;
-                                BitmapFactory.decodeFile(wp.getAbsolutePath(), opts);
+                                BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
                                 // 从Options中获取图片的分辨率
                                 int imageHeight = opts.outHeight;
                                 int imageWidth = opts.outWidth;
