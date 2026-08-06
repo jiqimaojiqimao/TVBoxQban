@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
+import android.graphics.BitmapFactory;  //xuameng 判断壁纸大小用
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.DiffUtil;
 
@@ -265,7 +266,13 @@ public class ModelSettingFragment extends BaseLazyFragment {
                         public void onSuccess(Response<File> response) {
                             if (HawkConfig.isGetWp){
                                 String mimeType = response.headers().get("Content-Type");
-                                if (mimeType != null && mimeType.startsWith("image/")) {   // 确认是图片文件
+                                BitmapFactory.Options opts = new BitmapFactory.Options();
+                                opts.inJustDecodeBounds = true;
+                                BitmapFactory.decodeFile(wp.getAbsolutePath(), opts);
+                                // 从Options中获取图片的分辨率
+                                int imageHeight = opts.outHeight;
+                                int imageWidth = opts.outWidth;
+                                if (mimeType != null && mimeType.startsWith("image/") && imageWidth >= 200 && imageHeight >= 200) {  // xuameng确认是图片文件并且宽高都正常
                                    ((BaseActivity) requireActivity()).changeWallpaper(true);      
                                    HawkConfig.isGetWp = false;  //xuameng下载壁纸 
                                    App.showToastShort(getContext(), "壁纸更换成功！");
