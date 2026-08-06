@@ -283,8 +283,12 @@ public class ModelSettingFragment extends BaseLazyFragment {
                                     HawkConfig.isGetWp = false;  //xuameng下载壁纸 
                                     App.showToastShort(getContext(), "壁纸更换成功！");
                                 }else{
+                                    if (file.exists()) {
+                                        file.delete(); // 删除的就是 /data/data/包名/files/wp
+                                    }
+                                    ((BaseActivity) requireActivity()).changeWallpaper(true);
                                     HawkConfig.isGetWp = false;  //xuameng下载壁纸
-                                    App.showToastShort(getContext(), "壁纸文件类型错误！");
+                                    App.showToastShort(getContext(), "壁纸文件类型错误！已重置壁纸！");
                                 }
                             }
                         }
