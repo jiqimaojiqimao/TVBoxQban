@@ -279,15 +279,12 @@ public class ModelSettingFragment extends BaseLazyFragment {
                                 int imageHeight = opts.outHeight;
                                 int imageWidth = opts.outWidth;
                                 if (mimeType != null && mimeType.startsWith("image/") && imageWidth >= 200 && imageHeight >= 200) {  // xuameng确认是图片文件并且宽高都正常
-                                   ((BaseActivity) requireActivity()).changeWallpaper(true);      
-                                   HawkConfig.isGetWp = false;  //xuameng下载壁纸 
-                                   App.showToastShort(getContext(), "壁纸更换成功！");
+                                    ((BaseActivity) requireActivity()).changeWallpaper(true);      
+                                    HawkConfig.isGetWp = false;  //xuameng下载壁纸 
+                                    App.showToastShort(getContext(), "壁纸更换成功！");
                                 }else{
-                                   File wp = new File(requireActivity().getFilesDir().getAbsolutePath() + "/wp");
-                                   if (wp.exists()) wp.delete();
-                                   ((BaseActivity) requireActivity()).changeWallpaper(true);
-                                   HawkConfig.isGetWp = false;  //xuameng下载壁纸
-                                   App.showToastShort(getContext(), "壁纸文件类型错误！已重置壁纸！");
+                                    HawkConfig.isGetWp = false;  //xuameng下载壁纸
+                                    App.showToastShort(getContext(), "壁纸文件类型错误！");
                                 }
                             }
                         }
