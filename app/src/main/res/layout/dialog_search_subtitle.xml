@@ -46,16 +46,13 @@
                 android:layout_marginLeft="@dimen/vs_5"
                 android:text="搜索"/>
         </LinearLayout>
-        <LinearLayout
-            android:layout_gravity="center|top"
-            android:orientation="vertical"
-            android:focusable="false"
-            android:focusableInTouchMode="false"
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/vs_10"
+            android:layout_weight="1"
             android:clipChildren="false"
-            android:clipToPadding="false"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/vs_10">
+            android:clipToPadding="false">
             <com.owen.tvrecyclerview.widget.TvRecyclerView
                 android:id="@+id/mGridView"
                 android:clipChildren="false"
@@ -65,7 +62,6 @@
                 app:tv_horizontalSpacingWithMargins="@dimen/vs_5"
                 app:tv_selectedItemIsCentered="true"
                 app:tv_verticalSpacingWithMargins="@dimen/vs_5"/>
-        </LinearLayout>
         <ProgressBar
             android:gravity="center"
             android:layout_gravity="center"
@@ -76,5 +72,6 @@
             android:indeterminateOnly="true"
             android:indeterminateDrawable="@drawable/anim_loading"
             android:indeterminateBehavior="repeat"/>
+        </FrameLayout>
     </LinearLayout>
 </FrameLayout>
