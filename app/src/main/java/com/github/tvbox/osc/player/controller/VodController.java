@@ -2263,7 +2263,7 @@ public class VodController extends BaseController {
         }
         if(isBottomVisible()) {
             mHandler.removeMessages(1002);
-            mHandler.removeMessages(1003); 
+            //mHandler.removeMessages(1003);  非常重要 不注销菜单有时不隐藏
             myHandle.postDelayed(myRunnable, myHandleSeconds);
             return super.dispatchKeyEvent(event);
         }
