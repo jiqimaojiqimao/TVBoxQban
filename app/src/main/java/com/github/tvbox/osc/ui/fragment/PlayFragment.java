@@ -125,6 +125,7 @@ import xyz.doikki.videoplayer.player.VideoView;
 import com.github.tvbox.osc.util.SubtitleHelper;  //xuameng 保存字幕颜色信息用
 
 import com.github.tvbox.osc.ui.dialog.DanmuSettingDialog;  //xuameng 弹幕
+import com.github.tvbox.osc.ui.dialog.EpisodeDialog;  //xuameng 剧集列表
 import com.github.tvbox.osc.player.danmu.DanmuLoadController; //xuameng 弹幕
 import com.github.tvbox.osc.api.DanmakuApi; //xuameng 弹幕
 import com.github.tvbox.osc.ui.dialog.SearchDanmuDialog;  //xuameng 弹幕
@@ -331,6 +332,12 @@ public class PlayFragment extends BaseLazyFragment {
             @Override
             public void playPre() {
                 PlayFragment.this.playPrevious();
+            }
+
+
+            @Override
+            public void showEpisodeDialog() {
+                PlayFragment.this.showEpisodeDialog();
             }
 
             @Override
@@ -1517,6 +1524,22 @@ public class PlayFragment extends BaseLazyFragment {
         }
         mVodInfo.playIndex--;
         play(false);
+    }
+
+    private void showEpisodeDialog() {
+        if (!isAdded() || mVodInfo == null || mVodInfo.seriesMap == null || TextUtils.isEmpty(mVodInfo.playFlag)) return;
+        List<VodInfo.VodSeries> episodes = mVodInfo.seriesMap.get(mVodInfo.playFlag);
+        if (episodes == null || episodes.isEmpty()) return;
+        String title = TextUtils.isEmpty(mVodInfo.name) ? "选集" : mVodInfo.name + " 选集";
+        EpisodeDialog dialog = new EpisodeDialog(requireContext(), title, episodes, mVodInfo.playIndex, new EpisodeDialog.EpisodeSelectListener() {
+            @Override
+            public void selectEpisode(int position) {
+                if (position < 0 || position >= episodes.size() || position == mVodInfo.playIndex) return;
+                mVodInfo.playIndex = position;
+                play(false);
+            }
+        });
+        dialog.show();
     }
 
     private int autoRetryCount = 0;
