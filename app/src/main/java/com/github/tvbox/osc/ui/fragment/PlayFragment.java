@@ -127,6 +127,7 @@ import com.github.tvbox.osc.util.SubtitleHelper;  //xuameng 保存字幕颜色�
 import com.github.tvbox.osc.ui.dialog.DanmuSettingDialog;  //xuameng 弹幕
 import com.github.tvbox.osc.player.danmu.DanmuLoadController; //xuameng 弹幕
 import com.github.tvbox.osc.api.DanmakuApi; //xuameng 弹幕
+import com.github.tvbox.osc.ui.dialog.SearchDanmuDialog;  //xuameng 弹幕
 import master.flame.danmaku.ui.widget.DanmakuView; //xuameng弹幕
 
 public class PlayFragment extends BaseLazyFragment {
@@ -286,9 +287,31 @@ public class PlayFragment extends BaseLazyFragment {
         });
         mController.setListener(new VodController.VodControlListener() {
             @Override
-            public void showDanmuSetting() { //xuameng 弹幕设置
+            public void showDanmuSetting() {   //xuameng 弹幕设置
                 DanmuSettingDialog dialog = new DanmuSettingDialog(requireContext(), mDanmuView);
+                dialog.setDanmuSearchListener(new DanmuSettingDialog.DanmuSearchListener() {
+                    @Override
+                    public void openSearchDanmuDialog() {
+                        SearchDanmuDialog searchDanmuDialog = new SearchDanmuDialog(requireContext());
+                        searchDanmuDialog.setDanmuLoader(new SearchDanmuDialog.DanmuLoader() {
+                            @Override
+                            public void loadDanmu(String danmu) {
+                                if (!isAdded()) return;
+                                checkDanmu(danmu);
+                            }
+                        });
+                        VodInfo.VodSeries series = mVodInfo == null ? null : getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
+                        searchDanmuDialog.setEpisode(series == null ? "" : series.name);
+                        searchDanmuDialog.setSearchWord(mVodInfo == null ? "" : mVodInfo.name);
+                        searchDanmuDialog.show();
+                    }
+                });
                 dialog.show();
+            }
+
+            @Override
+            public void closeDanmu() {
+                if (danmuLoadController != null) danmuLoadController.close();
             }
 
             @Override
@@ -700,8 +723,11 @@ public class PlayFragment extends BaseLazyFragment {
                         }, 300);
                     }
 
-                    // xuameng判断选中的字幕是否为 PGS 格式
-                    boolean isPgsSubtitle = value.language != null && value.language.toLowerCase().contains("pgs");
+                    // xuameng判断选中的字幕是否为 PGS 格式 或图形字幕
+                    boolean isPgsSubtitle = value.language != null 
+                        && (value.language.toLowerCase().contains("pgs")
+                        || value.language.toLowerCase().contains("vobsub")
+                        || value.language.toLowerCase().contains("dvb"));
                     if (mediaPlayer instanceof EXOmPlayer) {
 
                         if (isPgsSubtitle) {
@@ -963,11 +989,12 @@ public class PlayFragment extends BaseLazyFragment {
                     }
                 }
 
-                // 判断当前选中的字幕是否为 PGS
+                // 判断当前选中的字幕是否为 PGS或图形字幕
                 boolean isPgsSelected = false;
                 if (selectedSubtitleTrack != null && selectedSubtitleTrack.language != null) {
                     try {
-                        isPgsSelected = selectedSubtitleTrack.language.toLowerCase().contains("pgs");
+                        String lang = selectedSubtitleTrack.language.toLowerCase();
+                        isPgsSelected = lang.contains("pgs") || lang.contains("vobsub") || lang.contains("dvb");
                     } catch (Exception e) {
                     // 处理可能的异常情况
                         isPgsSelected = false;
