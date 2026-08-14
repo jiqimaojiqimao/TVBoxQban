@@ -10,6 +10,7 @@ import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.ui.adapter.ButtonAdapter;
 import com.github.tvbox.osc.util.DanmuHelper;
+import com.github.tvbox.osc.util.FastClickCheckUtil;
 import com.owen.tvrecyclerview.widget.TvRecyclerView;
 import com.owen.tvrecyclerview.widget.V7LinearLayoutManager;
 
@@ -24,11 +25,12 @@ import master.flame.danmaku.ui.widget.DanmakuView;
 
 /**
  * @author xuameng
- * @date :2026/06/27
+ * @date :2026/08/13
  * @description:   弹幕设置窗口
  */
 
 public class DanmuSettingDialog extends BaseDialog {
+    private DanmuSearchListener danmuSearchListener;
     private final DanmakuView danmakuView;
 
     public DanmuSettingDialog(@NonNull @NotNull Context context, DanmakuView danmakuView) {
@@ -36,11 +38,23 @@ public class DanmuSettingDialog extends BaseDialog {
         setContentView(R.layout.dialog_danmu_setting);
         this.danmakuView = danmakuView;
         initOnOff();
+        initDanmuSearch();
         initColor();
         initSpeed();
         initSize();
         initLine();
         initAlpha();
+    }
+
+    private void initDanmuSearch() {
+        TextView danmuSearch = findViewById(R.id.danmuSearch);
+        danmuSearch.setOnClickListener(v -> {
+            FastClickCheckUtil.check(v);
+            if (danmuSearchListener == null) return;
+            dismiss();
+            danmuSearchListener.openSearchDanmuDialog();
+        });
+        danmuSearch.post(danmuSearch::requestFocus);
     }
 
     private void initOnOff() {
@@ -61,7 +75,7 @@ public class DanmuSettingDialog extends BaseDialog {
 
             @Override
             public String getDisplay(Boolean val) {
-                return val ? "开" : "关";
+                return val ? "开启" : "关闭";
             }
         });
     }
@@ -195,9 +209,13 @@ public class DanmuSettingDialog extends BaseDialog {
         tvRecyclerView.setLayoutManager(new V7LinearLayoutManager(getContext(), 0, false));
         tvRecyclerView.setAdapter(adapter);
         tvRecyclerView.setSelectedPosition(select);
-        tvRecyclerView.post(() -> {
-            tvRecyclerView.smoothScrollToPosition(select);
-            tvRecyclerView.setSelectionWithSmooth(select);
-        });
+    }
+
+    public void setDanmuSearchListener(DanmuSearchListener danmuSearchListener) {
+        this.danmuSearchListener = danmuSearchListener;
+    }
+
+    public interface DanmuSearchListener {
+        void openSearchDanmuDialog();
     }
 }
