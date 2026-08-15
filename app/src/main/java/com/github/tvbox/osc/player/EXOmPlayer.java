@@ -26,6 +26,7 @@ import java.util.Map;  //xuameng记忆选择音轨
 public class EXOmPlayer extends ExoMediaPlayer {
     private String audioId = "";
     private String subtitleId = "";
+    private String videoId = ""; //xuameng视轨
     private static AudioTrackMemory memory;    //xuameng记忆选择音轨
 
     public EXOmPlayer(Context context) {
@@ -183,6 +184,16 @@ public class EXOmPlayer extends ExoMediaPlayer {
                             t.trackGroupId = groupIndex;
                             t.renderId = groupArrayIndex;
                             data.addSubtitle(t);
+                        } else if (MimeTypes.isVideo(format.sampleMimeType)) {
+                            String formatCodecs = simplifyCodec(format.codecs);
+                            TrackInfoBean t = new TrackInfoBean();
+                            t.name = (data.getVideo().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + formatCodecs + "视轨]";
+                            t.language = "";
+                            t.trackId = formatIndex;
+                            t.selected = !StringUtils.isEmpty(videoId) && videoId.equals(format.id);
+                            t.trackGroupId = groupIndex;
+                            t.renderId = groupArrayIndex;
+                            data.addVideo(t);  
                         }
                     }
                 }
@@ -191,10 +202,47 @@ public class EXOmPlayer extends ExoMediaPlayer {
         return data;
     }
 
+    /**
+     * xuameng从完整 codec 字符串中提取简短编码名
+     * avc1.640032 → avc
+     * hev1.1.6.L93.B0 → hevc
+     * mp4a.40.2 → aac
+     * 其他原样返回
+     */
+    private String simplifyCodec(String codec) {
+        if (TextUtils.isEmpty(codec)) return "未知";
+    
+        // 按点分割，取第一段
+        String[] parts = codec.split("\\.");
+        String prefix = parts[0].toLowerCase().trim();
+    
+        // 常见映射
+        switch (prefix) {
+            case "avc1":
+            case "avc2":
+            case "avc3":
+            case "avc4":
+                return "h264";
+            case "hev1":
+            case "hvc1":
+                return "hevc";
+            case "vp09":
+            case "vp9":
+                return "vp9";
+            case "av01":
+                return "av1";
+            case "mp4a":
+                return "aac";
+            default:
+            return prefix;
+        }
+    }
+
     @SuppressLint("UnsafeOptInUsageError")
     private void getExoSelectedTrack() {
         audioId = "";
         subtitleId = "";
+        videoId = ""; //xuameng视轨
         for (Tracks.Group group : mMediaPlayer.getCurrentTracks().getGroups()) {
             if (!group.isSelected()) continue;
             for (int trackIndex = 0; trackIndex < group.length; trackIndex++) {
@@ -202,9 +250,10 @@ public class EXOmPlayer extends ExoMediaPlayer {
                 Format format = group.getTrackFormat(trackIndex);
                 if (MimeTypes.isAudio(format.sampleMimeType)) {
                     audioId = format.id;
-                }
-                if (MimeTypes.isText(format.sampleMimeType)) {
+                } else if (MimeTypes.isText(format.sampleMimeType)) {
                     subtitleId = format.id;
+                } else if (MimeTypes.isVideo(format.sampleMimeType)) {  //xuameng视轨
+                    videoId = format.id;
                 }
             }
         }
@@ -259,6 +308,40 @@ public class EXOmPlayer extends ExoMediaPlayer {
                     memory.save(playKey, videoTrackBean.trackGroupId, videoTrackBean.trackId);
                 }
             }
+        }
+    }
+
+    public void selectExoTrackVideo(@Nullable TrackInfoBean videoTrackBean) {    //xuameng选择视轨
+        MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
+        if (trackInfo == null) return;
+
+        if (videoTrackBean == null) {
+            // 禁用视频轨道（一般很少用，但保留逻辑完整性）
+            for (int renderIndex = 0; renderIndex < trackInfo.getRendererCount(); renderIndex++) {
+                if (trackInfo.getRendererType(renderIndex) == C.TRACK_TYPE_VIDEO) {
+                    DefaultTrackSelector.Parameters.Builder parametersBuilder =
+                            getTrackSelector().getParameters().buildUpon();
+                    parametersBuilder.setRendererDisabled(renderIndex, true);
+                    getTrackSelector().setParameters(parametersBuilder);
+                    break;
+                }
+            }
+        } else {
+            // 先确认 renderId 确实是视频类型
+            if (trackInfo.getRendererType(videoTrackBean.renderId) != C.TRACK_TYPE_VIDEO) {
+                LogUtils.e("selectExoTrackVideo: renderId does not point to a video track!");
+                return;
+            }
+
+            TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(videoTrackBean.renderId);
+            DefaultTrackSelector.SelectionOverride override =
+                    new DefaultTrackSelector.SelectionOverride(videoTrackBean.trackGroupId, videoTrackBean.trackId);
+
+            DefaultTrackSelector.Parameters.Builder parametersBuilder =
+                    getTrackSelector().buildUponParameters();
+            parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
+            parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
+            getTrackSelector().setParameters(parametersBuilder);
         }
     }
 
