@@ -30,7 +30,7 @@ public class ExoTrackNameProvider {
         if (trackType == C.TRACK_TYPE_VIDEO) {
             trackName =
                     joinWithSeparator(
-                            buildRoleString(format), buildResolutionString(format), buildBitrateString(format));
+                            buildRoleString(format), buildResolutionString(format));  //xuameng 去掉 buildBitrateString(format) 码率信息
         } else if (trackType == C.TRACK_TYPE_AUDIO) {     //xuameng 显示音频轨道信息
             trackName =
                     joinWithSeparator(
@@ -47,7 +47,7 @@ public class ExoTrackNameProvider {
         int height = format.height;
         return width == Format.NO_VALUE || height == Format.NO_VALUE
                 ? ""
-                : resources.getString(R.string.exo_track_resolution, width, height);
+                : width + " X " + height;   // xuameng硬编码大写 X，跟 xml 彻底无关
     }
     private String buildBitrateString(Format format) {
         int bitrate = format.bitrate;
