@@ -401,6 +401,11 @@ public class PlayFragment extends BaseLazyFragment {
             }
 
             @Override
+            public void selectVideoTrack() {
+                selectMyVideoTrack();
+            }
+
+            @Override
             public void prepared() {
                 initSubtitleView();
                 if (mVideoView != null) mVideoView.prepared();
@@ -452,12 +457,12 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
 	    private String getCastTitle() {
-        if (mVodInfo == null) return "TVBox";
+        if (mVodInfo == null) return "聚汇影视";
         try {
             VodInfo.VodSeries series = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
             return mVodInfo.name + " " + series.name;
         } catch (Exception e) {
-            return TextUtils.isEmpty(mVodInfo.name) ? "TVBox" : mVodInfo.name;
+            return TextUtils.isEmpty(mVodInfo.name) ? "聚汇影视" : mVodInfo.name;
         }
     }
 
@@ -644,7 +649,7 @@ public class PlayFragment extends BaseLazyFragment {
             public void click(TrackInfoBean value, int pos) {
                 try {
                     for (TrackInfoBean audio : bean) {
-                        audio.selected = audio.trackId == value.trackId;
+                        audio.selected = isSameTrack(audio, value);
                     }
                     long progress = mediaPlayer.getCurrentPosition() - 3000L;//XUAMENG保存当前进度，//XUAMENG保存当前进度，回退3秒
                     if (mediaPlayer instanceof IjkMediaPlayer) {
@@ -676,14 +681,80 @@ public class PlayFragment extends BaseLazyFragment {
         }, new DiffUtil.ItemCallback<TrackInfoBean>() {
             @Override
             public boolean areItemsTheSame(@NonNull @NotNull TrackInfoBean oldItem, @NonNull @NotNull TrackInfoBean newItem) {
-                return oldItem.trackId == newItem.trackId;
+                return isSameTrack(oldItem, newItem);
             }
 
             @Override
             public boolean areContentsTheSame(@NonNull @NotNull TrackInfoBean oldItem, @NonNull @NotNull TrackInfoBean newItem) {
-                return oldItem.trackId == newItem.trackId;
+                return isSameTrack(oldItem, newItem);
             }
         }, bean, trackInfo.getAudioSelected(false));
+        dialog.show();
+    }
+
+    private boolean isSameTrack(TrackInfoBean left, TrackInfoBean right) {
+        return left.renderId == right.renderId
+                && left.trackGroupId == right.trackGroupId
+                && left.trackId == right.trackId;
+    }
+
+    void selectMyVideoTrack() {    //xuameng切换视轨
+        AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
+        TrackInfo trackInfo = null;
+        if (mediaPlayer instanceof IjkMediaPlayer) {
+            trackInfo = ((IjkMediaPlayer) mediaPlayer).getTrackInfo();
+        } else if (mediaPlayer instanceof EXOmPlayer) {
+            trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
+        }
+        if (trackInfo == null || trackInfo.getVideo().isEmpty()) {
+            App.showToastShort(mContext, "没有视轨");
+            return;
+        }
+        List<TrackInfoBean> tracks = trackInfo.getVideo();
+        SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(getActivity());
+        dialog.setTip("切换视轨");
+        dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<TrackInfoBean>() {
+            @Override
+            public void click(TrackInfoBean value, int pos) {
+                try {
+                    for (TrackInfoBean track : tracks) {
+                        track.selected = isSameTrack(track, value);
+                    }
+                    mediaPlayer.pause();
+                    long progress = mediaPlayer.getCurrentPosition();
+                    if (mediaPlayer instanceof IjkMediaPlayer) {
+                        ((IjkMediaPlayer) mediaPlayer).setTrack(value.trackId);
+                    } else if (mediaPlayer instanceof EXOmPlayer) {
+                        ((EXOmPlayer) mediaPlayer).selectExoTrackVideo(value);
+                    }
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            mediaPlayer.seekTo(progress);
+                            mediaPlayer.start();
+                        }
+                    }, 200);
+                    dialog.dismiss();
+                } catch (Exception e) {
+                    LOG.e("echo-switch-video-track-error:" + e.getMessage());
+                }
+            }
+
+            @Override
+            public String getDisplay(TrackInfoBean val) {
+                return val.name;
+            }
+        }, new DiffUtil.ItemCallback<TrackInfoBean>() {
+            @Override
+            public boolean areItemsTheSame(@NonNull @NotNull TrackInfoBean oldItem, @NonNull @NotNull TrackInfoBean newItem) {
+                return isSameTrack(oldItem, newItem);
+            }
+
+            @Override
+            public boolean areContentsTheSame(@NonNull @NotNull TrackInfoBean oldItem, @NonNull @NotNull TrackInfoBean newItem) {
+                return isSameTrack(oldItem, newItem);
+            }
+        }, tracks, trackInfo.getVideoSelected(false));
         dialog.show();
     }
 
@@ -714,7 +785,7 @@ public class PlayFragment extends BaseLazyFragment {
                 mController.mSubtitleView.setVisibility(View.VISIBLE);
                 try {
                     for (TrackInfoBean subtitle : bean) {
-                        subtitle.selected = subtitle.trackId == value.trackId;
+                        subtitle.selected = isSameTrack(subtitle, value);
                     }
                     long progress = mediaPlayer.getCurrentPosition() - 3000L;//XUAMENG保存当前进度，回退3秒
                     if (mediaPlayer instanceof IjkMediaPlayer) {
@@ -777,12 +848,12 @@ public class PlayFragment extends BaseLazyFragment {
         }, new DiffUtil.ItemCallback<TrackInfoBean>() {
             @Override
             public boolean areItemsTheSame(@NonNull @NotNull TrackInfoBean oldItem, @NonNull @NotNull TrackInfoBean newItem) {
-                return oldItem.trackId == newItem.trackId;
+                return isSameTrack(oldItem, newItem);
             }
 
             @Override
             public boolean areContentsTheSame(@NonNull @NotNull TrackInfoBean oldItem, @NonNull @NotNull TrackInfoBean newItem) {
-                return oldItem.trackId == newItem.trackId;
+                return isSameTrack(oldItem, newItem);
             }
         }, bean, trackInfo.getSubtitleSelected(false));
         dialog.show();
