@@ -18,10 +18,14 @@ import java.net.URLEncoder;  //xuameng新增
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.HashMap;  //xuameng记忆选择音轨
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import java.util.List;  //默认选中文音轨
 
 import tv.danmaku.ijk.media.player.IMediaPlayer;
+import tv.danmaku.ijk.media.player.IjkMediaMeta;
+import tv.danmaku.ijk.media.player.misc.IMediaFormat;
 import tv.danmaku.ijk.media.player.misc.ITrackInfo;
 import tv.danmaku.ijk.media.player.misc.IjkTrackInfo;
 import xyz.doikki.videoplayer.ijk.IjkPlayer;
@@ -211,9 +215,24 @@ public class IjkMediaPlayer extends IjkPlayer {
         TrackInfo data = new TrackInfo();
         int subtitleSelected = mMediaPlayer.getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT);
         int audioSelected = mMediaPlayer.getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_AUDIO);
+        int videoSelected = mMediaPlayer.getSelectedTrack(ITrackInfo.MEDIA_TRACK_TYPE_VIDEO);
         int index = 0;
         for (IjkTrackInfo info : trackInfo) {
-            if (info.getTrackType() == ITrackInfo.MEDIA_TRACK_TYPE_AUDIO) {//音轨信息
+            if (info.getTrackType() == ITrackInfo.MEDIA_TRACK_TYPE_VIDEO) {  //xuameng视轨信息
+                if (isAttachedPicture(info)) {
+                    LOG.i("echo-ijk-skip-attached-picture:" + info.getInfoInline());
+                    index++;
+                    continue;
+                }
+                TrackInfoBean v = new TrackInfoBean();
+                int trackNum = data.getVideo().size() + 1;
+                v.name = trackNum + "：" + processVideoName(info.getInfoInline());  //xuameng视轨信息
+                v.language = "";
+                v.trackId = index;
+                v.index = index;
+                v.selected = index == videoSelected;
+                data.addVideo(v);
+            } else if (info.getTrackType() == ITrackInfo.MEDIA_TRACK_TYPE_AUDIO) {//音轨信息
                 String infoInline = info.getInfoInline();
                 if (!TextUtils.isEmpty(infoInline)) {
                     String lower = infoInline.toLowerCase();
@@ -230,8 +249,7 @@ public class IjkMediaPlayer extends IjkPlayer {
                 a.selected = index == audioSelected;
                 // 如果需要，还可以检查轨道的描述或标题以获取更多信息
                 data.addAudio(a);
-            }
-            if (info.getTrackType() == ITrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT) {//内置字幕
+            } else if (info.getTrackType() == ITrackInfo.MEDIA_TRACK_TYPE_TIMEDTEXT) {//内置字幕
                 String trackName = "";
                 TrackInfoBean t = new TrackInfoBean();
                 t.name = trackName;
@@ -243,6 +261,43 @@ public class IjkMediaPlayer extends IjkPlayer {
             index++;
         }
         return data;
+    }
+
+    private String processVideoName(String rawName) {   //xuameng 转换视轨信息
+        if (rawName == null || rawName.isEmpty()) return "";
+    
+        String codec = "";
+        String resolution = "";
+    
+        // 提取编码（VIDEO, 后面第一个逗号前的部分）
+        String[] parts = rawName.replace("VIDEO,", "").replace("N/A,", "").split(",");
+        if (parts.length > 0) {
+            codec = parts[0].trim();
+        }
+    
+        // 提取分辨率：直接从原始串搜 "数字 x 数字"（不管split，不管空格）
+        Matcher matcher = Pattern.compile("(\\d+)\\s*[xX×*]\\s*(\\d+)").matcher(rawName);
+        if (matcher.find()) {
+            resolution = matcher.group(1) + "x" + matcher.group(2);
+        }
+    
+        if (TextUtils.isEmpty(codec)){  
+            codec = "未知";
+        }
+        // 拼成: 720x1280[h264视轨]
+        if (!resolution.isEmpty()) {
+            return resolution + "[" + codec + "视轨]";
+        }
+        return "[" + codec + "视轨]";
+    }
+
+    private boolean isAttachedPicture(IjkTrackInfo info) {
+        IMediaFormat format = info.getFormat();
+        if (format == null) return false;
+        String codecName = format.getString(IjkMediaMeta.IJKM_KEY_CODEC_NAME);
+        return "mjpeg".equalsIgnoreCase(codecName)
+                && format.getInteger(IjkMediaMeta.IJKM_KEY_BITRATE) <= 0
+                && format.getInteger(IjkMediaMeta.IJKM_KEY_FPS_NUM) <= 0;
     }
 
     public void setTrack(int trackIndex) {
