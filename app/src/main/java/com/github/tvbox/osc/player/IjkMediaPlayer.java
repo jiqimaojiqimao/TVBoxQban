@@ -278,7 +278,7 @@ public class IjkMediaPlayer extends IjkPlayer {
         // 提取分辨率：直接从原始串搜 "数字 x 数字"（不管split，不管空格）
         Matcher matcher = Pattern.compile("(\\d+)\\s*[xX×*]\\s*(\\d+)").matcher(rawName);
         if (matcher.find()) {
-            resolution = matcher.group(1) + "x" + matcher.group(2);
+            resolution = matcher.group(1) + " X " + matcher.group(2);
         }
     
         if (TextUtils.isEmpty(codec)){  
