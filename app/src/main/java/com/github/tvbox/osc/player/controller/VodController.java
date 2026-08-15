@@ -352,6 +352,7 @@ public class VodController extends BaseController {
     public SimpleSubtitleView mSubtitleView;
     TextView mZimuBtn;
     TextView mAudioTrackBtn;
+    TextView mVideoTrackBtn;  //xuameng视轨
     TextView mDanmuSettingBtn;  //xuameng弹幕设置
     TextView mDanmuSearchUiBtn;  //xuameng 弹幕搜索
     public TextView mLandscapePortraitBtn;
@@ -606,6 +607,7 @@ public class VodController extends BaseController {
         mSubtitleView = findViewById(R.id.subtitle_view);
         mZimuBtn = findViewById(R.id.zimu_select);
         mAudioTrackBtn = findViewById(R.id.audio_track_select);
+        mVideoTrackBtn = findViewById(R.id.video_track_select); //xuameng视轨
         mDanmuSettingBtn = findViewById(R.id.danmu_setting); //xuameng弹幕设置
         mDanmuSearchUiBtn = findViewById(R.id.danmu_search_ui);  //xuameng弹幕搜索
         mLandscapePortraitBtn = findViewById(R.id.landscape_portrait);
@@ -1510,6 +1512,17 @@ public class VodController extends BaseController {
                 listener.selectAudioTrack();
             }
         });
+        mVideoTrackBtn.setOnClickListener(new OnClickListener() {  //xuameng视轨
+            @Override
+            public void onClick(View view) {
+                FastClickCheckUtil.check(view);
+                myHandle.removeCallbacks(myRunnable);
+                if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
+                    hideBottom();
+                }
+                listener.selectVideoTrack();
+            }
+        });
         mDanmuSettingBtn.setOnClickListener(new OnClickListener() {   //xuameng弹幕
             @Override
             public void onClick(View view) {
@@ -1598,7 +1611,8 @@ public class VodController extends BaseController {
         mNextBtn.setNextFocusLeftId(R.id.audio_track_select); //xuameng底部菜单下一集左键是音轨
         mxuPlay.setNextFocusLeftId(R.id.seekBar); //xuameng底部菜单播放左键是进度条
         mxuPlay.setNextFocusDownId(R.id.play_next); //xuameng底部菜单所有键上键都是播放
-        mSeekBar.setNextFocusDownId(R.id.play_next);
+        mAudioTrackBtn.setNextFocusRightId(R.id.play_next);  //xuameng 音轨右键是下一集
+        mSeekBar.setNextFocusDownId(R.id.play_next);  //xuameng 进程条下键是下一集
         mNextBtn.setNextFocusUpId(R.id.mxuplay);
         mPreBtn.setNextFocusUpId(R.id.mxuplay);
         mPlayerRetry.setNextFocusUpId(R.id.mxuplay);
@@ -1611,15 +1625,15 @@ public class VodController extends BaseController {
         mPlayerTimeSkipBtn.setNextFocusUpId(R.id.mxuplay);
         mPlayerTimeResetBtn.setNextFocusUpId(R.id.mxuplay);
         mZimuBtn.setNextFocusUpId(R.id.mxuplay);
-        mAudioTrackBtn.setNextFocusRightId(R.id.play_next);
-        mAudioTrackBtn.setNextFocusUpId(R.id.mxuplay); //xuameng底部菜单所有键上键都是播放完
+        mAudioTrackBtn.setNextFocusUpId(R.id.mxuplay);
+        mVideoTrackBtn.setNextFocusUpId(R.id.mxuplay);
 		mCastBtn.setNextFocusUpId(R.id.mxuplay);
         mPlayrender.setNextFocusUpId(R.id.mxuplay);
 		mPlayanimation.setNextFocusUpId(R.id.mxuplay);
 		mPlayerEXOBtn.setNextFocusUpId(R.id.mxuplay);
         mDanmuSettingBtn.setNextFocusUpId(R.id.mxuplay);
         mDanmuSearchUiBtn.setNextFocusUpId(R.id.mxuplay);
-        mLandscapePortraitBtn.setNextFocusUpId(R.id.mxuplay);
+        mLandscapePortraitBtn.setNextFocusUpId(R.id.mxuplay);  //xuameng底部菜单所有键上键都是播放完
 
         // xuameng防止上键乱跳
         mxuPlay.setNextFocusUpId(View.NO_ID);
@@ -1758,6 +1772,7 @@ public class VodController extends BaseController {
             mPlayerTimeStartBtn.setText(PlayerUtils.stringForTime(mPlayerConfig.getInt("st") * 1000));
             mPlayerTimeSkipBtn.setText(PlayerUtils.stringForTime(mPlayerConfig.getInt("et") * 1000));
   //          mAudioTrackBtn.setVisibility((playerType == 1 || playerType == 2) ? VISIBLE : GONE);     //xuameng不判断音轨了全部显示
+            mVideoTrackBtn.setVisibility((playerType == 1 || playerType == 2) ? VISIBLE : GONE);  //xuameng视轨
             mAudioTrackBtn.setVisibility(View.VISIBLE);
             mPlayrender.setText((pr == 0) ? "T渲染" : "S渲染"); //xuameng 渲染
             mPlayanimation.setText(musicAnimation ? "音柱已开" : "音柱已关");  //xuameng音乐播放动画获取状态
@@ -1820,6 +1835,7 @@ public class VodController extends BaseController {
         void errReplay();
         void selectSubtitle();
         void selectAudioTrack();
+        void selectVideoTrack();
         void showDanmuSetting(); //xuameng弹幕设置
         void closeDanmu();  //xuameng 临时关闭弹幕
         void searchDanmuUi(boolean longClick);  //xuameng弹幕搜索
