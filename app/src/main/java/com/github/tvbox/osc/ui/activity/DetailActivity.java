@@ -1106,15 +1106,15 @@ public class DetailActivity extends BaseActivity {
                         safeRefreshList();   //xuameng返回键、长按播放刷新滚动到剧集
                         mGridView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                             @Override
-                                public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                                    super.onScrollStateChanged(recyclerView, newState);
-                                    if (newState == mGridView.SCROLL_STATE_IDLE) {   //xuameng剧集滚动完成后焦点选择为剧集
-                                        // 滚动已经停止，执行你需要的操作
-                                        //	mGridView.requestFocus();
-                                        safeSelectMGridView(vodInfo.playIndex);
-                                        mGridView.removeOnScrollListener(this);    //xuameng删除滚动监听
-                                    }
+                            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                                super.onScrollStateChanged(recyclerView, newState);
+                                if (newState == mGridView.SCROLL_STATE_IDLE) {   //xuameng剧集滚动完成后焦点选择为剧集
+                                    // 滚动已经停止，执行你需要的操作
+                                    //	mGridView.requestFocus();
+                                    safeSelectMGridView(vodInfo.playIndex);
+                                    mGridView.removeOnScrollListener(this);    //xuameng删除滚动监听
                                 }
+                            }
                        });
                        safeSelectMGridView(vodInfo.playIndex);
 
