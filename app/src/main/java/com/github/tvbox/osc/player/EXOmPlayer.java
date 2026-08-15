@@ -184,7 +184,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
                             t.trackGroupId = groupIndex;
                             t.renderId = groupArrayIndex;
                             data.addSubtitle(t);
-                        } else if (MimeTypes.isVideo(format.sampleMimeType)) {
+                        } else if (MimeTypes.isVideo(format.sampleMimeType)) {   //xuameng视轨信息
                             String formatCodecs = simplifyCodec(format.codecs);
                             TrackInfoBean t = new TrackInfoBean();
                             t.name = (data.getVideo().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + formatCodecs + "视轨]";
@@ -203,7 +203,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
     }
 
     /**
-     * xuameng从完整 codec 字符串中提取简短编码名
+     * xuameng从完整 视轨 codec 字符串中提取简短编码名
      * avc1.640032 → avc
      * hev1.1.6.L93.B0 → hevc
      * mp4a.40.2 → aac
@@ -260,7 +260,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
     }
 
     @SuppressLint("UnsafeOptInUsageError")
-    public void selectExoTrack(@Nullable TrackInfoBean videoTrackBean) {
+    public void selectExoTrack(@Nullable TrackInfoBean videoTrackBean) {  //xuameng选择字幕、音轨
         MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
         if (trackInfo != null) {
             if (videoTrackBean == null) {
@@ -284,7 +284,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
     }
 
     @SuppressLint("UnsafeOptInUsageError")
-    public void selectExoTrackAudio(@Nullable TrackInfoBean videoTrackBean, String playKey) {
+    public void selectExoTrackAudio(@Nullable TrackInfoBean videoTrackBean, String playKey) {  //xuameng选择并记忆选择音轨
         MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
         if (trackInfo != null) {
             if (videoTrackBean == null) {
