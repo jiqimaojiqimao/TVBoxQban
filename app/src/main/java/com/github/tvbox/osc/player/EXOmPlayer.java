@@ -175,10 +175,10 @@ public class EXOmPlayer extends ExoMediaPlayer {
                             if (originalString.contains(text3)) {  //xuameng过滤字幕类型里application/字符串
                                 originalString = originalString.replace(text3, textString3);  //xuameng过滤字幕类型里application/字符串
                             }
-                            String trackName = "";  //xuameng显示字幕类型
+                            String trackName = (data.getSubtitle().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + originalString + "字幕]";  //xuameng显示字幕类型
                             TrackInfoBean t = new TrackInfoBean();
                             t.name = trackName;
-                            t.language = (data.getSubtitle().size() + 1) + "：" + trackNameProvider.getTrackName(format) + "[" + originalString + "字幕]";  //xuameng显示字幕类型
+                            t.language = "";
                             t.trackId = formatIndex;
                             t.selected = !StringUtils.isEmpty(subtitleId) && subtitleId.equals(format.id);
                             t.trackGroupId = groupIndex;
