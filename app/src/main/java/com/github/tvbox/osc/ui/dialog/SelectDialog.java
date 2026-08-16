@@ -47,13 +47,13 @@ public class SelectDialog<T> extends BaseDialog {
         TvRecyclerView tvRecyclerView = findViewById(R.id.list);
         tvRecyclerView.setAdapter(adapter);
         tvRecyclerView.setSelectedPosition(select);
-        if (select<10){
+        if (select<5){
             tvRecyclerView.setSelection(select);
         }
         tvRecyclerView.post(new Runnable() {
             @Override
             public void run() {
-                if (selectIdx >= 10) {
+                if (selectIdx >= 5) {
                     tvRecyclerView.smoothScrollToPosition(selectIdx);
                     tvRecyclerView.setSelectionWithSmooth(selectIdx);
                 }
