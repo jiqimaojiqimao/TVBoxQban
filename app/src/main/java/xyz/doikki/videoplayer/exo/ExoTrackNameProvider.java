@@ -30,7 +30,7 @@ public class ExoTrackNameProvider {
         if (trackType == C.TRACK_TYPE_VIDEO) {
             trackName =
                     joinWithSeparator(
-                            buildRoleString(format), buildResolutionString(format));  //xuameng 去掉 buildBitrateString(format) 码率信息
+                            buildRoleString(format), buildResolutionString(format), buildBitrateString(format));
         } else if (trackType == C.TRACK_TYPE_AUDIO) {     //xuameng 显示音频轨道信息
             trackName =
                     joinWithSeparator(
