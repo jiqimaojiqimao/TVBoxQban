@@ -34,6 +34,7 @@ import java.lang.Math;
  * 新增：初始位不显示滚动动画
  * 新增：不是相邻行不不显示滚动动画
  * 新增：播放进度到当前行的上行或多行不显示滚动动画
+ * 20260817 新增：高亮进度平滑滤波 解决最版exoplayer对mp3的升级后字幕卡顿问题
  */
 public class LrcView extends View {
 
