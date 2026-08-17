@@ -63,16 +63,10 @@ public class LrcView extends View {
     private boolean mIsInitialPositioning = true;
     // 最大滚动距离（行数）
     private static final int MAX_SCROLL_DISTANCE = 1;
+    // 新增：高亮进度平滑滤波 =====
+    private float mSmoothedProgress = 0f;
 
-// 卡拉OK 高亮用：当前高亮行的起止时间
-private long mKaraOkLineStartTime = 0;
-private long mKaraOkLineEndTime = 0;
 
-// 卡拉OK 高亮用：进入当前行时的系统时钟（毫秒）
-private long mKaraOkEnterSystemMs = 0;
-
-// 防止回退导致高亮倒退的单调保护
-private float mKaraOkLastProgress = 0f;
 
     public LrcView(Context context) {
         super(context);
@@ -240,10 +234,6 @@ private float mKaraOkLastProgress = 0f;
         mCurrentLine = 0; // 总是从第0行开始
         mScrollOffset = 0f;
         mCurrentPosition = 0;
-mKaraOkLineStartTime = 0;
-mKaraOkLineEndTime = 0;
-mKaraOkEnterSystemMs = 0;
-mKaraOkLastProgress = 0f;
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
             mScrollAnimator.cancel();
@@ -326,102 +316,96 @@ mKaraOkLastProgress = 0f;
      *
      * @param position 当前播放时间（毫秒）
      */
-/**
- * 更新播放进度
- *
- * @param position 当前播放时间（毫秒）
- */
-public void updateTime(long position) {
-    if (mLrcLines.isEmpty()) {
-        return;
-    }
+    public void updateTime(long position) {
+        if (mLrcLines.isEmpty()) {
+            return;
+        }
 
-    // 检查是否达到最小显示位置
-    if (position < MIN_POSITION_TO_SHOW) {
-        mShouldShowLyrics = false;
-        mCurrentLine = 0;
-        mScrollOffset = 0f;
-        invalidate();
-        return;
-    }
+        // 检查是否达到最小显示位置
+        if (position < MIN_POSITION_TO_SHOW) {
+            // 进度小于1秒，不显示歌词，但保持在第一行
+            mShouldShowLyrics = false;
+            mCurrentLine = 0; // 确保强制重置到第一行
+            mScrollOffset = 0f; // 重置滚动偏移
+            invalidate();
+            return;
+        }
 
-    // 达到最小显示位置，开始显示歌词
-    if (!mShouldShowLyrics) {
-        mShouldShowLyrics = true;
-    }
+        // 达到最小显示位置，开始显示歌词
+        if (!mShouldShowLyrics) {
+            mShouldShowLyrics = true;
+        }
 
-    mCurrentPosition = position;
+        mCurrentPosition = position;
 
-    // 查找当前应该显示的行
-    int targetLine = 0;
+        // 查找当前应该显示的行
+        int targetLine = 0;
 
-    if (position < mLrcLines.get(0).time) {
-        targetLine = 0;
-    } else {
-        for (int i = 0; i < mLrcLines.size(); i++) {
-            if (i == mLrcLines.size() - 1 ||
-                    position >= mLrcLines.get(i).time &&
-                            position < mLrcLines.get(i + 1).time) {
-                targetLine = i;
-                break;
+        // 如果当前时间比第一行还早，保持在第一行
+        if (position < mLrcLines.get(0).time) {
+            targetLine = 0;
+        } else {
+            // 否则找到合适的时间点
+            for (int i = 0; i < mLrcLines.size(); i++) {
+                if (i == mLrcLines.size() - 1 ||
+                        position >= mLrcLines.get(i).time &&
+                                position < mLrcLines.get(i + 1).time) {
+                    targetLine = i;
+                    break;
+                }
             }
         }
-    }
 
-    // ===== 无条件同步当前行的时间窗口（卡拉OK高亮用）=====
-    mKaraOkLineStartTime = mLrcLines.get(targetLine).time;
-    mKaraOkLineEndTime = (targetLine + 1 < mLrcLines.size())
-            ? mLrcLines.get(targetLine + 1).time
-            : mKaraOkLineStartTime + 5000;
-
-    // ===== 初始定位 =====
-    if (mIsInitialPositioning) {
-        mCurrentLine = targetLine;
-        mScrollOffset = 0f;
-        mKaraOkEnterSystemMs = System.currentTimeMillis();
-        mKaraOkLastProgress = 0f;
-        mIsInitialPositioning = false;
-        invalidate();
-        return;
-    }
-
-    // ===== 行切换 =====
-    if (targetLine != mCurrentLine) {
-        // 重置卡拉OK高亮时钟
-        mKaraOkEnterSystemMs = System.currentTimeMillis();
-        mKaraOkLastProgress = 0f;
-
-        int lineDiff = targetLine - mCurrentLine;
-        int lineDistance = Math.abs(lineDiff);
-
-        if (lineDistance > MAX_SCROLL_DISTANCE) {
-            // 非相邻行：直接跳转
-            if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
-                mScrollAnimator.cancel();
-            }
+        // 关键修改：处理初始定位
+        if (mIsInitialPositioning) {
+            // 初始定位阶段，直接跳转到目标行，不执行滚动动画
             mCurrentLine = targetLine;
             mScrollOffset = 0f;
+            mSmoothedProgress = 0f; 
+            mIsInitialPositioning = false; // 定位完成，退出初始状态
             invalidate();
-        } else {
+            return;
+        }
+
+        // 正常播放中的滚动逻辑
+        if (targetLine != mCurrentLine) {
+            // 计算目标行与当前行的距离和方向
+            int lineDiff = targetLine - mCurrentLine;
+            int lineDistance = Math.abs(lineDiff);
+    
+            // 判断滚动方向：正数表示向前（下一行），负数表示向后（上一行）
             boolean isForward = lineDiff > 0;
-            if (isForward && targetLine > 3) {
-                // 相邻行 + 向前 + 超过前3行：平滑滚动
-                smoothScrollTo(targetLine);
-            } else {
-                // 向后滚动或前三行：直接跳转
+    
+            // 如果距离超过阈值（不是相邻行），直接跳转而不滚动
+            if (lineDistance > MAX_SCROLL_DISTANCE) {
                 if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                     mScrollAnimator.cancel();
                 }
+                // 直接跳转逻辑
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
+                mSmoothedProgress = 0f; 
                 invalidate();
+            } else {
+                // 相邻行：只有向前滚动（到下一行）才执行平滑滚动
+                if (isForward && targetLine > 3) {
+                    smoothScrollTo(targetLine);
+                } else {
+                    // 向后滚动（到上一行）或前三行：直接跳转
+                    if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+                        mScrollAnimator.cancel();
+                    }
+                    mCurrentLine = targetLine;
+                    mScrollOffset = 0f;
+                    mSmoothedProgress = 0f;
+                    invalidate();
+                }
             }
+        } else {
+            // 行数不变，只更新进度
+            invalidate();
         }
-    } else {
-        // 行数不变，只更新进度（触发重绘让高亮推进）
-        invalidate();
     }
-}
 
     /**
      * 新增：手动设置是否显示歌词
@@ -452,10 +436,7 @@ public void updateTime(long position) {
         mCurrentPosition = 0;
         mCurrentLine = 0;
         mScrollOffset = 0f;
-mKaraOkLineStartTime = 0;
-mKaraOkLineEndTime = 0;
-mKaraOkEnterSystemMs = 0;
-mKaraOkLastProgress = 0f;
+        mSmoothedProgress = 0f;  
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         invalidate();
     }
@@ -505,18 +486,22 @@ mKaraOkLastProgress = 0f;
 
             if (actualIndex == mCurrentLine) {
                 // 当前行：卡拉OK高亮效果
-float progress = 0f;
-if (actualIndex == mCurrentLine) {
-    // ===== 卡拉OK 高亮：用系统时钟驱动，不直信 ExoPlayer position =====
-    long elapsedSinceEnter = System.currentTimeMillis() - mKaraOkEnterSystemMs;
-    long duration = mKaraOkLineEndTime - mKaraOkLineStartTime;
-    if (duration > 0) {
-        progress = (float) elapsedSinceEnter / duration;
-    }
-    // 单调限幅：防止 ExoPlayer 回退导致高亮倒退
-    progress = Math.max(mKaraOkLastProgress, Math.min(1f, progress));
-    mKaraOkLastProgress = progress;
-}
+                float targetProgress = 0f;
+                if (mCurrentPosition >= line.time) {
+                    long nextTime = (actualIndex + 1 < mLrcLines.size()) ?
+                                   mLrcLines.get(actualIndex + 1).time : line.time + 5000;
+                    long duration = nextTime - line.time;
+                    if (duration > 0) {
+                        targetProgress = (float) (mCurrentPosition - line.time) / duration;
+                    }
+                }
+                targetProgress = Math.max(0f, Math.min(1f, targetProgress));
+
+                // ===== 平滑滤波：把 ExoPlayer 抖动的 progress 抹平 =====
+                // 行切换时 mSmoothedProgress 已经被 reset 为 0，这里自然从 0 开始跟
+                mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
+
+                float progress = mSmoothedProgress;
 
                 // 获取字体度量信息
                 Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
