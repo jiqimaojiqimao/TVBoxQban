@@ -326,101 +326,102 @@ mKaraOkLastProgress = 0f;
      *
      * @param position 当前播放时间（毫秒）
      */
-    public void updateTime(long position) {
-        if (mLrcLines.isEmpty()) {
-            return;
-        }
+/**
+ * 更新播放进度
+ *
+ * @param position 当前播放时间（毫秒）
+ */
+public void updateTime(long position) {
+    if (mLrcLines.isEmpty()) {
+        return;
+    }
 
-        // 检查是否达到最小显示位置
-        if (position < MIN_POSITION_TO_SHOW) {
-            // 进度小于1秒，不显示歌词，但保持在第一行
-            mShouldShowLyrics = false;
-            mCurrentLine = 0; // 确保强制重置到第一行
-            mScrollOffset = 0f; // 重置滚动偏移
-            invalidate();
-            return;
-        }
+    // 检查是否达到最小显示位置
+    if (position < MIN_POSITION_TO_SHOW) {
+        mShouldShowLyrics = false;
+        mCurrentLine = 0;
+        mScrollOffset = 0f;
+        invalidate();
+        return;
+    }
 
-        // 达到最小显示位置，开始显示歌词
-        if (!mShouldShowLyrics) {
-            mShouldShowLyrics = true;
-        }
+    // 达到最小显示位置，开始显示歌词
+    if (!mShouldShowLyrics) {
+        mShouldShowLyrics = true;
+    }
 
-        mCurrentPosition = position;
+    mCurrentPosition = position;
 
-        // 查找当前应该显示的行
-        int targetLine = 0;
+    // 查找当前应该显示的行
+    int targetLine = 0;
 
-        // 如果当前时间比第一行还早，保持在第一行
-        if (position < mLrcLines.get(0).time) {
-            targetLine = 0;
-        } else {
-            // 否则找到合适的时间点
-            for (int i = 0; i < mLrcLines.size(); i++) {
-                if (i == mLrcLines.size() - 1 ||
-                        position >= mLrcLines.get(i).time &&
-                                position < mLrcLines.get(i + 1).time) {
-                    targetLine = i;
-                    break;
-                }
+    if (position < mLrcLines.get(0).time) {
+        targetLine = 0;
+    } else {
+        for (int i = 0; i < mLrcLines.size(); i++) {
+            if (i == mLrcLines.size() - 1 ||
+                    position >= mLrcLines.get(i).time &&
+                            position < mLrcLines.get(i + 1).time) {
+                targetLine = i;
+                break;
             }
         }
+    }
 
-// ===== 卡拉OK 高亮：无条件同步当前行的时间窗口 =====
-        // 每次 updateTime 都确保高亮时间窗口是最新的（不管行有没有变）
-        if (mLrcLines.size() > 0) {
-            mKaraOkLineStartTime = mLrcLines.get(targetLine).time;
-            mKaraOkLineEndTime = (targetLine + 1 < mLrcLines.size())
-                    ? mLrcLines.get(targetLine + 1).time
-                    : mKaraOkLineStartTime + 5000;
-        }
+    // ===== 无条件同步当前行的时间窗口（卡拉OK高亮用）=====
+    mKaraOkLineStartTime = mLrcLines.get(targetLine).time;
+    mKaraOkLineEndTime = (targetLine + 1 < mLrcLines.size())
+            ? mLrcLines.get(targetLine + 1).time
+            : mKaraOkLineStartTime + 5000;
 
-        // 关键修改：处理初始定位
-        if (mIsInitialPositioning) {
+    // ===== 初始定位 =====
+    if (mIsInitialPositioning) {
+        mCurrentLine = targetLine;
+        mScrollOffset = 0f;
+        mKaraOkEnterSystemMs = System.currentTimeMillis();
+        mKaraOkLastProgress = 0f;
+        mIsInitialPositioning = false;
+        invalidate();
+        return;
+    }
+
+    // ===== 行切换 =====
+    if (targetLine != mCurrentLine) {
+        // 重置卡拉OK高亮时钟
+        mKaraOkEnterSystemMs = System.currentTimeMillis();
+        mKaraOkLastProgress = 0f;
+
+        int lineDiff = targetLine - mCurrentLine;
+        int lineDistance = Math.abs(lineDiff);
+
+        if (lineDistance > MAX_SCROLL_DISTANCE) {
+            // 非相邻行：直接跳转
+            if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+                mScrollAnimator.cancel();
+            }
             mCurrentLine = targetLine;
             mScrollOffset = 0f;
-            mIsInitialPositioning = false;
-            // 初始定位也要记录进入时间
-            mKaraOkEnterSystemMs = System.currentTimeMillis();
-            mKaraOkLastProgress = 0f;
             invalidate();
-            return;
-        }
-
-        // 正常播放中的滚动逻辑
-        if (targetLine != mCurrentLine) {
-            // 行切换了：更新进入时间
-            mKaraOkEnterSystemMs = System.currentTimeMillis();
-            mKaraOkLastProgress = 0f;
-
-            int lineDiff = targetLine - mCurrentLine;
-            int lineDistance = Math.abs(lineDiff);
-
-            if (lineDistance > MAX_SCROLL_DISTANCE) {
+        } else {
+            boolean isForward = lineDiff > 0;
+            if (isForward && targetLine > 3) {
+                // 相邻行 + 向前 + 超过前3行：平滑滚动
+                smoothScrollTo(targetLine);
+            } else {
+                // 向后滚动或前三行：直接跳转
                 if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                     mScrollAnimator.cancel();
                 }
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
                 invalidate();
-            } else {
-                boolean isForward = lineDiff > 0;
-                if (isForward && targetLine > 3) {
-                    smoothScrollTo(targetLine);
-                } else {
-                    if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
-                        mScrollAnimator.cancel();
-                    }
-                    mCurrentLine = targetLine;
-                    mScrollOffset = 0f;
-                    invalidate();
-                }
             }
-        } else {
-            // 行数不变，只更新进度
-            invalidate();
         }
+    } else {
+        // 行数不变，只更新进度（触发重绘让高亮推进）
+        invalidate();
     }
+}
 
     /**
      * 新增：手动设置是否显示歌词
