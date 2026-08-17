@@ -279,7 +279,7 @@ public class LrcView extends View {
         if (lineDiff == 0) {
             return; // 无需滚动
         }
-
+        mSmoothedProgress = 0f;
         // 设置动画
         mScrollAnimator = ValueAnimator.ofFloat(0f, (float) lineDiff);
         mScrollAnimator.setDuration(mScrollDuration);
@@ -490,11 +490,13 @@ public class LrcView extends View {
                 // 当前行：卡拉OK高亮效果
                 float targetProgress = 0f;
                 if (mCurrentPosition >= line.time) {
-                    long nextTime = (actualIndex + 1 < mLrcLines.size()) ?
-                                   mLrcLines.get(actualIndex + 1).time - 50 : line.time + 5000;
+                    long nextTime = (actualIndex + 1 < mLrcLines.size())
+                        ? mLrcLines.get(actualIndex + 1).time
+                        : line.time + 5000;
                     long duration = nextTime - line.time;
                     if (duration > 0) {
                         targetProgress = (float) (mCurrentPosition - line.time) / duration;
+                        targetProgress = Math.min(1.0f, Math.max(0f, targetProgress));
                     }
                 }
                 targetProgress = Math.max(0f, Math.min(1f, targetProgress));
