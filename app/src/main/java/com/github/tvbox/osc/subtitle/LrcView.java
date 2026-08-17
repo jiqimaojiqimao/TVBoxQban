@@ -234,6 +234,7 @@ public class LrcView extends View {
         mCurrentLine = 0; // 总是从第0行开始
         mScrollOffset = 0f;
         mCurrentPosition = 0;
+        mSmoothedProgress = 0f; 
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
             mScrollAnimator.cancel();
