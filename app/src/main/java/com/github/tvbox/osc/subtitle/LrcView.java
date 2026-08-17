@@ -64,7 +64,15 @@ public class LrcView extends View {
     // 最大滚动距离（行数）
     private static final int MAX_SCROLL_DISTANCE = 1;
 
+// 卡拉OK 高亮用：当前高亮行的起止时间
+private long mKaraOkLineStartTime = 0;
+private long mKaraOkLineEndTime = 0;
 
+// 卡拉OK 高亮用：进入当前行时的系统时钟（毫秒）
+private long mKaraOkEnterSystemMs = 0;
+
+// 防止回退导致高亮倒退的单调保护
+private float mKaraOkLastProgress = 0f;
 
     public LrcView(Context context) {
         super(context);
@@ -232,6 +240,10 @@ public class LrcView extends View {
         mCurrentLine = 0; // 总是从第0行开始
         mScrollOffset = 0f;
         mCurrentPosition = 0;
+mKaraOkLineStartTime = 0;
+mKaraOkLineEndTime = 0;
+mKaraOkEnterSystemMs = 0;
+mKaraOkLastProgress = 0f;
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
             mScrollAnimator.cancel();
@@ -431,6 +443,10 @@ public class LrcView extends View {
         mCurrentPosition = 0;
         mCurrentLine = 0;
         mScrollOffset = 0f;
+mKaraOkLineStartTime = 0;
+mKaraOkLineEndTime = 0;
+mKaraOkEnterSystemMs = 0;
+mKaraOkLastProgress = 0f;
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         invalidate();
     }
@@ -480,16 +496,18 @@ public class LrcView extends View {
 
             if (actualIndex == mCurrentLine) {
                 // 当前行：卡拉OK高亮效果
-                float progress = 0f;
-                if (mCurrentPosition >= line.time) {
-                    long nextTime = (actualIndex + 1 < mLrcLines.size()) ? 
-                                   mLrcLines.get(actualIndex + 1).time : line.time + 5000;
-                    long duration = nextTime - line.time;
-                    if (duration > 0) {
-                        progress = (float) (mCurrentPosition - line.time) / duration;
-                    }
-                }
-                progress = Math.max(0, Math.min(1, progress));
+float progress = 0f;
+if (actualIndex == mCurrentLine) {
+    // ===== 卡拉OK 高亮：用系统时钟驱动，不直信 ExoPlayer position =====
+    long elapsedSinceEnter = System.currentTimeMillis() - mKaraOkEnterSystemMs;
+    long duration = mKaraOkLineEndTime - mKaraOkLineStartTime;
+    if (duration > 0) {
+        progress = (float) elapsedSinceEnter / duration;
+    }
+    // 单调限幅：防止 ExoPlayer 回退导致高亮倒退
+    progress = Math.max(mKaraOkLastProgress, Math.min(1f, progress));
+    mKaraOkLastProgress = progress;
+}
 
                 // 获取字体度量信息
                 Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
