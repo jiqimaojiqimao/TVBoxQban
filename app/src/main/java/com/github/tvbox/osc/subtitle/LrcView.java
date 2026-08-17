@@ -327,6 +327,8 @@ public class LrcView extends View {
             mShouldShowLyrics = false;
             mCurrentLine = 0; // 确保强制重置到第一行
             mScrollOffset = 0f; // 重置滚动偏移
+            mSmoothedProgress = 0f;
+            mCurrentPosition = 0; 
             invalidate();
             return;
         }
@@ -335,8 +337,6 @@ public class LrcView extends View {
         if (!mShouldShowLyrics) {
             mShouldShowLyrics = true;
         }
-
-        mCurrentPosition = position;
 
         // 查找当前应该显示的行
         int targetLine = 0;
@@ -362,6 +362,7 @@ public class LrcView extends View {
             mCurrentLine = targetLine;
             mScrollOffset = 0f;
             mSmoothedProgress = 0f; 
+            mCurrentPosition = position;
             mIsInitialPositioning = false; // 定位完成，退出初始状态
             invalidate();
             return;
@@ -375,7 +376,9 @@ public class LrcView extends View {
     
             // 判断滚动方向：正数表示向前（下一行），负数表示向后（上一行）
             boolean isForward = lineDiff > 0;
-    
+            // 关键修复：切行前先把 mCurrentPosition 更新为新行的起始时间
+            // 这样即使 onDraw 在切行前触发，旧行算出来的 progress 也是 0
+            mCurrentPosition = mLrcLines.get(targetLine).time;
             // 如果距离超过阈值（不是相邻行），直接跳转而不滚动
             if (lineDistance > MAX_SCROLL_DISTANCE) {
                 if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
@@ -489,7 +492,7 @@ public class LrcView extends View {
                 float targetProgress = 0f;
                 if (mCurrentPosition >= line.time) {
                     long nextTime = (actualIndex + 1 < mLrcLines.size()) ?
-                                   mLrcLines.get(actualIndex + 1).time : line.time + 5000;
+                                   mLrcLines.get(actualIndex + 1).time - 50 : line.time + 5000;
                     long duration = nextTime - line.time;
                     if (duration > 0) {
                         targetProgress = (float) (mCurrentPosition - line.time) / duration;
