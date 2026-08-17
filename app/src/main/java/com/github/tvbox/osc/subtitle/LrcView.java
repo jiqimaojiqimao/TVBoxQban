@@ -503,8 +503,11 @@ public class LrcView extends View {
 
                 // ===== 平滑滤波：把 ExoPlayer 抖动的 progress 抹平 =====
                 // 行切换时 mSmoothedProgress 已经被 reset 为 0，这里自然从 0 开始跟
-                mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
-
+                if (targetProgress >= 1.0f) {
+                    mSmoothedProgress = 1.0f;
+                } else {
+                    mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
+                }
                 float progress = mSmoothedProgress;
 
                 // 获取字体度量信息
