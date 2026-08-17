@@ -366,40 +366,48 @@ mKaraOkLastProgress = 0f;
             }
         }
 
+// ===== 卡拉OK 高亮：无条件同步当前行的时间窗口 =====
+        // 每次 updateTime 都确保高亮时间窗口是最新的（不管行有没有变）
+        if (mLrcLines.size() > 0) {
+            mKaraOkLineStartTime = mLrcLines.get(targetLine).time;
+            mKaraOkLineEndTime = (targetLine + 1 < mLrcLines.size())
+                    ? mLrcLines.get(targetLine + 1).time
+                    : mKaraOkLineStartTime + 5000;
+        }
+
         // 关键修改：处理初始定位
         if (mIsInitialPositioning) {
-            // 初始定位阶段，直接跳转到目标行，不执行滚动动画
             mCurrentLine = targetLine;
             mScrollOffset = 0f;
-            mIsInitialPositioning = false; // 定位完成，退出初始状态
+            mIsInitialPositioning = false;
+            // 初始定位也要记录进入时间
+            mKaraOkEnterSystemMs = System.currentTimeMillis();
+            mKaraOkLastProgress = 0f;
             invalidate();
             return;
         }
 
         // 正常播放中的滚动逻辑
         if (targetLine != mCurrentLine) {
-            // 计算目标行与当前行的距离和方向
+            // 行切换了：更新进入时间
+            mKaraOkEnterSystemMs = System.currentTimeMillis();
+            mKaraOkLastProgress = 0f;
+
             int lineDiff = targetLine - mCurrentLine;
             int lineDistance = Math.abs(lineDiff);
-    
-            // 判断滚动方向：正数表示向前（下一行），负数表示向后（上一行）
-            boolean isForward = lineDiff > 0;
-    
-            // 如果距离超过阈值（不是相邻行），直接跳转而不滚动
+
             if (lineDistance > MAX_SCROLL_DISTANCE) {
                 if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                     mScrollAnimator.cancel();
                 }
-                // 直接跳转逻辑
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
                 invalidate();
             } else {
-                // 相邻行：只有向前滚动（到下一行）才执行平滑滚动
+                boolean isForward = lineDiff > 0;
                 if (isForward && targetLine > 3) {
                     smoothScrollTo(targetLine);
                 } else {
-                    // 向后滚动（到上一行）或前三行：直接跳转
                     if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                         mScrollAnimator.cancel();
                     }
