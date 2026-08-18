@@ -374,6 +374,11 @@ public class LrcView extends View {
 
         // 正常播放中的滚动逻辑
         if (targetLine != mCurrentLine) {
+            // 等当前行高亮基本铺满再切行（避免半黄就跳）
+            if (mSmoothedProgress < 0.99f) {
+                invalidate();
+                return;
+            }
             // 计算目标行与当前行的距离和方向
             int lineDiff = targetLine - mCurrentLine;
             int lineDistance = Math.abs(lineDiff);
@@ -512,7 +517,7 @@ public class LrcView extends View {
                 if (targetProgress >= 1.0f) {
                     mSmoothedProgress = 1.0f;
                 } else {
-                    mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.01f;
+                    mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
                 }
                 float progress = mSmoothedProgress;
 
