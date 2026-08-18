@@ -45,6 +45,8 @@ import java.util.Stack;  //xuameng 新增搜索结果有folder 就是下一级�
 import android.view.ViewTreeObserver;  //xuameng 新增搜索结果有folder 就是下一级判断 监听选中滚动
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -713,6 +715,42 @@ public class FastSearchActivity extends BaseActivity {
         return matchNum == arr.length ? true : false;
     }
 
+    private boolean isExactSearchResult(Movie.Video video) {
+        return video != null && !TextUtils.isEmpty(video.name) && !TextUtils.isEmpty(searchTitle)
+                && TextUtils.equals(video.name.trim(), searchTitle.trim());
+    }
+
+    private void sortSearchResults(List<Movie.Video> data) {
+        if (data == null || data.size() < 2 || TextUtils.isEmpty(searchTitle)) return;
+        Collections.sort(data, new Comparator<Movie.Video>() {
+            @Override
+            public int compare(Movie.Video left, Movie.Video right) {
+                boolean leftExact = isExactSearchResult(left);
+                boolean rightExact = isExactSearchResult(right);
+                if (leftExact == rightExact) return 0;
+                return leftExact ? -1 : 1;
+            }
+        });
+    }
+
+    private void addSearchResults(List<Movie.Video> data) {
+        if (data == null || data.isEmpty()) return;
+        int exactCount = 0;
+        for (Movie.Video video : searchAdapter.getData()) {
+            if (!isExactSearchResult(video)) break;
+            exactCount++;
+        }
+        List<Movie.Video> otherResults = new ArrayList<>();
+        for (Movie.Video video : data) {
+            if (isExactSearchResult(video)) {
+                searchAdapter.addData(exactCount++, video);
+            } else {
+                otherResults.add(video);
+            }
+        }
+        if (!otherResults.isEmpty()) searchAdapter.addData(otherResults);
+    }
+
     private void searchData(AbsXml absXml) {
         // 已经进入子级，直接丢弃全局搜索结果
         if (!isTopSearchStage) {
@@ -734,6 +772,11 @@ public class FastSearchActivity extends BaseActivity {
                 }
             }
 
+            sortSearchResults(data);
+            for (ArrayList<Movie.Video> sourceResults : resultVods.values()) {
+                sortSearchResults(sourceResults);
+            }
+
             if (searchAdapter.getData().isEmpty()) {
                 if (data != null && !data.isEmpty()){
 	                showSuccess();   //xuameng 修复loading隐藏BUG只有真正获取到数据才隐藏
@@ -746,7 +789,7 @@ public class FastSearchActivity extends BaseActivity {
                 topSearchCompleted = false;  // xuameng搜索完成
                // xuameng 搜索缓存 有下一级时有缓存不用重搜完
             } else {
-                searchAdapter.addData(data);
+                addSearchResults(data);
                 topSearchCache.addAll(data);  // xuameng 搜索缓存 有下一级时有缓存不用重搜
             }
 
