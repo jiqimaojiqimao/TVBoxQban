@@ -102,6 +102,7 @@ import com.github.tvbox.osc.util.ImgUtilDetail;   //xuameng base64图片
  */
 
 public class VideoActivity extends BaseActivity {
+    private static final String STATE_FULL_WINDOWS = "detail_full_windows";
     private LinearLayout llLayout;
     private FragmentContainerView llPlayerFragmentContainer;
     private View llPlayerFragmentContainerBlock;
@@ -156,6 +157,14 @@ public class VideoActivity extends BaseActivity {
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_detail;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            fullWindows = savedInstanceState.getBoolean(STATE_FULL_WINDOWS, false);
+        }
+        super.onCreate(savedInstanceState);
     }
 
     @Override
@@ -668,6 +677,9 @@ public class VideoActivity extends BaseActivity {
 
 
         setLoadSir(llLayout);
+        if (fullWindows) {
+            setFullPreview(true);
+        }
     }
 
     //解决类似海贼王的超长动漫 焦点滚动失败的问题
@@ -955,9 +967,13 @@ public class VideoActivity extends BaseActivity {
     }
 
     private String removeHtmlTag(String info) {
-        if (info == null)
+        if (TextUtils.isEmpty(info))
             return "";
-        return info.replaceAll("\\<.*?\\>", "").replaceAll("\\s", "");
+        String text = info.replaceAll("\\[a=cr:(?:\\{.*?\\}|\\[.*?\\])\\/](.*?)\\[\\/a]", "$1");
+        text = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                ? Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
+                : Html.fromHtml(text).toString();
+        return text.replaceAll("\\s", "");
     }
 
     private void initViewModel() {
@@ -1002,8 +1018,8 @@ public class VideoActivity extends BaseActivity {
                     } else {
                         setTextShow(tvType, "类型：", mVideo.type);
                     }
-                    setTextShow(tvActor, "演员：", mVideo.actor);
-                    setTextShow(tvDirector, "导演：", mVideo.director);
+                    setTextShow(tvActor, "演员：", removeHtmlTag(mVideo.actor));
+                    setTextShow(tvDirector, "导演：", removeHtmlTag(mVideo.director));
                     setTextShow(tvDes, "内容简介：", removeHtmlTag(mVideo.des));
 
                     int radius = AutoSizeUtils.mm2px(mContext, 5);  //xuameng Base64 图片 圆角设置
@@ -1094,15 +1110,15 @@ public class VideoActivity extends BaseActivity {
                         safeRefreshList();   //xuameng返回键、长按播放刷新滚动到剧集
                         mGridView.addOnScrollListener(new RecyclerView.OnScrollListener() {
                             @Override
-                                public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                                    super.onScrollStateChanged(recyclerView, newState);
-                                    if (newState == mGridView.SCROLL_STATE_IDLE) {   //xuameng剧集滚动完成后焦点选择为剧集
-                                        // 滚动已经停止，执行你需要的操作
-                                        //	mGridView.requestFocus();
-                                        safeSelectMGridView(vodInfo.playIndex);
-                                        mGridView.removeOnScrollListener(this);    //xuameng删除滚动监听
-                                    }
+                            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                                super.onScrollStateChanged(recyclerView, newState);
+                                if (newState == mGridView.SCROLL_STATE_IDLE) {   //xuameng剧集滚动完成后焦点选择为剧集
+                                    // 滚动已经停止，执行你需要的操作
+                                    //	mGridView.requestFocus();
+                                    safeSelectMGridView(vodInfo.playIndex);
+                                    mGridView.removeOnScrollListener(this);    //xuameng删除滚动监听
                                 }
+                            }
                        });
                        safeSelectMGridView(vodInfo.playIndex);
 
@@ -1586,6 +1602,12 @@ public class VideoActivity extends BaseActivity {
         OkGo.getInstance().cancelTag("lrc_load");  //xuameng 歌词加载
         releasePlayFragment();
         EventBus.getDefault().unregister(this);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean(STATE_FULL_WINDOWS, fullWindows);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
