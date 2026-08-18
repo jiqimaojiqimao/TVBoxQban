@@ -374,11 +374,6 @@ public class LrcView extends View {
 
         // 正常播放中的滚动逻辑
         if (targetLine != mCurrentLine) {
-    // 等当前行高亮基本铺满再切行（避免半黄就跳）
-    if (mSmoothedProgress < 0.90f) {
-        invalidate();
-        return;
-    }
             // 计算目标行与当前行的距离和方向
             int lineDiff = targetLine - mCurrentLine;
             int lineDistance = Math.abs(lineDiff);
@@ -509,18 +504,17 @@ public class LrcView extends View {
                    }
                 }
 
-// 统一用 0.99f，不再对前三行特殊对待
-if (targetProgress > 0.99f) {
-    targetProgress = 1.0f;
-}
+                if (targetProgress > 0.99f) {
+                    targetProgress = 1.0f;
+                }
 
-// 平滑滤波
-if (targetProgress >= 1.0f) {
-    mSmoothedProgress = 1.0f;
-} else {
-    mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
-}
-float progress = mSmoothedProgress;
+                // 平滑滤波
+                if (targetProgress >= 1.0f) {
+                    mSmoothedProgress = 1.0f;
+                } else {
+                    mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.01f;
+                }
+                float progress = mSmoothedProgress;
 
                 // 获取字体度量信息
                 Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
