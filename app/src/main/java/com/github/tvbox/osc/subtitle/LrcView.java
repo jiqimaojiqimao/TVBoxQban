@@ -504,14 +504,19 @@ public class LrcView extends View {
                    }
                 }
 
-                // ===== 平滑滤波：把 ExoPlayer 抖动的 progress 抹平 =====
-                // 行切换时 mSmoothedProgress 已经被 reset 为 0，这里自然从 0 开始跟
-                if (targetProgress >= 1.0f) {
-                    mSmoothedProgress = 1.0f;
-                } else {
-                    mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.35f;
-                }
-                float progress = mSmoothedProgress;
+    // ✅ 前三行直接跳转的提前拉满，滚动行保持精确
+    float pullAheadThreshold = (mCurrentLine <= 3) ? 0.85f : 0.99f;
+    if (targetProgress > pullAheadThreshold) {
+        targetProgress = 1.0f;
+    }
+
+    // ===== 平滑滤波：固定 0.1f =====
+    if (targetProgress >= 1.0f) {
+        mSmoothedProgress = 1.0f;
+    } else {
+        mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
+    }
+    float progress = mSmoothedProgress;
 
                 // 获取字体度量信息
                 Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
