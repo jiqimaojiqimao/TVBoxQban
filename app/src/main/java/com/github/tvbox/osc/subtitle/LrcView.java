@@ -472,7 +472,7 @@ public class LrcView extends View {
         float lineHeight = mNormalPaint.getTextSize() * 1.5f;
         int visibleLines = Math.min(mLrcLines.size(), 7); // 显示最多7行歌词
         float totalHeight = lineHeight * visibleLines;
-		// 将浮点数偏移转换为整数像素，避免亚像素渲染问题
+        // 将浮点数偏移转换为整数像素，避免亚像素渲染问题
         float scrollOffsetPixels = Math.round(mScrollOffset * lineHeight);  //滚动偏移像素
         float startY = (getHeight() - totalHeight) / 2 + mNormalPaint.getTextSize() - scrollOffsetPixels;  // 计算起始Y位置，使当前行居中显示  并滚动
         // 计算实际可见的行范围，确保不会超出歌词列表边界
@@ -497,19 +497,19 @@ public class LrcView extends View {
                         ? mLrcLines.get(actualIndex + 1).time
                         : line.time + 5000;
                     long duration = nextTime - line.time;
-                    if (duration > 0) {
-                        targetProgress = (float) (mCurrentPosition - line.time) / duration;
-                        targetProgress = Math.min(1.0f, Math.max(0f, targetProgress));
-                    }
+
+                   if (duration > 0) {
+                       targetProgress = (float) (mCurrentPosition - line.time) / duration;
+                       targetProgress = Math.max(0f, Math.min(1f, targetProgress));
+                   }
                 }
-                targetProgress = Math.max(0f, Math.min(1f, targetProgress));
 
                 // ===== 平滑滤波：把 ExoPlayer 抖动的 progress 抹平 =====
                 // 行切换时 mSmoothedProgress 已经被 reset 为 0，这里自然从 0 开始跟
                 if (targetProgress >= 1.0f) {
                     mSmoothedProgress = 1.0f;
                 } else {
-                    mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
+                    mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.35f;
                 }
                 float progress = mSmoothedProgress;
 
