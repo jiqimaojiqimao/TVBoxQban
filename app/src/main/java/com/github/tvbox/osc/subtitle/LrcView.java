@@ -400,7 +400,8 @@ public class LrcView extends View {
                     if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                         mScrollAnimator.cancel();
                     }
-                    if (mSmoothedProgress < 1) {
+                    // 只有前三行向前才等铺满
+                    if (isForward && targetLine <= 3 && mSmoothedProgress < 1f) {
                         invalidate();
                         return;
                     }
