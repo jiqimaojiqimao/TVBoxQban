@@ -400,10 +400,10 @@ public class LrcView extends View {
                     if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                         mScrollAnimator.cancel();
                     }
-            if (mSmoothedProgress < 1) {
-                invalidate();
-                return;
-            }
+                    if (mSmoothedProgress < 1) {
+                        invalidate();
+                        return;
+                    }
                     mCurrentLine = targetLine;
                     mScrollOffset = 0f;
                     mSmoothedProgress = 0f;
@@ -530,6 +530,10 @@ public class LrcView extends View {
 
                 // 绘制高亮部分（渐变填充）
                 float highlightWidth = line.width * progress;
+                // 防止裁剪区域无效
+                if (highlightWidth < 1f) {
+                    highlightWidth = 1f;
+                }
                 canvas.save();
                 // 使用精确的裁剪区域
                 canvas.clipRect(getWidth() / 2 - line.width / 2, 
