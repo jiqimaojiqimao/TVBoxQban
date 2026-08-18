@@ -149,6 +149,25 @@ public class HomeActivity extends BaseActivity {
         }
     };
 
+    private final Runnable refreshTopLayoutRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (topLayout == null || isActivityUnavailable() || currentSelected != 0 || topHide != 0) {
+                return;
+            }
+            // OnePlus devices may finish applying immersive mode after the first measure.
+            // Re-apply the visible top state once the final display metrics are available.
+            hideSysBar();
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) topLayout.getLayoutParams();
+            params.topMargin = AutoSizeUtils.mm2px(HomeActivity.this, 10.0f);
+            params.height = AutoSizeUtils.mm2px(HomeActivity.this, 50.0f);
+            topLayout.setLayoutParams(params);
+            topLayout.setAlpha(1.0f);
+            refreshTopInfoTextSize();
+            topLayout.requestLayout();
+        }
+    };
+
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_home;
@@ -710,6 +729,8 @@ public class HomeActivity extends BaseActivity {
         refreshTopInfoTextSize();
         mHandler.removeCallbacks(refreshTopInfoTextSizeRunnable);
         mHandler.postDelayed(refreshTopInfoTextSizeRunnable, 350);
+        mHandler.removeCallbacks(refreshTopLayoutRunnable);
+        mHandler.postDelayed(refreshTopLayoutRunnable, 450);
         mHandler.post(mRunnable);
     }
 
@@ -718,6 +739,7 @@ public class HomeActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
         mHandler.removeCallbacks(refreshTopInfoTextSizeRunnable);
+        mHandler.removeCallbacks(refreshTopLayoutRunnable);
         mHandler.removeCallbacks(mRunnable);
     }
 
