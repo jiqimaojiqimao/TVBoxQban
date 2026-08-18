@@ -419,6 +419,7 @@ public class LrcView extends View {
                     } else {
                         mSmoothedProgress = 0f;
                     }
+                    invalidate();
                 }
             }
         } else {
