@@ -366,7 +366,18 @@ public class LrcView extends View {
             // 初始定位阶段，直接跳转到目标行，不执行滚动动画
             mCurrentLine = targetLine;
             mScrollOffset = 0f;
-            mSmoothedProgress = 0f; 
+            // 初始化新行的进度，避免高亮从头开始
+            long newLineTime = mLrcLines.get(targetLine).time;
+            long nextTime = (targetLine + 1 < mLrcLines.size())
+                    ? mLrcLines.get(targetLine + 1).time
+                    : newLineTime + 5000;
+            long duration = nextTime - newLineTime;
+            if (duration > 0 && mCurrentPosition >= newLineTime) {
+                float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
+                mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
+            } else {
+                mSmoothedProgress = 0f;
+            }
             mIsInitialPositioning = false; // 定位完成，退出初始状态
             invalidate();
             return;
@@ -389,7 +400,18 @@ public class LrcView extends View {
                 // 直接跳转逻辑
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
-                mSmoothedProgress = 0f; 
+                // 初始化新行的进度，避免高亮从头开始
+                long newLineTime = mLrcLines.get(targetLine).time;
+                long nextTime = (targetLine + 1 < mLrcLines.size())
+                        ? mLrcLines.get(targetLine + 1).time
+                        : newLineTime + 5000;
+                long duration = nextTime - newLineTime;
+                if (duration > 0 && mCurrentPosition >= newLineTime) {
+                    float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
+                    mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
+                } else {
+                    mSmoothedProgress = 0f;
+                }
                 invalidate();
             } else {
                 // 相邻行：只有向前滚动（到下一行）才执行平滑滚动
