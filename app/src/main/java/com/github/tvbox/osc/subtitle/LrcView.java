@@ -407,8 +407,18 @@ public class LrcView extends View {
                     }
                     mCurrentLine = targetLine;
                     mScrollOffset = 0f;
-                    mSmoothedProgress = 0f;
-                    invalidate();
+                    // 初始化新行的进度，避免高亮从头开始
+                    long newLineTime = mLrcLines.get(targetLine).time;
+                    long nextTime = (targetLine + 1 < mLrcLines.size())
+                            ? mLrcLines.get(targetLine + 1).time
+                            : newLineTime + 5000;
+                    long duration = nextTime - newLineTime;
+                    if (duration > 0 && mCurrentPosition >= newLineTime) {
+                        float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
+                        mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
+                    } else {
+                        mSmoothedProgress = 0f;
+                    }
                 }
             }
         } else {
