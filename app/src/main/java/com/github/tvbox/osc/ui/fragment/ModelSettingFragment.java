@@ -40,7 +40,6 @@ import com.owen.tvrecyclerview.widget.V7LinearLayoutManager; //xuameng优化首�
 import androidx.constraintlayout.widget.ConstraintLayout;  //xuameng优化首页数据源列表
 import android.view.ViewGroup;   //xuameng优化首页数据源列表
 import me.jessyan.autosize.utils.AutoSizeUtils;  //xuameng优化首页数据源列表
-import com.github.tvbox.osc.util.DefaultConfig;  //xuameng 代理proxy://转换
 import com.github.tvbox.osc.base.App;  //xuameng showtoast
 import android.util.Pair;  //xuameng exo解码用
 import com.github.tvbox.osc.util.FastClickCheckUtil;
