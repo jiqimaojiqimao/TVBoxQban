@@ -315,140 +315,190 @@ public class LrcView extends View {
         mScrollAnimator.start();
     }
 
-    /**
-     * 更新播放进度
-     *
-     * @param position 当前播放时间（毫秒）
-     */
-    public void updateTime(long position) {
-        if (mLrcLines.isEmpty()) {
-            return;
-        }
 
-        // 检查是否达到最小显示位置
-        if (position < MIN_POSITION_TO_SHOW) {
-            // 进度小于1秒，不显示歌词，但保持在第一行
-            mShouldShowLyrics = false;
-            mCurrentLine = 0; // 确保强制重置到第一行
-            mScrollOffset = 0f; // 重置滚动偏移
-            mSmoothedProgress = 0f;
-            invalidate();
-            return;
-        }
+private enum LrcState {
+    IDLE,               // 未开始 / 进度不足
+    INIT_POSITIONING,   // 初始定位（无动画）
+    SCROLLING,          // 正在平滑滚动
+    STABLE              // 正常播放、稳定状态
+}
 
-        // 达到最小显示位置，开始显示歌词
-        if (!mShouldShowLyrics) {
-            mShouldShowLyrics = true;
-        }
+private boolean canChangeToLine(int targetLine, long position) {
+    // 1. 非前 3 行：时间到了就换
+    if (targetLine > 3) {
+        return true;
+    }
 
-        mCurrentPosition = position;
+    // 2. 前 3 行：必须高亮铺满
+    if (mCurrentLine >= targetLine) {
+        return true; // 回退或不变，允许
+    }
 
-        // 查找当前应该显示的行
-        int targetLine = 0;
+    LrcLine current = mLrcLines.get(mCurrentLine);
+    long nextTime = (mCurrentLine + 1 < mLrcLines.size())
+            ? mLrcLines.get(mCurrentLine + 1).time
+            : current.time + 5000;
 
-        // 如果当前时间比第一行还早，保持在第一行
-        if (position < mLrcLines.get(0).time) {
-            targetLine = 0;
-        } else {
-            // 否则找到合适的时间点
-            for (int i = 0; i < mLrcLines.size(); i++) {
-                if (i == mLrcLines.size() - 1 ||
-                        position >= mLrcLines.get(i).time &&
-                                position < mLrcLines.get(i + 1).time) {
-                    targetLine = i;
-                    break;
-                }
-            }
-        }
+    long duration = nextTime - current.time;
+    if (duration <= 0) {
+        return true;
+    }
 
-        // 关键修改：处理初始定位
-        if (mIsInitialPositioning) {
-            // 初始定位阶段，直接跳转到目标行，不执行滚动动画
-            mCurrentLine = targetLine;
-            mScrollOffset = 0f;
-            // 初始化新行的进度，避免高亮从头开始
-            long newLineTime = mLrcLines.get(targetLine).time;
-            long nextTime = (targetLine + 1 < mLrcLines.size())
-                    ? mLrcLines.get(targetLine + 1).time
-                    : newLineTime + 5000;
-            long duration = nextTime - newLineTime;
-            if (duration > 0 && mCurrentPosition >= newLineTime) {
-                float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
-                mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
-            } else {
-                mSmoothedProgress = 0f;
-            }
-            mIsInitialPositioning = false; // 定位完成，退出初始状态
-            invalidate();
-            return;
-        }
+    float progress = (float) (position - current.time) / duration;
+    return progress >= 0.99f;
+}
 
-        // 正常播放中的滚动逻辑
-        if (targetLine != mCurrentLine) {
-            // 计算目标行与当前行的距离和方向
-            int lineDiff = targetLine - mCurrentLine;
-            int lineDistance = Math.abs(lineDiff);
-    
-            // 判断滚动方向：正数表示向前（下一行），负数表示向后（上一行）
-            boolean isForward = lineDiff > 0;
-    
-            // 如果距离超过阈值（不是相邻行），直接跳转而不滚动
-            if (lineDistance > MAX_SCROLL_DISTANCE) {
-                if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
-                    mScrollAnimator.cancel();
-                }
-                // 直接跳转逻辑
-                mCurrentLine = targetLine;
-                mScrollOffset = 0f;
-                // 初始化新行的进度，避免高亮从头开始
-                long newLineTime = mLrcLines.get(targetLine).time;
-                long nextTime = (targetLine + 1 < mLrcLines.size())
-                        ? mLrcLines.get(targetLine + 1).time
-                        : newLineTime + 5000;
-                long duration = nextTime - newLineTime;
-                if (duration > 0 && mCurrentPosition >= newLineTime) {
-                    float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
-                    mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
-                } else {
-                    mSmoothedProgress = 0f;
-                }
-                invalidate();
-            } else {
-                // 相邻行：只有向前滚动（到下一行）才执行平滑滚动
-                if (isForward && targetLine > 3) {
-                    smoothScrollTo(targetLine);
-                } else {
-                    // 向后滚动（到上一行）或前三行：直接跳转
-                    if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
-                        mScrollAnimator.cancel();
-                    }
-                    // 只有前三行向前才等铺满
-                    if (isForward && targetLine <= 3 && mSmoothedProgress < 1f) {
-                        invalidate();
-                        return;
-                    }
-                    mCurrentLine = targetLine;
-                    mScrollOffset = 0f;
-                    // 初始化新行的进度，避免高亮从头开始
-                    long newLineTime = mLrcLines.get(targetLine).time;
-                    long nextTime = (targetLine + 1 < mLrcLines.size())
-                            ? mLrcLines.get(targetLine + 1).time
-                            : newLineTime + 5000;
-                    long duration = nextTime - newLineTime;
-                    if (duration > 0 && mCurrentPosition >= newLineTime) {
-                        float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
-                        mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
-                    } else {
-                        mSmoothedProgress = 0f;
-                    }
-                    invalidate();
-                }
-            }
-        } else {
-            // 行数不变，只更新进度
-            invalidate();
+private int findTargetLine(long position) {
+    if (mLrcLines.isEmpty() || position < mLrcLines.get(0).time) {
+        return 0;
+    }
+
+    for (int i = 0; i < mLrcLines.size() - 1; i++) {
+        if (position >= mLrcLines.get(i).time &&
+            position < mLrcLines.get(i + 1).time) {
+            return i;
         }
     }
+    return mLrcLines.size() - 1;
+}
+
+private void initLineProgress(int lineIndex, long position) {
+    LrcLine line = mLrcLines.get(lineIndex);
+    long nextTime = (lineIndex + 1 < mLrcLines.size())
+            ? mLrcLines.get(lineIndex + 1).time
+            : line.time + 5000;
+
+    long duration = nextTime - line.time;
+    if (duration > 0 && position >= line.time) {
+        float progress = (float) (position - line.time) / duration;
+        mSmoothedProgress = Math.max(0f, Math.min(1f, progress));
+    } else {
+        mSmoothedProgress = 0f;
+    }
+}
+
+private void enterIdleState() {
+    mShouldShowLyrics = false;
+    mCurrentLine = 0;
+    mScrollOffset = 0f;
+    mSmoothedProgress = 0f;
+    mIsInitialPositioning = true;
+    if (mScrollAnimator != null) {
+        mScrollAnimator.cancel();
+    }
+}
+
+private void handleInitPositioning(int targetLine) {
+    mCurrentLine = targetLine;
+    mScrollOffset = 0f;
+    initLineProgress(targetLine, mCurrentPosition);
+    mIsInitialPositioning = false;
+    invalidate();
+}
+
+private void handleStableState(int targetLine) {
+    if (targetLine == mCurrentLine) {
+        invalidate();
+        return;
+    }
+
+    // ===== 换行策略 =====
+    if (!canChangeToLine(targetLine, mCurrentPosition)) {
+        invalidate();
+        return;
+    }
+
+    int lineDiff = targetLine - mCurrentLine;
+
+    // 非相邻行：直接跳转
+    if (Math.abs(lineDiff) > MAX_SCROLL_DISTANCE) {
+        applyJumpToLine(targetLine);
+        return;
+    }
+
+    // 向后跳转（上一行）：直接跳转
+    if (lineDiff < 0) {
+        applyJumpToLine(targetLine);
+        return;
+    }
+
+    // 向前相邻行：平滑滚动
+    applySmoothScrollTo(targetLine);
+}
+
+private void applyJumpToLine(int targetLine) {
+    if (mScrollAnimator != null) {
+        mScrollAnimator.cancel();
+    }
+    mCurrentLine = targetLine;
+    mScrollOffset = 0f;
+    initLineProgress(targetLine, mCurrentPosition);
+    invalidate();
+}
+
+private void applyJumpToLine(int targetLine) {
+    if (mScrollAnimator != null) {
+        mScrollAnimator.cancel();
+    }
+    mCurrentLine = targetLine;
+    mScrollOffset = 0f;
+    initLineProgress(targetLine, mCurrentPosition);
+    invalidate();
+}
+
+private LrcState getCurrentState() {
+    if (!mShouldShowLyrics) {
+        return LrcState.IDLE;
+    }
+    if (mIsInitialPositioning) {
+        return LrcState.INIT_POSITIONING;
+    }
+    if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+        return LrcState.SCROLLING;
+    }
+    return LrcState.STABLE;
+}
+
+public void updateTime(long position) {
+    if (mLrcLines.isEmpty()) {
+        return;
+    }
+
+    // ===== 1. 是否允许显示歌词 =====
+    if (position < MIN_POSITION_TO_SHOW) {
+        enterIdleState();
+        invalidate();
+        return;
+    }
+
+    mShouldShowLyrics = true;
+
+    // ===== 2. 计算目标行 =====
+    int targetLine = findTargetLine(position);
+    mCurrentPosition = position;
+
+    // ===== 3. 状态机 =====
+    LrcState currentState = getCurrentState();
+
+    switch (currentState) {
+
+        case IDLE:
+        case INIT_POSITIONING:
+            handleInitPositioning(targetLine);
+            break;
+
+        case SCROLLING:
+            // 滚动期间不响应换行，等动画结束
+            invalidate();
+            break;
+
+        case STABLE:
+            handleStableState(targetLine);
+            break;
+    }
+}
+
+
 
     /**
      * 新增：手动设置是否显示歌词
