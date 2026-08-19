@@ -95,7 +95,7 @@ import com.github.tvbox.osc.event.RefreshEvent; //xuameng弹幕
 import com.github.tvbox.osc.util.DanmuHelper; //xuameng弹幕
 import com.github.tvbox.osc.player.danmu.DanmuLoadController; //xuameng 弹幕
 
-import androidx.media3.ui.SubtitleView; // 用于显示ExoPlayer内置字幕
+import com.google.android.exoplayer2.ui.SubtitleView;   // 用于显示ExoPlayer内置字幕
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -535,7 +535,7 @@ public class VodController extends BaseController {
                     mHandler.postDelayed(this, 15000);
                     return;
                 }
-                String Url = "https://api.miaomc.cn/image/get";
+                String Url = "https://www.dmoe.cc/random.php";
                 Picasso.get().load(Url)
                     //				.placeholder(R.drawable.xumusic)   //xuameng默认的站位图
                     .noPlaceholder() //不使用站位图，效果不好
