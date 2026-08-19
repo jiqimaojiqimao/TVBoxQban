@@ -426,7 +426,7 @@ private void handleStableState(int targetLine) {
     applySmoothScrollTo(targetLine);
 }
 
-、private void applySmoothScrollTo(int targetLine) {
+ private void applySmoothScrollTo(int targetLine) {
     if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
         return;
     }
