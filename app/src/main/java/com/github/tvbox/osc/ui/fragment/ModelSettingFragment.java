@@ -257,8 +257,6 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 FastClickCheckUtil.check(v);  //xuameng 2秒
                 String wpUrl = ApiConfig.get().wallpaper;
                 if (!wpUrl.isEmpty()) {
-                    // xuameng  将proxy:// 转为 http://ip:port/proxy?
-                    wpUrl = DefaultConfig.checkReplaceProxy(wpUrl);
                     HawkConfig.isGetWp = true;  //xuameng下载壁纸
                     App.showToastShort(getContext(), "壁纸更换中！");
                     OkGo.<File>get(wpUrl).tag("wallpaperDown").execute(new FileCallback(requireActivity().getFilesDir().getAbsolutePath(), "wp") {  //xuameng增加tag以便打断下载
@@ -816,7 +814,6 @@ public class ModelSettingFragment extends BaseLazyFragment {
                 boolean open = !DanmuHelper.isOpen();
                 DanmuHelper.setOpen(open);
                 tvDanmuOpenText.setText(open ? "已开启" : "已关闭");
-                EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SET_DANMU_SETTINGS, open));
             }
         });
         findViewById(R.id.danmuApi).setOnClickListener(new View.OnClickListener() {  //xuameng 弹幕
