@@ -463,15 +463,6 @@ private void applyJumpToLine(int targetLine) {
     invalidate();
 }
 
-private void applyJumpToLine(int targetLine) {
-    if (mScrollAnimator != null) {
-        mScrollAnimator.cancel();
-    }
-    mCurrentLine = targetLine;
-    mScrollOffset = 0f;
-    initLineProgress(targetLine, mCurrentPosition);
-    invalidate();
-}
 
 private LrcState getCurrentState() {
     if (!mShouldShowLyrics) {
