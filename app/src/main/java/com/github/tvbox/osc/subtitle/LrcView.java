@@ -426,6 +426,33 @@ private void handleStableState(int targetLine) {
     applySmoothScrollTo(targetLine);
 }
 
+、private void applySmoothScrollTo(int targetLine) {
+    if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+        return;
+    }
+
+    int lineDiff = targetLine - mCurrentLine;
+    mScrollAnimator = ValueAnimator.ofFloat(0f, lineDiff);
+    mScrollAnimator.setDuration(mScrollDuration);
+    mScrollAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+
+    mScrollAnimator.addUpdateListener(animation -> {
+        mScrollOffset = (float) animation.getAnimatedValue();
+        invalidate();
+    });
+
+    mScrollAnimator.addListener(new AnimatorListenerAdapter() {
+        @Override
+        public void onAnimationEnd(Animator animation) {
+            mCurrentLine = targetLine;
+            mScrollOffset = 0f;
+            initLineProgress(targetLine, mCurrentPosition);
+        }
+    });
+
+    mScrollAnimator.start();
+}
+
 private void applyJumpToLine(int targetLine) {
     if (mScrollAnimator != null) {
         mScrollAnimator.cancel();
