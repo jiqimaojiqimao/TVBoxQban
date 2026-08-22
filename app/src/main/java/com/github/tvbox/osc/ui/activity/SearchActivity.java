@@ -65,7 +65,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -765,42 +764,6 @@ public class SearchActivity extends BaseActivity {
         return matchNum == arr.length ? true : false;
     }
 
-    private boolean isExactSearchResult(Movie.Video video) {
-        return video != null && !TextUtils.isEmpty(video.name) && !TextUtils.isEmpty(searchTitle)
-                && TextUtils.equals(video.name.trim(), searchTitle.trim());
-    }
-
-    private void sortSearchResults(List<Movie.Video> data) {
-        if (data == null || data.size() < 2 || TextUtils.isEmpty(searchTitle)) return;
-        Collections.sort(data, new Comparator<Movie.Video>() {
-            @Override
-            public int compare(Movie.Video left, Movie.Video right) {
-                boolean leftExact = isExactSearchResult(left);
-                boolean rightExact = isExactSearchResult(right);
-                if (leftExact == rightExact) return 0;
-                return leftExact ? -1 : 1;
-            }
-        });
-    }
-
-    private void addSearchResults(List<Movie.Video> data) {
-        if (data == null || data.isEmpty()) return;
-        int exactCount = 0;
-        for (Movie.Video video : searchAdapter.getData()) {
-            if (!isExactSearchResult(video)) break;
-            exactCount++;
-        }
-        List<Movie.Video> otherResults = new ArrayList<>();
-        for (Movie.Video video : data) {
-            if (isExactSearchResult(video)) {
-                searchAdapter.addData(exactCount++, video);
-            } else {
-                otherResults.add(video);
-            }
-        }
-        if (!otherResults.isEmpty()) searchAdapter.addData(otherResults);
-    }
-
     private void searchData(AbsXml absXml) {  //xuameng重要BUG如果快速模式直接返回
         if(Hawk.get(HawkConfig.FAST_SEARCH_MODE, false)){
             return;
@@ -822,7 +785,6 @@ public class SearchActivity extends BaseActivity {
                 if (data != null && !data.isEmpty()){
 	                showSuccess();   //xuameng 修复loading隐藏BUG只有真正获取到数据才隐藏
                 }
-                sortSearchResults(data);
                 mGridView.setVisibility(View.VISIBLE);
                 searchAdapter.setNewData(data);
                 tv_history.setVisibility(View.GONE);    //xuameng搜索历史
@@ -833,7 +795,7 @@ public class SearchActivity extends BaseActivity {
                 topSearchCompleted = false;  // xuameng搜索完成
                // xuameng 搜索缓存 有下一级时有缓存不用重搜完
             } else {
-                addSearchResults(data);
+                searchAdapter.addData(data);
                 topSearchCache.addAll(data);  // xuameng 搜索缓存 有下一级时有缓存不用重搜
             }
         }
