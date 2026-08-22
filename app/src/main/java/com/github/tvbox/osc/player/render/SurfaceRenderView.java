@@ -87,7 +87,9 @@ public class SurfaceRenderView extends SurfaceView implements IRenderView, Surfa
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-
+        if (mMediaPlayer != null) {
+            mMediaPlayer.setDisplay(holder);
+        }
     }
 
     @Override
