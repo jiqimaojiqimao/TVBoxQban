@@ -1,6 +1,8 @@
 package com.github.tvbox.osc.ui.adapter;
 
+import android.os.Build;
 import android.text.TextUtils;
+import android.text.Html;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -28,6 +30,16 @@ public class CollectAdapter extends BaseQuickAdapter<VodCollect, BaseViewHolder>
         super(R.layout.item_grid, new ArrayList<>());
     }
 
+    private String removeHtmlTag(String info) {
+        if (TextUtils.isEmpty(info))
+            return "";
+        String text = info.replaceAll("\\[a=cr:(?:\\{.*?\\}|\\[.*?\\])\\/](.*?)\\[\\/a]", "$1");
+        text = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                ? Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
+                : Html.fromHtml(text).toString();
+        return text.replaceAll("\\s", "");
+    }
+
     @Override
     protected void convert(BaseViewHolder helper, VodCollect item) {
     	// takagen99: Add Delete Mode
@@ -42,7 +54,8 @@ public class CollectAdapter extends BaseQuickAdapter<VodCollect, BaseViewHolder>
         helper.setVisible(R.id.tvArea, false);
 	//	helper.setVisible(R.id.tvNote, false);
         helper.setText(R.id.tvNote, "⭐我的收藏");
-        helper.setText(R.id.tvName, item.name);
+    //    helper.setText(R.id.tvName, item.name);
+        helper.setText(R.id.tvName, removeHtmlTag(item.name));
         TextView tvYear = helper.getView(R.id.tvYear);
         SourceBean source = ApiConfig.get().getSource(item.sourceKey);
         tvYear.setText(source!=null?source.getName():"🔍搜索影片");
