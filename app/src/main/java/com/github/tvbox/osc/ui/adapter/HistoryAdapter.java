@@ -1,6 +1,8 @@
 package com.github.tvbox.osc.ui.adapter;
 
+import android.os.Build;
 import android.text.TextUtils;
+import android.text.Html;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -30,6 +32,16 @@ import me.jessyan.autosize.utils.AutoSizeUtils;
 public class HistoryAdapter extends BaseQuickAdapter<VodInfo, BaseViewHolder> {
     public HistoryAdapter() {
         super(R.layout.item_grid, new ArrayList<>());
+    }
+
+    private String removeHtmlTag(String info) {
+        if (TextUtils.isEmpty(info))
+            return "";
+        String text = info.replaceAll("\\[a=cr:(?:\\{.*?\\}|\\[.*?\\])\\/](.*?)\\[\\/a]", "$1");
+        text = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                ? Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
+                : Html.fromHtml(text).toString();
+        return text.replaceAll("\\s", "");
     }
 
     @Override
@@ -79,7 +91,8 @@ public class HistoryAdapter extends BaseQuickAdapter<VodInfo, BaseViewHolder> {
         } else {
             helper.setText(R.id.tvNote, item.note);
         }
-        helper.setText(R.id.tvName, item.name);
+//        helper.setText(R.id.tvName, item.name);
+        helper.setText(R.id.tvName, removeHtmlTag(item.name));
         // helper.setText(R.id.tvActor, item.actor);
         ImageView ivThumb = helper.getView(R.id.ivThumb);
 
