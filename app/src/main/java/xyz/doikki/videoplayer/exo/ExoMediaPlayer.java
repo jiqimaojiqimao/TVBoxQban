@@ -383,6 +383,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 if (mMediaPlayer != null) {                     // xuameng重置播放器状态
                     mMediaPlayer.stop();
                     mMediaPlayer.clearMediaItems();
+                    initPlayer();
                     mIsPreparing = false;                       // xuameng可选：重置一些状态变量
                 }
                 // xuameng重新尝试播放
