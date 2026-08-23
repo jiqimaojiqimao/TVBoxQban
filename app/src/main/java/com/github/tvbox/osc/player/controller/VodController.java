@@ -420,10 +420,15 @@ public class VodController extends BaseController {
     private Runnable myRunnableXu = new Runnable() {
         @Override
         public void run() {
-            if(isInPlaybackState() && mControlWrapper.isPlaying()) { //xuameng音乐播放时图标判断
-                String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
-                String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
+            String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
+            String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
+            if(isInPlaybackState()) { //xuameng 重新选择解析视频大小不刷新
                 mVideoSize.setText("[ " + width + " X " + height + " ]");
+            }else{
+                mHandler.postDelayed(this, 100);
+                return;
+            }
+            if(isInPlaybackState() && mControlWrapper.isPlaying()) { //xuameng音乐播放时图标判断
                 if(!mIsDragging) {
                     mControlWrapper.startProgress(); //xuameng启动进程
                     mControlWrapper.startFadeOut();
