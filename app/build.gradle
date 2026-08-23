@@ -148,6 +148,7 @@ dependencies {
     //安卓工具类
     implementation 'com.blankj:utilcodex:1.31.0'   
     //xuameng exo
+    implementation 'com.google.errorprone:error_prone_annotations:2.23.0'  //xuameng exo okhttpdatasource用
     def exoplayerVersion = "1.11.0"
     implementation "androidx.media3:media3-common:$exoplayerVersion"
     implementation "androidx.media3:media3-container:$exoplayerVersion"
