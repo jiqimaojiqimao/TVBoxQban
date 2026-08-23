@@ -102,7 +102,7 @@ public final class ExoMediaSourceHelper {
             setHeaders(headers);
         }
 
-        if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2004 || errorCode == 2000 ) {      // xuameng当错误码为3003时，强制使用 HLS 源进行播放
+        if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {      // xuameng当错误码为3003时，强制使用 HLS 源进行播放
             return new HlsMediaSource.Factory(mHttpDataSourceFactory)
                     .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
                     .setAllowChunklessPreparation(true)
