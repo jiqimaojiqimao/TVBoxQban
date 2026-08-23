@@ -75,6 +75,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
 
     //--------- data sources ---------//
     protected String mUrl;//当前播放视频的地址
+    protected String mLastUrl; // xuameng 记录上一次播放的URL，用于判断是否同一资源
     protected String mProgressKey = null;
     protected Map<String, String> mHeaders;//当前视频地址的请求头
     protected AssetFileDescriptor mAssetFileDescriptor;//assets文件
@@ -339,11 +340,17 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
             setOptions();
         }
         if (prepareDataSource()) {
-			mVideoSize[0] = 0;   //xuameng重要修复获取视频尺寸不刷新
-			mVideoSize[1] = 0;
+            // xuameng 判断是否为同一URL，避免重复清空视频尺寸
+            boolean isSameUrl = TextUtils.equals(mLastUrl, mUrl);
+            if (!isSameUrl) {
+                mVideoSize[0] = 0; //xuameng重要修复获取视频尺寸不刷新
+                mVideoSize[1] = 0;
+            }
             mMediaPlayer.prepareAsync();
             setPlayState(STATE_PREPARING);
             setPlayerState(isFullScreen() ? PLAYER_FULL_SCREEN : isTinyScreen() ? PLAYER_TINY_SCREEN : PLAYER_NORMAL);
+            // xuameng 记录本次播放URL
+            mLastUrl = mUrl;
         }
     }
 
