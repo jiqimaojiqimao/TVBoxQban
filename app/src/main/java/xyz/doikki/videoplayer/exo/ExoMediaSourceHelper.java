@@ -129,14 +129,11 @@ public final class ExoMediaSourceHelper {
                 .setMimeType("video/mp2t")
                 .build();
 
-        // ✅ 直接构造 TsExtractor，完全绕过 sniff
         TsExtractor tsExtractor = new TsExtractor(
-                TsExtractor.MODE_HLS, // ✅ 宽容模式，支持 BDAV 192 字节
-                new DefaultTsPayloadReaderFactory(
-                        DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
-                                | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
-                                | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
-                ),
+                TsExtractor.MODE_HLS,
+                DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
+                        | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+                        | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES,
                 TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3
         );
 
@@ -146,7 +143,6 @@ public final class ExoMediaSourceHelper {
 
     return new ProgressiveMediaSource.Factory(factory)
             .createMediaSource(MediaItem.fromUri(contentUri));
-        }
     }
 
 private static boolean looksLikeM2ts(Uri uri) {
