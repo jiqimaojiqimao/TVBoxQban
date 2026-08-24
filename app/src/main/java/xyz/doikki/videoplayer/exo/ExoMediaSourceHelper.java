@@ -143,6 +143,7 @@ public final class ExoMediaSourceHelper {
 
     return new ProgressiveMediaSource.Factory(factory)
             .createMediaSource(MediaItem.fromUri(contentUri));
+		}
     }
 
 private static boolean looksLikeM2ts(Uri uri) {
