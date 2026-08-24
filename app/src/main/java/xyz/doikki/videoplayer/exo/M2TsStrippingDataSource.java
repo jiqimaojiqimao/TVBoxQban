@@ -17,38 +17,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Blu-ray BDAV m2ts（192B） → 标准 MPEG-TS（188B）
- *
- * ✅ 适配 123 网盘严格 Range 行为
- * ✅ 自动探测真实文件大小
- * ✅ 尾部 seek 永不越界
- * ✅ Media3 / ExoPlayer 通用
+ * ✅ TVBox + 123 网盘 + BDAV m2ts 终极版
+ * ✅ 强制 HEAD + Range 探测真实文件大小
+ * ✅ 禁止任何越界 Range
+ * ✅ 尾部 seek 永不 416
  */
 public final class M2TsStrippingDataSource implements DataSource {
 
     private static final String TAG = "M2TS_xuameng";
-
     private static final int BDAV_PACKET_SIZE = 192;
     private static final int TS_PACKET_SIZE = 188;
-    private static final int SYNC_FAIL_LIMIT = 8;
 
     private final DataSource upstream;
-
-    @Nullable
-    private TransferListener transferListener;
-
     private final byte[] scratch = new byte[BDAV_PACKET_SIZE];
     private byte[] pending = new byte[0];
     private int pendingOffset = 0;
     private int pendingLength = 0;
 
-    private long bytesRead = 0;
-    private boolean stripping = true;
-    private int syncFailCount = 0;
-    private boolean modeDecided = false;
-
-    /** 123 网盘真实文件大小（通过 HEAD / Range 探测） */
+    /** ✅ 123 网盘真实文件大小 */
     private long realFileLength = C.LENGTH_UNSET;
+    private boolean lengthDetected = false;
 
     public M2TsStrippingDataSource(DataSource upstream) {
         this.upstream = Assertions.checkNotNull(upstream);
@@ -56,7 +44,6 @@ public final class M2TsStrippingDataSource implements DataSource {
 
     @Override
     public void addTransferListener(@NonNull TransferListener transferListener) {
-        this.transferListener = transferListener;
         upstream.addTransferListener(transferListener);
     }
 
@@ -66,145 +53,137 @@ public final class M2TsStrippingDataSource implements DataSource {
 
         Log.d(TAG, "open uri=" + dataSpec.uri + " position=" + requestedPosition);
 
-        // ✅ 第一次 open 时，必须探测真实文件大小
-        if (realFileLength == C.LENGTH_UNSET) {
+        if (!lengthDetected) {
             detectRealFileLength(dataSpec);
+            lengthDetected = true;
         }
 
-        long upstreamPosition;
+        // ✅ 如果 ExoPlayer 请求的位置已经超出文件末尾，直接返回 EOF
+        if (realFileLength > 0 && requestedPosition >= realFileLength) {
+            Log.w(TAG, "⚠️ requestedPosition >= realFileLength, return EOF");
+            return 0;
+        }
 
-        if (requestedPosition == 0) {
-            upstreamPosition = 0;
-        } else if (realFileLength > 0) {
-            // ✅ 尾部 seek：只 seek 到最后一个合法 BDAV 包
-            long lastPacketStart =
-                    (realFileLength / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
+        long upstreamPosition = requestedPosition;
 
-            if (lastPacketStart >= BDAV_PACKET_SIZE) {
-                upstreamPosition = lastPacketStart - BDAV_PACKET_SIZE;
-            } else {
-                upstreamPosition = 0;
-            }
-
-            Log.d(TAG, "tail seek: realFileLength=" + realFileLength
-                    + " upstreamPosition=" + upstreamPosition);
-        } else {
-            // fallback（理论上不会走到）
+        if (requestedPosition > 0 && realFileLength > 0) {
             long packets = requestedPosition / TS_PACKET_SIZE;
             long remainder = requestedPosition % TS_PACKET_SIZE;
             upstreamPosition = packets * BDAV_PACKET_SIZE + remainder;
             upstreamPosition =
                     (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
-        }
 
-        // 192 对齐
-        upstreamPosition =
-                (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
-
-        long finalPosition = upstreamPosition;
-
-        // ✅ 最多回退 100 次，防止死循环
-        for (int retry = 0; retry < 100; retry++) {
-            try {
-                DataSpec trySpec = dataSpec.buildUpon()
-                        .setPosition(finalPosition)
-                        .build();
-
-                long result = upstream.open(trySpec);
-
-                // probe 一个 BDAV 包
-                int read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
-                if (read != BDAV_PACKET_SIZE) {
-                    upstream.close();
-                    throw new IOException("probe read failed");
-                }
-
-                if (scratch[4] != 0x47) {
-                    upstream.close();
-                    throw new IOException("BDAV sync failed");
-                }
-
-                Log.d(TAG, "✅ open + probe success at " + finalPosition);
-
-                // 缓存剥头后的 188 字节
-                ensurePendingCapacity(TS_PACKET_SIZE);
-                System.arraycopy(scratch, 4, pending, 0, TS_PACKET_SIZE);
-                pendingOffset = 0;
-                pendingLength = TS_PACKET_SIZE;
-
-                this.bytesRead = 0;
-                this.stripping = true;
-                this.modeDecided = true;
-
-                return result;
-
-            } catch (HttpDataSource.InvalidResponseCodeException e) {
-                if (e.responseCode == 416) {
-                    Log.w(TAG, "❌ 416 at " + finalPosition + ", rollback 192");
-                    try { upstream.close(); } catch (Exception ignored) {}
+            // ✅ 强制限制在合法范围内
+            if (upstreamPosition >= realFileLength) {
+                upstreamPosition =
+                        (realFileLength / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
+                if (upstreamPosition >= BDAV_PACKET_SIZE) {
+                    upstreamPosition -= BDAV_PACKET_SIZE;
                 } else {
-                    throw e;
+                    upstreamPosition = 0;
                 }
-            } catch (IOException e) {
-                Log.w(TAG, "❌ probe failed at " + finalPosition);
-                try { upstream.close(); } catch (Exception ignored) {}
-            }
-
-            finalPosition -= BDAV_PACKET_SIZE;
-            if (finalPosition < 0) {
-                finalPosition = 0;
             }
         }
 
-        throw new IOException("BDAV open failed after retries");
+        Log.d(TAG, "✅ tail seek: realFileLength=" + realFileLength
+                + " upstreamPosition=" + upstreamPosition);
+
+        DataSpec safeSpec = dataSpec.buildUpon()
+                .setPosition(upstreamPosition)
+                .build();
+
+        long result = upstream.open(safeSpec);
+
+        int read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
+        if (read != BDAV_PACKET_SIZE || scratch[4] != 0x47) {
+            upstream.close();
+            throw new IOException("BDAV probe failed");
+        }
+
+        ensurePendingCapacity(TS_PACKET_SIZE);
+        System.arraycopy(scratch, 4, pending, 0, TS_PACKET_SIZE);
+        pendingOffset = 0;
+        pendingLength = TS_PACKET_SIZE;
+
+        Log.d(TAG, "✅ open success at " + upstreamPosition);
+        return result;
     }
 
     /**
-     * ✅ 强制探测真实文件大小
-     * 123 网盘支持 Range: bytes=0-0，并返回 Content-Range
+     * ✅ 123 网盘专用：HEAD + Range 强制探测
      */
     private void detectRealFileLength(DataSpec dataSpec) throws IOException {
+        // 1️⃣ 先试 HEAD
         try {
-            DataSpec probe = dataSpec.buildUpon()
+            DataSpec headSpec = dataSpec.buildUpon()
+                    .setUri(dataSpec.uri)
+                    .setPosition(0)
+                    .setLength(0)
+                    .build();
+            upstream.open(headSpec);
+            Map<String, List<String>> headers = upstream.getResponseHeaders();
+            for (Map.Entry<String, List<String>> e : headers.entrySet()) {
+                if ("Content-Length".equalsIgnoreCase(e.getKey())) {
+                    realFileLength = Long.parseLong(e.getValue().get(0));
+                    Log.d(TAG, "✅ real file length (HEAD)=" + realFileLength);
+                    return;
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            try { upstream.close(); } catch (Exception ignored) {}
+        }
+
+        // 2️⃣ 再试 Range: bytes=0-0
+        try {
+            DataSpec rangeSpec = dataSpec.buildUpon()
                     .setPosition(0)
                     .setLength(1)
                     .build();
-
-            upstream.open(probe);
-
+            upstream.open(rangeSpec);
             Map<String, List<String>> headers = upstream.getResponseHeaders();
-            for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-                String key = entry.getKey();
-                if (key == null) continue;
-
-                if ("Content-Range".equalsIgnoreCase(key)) {
-                    for (String value : entry.getValue()) {
-                        if (value != null && value.startsWith("bytes")) {
-                            int slash = value.lastIndexOf('/');
-                            if (slash > 0) {
-                                realFileLength =
-                                        Long.parseLong(value.substring(slash + 1));
-                                Log.d(TAG, "✅ real file length=" + realFileLength);
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                if ("Content-Length".equalsIgnoreCase(key)) {
-                    for (String value : entry.getValue()) {
-                        realFileLength = Long.parseLong(value);
-                        Log.d(TAG, "✅ real file length from Content-Length="
-                                + realFileLength);
+            for (Map.Entry<String, List<String>> e : headers.entrySet()) {
+                if ("Content-Range".equalsIgnoreCase(e.getKey())) {
+                    String v = e.getValue().get(0);
+                    int slash = v.lastIndexOf('/');
+                    if (slash > 0) {
+                        realFileLength = Long.parseLong(v.substring(slash + 1));
+                        Log.d(TAG, "✅ real file length (Range)=" + realFileLength);
                         return;
                     }
                 }
             }
-        } catch (Exception e) {
-            Log.w(TAG, "detectRealFileLength failed", e);
+        } catch (Exception ignored) {
         } finally {
             try { upstream.close(); } catch (Exception ignored) {}
         }
+
+        // 3️⃣ 兜底：二分法逼出文件大小
+        long low = 0, high = 1L << 40;
+        while (low < high) {
+            long mid = (low + high + 1) / 2;
+            try {
+                DataSpec probe = dataSpec.buildUpon()
+                        .setPosition(mid)
+                        .setLength(1)
+                        .build();
+                upstream.open(probe);
+                upstream.close();
+                low = mid;
+            } catch (HttpDataSource.InvalidResponseCodeException e) {
+                if (e.responseCode == 416) {
+                    high = mid - 1;
+                } else {
+                    break;
+                }
+            } catch (Exception ignored) {
+                high = mid - 1;
+            } finally {
+                try { upstream.close(); } catch (Exception ignored) {}
+            }
+        }
+        realFileLength = low;
+        Log.d(TAG, "✅ real file length (binary search)=" + realFileLength);
     }
 
     @Override
@@ -213,29 +192,24 @@ public final class M2TsStrippingDataSource implements DataSource {
 
         if (length == 0) return 0;
 
-        // 优先消费 pending
         if (pendingLength > 0) {
             int copy = Math.min(pendingLength, length);
             System.arraycopy(pending, pendingOffset, buffer, offset, copy);
             pendingOffset += copy;
             pendingLength -= copy;
-            bytesRead += copy;
             return copy;
         }
 
         int read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
         if (read != BDAV_PACKET_SIZE) {
-            Log.d(TAG, "END_OF_INPUT");
             return C.RESULT_END_OF_INPUT;
         }
 
         if (scratch[4] != 0x47) {
-            Log.w(TAG, "❌ BDAV sync lost at " + bytesRead);
             throw new IOException("BDAV sync lost");
         }
 
         System.arraycopy(scratch, 4, buffer, offset, TS_PACKET_SIZE);
-        bytesRead += TS_PACKET_SIZE;
         return TS_PACKET_SIZE;
     }
 
