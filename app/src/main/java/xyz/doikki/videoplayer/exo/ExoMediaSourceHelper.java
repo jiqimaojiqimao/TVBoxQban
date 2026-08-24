@@ -46,6 +46,7 @@ public final class ExoMediaSourceHelper {
     private OkHttpDataSource.Factory mHttpDataSourceFactory;
     private OkHttpClient mOkClient = null;
     private Cache mCache;
+    private static final int TYPE_M2TS = 4;
 
     private ExoMediaSourceHelper(Context context) {
         mAppContext = context.getApplicationContext();
@@ -102,9 +103,7 @@ public final class ExoMediaSourceHelper {
             setHeaders(headers);
         }
 
-        boolean isTsUri = looksLikeM2ts(contentUri);  //xuameng 排除 ts m2ts
-        if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
-                || errorCode == 3004 || errorCode == 2000)) {
+        if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {      // xuameng当错误码为3003时，强制使用 HLS 源进行播放
             return new HlsMediaSource.Factory(factory)
                     .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
                     .setAllowChunklessPreparation(true)
@@ -112,6 +111,11 @@ public final class ExoMediaSourceHelper {
                     .createMediaSource(MediaItem.fromUri(contentUri));
         }
 
+        if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
+            MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
+            builder.setMimeType(MimeTypes.APPLICATION_M3U8);
+            return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(getMediaItem(uri, errorCode));
+        }
         switch (contentType) {
             case C.TYPE_DASH:
                 return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
@@ -121,52 +125,27 @@ public final class ExoMediaSourceHelper {
                         .setAllowChunklessPreparation(true)
                         .setExtractorFactory(new MyHlsExtractorFactory())
                         .createMediaSource(MediaItem.fromUri(contentUri));
+        // ✅ 新增：m2ts 播放分支
+        case TYPE_M2TS:
+            // 用 M2TsStrippingDataSource 包装底层数据源
+            DataSource.Factory m2tsFactory = new M2TsStrippingDataSourceFactory(factory);
+            // 配置 TS 提取器，支持 DTS、加大时间戳搜索范围
+            ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
+                    .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
+                    .setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
+
+    MediaItem mediaItem = new MediaItem.Builder()
+            .setUri(contentUri)
+            .setMimeType("video/mp2t")
+            .build();
+
+            return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
+                    .createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
-    if (looksLikeM2ts(contentUri)) {
-        MediaItem item = new MediaItem.Builder()
-                .setUri(contentUri)
-                .setMimeType("video/mp2t") // ✅ 强制 TS
-                .build();
-
-        DefaultExtractorsFactory extractorsFactory =
-                new DefaultExtractorsFactory()
-                        .setTsExtractorFlags(
-                                DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
-                                        | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
-                                        | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
-                        )
-                        .setTsExtractorTimestampSearchBytes(
-                                TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3
-                        )
-                        // ✅ 关键：强制使用 HLS 模式解析 TS
-                        .setTsExtractorMode(TsExtractor.MODE_HLS);
-
-        return new ProgressiveMediaSource.Factory(
-                factory,
-                extractorsFactory
-        ).createMediaSource(item);
+                return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+        }
     }
-
-    return new ProgressiveMediaSource.Factory(factory)
-            .createMediaSource(MediaItem.fromUri(contentUri));
-		}
-    }
-
-private static boolean looksLikeM2ts(Uri uri) {
-    if (uri == null) return false;
-    String raw = uri.toString().toLowerCase();
-    boolean hit = raw.contains(".m2ts");
-
-    String filename = uri.getQueryParameter("filename");
-    if (filename != null) {
-        filename = filename.toLowerCase();
-        hit = hit || filename.endsWith(".m2ts");
-    }
-
-    android.util.Log.e("xuameng_M2TS", "hit=" + hit + " uri=" + uri);
-    return hit;
-}
 
     private static MediaItem getMediaItem(String uri, int errorCode) {
         MediaItem.Builder builder = new MediaItem.Builder().setUri(Uri.parse(uri.trim().replace("\\", "")));
@@ -175,13 +154,22 @@ private static boolean looksLikeM2ts(Uri uri) {
         return builder.build();
     }
 
-private static synchronized ExtractorsFactory getExtractorsFactory() {
-    return new DefaultExtractorsFactory()
-        .setTsExtractorFlags(
-            DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
-          | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
-          | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES)
-        .setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
+    private static synchronized ExtractorsFactory getExtractorsFactory() {
+        return new DefaultExtractorsFactory().setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS).setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
+
+    }
+
+private static class M2TsStrippingDataSourceFactory implements DataSource.Factory {
+    private final DataSource.Factory upstreamFactory;
+
+    M2TsStrippingDataSourceFactory(DataSource.Factory upstreamFactory) {
+        this.upstreamFactory = upstreamFactory;
+    }
+
+    @Override
+    public DataSource createDataSource() {
+        return new M2TsStrippingDataSource(upstreamFactory.createDataSource());
+    }
 }
 
     private int inferContentType(String fileName) {
@@ -190,6 +178,12 @@ private static synchronized ExtractorsFactory getExtractorsFactory() {
             return C.TYPE_DASH;
         } else if (fileName.contains("m3u8") || fileName.contains("type=hls") || fileName.contains("format=hls")) {
             return C.TYPE_HLS;
+        } else if (fileName.contains(".m2ts") 
+            || fileName.contains(".mts") 
+            || fileName.contains(".bdmv") 
+            || fileName.contains("type=m2ts") 
+            || fileName.contains("format=m2ts")) {
+            return C.TYPE_M2TS;
         } else {
             return C.TYPE_OTHER;
         }
