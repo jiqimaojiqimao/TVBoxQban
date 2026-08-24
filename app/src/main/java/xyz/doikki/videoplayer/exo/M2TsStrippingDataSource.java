@@ -63,82 +63,66 @@ public final class M2TsStrippingDataSource implements DataSource {
         upstream.addTransferListener(transferListener);
     }
 
-    @Override
-    public long open(@NonNull DataSpec dataSpec) throws IOException {
-		android.util.Log.d("M2TS_xuameng", "open uri=" + dataSpec.uri);
-        // 记录本次打开的起始 position，用于把"剥头后 position"换算回上游 position
-        this.upstreamOpenPosition = dataSpec.position;
-        this.bytesRead = 0;
-        this.pendingOffset = 0;
-        this.pendingLength = 0;
-        this.modeDecided = false;
-        this.stripping = true;
-        this.syncFailCount = 0;
+@Override
+public long open(@NonNull DataSpec dataSpec) throws IOException {
+    android.util.Log.d("M2TS_xuameng", "open uri=" + dataSpec.uri
+            + " position=" + dataSpec.position);
 
-        // 若上游 position 落在某个 BDAV 包中间，向下对齐到包起点
-        long alignedPos = dataSpec.position;
-        DataSpec alignedSpec = dataSpec; // 不修改 position
-        if (alignedPos != dataSpec.position) {
-            alignedSpec = dataSpec.buildUpon().setPosition(alignedPos).build();
-        }
-        long length = upstream.open(alignedSpec);
-        this.streamLength = length;
-        return length;
+    long requestedPosition = dataSpec.position;
+
+    // ✅ BDAV 必须对齐
+    long alignedPosition =
+            (requestedPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
+
+    if (alignedPosition != requestedPosition) {
+        android.util.Log.d("M2TS_xuameng",
+                "align position: " + requestedPosition + " -> " + alignedPosition);
     }
+
+    DataSpec alignedSpec = dataSpec.buildUpon()
+            .setPosition(alignedPosition)
+            .build();
+
+    this.bytesRead = 0;
+    this.pendingOffset = 0;
+    this.pendingLength = 0;
+    this.isBdav = true; // ✅ 明确是 BDAV
+
+    return upstream.open(alignedSpec);
+}
 
 @Override
 public int read(@NonNull byte[] buffer, int offset, int length) throws IOException {
     if (length == 0) return 0;
 
-    int totalRead = 0;
-
-    while (totalRead < length) {
-        if (pendingLength > 0) {
-            int copy = Math.min(pendingLength, length - totalRead);
-            System.arraycopy(pending, pendingOffset, buffer, offset + totalRead, copy);
-            pendingOffset += copy;
-            pendingLength -= copy;
-            totalRead += copy;
-            bytesRead += copy;
-            continue;
-        }
-
-        int read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
-        if (read == C.RESULT_END_OF_INPUT) break;
-        if (read != BDAV_PACKET_SIZE) {
-            // 末尾不足一包，直接透传
-            ensurePendingCapacity(read);
-            System.arraycopy(scratch, 0, pending, 0, read);
-            pendingOffset = 0;
-            pendingLength = read;
-            continue;
-        }
-
-        boolean syncOk = (scratch[4] == 0x47);
-
-        // ✅ 关键：永远不要丢包
-        if (syncOk) {
-            ensurePendingCapacity(TS_PACKET_SIZE);
-            System.arraycopy(scratch, 4, pending, 0, TS_PACKET_SIZE);
-            pendingOffset = 0;
-            pendingLength = TS_PACKET_SIZE;
-            android.util.Log.d("M2TS_xuameng", "sync ok, stripped 192->188");
-        } else {
-            ensurePendingCapacity(BDAV_PACKET_SIZE);
-            System.arraycopy(scratch, 0, pending, 0, BDAV_PACKET_SIZE);
-            pendingOffset = 0;
-            pendingLength = BDAV_PACKET_SIZE;
-            android.util.Log.d("M2TS_xuameng", "non-sync, passthrough 192");
-        }
+    // 优先消费 pending
+    if (pendingLength > 0) {
+        int copy = Math.min(pendingLength, length);
+        System.arraycopy(pending, pendingOffset, buffer, offset, copy);
+        pendingOffset += copy;
+        pendingLength -= copy;
+        bytesRead += copy;
+        return copy;
     }
 
-    if (totalRead == 0) {
-        android.util.Log.d("M2TS_xuameng", "END_OF_INPUT");
+    // 读一个 BDAV 包
+    int read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
+    if (read != BDAV_PACKET_SIZE) {
         return C.RESULT_END_OF_INPUT;
     }
 
-    android.util.Log.d("M2TS_xuameng", "read total=" + totalRead);
-    return totalRead;
+    // ✅ BDAV 必须校验同步头
+    if (scratch[4] != 0x47) {
+        android.util.Log.d("M2TS_xuameng", "BDAV sync lost, skip packet");
+        // 跳过这个包，继续读下一个
+        return read(buffer, offset, length);
+    }
+
+    // ✅ 只给 188
+    System.arraycopy(scratch, 4, buffer, offset, TS_PACKET_SIZE);
+    bytesRead += TS_PACKET_SIZE;
+    android.util.Log.d("M2TS_xuameng", "sync ok, stripped 192->188");
+    return TS_PACKET_SIZE;
 }
 
     @Override
