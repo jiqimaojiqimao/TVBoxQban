@@ -148,8 +148,8 @@ switch (contentType) {
     }
 
     // ✅ 普通文件兜底（只保留一个）
-    case C.TYPE_OTHER:
     default:
+    case C.TYPE_OTHER:
         return new ProgressiveMediaSource.Factory(factory)
                 .createMediaSource(MediaItem.fromUri(contentUri));
 }
