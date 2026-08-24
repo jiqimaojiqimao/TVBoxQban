@@ -1,8 +1,7 @@
 package xyz.doikki.videoplayer.exo;
 
 import android.net.Uri;
-import java.util.List;
-import java.util.Map;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.media3.common.C;
@@ -11,6 +10,8 @@ import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DataSpec;
 import androidx.media3.datasource.TransferListener;
 
+import java.util.List;
+import java.util.Map;
 import java.io.IOException;
 
 /**
@@ -66,19 +67,29 @@ public final class M2TsStrippingDataSource implements DataSource {
 
 @Override
 public long open(@NonNull DataSpec dataSpec) throws IOException {
-    android.util.Log.d("M2TS_xuameng", "open uri=" + dataSpec.uri
-            + " position=" + dataSpec.position);
+    android.util.Log.d("M2TS_xuameng",
+            "open uri=" + dataSpec.uri + " position=" + dataSpec.position);
 
     long requestedPosition = dataSpec.position;
 
-    // ✅ BDAV 必须对齐
-    long alignedPosition =
-            (requestedPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
-
-    if (alignedPosition != requestedPosition) {
-        android.util.Log.d("M2TS_xuameng",
-                "align position: " + requestedPosition + " -> " + alignedPosition);
+    // ✅ BDAV：逻辑 position 是 188 对齐，必须转成 192 对齐
+    long upstreamPosition;
+    if (requestedPosition == 0) {
+        upstreamPosition = 0;
+    } else {
+        // 188 -> 192 换算
+        upstreamPosition = (requestedPosition / TS_PACKET_SIZE) * BDAV_PACKET_SIZE
+                + (requestedPosition % TS_PACKET_SIZE);
     }
+
+    // ✅ 再按 192 对齐
+    long alignedPosition =
+            (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
+
+    android.util.Log.d("M2TS_xuameng",
+            "requested=" + requestedPosition
+                    + " upstream=" + upstreamPosition
+                    + " aligned=" + alignedPosition);
 
     DataSpec alignedSpec = dataSpec.buildUpon()
             .setPosition(alignedPosition)
@@ -87,7 +98,7 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
     this.bytesRead = 0;
     this.pendingOffset = 0;
     this.pendingLength = 0;
-    this.isBdav = true; // ✅ 明确是 BDAV
+    this.isBdav = true;
 
     return upstream.open(alignedSpec);
 }
