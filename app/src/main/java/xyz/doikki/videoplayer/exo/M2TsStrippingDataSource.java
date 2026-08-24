@@ -18,8 +18,7 @@ import java.util.Map;
 
 /**
  * ✅ TVBox + 123 网盘 + BDAV m2ts 终极版
- * ✅ 禁止 open() 修改 position
- * ✅ 禁止尾部 rollback
+ * ✅ 禁止尾部微调死循环
  * ✅ 禁止欺骗 ExoPlayer
  */
 public final class M2TsStrippingDataSource implements DataSource {
@@ -34,7 +33,6 @@ public final class M2TsStrippingDataSource implements DataSource {
     private int pendingOffset = 0;
     private int pendingLength = 0;
 
-    private long bytesRead = 0;
     private long realFileLength = C.LENGTH_UNSET;
     private boolean lengthDetected = false;
 
@@ -58,13 +56,14 @@ public final class M2TsStrippingDataSource implements DataSource {
             lengthDetected = true;
         }
 
-        // ✅ 如果请求位置超出文件末尾，直接返回 EOF
-        if (realFileLength > 0 && requestedPosition >= realFileLength) {
-            Log.w(TAG, "⚠️ requestedPosition >= realFileLength, return EOF");
+        // ✅ 关键：尾部 192 字节内，直接返回 EOF
+        if (realFileLength > 0
+                && requestedPosition >= realFileLength - BDAV_PACKET_SIZE) {
+            Log.w(TAG, "⚠️ tail probe, return EOF");
             return 0;
         }
 
-        // ✅ 192 对齐（不跳包）
+        // ✅ 192 对齐
         long upstreamPosition =
                 (requestedPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
 
@@ -89,13 +88,11 @@ public final class M2TsStrippingDataSource implements DataSource {
 
         if (length == 0) return 0;
 
-        // 优先消费 pending
         if (pendingLength > 0) {
             int copy = Math.min(pendingLength, length);
             System.arraycopy(pending, pendingOffset, buffer, offset, copy);
             pendingOffset += copy;
             pendingLength -= copy;
-            bytesRead += copy;
             return copy;
         }
 
@@ -116,18 +113,14 @@ public final class M2TsStrippingDataSource implements DataSource {
         }
 
         if (scratch[4] != 0x47) {
-            Log.w(TAG, "❌ BDAV sync lost at " + bytesRead);
-            throw new IOException("BDAV sync lost");
+            Log.w(TAG, "❌ BDAV sync lost, return EOF");
+            return C.RESULT_END_OF_INPUT;
         }
 
         System.arraycopy(scratch, 4, buffer, offset, TS_PACKET_SIZE);
-        bytesRead += TS_PACKET_SIZE;
         return TS_PACKET_SIZE;
     }
 
-    /**
-     * ✅ 123 网盘专用：只探测一次
-     */
     private void detectRealFileLength(DataSpec dataSpec) throws IOException {
         try {
             DataSpec probe = dataSpec.buildUpon()
