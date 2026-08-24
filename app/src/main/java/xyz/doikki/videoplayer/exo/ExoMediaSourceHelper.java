@@ -128,7 +128,7 @@ public final class ExoMediaSourceHelper {
                         .createMediaSource(MediaItem.fromUri(contentUri));
 
             // xuameng m2ts 播放分支
-            case TYPE_M2TS: {
+            case TYPE_M2TS:
                 return createM2TsMediaSource(contentUri, factory);
 
             default:
@@ -168,7 +168,7 @@ public final class ExoMediaSourceHelper {
         ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
                 .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
                 .setTsExtractorTimestampSearchBytes(
-                        .setTsExtractorTimestampSearchBytes(1024 * 1024); // 1MB
+                        .setTsExtractorTimestampSearchBytes(188 * 1024)
 
         MediaItem mediaItem = new MediaItem.Builder()
                 .setUri(uri)
