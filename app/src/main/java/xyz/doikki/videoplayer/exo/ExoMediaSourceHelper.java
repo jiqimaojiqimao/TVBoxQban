@@ -135,8 +135,7 @@ switch (contentType) {
 
         ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
                 .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
-                .setTsExtractorTimestampSearchBytes(
-                        TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
+.setTsExtractorTimestampSearchBytes(1024 * 1024);
 
         MediaItem mediaItem = new MediaItem.Builder()
                 .setUri(contentUri)
