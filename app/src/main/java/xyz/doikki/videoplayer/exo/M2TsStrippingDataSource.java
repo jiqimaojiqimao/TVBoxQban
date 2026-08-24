@@ -83,40 +83,64 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
         upstreamPosition = packets * BDAV_PACKET_SIZE + remainder;
     }
 
-    // 192 对齐
     upstreamPosition =
             (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
 
     long finalPosition = upstreamPosition;
 
-    // ✅ 循环回退，直到 open 成功 或 position=0
-    while (finalPosition >= 0) {
+    // ✅ 最多回退 100 次，防止死循环
+    for (int retry = 0; retry < 100; retry++) {
         try {
             DataSpec trySpec = dataSpec.buildUpon()
                     .setPosition(finalPosition)
                     .build();
 
             long result = upstream.open(trySpec);
+
+            // ✅ 关键：立刻读一个包验证是不是真 BDAV
+            int probeRead = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
+            if (probeRead != BDAV_PACKET_SIZE) {
+                upstream.close();
+                throw new IOException("probe read failed");
+            }
+
+            if (scratch[4] != 0x47) {
+                upstream.close();
+                throw new IOException("BDAV sync failed");
+            }
+
             android.util.Log.d("M2TS_xuameng",
-                    "open success at " + finalPosition);
+                    "✅ open + probe success at " + finalPosition);
+
+            // 把 probe 到的包缓存起来
+            ensurePendingCapacity(BDAV_PACKET_SIZE);
+            System.arraycopy(scratch, 0, pending, 0, BDAV_PACKET_SIZE);
+            pendingOffset = 0;
+            pendingLength = BDAV_PACKET_SIZE;
+
+            this.bytesRead = 0;
+            this.isBdav = true;
             return result;
 
         } catch (HttpDataSource.InvalidResponseCodeException e) {
             if (e.responseCode == 416) {
                 android.util.Log.w("M2TS_xuameng",
-                        "416 at " + finalPosition + ", rollback 192");
-                finalPosition -= BDAV_PACKET_SIZE;
-                if (finalPosition < 0) {
-                    finalPosition = 0;
-                }
-                continue;
+                        "❌ 416 at " + finalPosition + ", rollback 192");
+            } else {
+                throw e;
             }
-            throw e;
+        } catch (IOException e) {
+            android.util.Log.w("M2TS_xuameng",
+                    "❌ probe failed at " + finalPosition + ", rollback 192");
+        }
+
+        finalPosition -= BDAV_PACKET_SIZE;
+        if (finalPosition < 0) {
+            finalPosition = 0;
         }
     }
 
-    // 理论上不会走到这里
-    throw new IOException("Failed to open after 416 rollback");
+    throw new IOException("BDAV open failed after retries");
 }
 
 @Override
