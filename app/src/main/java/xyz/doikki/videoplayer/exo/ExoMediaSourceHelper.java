@@ -104,7 +104,7 @@ public final class ExoMediaSourceHelper {
 
 
 
-boolean isTsUri = uri != null && uri.toLowerCase().matches(".*\\.m2?ts(\\?.*)?$");   // xuameng当错误码为3003时，强制使用 HLS 源进行播放
+boolean isTsUri = looksLikeM2ts(uri);
 if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
         || errorCode == 3004 || errorCode == 2000)) {
     return new HlsMediaSource.Factory(factory)
@@ -130,21 +130,35 @@ if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
                         .createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
-    String lower = uri.toLowerCase();
-    boolean looksTs = lower.endsWith(".ts") || lower.endsWith(".m2ts")
-            || lower.contains(".ts?") || lower.contains(".m2ts?");
+    Uri uri = contentUri;
     ProgressiveMediaSource.Factory psf =
-            new ProgressiveMediaSource.Factory(factory, getExtractorsFactory());
-    if (looksTs) {
+        new ProgressiveMediaSource.Factory(factory, getExtractorsFactory());
+    if (looksLikeM2ts(uri)) {
         MediaItem item = new MediaItem.Builder()
-                .setUri(contentUri)
-                .setMimeType(MimeTypes.APPLICATION_TS)
+                .setUri(uri)
+                .setMimeType("video/mp2t")
                 .build();
         return psf.createMediaSource(item);
     }
-    return psf.createMediaSource(MediaItem.fromUri(contentUri));
+    return psf.createMediaSource(MediaItem.fromUri(uri));
+
+private static boolean looksLikeM2ts(Uri uri) {
+    String raw = uri.toString().toLowerCase();
+    // 1) path 本身
+    if (raw.endsWith(".m2ts") || raw.endsWith(".ts")
+            || raw.contains(".m2ts?") || raw.contains(".ts?")) {
+        return true;
+    }
+    // 2) query 里可能有 filename=xxx.m2ts（123 网盘/CDN 常见）
+    String filename = uri.getQueryParameter("filename");
+    if (filename != null) {
+        String fn = filename.toLowerCase();
+        if (fn.endsWith(".m2ts") || fn.endsWith(".mts") || fn.endsWith(".ts")) {
+            return true;
         }
     }
+    return false;
+}
 
     private static MediaItem getMediaItem(String uri, int errorCode) {
         MediaItem.Builder builder = new MediaItem.Builder().setUri(Uri.parse(uri.trim().replace("\\", "")));
