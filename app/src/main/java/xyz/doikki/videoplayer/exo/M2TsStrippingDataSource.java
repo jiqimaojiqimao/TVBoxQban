@@ -73,13 +73,6 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
     android.util.Log.d("M2TS_xuameng",
             "open uri=" + dataSpec.uri + " position=" + requestedPosition);
 
-    // ✅ 第一次 open 时，不要用 probe 去拿 Content-Length
-    // 123 网盘对 Range: bytes=0-0 返回 Content-Length=1
-    if (streamLength == C.LENGTH_UNSET && requestedPosition == 0) {
-        // 不 probe，直接按 0 处理
-        streamLength = C.LENGTH_UNSET;
-    }
-
     long upstreamPosition;
     if (requestedPosition == 0) {
         upstreamPosition = 0;
@@ -89,25 +82,41 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
         upstreamPosition = packets * BDAV_PACKET_SIZE + remainder;
     }
 
-    // ✅ 只有在明确知道 streamLength 时才 clamp
-    if (streamLength > 0 && upstreamPosition >= streamLength) {
-        upstreamPosition =
-                (streamLength / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
-        android.util.Log.w("M2TS_xuameng",
-                "clamp upstreamPosition to " + upstreamPosition);
-    }
-
     // ✅ 192 对齐
     upstreamPosition =
             (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
 
+    // ✅ 试探性 open，遇到 416 就回退
+    long finalPosition = upstreamPosition;
+    while (finalPosition >= 0) {
+        try {
+            DataSpec probeSpec = dataSpec.buildUpon()
+                    .setPosition(finalPosition)
+                    .setLength(1)
+                    .build();
+            upstream.open(probeSpec);
+            upstream.close();
+            break;
+        } catch (HttpDataSource.InvalidResponseCodeException e) {
+            if (e.responseCode == 416) {
+                android.util.Log.w("M2TS_xuameng",
+                        "416 at " + finalPosition + ", rollback 192");
+                finalPosition -= BDAV_PACKET_SIZE;
+                if (finalPosition < 0) {
+                    finalPosition = 0;
+                }
+                continue;
+            }
+            throw e;
+        }
+    }
+
     android.util.Log.d("M2TS_xuameng",
             "requested=" + requestedPosition
-                    + " upstream=" + upstreamPosition
-                    + " streamLength=" + streamLength);
+                    + " upstream=" + finalPosition);
 
     DataSpec alignedSpec = dataSpec.buildUpon()
-            .setPosition(upstreamPosition)
+            .setPosition(finalPosition)
             .build();
 
     this.bytesRead = 0;
