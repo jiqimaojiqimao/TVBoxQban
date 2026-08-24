@@ -66,33 +66,52 @@ public final class M2TsStrippingDataSource implements DataSource {
     }
 
 @Override
+@Override
 public long open(@NonNull DataSpec dataSpec) throws IOException {
-    android.util.Log.d("M2TS_xuameng",
-            "open uri=" + dataSpec.uri + " position=" + dataSpec.position);
-
     long requestedPosition = dataSpec.position;
+    android.util.Log.d("M2TS_xuameng",
+            "open uri=" + dataSpec.uri + " position=" + requestedPosition);
 
-    // ✅ BDAV：逻辑 position 是 188 对齐，必须转成 192 对齐
+    // 第一次 open，记录真实文件长度
+    if (streamLength == C.LENGTH_UNSET) {
+        DataSpec probe = dataSpec.buildUpon()
+                .setPosition(0)
+                .setLength(1)
+                .build();
+        upstream.open(probe);
+        streamLength = upstream.getResponseHeaders()
+                .getOrDefault("Content-Length", List.of("0")).get(0);
+        upstream.close();
+    }
+
     long upstreamPosition;
     if (requestedPosition == 0) {
         upstreamPosition = 0;
     } else {
-        // 188 -> 192 换算
-        upstreamPosition = (requestedPosition / TS_PACKET_SIZE) * BDAV_PACKET_SIZE
-                + (requestedPosition % TS_PACKET_SIZE);
+        // 188 → 192 换算
+        long packets = requestedPosition / TS_PACKET_SIZE;
+        long remainder = requestedPosition % TS_PACKET_SIZE;
+        upstreamPosition = packets * BDAV_PACKET_SIZE + remainder;
     }
 
-    // ✅ 再按 192 对齐
-    long alignedPosition =
+    // ✅ 防止 416：不能超过文件长度
+    if (streamLength > 0 && upstreamPosition >= streamLength) {
+        upstreamPosition = (streamLength / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
+        android.util.Log.w("M2TS_xuameng",
+                "clamp upstreamPosition to " + upstreamPosition);
+    }
+
+    // ✅ 192 对齐
+    upstreamPosition =
             (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
 
     android.util.Log.d("M2TS_xuameng",
             "requested=" + requestedPosition
                     + " upstream=" + upstreamPosition
-                    + " aligned=" + alignedPosition);
+                    + " streamLength=" + streamLength);
 
     DataSpec alignedSpec = dataSpec.buildUpon()
-            .setPosition(alignedPosition)
+            .setPosition(upstreamPosition)
             .build();
 
     this.bytesRead = 0;
@@ -107,7 +126,6 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
 public int read(@NonNull byte[] buffer, int offset, int length) throws IOException {
     if (length == 0) return 0;
 
-    // 优先消费 pending
     if (pendingLength > 0) {
         int copy = Math.min(pendingLength, length);
         System.arraycopy(pending, pendingOffset, buffer, offset, copy);
@@ -117,23 +135,19 @@ public int read(@NonNull byte[] buffer, int offset, int length) throws IOExcepti
         return copy;
     }
 
-    // 读一个 BDAV 包
     int read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
     if (read != BDAV_PACKET_SIZE) {
+        android.util.Log.d("M2TS_xuameng", "END_OF_INPUT");
         return C.RESULT_END_OF_INPUT;
     }
 
-    // ✅ BDAV 必须校验同步头
     if (scratch[4] != 0x47) {
-        android.util.Log.d("M2TS_xuameng", "BDAV sync lost, skip packet");
-        // 跳过这个包，继续读下一个
+        android.util.Log.d("M2TS_xuameng", "BDAV sync lost, skip");
         return read(buffer, offset, length);
     }
 
-    // ✅ 只给 188
     System.arraycopy(scratch, 4, buffer, offset, TS_PACKET_SIZE);
     bytesRead += TS_PACKET_SIZE;
-    android.util.Log.d("M2TS_xuameng", "sync ok, stripped 192->188");
     return TS_PACKET_SIZE;
 }
 
