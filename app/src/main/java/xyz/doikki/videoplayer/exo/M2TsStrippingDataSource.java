@@ -66,7 +66,6 @@ public final class M2TsStrippingDataSource implements DataSource {
     }
 
 @Override
-@Override
 public long open(@NonNull DataSpec dataSpec) throws IOException {
     long requestedPosition = dataSpec.position;
     android.util.Log.d("M2TS_xuameng",
@@ -79,8 +78,14 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
                 .setLength(1)
                 .build();
         upstream.open(probe);
-        streamLength = upstream.getResponseHeaders()
-                .getOrDefault("Content-Length", List.of("0")).get(0);
+        String lengthStr = upstream.getResponseHeaders()
+                .getOrDefault("Content-Length", Collections.singletonList("0"))
+                .get(0);
+        try {
+            streamLength = Long.parseLong(lengthStr);
+        } catch (NumberFormatException e) {
+            streamLength = C.LENGTH_UNSET;
+        }
         upstream.close();
     }
 
