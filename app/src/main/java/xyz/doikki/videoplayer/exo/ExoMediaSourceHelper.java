@@ -116,43 +116,42 @@ public final class ExoMediaSourceHelper {
             builder.setMimeType(MimeTypes.APPLICATION_M3U8);
             return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(getMediaItem(uri, errorCode));
         }
-switch (contentType) {
-    case C.TYPE_DASH:
-        return new DashMediaSource.Factory(factory)
-                .createMediaSource(MediaItem.fromUri(contentUri));
 
-    case C.TYPE_HLS:
-        return new HlsMediaSource.Factory(factory)
-                .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())
-                .setAllowChunklessPreparation(true)
-                .setExtractorFactory(new MyHlsExtractorFactory())
-                .createMediaSource(MediaItem.fromUri(contentUri));
+        switch (contentType) {
+            case C.TYPE_DASH:
+                return new DashMediaSource.Factory(factory)
+                        .createMediaSource(MediaItem.fromUri(contentUri));
 
-    // ✅ m2ts 播放分支
-    case TYPE_M2TS: {
-				android.util.Log.d("M2TS_xuameng", "M2TS_xuameng  OK OK");
-        DataSource.Factory m2tsFactory =
-                new M2TsStrippingDataSourceFactory(factory);
+            case C.TYPE_HLS:
+                return new HlsMediaSource.Factory(factory)
+                        .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())
+                        .setAllowChunklessPreparation(true)
+                        .setExtractorFactory(new MyHlsExtractorFactory())
+                        .createMediaSource(MediaItem.fromUri(contentUri));
 
-        ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
-                .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
-.setTsExtractorTimestampSearchBytes(1024 * 1024);
+            // xuameng m2ts 播放分支
+            case TYPE_M2TS: {
+                DataSource.Factory m2tsFactory =
+                        new M2TsStrippingDataSourceFactory(factory);
 
-        MediaItem mediaItem = new MediaItem.Builder()
-                .setUri(contentUri)
-                .setMimeType("video/mp2t") // ✅ 兼容旧 Media3
-                .build();
+                ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
+                        .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
+                        .setTsExtractorTimestampSearchBytes(1024 * 1024);
 
-        return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
-                .createMediaSource(mediaItem);
-    }
+                MediaItem mediaItem = new MediaItem.Builder()
+                        .setUri(contentUri)
+                        .setMimeType("video/mp2t") 
+                        .build();
 
-    // ✅ 普通文件兜底（只保留一个）
-    default:
-    case C.TYPE_OTHER:
-        return new ProgressiveMediaSource.Factory(factory)
-                .createMediaSource(MediaItem.fromUri(contentUri));
-}
+                return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
+                        .createMediaSource(mediaItem);
+            }
+
+            default:
+            case C.TYPE_OTHER:
+                return new ProgressiveMediaSource.Factory(factory)
+                        .createMediaSource(MediaItem.fromUri(contentUri));
+        }
     }
 
     private static MediaItem getMediaItem(String uri, int errorCode) {
@@ -167,18 +166,18 @@ switch (contentType) {
 
     }
 
-private static class M2TsStrippingDataSourceFactory implements DataSource.Factory {
-    private final DataSource.Factory upstreamFactory;
+    private static class M2TsStrippingDataSourceFactory implements DataSource.Factory {  //xuameng m2ts专用
+        private final DataSource.Factory upstreamFactory;
 
-    M2TsStrippingDataSourceFactory(DataSource.Factory upstreamFactory) {
-        this.upstreamFactory = upstreamFactory;
-    }
+        M2TsStrippingDataSourceFactory(DataSource.Factory upstreamFactory) {
+            this.upstreamFactory = upstreamFactory;
+        }
 
-    @Override
-    public DataSource createDataSource() {
-        return new M2TsStrippingDataSource(upstreamFactory.createDataSource());
+        @Override
+        public DataSource createDataSource() {
+            return new M2TsStrippingDataSource(upstreamFactory.createDataSource());
+        }
     }
-}
 
     private int inferContentType(String fileName) {
         fileName = fileName.toLowerCase();
