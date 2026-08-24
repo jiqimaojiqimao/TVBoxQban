@@ -102,13 +102,17 @@ public final class ExoMediaSourceHelper {
             setHeaders(headers);
         }
 
-        if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {      // xuameng当错误码为3003时，强制使用 HLS 源进行播放
-            return new HlsMediaSource.Factory(factory)
-                    .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
-                    .setAllowChunklessPreparation(true)
-                    .setExtractorFactory(new MyHlsExtractorFactory())
-                    .createMediaSource(MediaItem.fromUri(contentUri));
-        }
+
+
+boolean isTsUri = uri != null && uri.toLowerCase().matches(".*\\.m2?ts(\\?.*)?$");   // xuameng当错误码为3003时，强制使用 HLS 源进行播放
+if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
+        || errorCode == 3004 || errorCode == 2000)) {
+    return new HlsMediaSource.Factory(factory)
+            .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
+            .setAllowChunklessPreparation(true)
+            .setExtractorFactory(new MyHlsExtractorFactory())
+            .createMediaSource(MediaItem.fromUri(contentUri));
+}
 
         if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
             MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
@@ -126,7 +130,19 @@ public final class ExoMediaSourceHelper {
                         .createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
-                return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+    String lower = uri.toLowerCase();
+    boolean looksTs = lower.endsWith(".ts") || lower.endsWith(".m2ts")
+            || lower.contains(".ts?") || lower.contains(".m2ts?");
+    ProgressiveMediaSource.Factory psf =
+            new ProgressiveMediaSource.Factory(factory, getExtractorsFactory());
+    if (looksTs) {
+        MediaItem item = new MediaItem.Builder()
+                .setUri(contentUri)
+                .setMimeType(MimeTypes.APPLICATION_M2TS)
+                .build();
+        return psf.createMediaSource(item);
+    }
+    return psf.createMediaSource(MediaItem.fromUri(contentUri));
         }
     }
 
@@ -137,10 +153,14 @@ public final class ExoMediaSourceHelper {
         return builder.build();
     }
 
-    private static synchronized ExtractorsFactory getExtractorsFactory() {
-        return new DefaultExtractorsFactory().setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS).setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
-
-    }
+private static synchronized ExtractorsFactory getExtractorsFactory() {
+    return new DefaultExtractorsFactory()
+        .setTsExtractorFlags(
+            DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
+          | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+          | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES)
+        .setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
+}
 
     private int inferContentType(String fileName) {
         fileName = fileName.toLowerCase();
