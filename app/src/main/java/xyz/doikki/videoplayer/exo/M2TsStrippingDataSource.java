@@ -15,6 +15,7 @@ import androidx.media3.datasource.TransferListener;
 import java.io.IOException;
 import java.util.Map;
 import java.util.List;
+import java.util.Collections;
 
 /**
  * ✅ TVBox + 123 网盘 + BDAV m2ts 终极版
@@ -60,12 +61,14 @@ public final class M2TsStrippingDataSource implements DataSource {
         }
 
         // ✅ 关键：尾部 196KB 内，直接返回 EOF
-        if (realFileLength > 0
-                && requestedPosition >= realFileLength - BDAV_PACKET_SIZE * TAIL_SAFE_PACKETS) {
-            Log.w(TAG, "⚠️ tail probe, return EOF");
-            tailEof = true;
-            return 0;
-        }
+if (realFileLength > 0
+        && requestedPosition >= realFileLength - BDAV_PACKET_SIZE * TAIL_SAFE_PACKETS) {
+    Log.w(TAG, "⚠️ tail probe, return EOF");
+    tailEof = true;
+    pendingLength = 0;
+    pendingOffset = 0;
+    return 0;
+}
 
         tailEof = false;
 
@@ -163,20 +166,26 @@ public final class M2TsStrippingDataSource implements DataSource {
         return upstream.getUri();
     }
 
-    @Override
-    public Map<String, List<String>> getResponseHeaders() {
-        return upstream.getResponseHeaders();
+@Override
+public Map<String, List<String>> getResponseHeaders() {
+    if (tailEof) {
+        // ✅ 关键：告诉 Media3 响应长度为 0
+        return Collections.singletonMap(
+                "Content-Length",
+                Collections.singletonList("0")
+        );
     }
+    return upstream.getResponseHeaders();
+}
 
-    @Override
-    public void close() throws IOException {
-        try {
-            upstream.close();
-        } finally {
-            pending = new byte[0];
-            pendingOffset = 0;
-            pendingLength = 0;
-            tailEof = false;
-        }
+@Override
+public void close() throws IOException {
+    try {
+        upstream.close();
+    } finally {
+        pending = new byte[0];
+        pendingOffset = 0;
+        pendingLength = 0;
     }
+}
 }
