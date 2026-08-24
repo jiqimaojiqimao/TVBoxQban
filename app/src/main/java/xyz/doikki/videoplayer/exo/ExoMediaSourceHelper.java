@@ -128,7 +128,7 @@ switch (contentType) {
                 .setExtractorFactory(new MyHlsExtractorFactory())
                 .createMediaSource(MediaItem.fromUri(contentUri));
 
-    // ✅ 新增：m2ts 播放分支
+    // ✅ m2ts 播放分支
     case TYPE_M2TS: {
         DataSource.Factory m2tsFactory =
                 new M2TsStrippingDataSourceFactory(factory);
@@ -140,16 +140,16 @@ switch (contentType) {
 
         MediaItem mediaItem = new MediaItem.Builder()
                 .setUri(contentUri)
-                .setMimeType(MimeTypes.APPLICATION_M2TS)
+                .setMimeType("video/mp2t") // ✅ 兼容旧 Media3
                 .build();
 
         return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
                 .createMediaSource(mediaItem);
     }
 
-    // ✅ 普通文件兜底
-    default:
+    // ✅ 普通文件兜底（只保留一个）
     case C.TYPE_OTHER:
+    default:
         return new ProgressiveMediaSource.Factory(factory)
                 .createMediaSource(MediaItem.fromUri(contentUri));
 }
