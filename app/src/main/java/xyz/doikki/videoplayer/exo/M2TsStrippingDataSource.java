@@ -83,21 +83,24 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
         upstreamPosition = packets * BDAV_PACKET_SIZE + remainder;
     }
 
-    // ✅ 192 对齐
+    // 192 对齐
     upstreamPosition =
             (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
 
-    // ✅ 试探性 open，遇到 416 就回退
     long finalPosition = upstreamPosition;
+
+    // ✅ 循环回退，直到 open 成功 或 position=0
     while (finalPosition >= 0) {
         try {
-            DataSpec probeSpec = dataSpec.buildUpon()
+            DataSpec trySpec = dataSpec.buildUpon()
                     .setPosition(finalPosition)
-                    .setLength(1)
                     .build();
-            upstream.open(probeSpec);
-            upstream.close();
-            break;
+
+            long result = upstream.open(trySpec);
+            android.util.Log.d("M2TS_xuameng",
+                    "open success at " + finalPosition);
+            return result;
+
         } catch (HttpDataSource.InvalidResponseCodeException e) {
             if (e.responseCode == 416) {
                 android.util.Log.w("M2TS_xuameng",
@@ -112,20 +115,8 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
         }
     }
 
-    android.util.Log.d("M2TS_xuameng",
-            "requested=" + requestedPosition
-                    + " upstream=" + finalPosition);
-
-    DataSpec alignedSpec = dataSpec.buildUpon()
-            .setPosition(finalPosition)
-            .build();
-
-    this.bytesRead = 0;
-    this.pendingOffset = 0;
-    this.pendingLength = 0;
-    this.isBdav = true;
-
-    return upstream.open(alignedSpec);
+    // 理论上不会走到这里
+    throw new IOException("Failed to open after 416 rollback");
 }
 
 @Override
