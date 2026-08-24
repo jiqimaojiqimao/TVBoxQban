@@ -142,21 +142,28 @@ if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
     return psf.createMediaSource(MediaItem.fromUri(uri));
         }
     }
+
 private static boolean looksLikeM2ts(Uri uri) {
+    if (uri == null) return false;
+
     String raw = uri.toString().toLowerCase();
-    // 1) path 本身
-    if (raw.endsWith(".m2ts") || raw.endsWith(".ts")
-            || raw.contains(".m2ts?") || raw.contains(".ts?")) {
+
+    // 1）path 或 query 中只要出现 .m2ts / .ts / .mts
+    if (raw.contains(".m2ts") || raw.contains(".ts?") || raw.contains(".mts")) {
         return true;
     }
-    // 2) query 里可能有 filename=xxx.m2ts（123 网盘/CDN 常见）
+
+    // 2）filename 参数（123 网盘专用）
     String filename = uri.getQueryParameter("filename");
     if (filename != null) {
-        String fn = filename.toLowerCase();
-        if (fn.endsWith(".m2ts") || fn.endsWith(".mts") || fn.endsWith(".ts")) {
+        filename = filename.toLowerCase();
+        if (filename.endsWith(".m2ts")
+                || filename.endsWith(".ts")
+                || filename.endsWith(".mts")) {
             return true;
         }
     }
+
     return false;
 }
 
