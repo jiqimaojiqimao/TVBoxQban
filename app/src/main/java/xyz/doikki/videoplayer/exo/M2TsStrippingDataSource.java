@@ -19,6 +19,7 @@ import java.util.Map;
 /**
  * ✅ TVBox + 123 网盘 + BDAV m2ts 终极版
  * ✅ 禁止尾部微调死循环
+ * ✅ 禁止 416
  * ✅ 禁止欺骗 ExoPlayer
  */
 public final class M2TsStrippingDataSource implements DataSource {
@@ -56,9 +57,9 @@ public final class M2TsStrippingDataSource implements DataSource {
             lengthDetected = true;
         }
 
-        // ✅ 关键：尾部 192 字节内，直接返回 EOF
+        // ✅ 关键：尾部 2 个 BDAV 包内，直接返回 EOF
         if (realFileLength > 0
-                && requestedPosition >= realFileLength - BDAV_PACKET_SIZE) {
+                && requestedPosition >= realFileLength - BDAV_PACKET_SIZE * 2) {
             Log.w(TAG, "⚠️ tail probe, return EOF");
             return 0;
         }
