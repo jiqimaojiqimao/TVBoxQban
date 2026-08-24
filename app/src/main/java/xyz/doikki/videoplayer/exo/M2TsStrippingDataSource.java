@@ -45,7 +45,7 @@ public final class M2TsStrippingDataSource implements DataSource {
     private int pendingLength = 0;
 
     private long upstreamOpenPosition = 0; // 本次 open 时上游起始 position
-    private long streamLength = DataSource.LENGTH_UNSET;
+    private long streamLength = C.LENGTH_UNSET;
     private long bytesRead = 0;
 
     // 模式：true=按 192 剥头；false=直接透传（非 BDAV 或已确认不是）
