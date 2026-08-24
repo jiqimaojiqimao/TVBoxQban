@@ -28,7 +28,7 @@ public final class M2TsStrippingDataSource implements DataSource {
     private static final String TAG = "M2TS_xuameng";
     private static final int BDAV_PACKET_SIZE = 192;
     private static final int TS_PACKET_SIZE = 188;
-    private static final int TAIL_SAFE_PACKETS = 1024; // ≈196KB
+    private static final int TAIL_SAFE_PACKETS = 4096; // ≈196KB
 
     private final DataSource upstream;
     private final byte[] scratch = new byte[BDAV_PACKET_SIZE];
@@ -62,12 +62,12 @@ public final class M2TsStrippingDataSource implements DataSource {
 
         // ✅ 关键：尾部 196KB 内，直接返回 EOF
 if (realFileLength > 0
-        && requestedPosition >= realFileLength - BDAV_PACKET_SIZE * TAIL_SAFE_PACKETS) {
-    Log.w(TAG, "⚠️ tail probe, return EOF");
+        && requestedPosition >= realFileLength - BDAV_PACKET_SIZE * 4096) {
+    Log.w(TAG, "⚠️ tail probe, fake EOF");
     tailEof = true;
     pendingLength = 0;
     pendingOffset = 0;
-    return 0;
+    return 0; // 关键：返回 0 长度，不是 C.LENGTH_UNSET
 }
 
         tailEof = false;
@@ -184,6 +184,7 @@ public void close() throws IOException {
         pending = new byte[0];
         pendingOffset = 0;
         pendingLength = 0;
+        tailEof = false; 
     }
 }
 }
