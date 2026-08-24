@@ -9,6 +9,7 @@ import androidx.media3.common.util.Assertions;
 import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DataSpec;
 import androidx.media3.datasource.TransferListener;
+import androidx.media3.datasource.HttpDataSource;
 
 import java.util.List;
 import java.util.Map;
