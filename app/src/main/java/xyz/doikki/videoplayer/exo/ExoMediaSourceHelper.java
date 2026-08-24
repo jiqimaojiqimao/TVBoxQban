@@ -144,6 +144,7 @@ switch (contentType) {
 
         return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
                 .createMediaSource(mediaItem);
+		android.util.Log.d("M2TS_xuameng", "M2TS_xuameng  OK OK");
     }
 
     // ✅ 普通文件兜底（只保留一个）
