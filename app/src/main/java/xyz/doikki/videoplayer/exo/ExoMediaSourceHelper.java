@@ -116,35 +116,43 @@ public final class ExoMediaSourceHelper {
             builder.setMimeType(MimeTypes.APPLICATION_M3U8);
             return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(getMediaItem(uri, errorCode));
         }
-        switch (contentType) {
-            case C.TYPE_DASH:
-                return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
-            case C.TYPE_HLS:
-                return new HlsMediaSource.Factory(factory)
-                        .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
-                        .setAllowChunklessPreparation(true)
-                        .setExtractorFactory(new MyHlsExtractorFactory())
-                        .createMediaSource(MediaItem.fromUri(contentUri));
-        // ✅ 新增：m2ts 播放分支
-        case TYPE_M2TS:
-            // 用 M2TsStrippingDataSource 包装底层数据源
-            DataSource.Factory m2tsFactory = new M2TsStrippingDataSourceFactory(factory);
-            // 配置 TS 提取器，支持 DTS、加大时间戳搜索范围
-            ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
-                    .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
-                    .setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
+switch (contentType) {
+    case C.TYPE_DASH:
+        return new DashMediaSource.Factory(factory)
+                .createMediaSource(MediaItem.fromUri(contentUri));
 
-    MediaItem mediaItem = new MediaItem.Builder()
-            .setUri(contentUri)
-            .setMimeType("video/mp2t")
-            .build();
+    case C.TYPE_HLS:
+        return new HlsMediaSource.Factory(factory)
+                .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())
+                .setAllowChunklessPreparation(true)
+                .setExtractorFactory(new MyHlsExtractorFactory())
+                .createMediaSource(MediaItem.fromUri(contentUri));
 
-            return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
-                    .createMediaSource(MediaItem.fromUri(contentUri));
-            default:
-            case C.TYPE_OTHER:
-                return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
-        }
+    // ✅ 新增：m2ts 播放分支
+    case TYPE_M2TS: {
+        DataSource.Factory m2tsFactory =
+                new M2TsStrippingDataSourceFactory(factory);
+
+        ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
+                .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
+                .setTsExtractorTimestampSearchBytes(
+                        TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
+
+        MediaItem mediaItem = new MediaItem.Builder()
+                .setUri(contentUri)
+                .setMimeType(MimeTypes.APPLICATION_M2TS)
+                .build();
+
+        return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
+                .createMediaSource(mediaItem);
+    }
+
+    // ✅ 普通文件兜底
+    default:
+    case C.TYPE_OTHER:
+        return new ProgressiveMediaSource.Factory(factory)
+                .createMediaSource(MediaItem.fromUri(contentUri));
+}
     }
 
     private static MediaItem getMediaItem(String uri, int errorCode) {
@@ -183,7 +191,7 @@ private static class M2TsStrippingDataSourceFactory implements DataSource.Factor
             || fileName.contains(".bdmv") 
             || fileName.contains("type=m2ts") 
             || fileName.contains("format=m2ts")) {
-            return C.TYPE_M2TS;
+            return TYPE_M2TS;
         } else {
             return C.TYPE_OTHER;
         }
