@@ -74,14 +74,28 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
     android.util.Log.d("M2TS_xuameng",
             "open uri=" + dataSpec.uri + " position=" + requestedPosition);
 
-    long upstreamPosition;
-    if (requestedPosition == 0) {
-        upstreamPosition = 0;
+long upstreamPosition;
+if (requestedPosition == 0) {
+    upstreamPosition = 0;
+} else {
+    // 用真实文件长度计算最后一个合法 BDAV 包
+    if (realFileLength > 0) {
+        long lastPacketStart =
+                (realFileLength / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
+        if (lastPacketStart >= BDAV_PACKET_SIZE) {
+            upstreamPosition = lastPacketStart - BDAV_PACKET_SIZE;
+        } else {
+            upstreamPosition = 0;
+        }
     } else {
+        // 还没探测到真实长度，用保守策略
         long packets = requestedPosition / TS_PACKET_SIZE;
         long remainder = requestedPosition % TS_PACKET_SIZE;
         upstreamPosition = packets * BDAV_PACKET_SIZE + remainder;
+        upstreamPosition =
+                (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
     }
+}
 
     upstreamPosition =
             (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
@@ -193,6 +207,42 @@ if (scratch[4] != 0x47) {
     System.arraycopy(scratch, 4, buffer, offset, TS_PACKET_SIZE);
     bytesRead += TS_PACKET_SIZE;
     return TS_PACKET_SIZE;
+}
+
+
+
+private long realFileLength = -1;
+
+private void detectRealFileLength(DataSpec dataSpec) throws IOException {
+    if (realFileLength != -1) return;
+
+    // 用 Range: bytes=0-0 探测
+    DataSpec probeSpec = dataSpec.buildUpon()
+            .setPosition(0)
+            .setLength(1)
+            .build();
+
+    upstream.open(probeSpec);
+    upstream.close();
+
+    // 从 response headers 拿 Content-Range
+    Map<String, List<String>> headers = upstream.getResponseHeaders();
+    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+        if ("Content-Range".equalsIgnoreCase(entry.getKey())) {
+            for (String value : entry.getValue()) {
+                // bytes 0-0/89540871234
+                if (value != null && value.startsWith("bytes")) {
+                    int slash = value.lastIndexOf('/');
+                    if (slash > 0) {
+                        realFileLength = Long.parseLong(value.substring(slash + 1));
+                        android.util.Log.d("M2TS_xuameng",
+                                "✅ real file length=" + realFileLength);
+                        return;
+                    }
+                }
+            }
+        }
+    }
 }
 
     @Override
