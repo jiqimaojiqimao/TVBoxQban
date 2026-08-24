@@ -169,10 +169,8 @@ if (realFileLength > 0
 @Override
 public Map<String, List<String>> getResponseHeaders() {
     if (tailEof) {
-        // ✅ 关键：告诉 Media3 响应长度为 0
-        return Collections.singletonMap(
-                "Content-Length",
-                Collections.singletonList("0")
+        return Map.of(
+                "Content-Length", List.of("0")
         );
     }
     return upstream.getResponseHeaders();
