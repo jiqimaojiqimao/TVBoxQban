@@ -112,11 +112,6 @@ public final class ExoMediaSourceHelper {
                     .createMediaSource(MediaItem.fromUri(contentUri));
         }
 
-        if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-            MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
-            builder.setMimeType(MimeTypes.APPLICATION_M3U8);
-            return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(getMediaItem(uri, errorCode));
-        }
         switch (contentType) {
             case C.TYPE_DASH:
                 return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
@@ -128,16 +123,36 @@ public final class ExoMediaSourceHelper {
                         .createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
-                ProgressiveMediaSource.Factory psf =
-                    new ProgressiveMediaSource.Factory(factory, getExtractorsFactory());
-                if (looksLikeM2ts(contentUri)) {
-                    MediaItem item = new MediaItem.Builder()
-                            .setUri(contentUri)
-                            .setMimeType("video/mp2t")
-                            .build();
-                    return psf.createMediaSource(item);
-                }
-                return psf.createMediaSource(MediaItem.fromUri(contentUri));
+if (looksLikeM2ts(contentUri)) {
+    ExtractorsFactory tsOnlyFactory = new ExtractorsFactory() {
+        @Override
+        public Extractor[] createExtractors() {
+            return new Extractor[]{
+                new TsExtractor(
+                        TsExtractor.MODE_HLS,
+                        DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
+                                | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+                                | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES,
+                        TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3
+                )
+            };
+        }
+
+        @Override
+        public Extractor[] createExtractors(Uri uri, Map<String, List<String>> responseHeaders) {
+            return createExtractors();
+        }
+    };
+
+    MediaItem item = new MediaItem.Builder()
+            .setUri(contentUri)
+            .setMimeType("video/mp2t")
+            .build();
+
+    return new ProgressiveMediaSource.Factory(factory, tsOnlyFactory)
+            .createMediaSource(item);
+}
+                return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
         }
     }
 
