@@ -13,7 +13,6 @@ import androidx.media3.datasource.HttpDataSource;
 import androidx.media3.datasource.TransferListener;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,6 +26,7 @@ public final class M2TsStrippingDataSource implements DataSource {
     private static final String TAG = "M2TS_xuameng";
     private static final int BDAV_PACKET_SIZE = 192;
     private static final int TS_PACKET_SIZE = 188;
+    private static final int TAIL_SAFE_PACKETS = 1024; // ≈196KB
 
     private final DataSource upstream;
     private final byte[] scratch = new byte[BDAV_PACKET_SIZE];
@@ -36,6 +36,7 @@ public final class M2TsStrippingDataSource implements DataSource {
 
     private long realFileLength = C.LENGTH_UNSET;
     private boolean lengthDetected = false;
+    private boolean tailEof = false;
 
     public M2TsStrippingDataSource(DataSource upstream) {
         this.upstream = Assertions.checkNotNull(upstream);
@@ -57,12 +58,15 @@ public final class M2TsStrippingDataSource implements DataSource {
             lengthDetected = true;
         }
 
-        // ✅ 关键：尾部 2 个 BDAV 包内，直接返回 EOF
+        // ✅ 关键：尾部 196KB 内，直接返回 EOF
         if (realFileLength > 0
-                && requestedPosition >= realFileLength - BDAV_PACKET_SIZE * 2) {
+                && requestedPosition >= realFileLength - BDAV_PACKET_SIZE * TAIL_SAFE_PACKETS) {
             Log.w(TAG, "⚠️ tail probe, return EOF");
+            tailEof = true;
             return 0;
         }
+
+        tailEof = false;
 
         // ✅ 192 对齐
         long upstreamPosition =
@@ -77,6 +81,7 @@ public final class M2TsStrippingDataSource implements DataSource {
         } catch (HttpDataSource.InvalidResponseCodeException e) {
             if (e.responseCode == 416) {
                 Log.w(TAG, "⚠️ 416, return EOF");
+                tailEof = true;
                 return 0;
             }
             throw e;
@@ -88,6 +93,11 @@ public final class M2TsStrippingDataSource implements DataSource {
             throws IOException {
 
         if (length == 0) return 0;
+
+        if (tailEof) {
+            Log.d(TAG, "END_OF_INPUT (tail probe)");
+            return C.RESULT_END_OF_INPUT;
+        }
 
         if (pendingLength > 0) {
             int copy = Math.min(pendingLength, length);
@@ -165,6 +175,7 @@ public final class M2TsStrippingDataSource implements DataSource {
             pending = new byte[0];
             pendingOffset = 0;
             pendingLength = 0;
+            tailEof = false;
         }
     }
 }
