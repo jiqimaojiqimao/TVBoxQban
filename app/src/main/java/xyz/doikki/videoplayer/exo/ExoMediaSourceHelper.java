@@ -112,7 +112,7 @@ public final class ExoMediaSourceHelper {
         }
 
         if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-            return createM2TsMediaSource(contentUri, factory);
+            return createM2TsMediaSource(uri, factory);
         }
 
         switch (contentType) {
@@ -129,7 +129,7 @@ public final class ExoMediaSourceHelper {
 
             // xuameng m2ts 播放分支
             case TYPE_M2TS:
-                return createM2TsMediaSource(contentUri, factory);
+                return createM2TsMediaSource(uri, factory);
 
             default:
             case C.TYPE_OTHER:
@@ -164,13 +164,14 @@ public final class ExoMediaSourceHelper {
     }
 
     private MediaSource createM2TsMediaSource(String uri, DataSource.Factory factory) {  //xuameng m2ts专用
+        Uri contentUri = Uri.parse(uri);
         DataSource.Factory m2tsFactory = new M2TsStrippingDataSourceFactory(factory);
         ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
                 .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
                 .setTsExtractorTimestampSearchBytes(188 * 1024);
 
         MediaItem mediaItem = new MediaItem.Builder()
-                .setUri(uri)
+                .setUri(contentUri)
                 .setMimeType(MimeTypes.APPLICATION_M3U8)
                 .build();
 
