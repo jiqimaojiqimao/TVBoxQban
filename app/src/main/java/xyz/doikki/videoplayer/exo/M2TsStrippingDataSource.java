@@ -88,7 +88,6 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
 
     long finalPosition = upstreamPosition;
 
-    // ✅ 最多回退 100 次，防止死循环
     for (int retry = 0; retry < 100; retry++) {
         try {
             DataSpec trySpec = dataSpec.buildUpon()
@@ -97,7 +96,7 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
 
             long result = upstream.open(trySpec);
 
-            // ✅ 关键：立刻读一个包验证是不是真 BDAV
+            // ✅ probe 一个 BDAV 包
             int probeRead = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
             if (probeRead != BDAV_PACKET_SIZE) {
                 upstream.close();
@@ -112,11 +111,11 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
             android.util.Log.d("M2TS_xuameng",
                     "✅ open + probe success at " + finalPosition);
 
-            // 把 probe 到的包缓存起来
-            ensurePendingCapacity(BDAV_PACKET_SIZE);
-            System.arraycopy(scratch, 0, pending, 0, BDAV_PACKET_SIZE);
+            // ✅ 关键：probe 后必须剥头，只缓存 188
+            ensurePendingCapacity(TS_PACKET_SIZE);
+            System.arraycopy(scratch, 4, pending, 0, TS_PACKET_SIZE);
             pendingOffset = 0;
-            pendingLength = BDAV_PACKET_SIZE;
+            pendingLength = TS_PACKET_SIZE; // ✅ 188
 
             this.bytesRead = 0;
             this.isBdav = true;
