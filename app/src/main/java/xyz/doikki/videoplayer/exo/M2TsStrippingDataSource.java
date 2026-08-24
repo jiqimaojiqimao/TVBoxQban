@@ -153,6 +153,7 @@ public final class M2TsStrippingDataSource implements DataSource {
                 } else {
                     // 期望剥头却没找到 0x47：跳过这个包，继续读下一个
                     // （BDAV 流偶尔出现填充/损坏包，跳过比报错更稳）
+					android.util.Log.d("M2TS_xuameng", "skip non-sync packet at pos=" + bytesRead);
                 }
             } else {
                 // 透传模式：整个 192 字节原样给出（此时上层应不会走到这里，因为 modeDecided 后才会进）
