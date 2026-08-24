@@ -103,10 +103,12 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
                 throw new IOException("probe read failed");
             }
 
-            if (scratch[4] != 0x47) {
-                upstream.close();
-                throw new IOException("BDAV sync failed");
-            }
+if (scratch[4] != 0x47) {
+    upstream.close();
+    android.util.Log.w("M2TS_xuameng",
+            "❌ BDAV sync failed at " + finalPosition);
+    throw new IOException("BDAV sync failed");
+}
 
             android.util.Log.d("M2TS_xuameng",
                     "✅ open + probe success at " + finalPosition);
@@ -146,6 +148,7 @@ public long open(@NonNull DataSpec dataSpec) throws IOException {
 public int read(@NonNull byte[] buffer, int offset, int length) throws IOException {
     if (length == 0) return 0;
 
+    // 优先消费 pending
     if (pendingLength > 0) {
         int copy = Math.min(pendingLength, length);
         System.arraycopy(pending, pendingOffset, buffer, offset, copy);
@@ -161,9 +164,12 @@ public int read(@NonNull byte[] buffer, int offset, int length) throws IOExcepti
         return C.RESULT_END_OF_INPUT;
     }
 
+    // ✅ BDAV 模式下，必须严格校验同步头
     if (scratch[4] != 0x47) {
-        android.util.Log.d("M2TS_xuameng", "BDAV sync lost, skip");
-        return read(buffer, offset, length);
+        android.util.Log.w("M2TS_xuameng",
+                "❌ BDAV sync lost at position=" + bytesRead + ", throw exception");
+        // ✅ 关键：抛异常，让 ExoPlayer 重新 seek
+        throw new IOException("BDAV sync lost, need reseek");
     }
 
     System.arraycopy(scratch, 4, buffer, offset, TS_PACKET_SIZE);
