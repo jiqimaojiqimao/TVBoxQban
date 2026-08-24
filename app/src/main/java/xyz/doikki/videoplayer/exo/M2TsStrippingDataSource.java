@@ -69,40 +69,30 @@ public final class M2TsStrippingDataSource implements DataSource {
 @Override
 public long open(@NonNull DataSpec dataSpec) throws IOException {
     long requestedPosition = dataSpec.position;
+
     android.util.Log.d("M2TS_xuameng",
             "open uri=" + dataSpec.uri + " position=" + requestedPosition);
 
-    // 第一次 open，记录真实文件长度
-    if (streamLength == C.LENGTH_UNSET) {
-        DataSpec probe = dataSpec.buildUpon()
-                .setPosition(0)
-                .setLength(1)
-                .build();
-        upstream.open(probe);
-        String lengthStr = upstream.getResponseHeaders()
-                .getOrDefault("Content-Length", Collections.singletonList("0"))
-                .get(0);
-        try {
-            streamLength = Long.parseLong(lengthStr);
-        } catch (NumberFormatException e) {
-            streamLength = C.LENGTH_UNSET;
-        }
-        upstream.close();
+    // ✅ 第一次 open 时，不要用 probe 去拿 Content-Length
+    // 123 网盘对 Range: bytes=0-0 返回 Content-Length=1
+    if (streamLength == C.LENGTH_UNSET && requestedPosition == 0) {
+        // 不 probe，直接按 0 处理
+        streamLength = C.LENGTH_UNSET;
     }
 
     long upstreamPosition;
     if (requestedPosition == 0) {
         upstreamPosition = 0;
     } else {
-        // 188 → 192 换算
         long packets = requestedPosition / TS_PACKET_SIZE;
         long remainder = requestedPosition % TS_PACKET_SIZE;
         upstreamPosition = packets * BDAV_PACKET_SIZE + remainder;
     }
 
-    // ✅ 防止 416：不能超过文件长度
+    // ✅ 只有在明确知道 streamLength 时才 clamp
     if (streamLength > 0 && upstreamPosition >= streamLength) {
-        upstreamPosition = (streamLength / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
+        upstreamPosition =
+                (streamLength / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
         android.util.Log.w("M2TS_xuameng",
                 "clamp upstreamPosition to " + upstreamPosition);
     }
