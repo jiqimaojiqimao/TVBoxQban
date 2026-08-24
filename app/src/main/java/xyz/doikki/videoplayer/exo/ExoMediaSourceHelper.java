@@ -129,16 +129,26 @@ public final class ExoMediaSourceHelper {
                 .setMimeType("video/mp2t")
                 .build();
 
+        // ✅ TVBox Media3 唯一可用的 TsExtractor 构造方式
         TsExtractor tsExtractor = new TsExtractor(
-                TsExtractor.MODE_HLS,
+                TsExtractor.MODE_HLS, // 宽容模式
                 DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
                         | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
                         | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES,
                 TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3
         );
 
-        return new ProgressiveMediaSource.Factory(factory)
-                .createMediaSource(item, tsExtractor);
+        // ✅ 不用 createMediaSource(item, extractor)
+        // ✅ 用 ExtractorsFactory 匿名内部类（只返回这一个）
+        return new ProgressiveMediaSource.Factory(
+                factory,
+                new ExtractorsFactory() {
+                    @Override
+                    public Extractor[] createExtractors() {
+                        return new Extractor[]{tsExtractor};
+                    }
+                }
+        ).createMediaSource(item);
     }
 
     return new ProgressiveMediaSource.Factory(factory)
