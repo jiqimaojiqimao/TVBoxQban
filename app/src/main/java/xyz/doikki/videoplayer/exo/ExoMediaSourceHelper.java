@@ -138,7 +138,7 @@ if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
     if (looksTs) {
         MediaItem item = new MediaItem.Builder()
                 .setUri(contentUri)
-                .setMimeType(MimeTypes.APPLICATION_M2TS)
+                .setMimeType(MimeTypes.APPLICATION_TS)
                 .build();
         return psf.createMediaSource(item);
     }
