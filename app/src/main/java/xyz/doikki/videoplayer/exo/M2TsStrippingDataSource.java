@@ -78,7 +78,6 @@ public final class M2TsStrippingDataSource implements DataSource {
         // 若上游 position 落在某个 BDAV 包中间，向下对齐到包起点
         long alignedPos = dataSpec.position;
         DataSpec alignedSpec = dataSpec; // 不修改 position
-        DataSpec alignedSpec = dataSpec;
         if (alignedPos != dataSpec.position) {
             alignedSpec = dataSpec.buildUpon().setPosition(alignedPos).build();
         }
