@@ -102,17 +102,15 @@ public final class ExoMediaSourceHelper {
             setHeaders(headers);
         }
 
-
-
-boolean isTsUri = looksLikeM2ts(contentUri);
-if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
-        || errorCode == 3004 || errorCode == 2000)) {
-    return new HlsMediaSource.Factory(factory)
-            .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
-            .setAllowChunklessPreparation(true)
-            .setExtractorFactory(new MyHlsExtractorFactory())
-            .createMediaSource(MediaItem.fromUri(contentUri));
-}
+        boolean isTsUri = looksLikeM2ts(contentUri);  //xuameng 排除 ts m2ts
+        if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
+                || errorCode == 3004 || errorCode == 2000)) {
+            return new HlsMediaSource.Factory(factory)
+                    .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
+                    .setAllowChunklessPreparation(true)
+                    .setExtractorFactory(new MyHlsExtractorFactory())
+                    .createMediaSource(MediaItem.fromUri(contentUri));
+        }
 
         if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
             MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
@@ -130,41 +128,32 @@ if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
                         .createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
-    ProgressiveMediaSource.Factory psf =
-        new ProgressiveMediaSource.Factory(factory, getExtractorsFactory());
-    if (looksLikeM2ts(contentUri)) {
-        MediaItem item = new MediaItem.Builder()
-                .setUri(uri)
-                .setMimeType("video/mp2t")
-                .build();
-        return psf.createMediaSource(item);
-    }
-    return psf.createMediaSource(MediaItem.fromUri(uri));
+                ProgressiveMediaSource.Factory psf =
+                    new ProgressiveMediaSource.Factory(factory, getExtractorsFactory());
+                if (looksLikeM2ts(contentUri)) {
+                    MediaItem item = new MediaItem.Builder()
+                            .setUri(contentUri)
+                            .setMimeType("video/mp2t")
+                            .build();
+                    return psf.createMediaSource(item);
+                }
+                return psf.createMediaSource(MediaItem.fromUri(contentUri));
         }
     }
 
 private static boolean looksLikeM2ts(Uri uri) {
     if (uri == null) return false;
-
     String raw = uri.toString().toLowerCase();
+    boolean hit = raw.contains(".m2ts");
 
-    // 1）path 或 query 中只要出现 .m2ts / .ts / .mts
-    if (raw.contains(".m2ts") || raw.contains(".ts?") || raw.contains(".mts")) {
-        return true;
-    }
-
-    // 2）filename 参数（123 网盘专用）
     String filename = uri.getQueryParameter("filename");
     if (filename != null) {
         filename = filename.toLowerCase();
-        if (filename.endsWith(".m2ts")
-                || filename.endsWith(".ts")
-                || filename.endsWith(".mts")) {
-            return true;
-        }
+        hit = hit || filename.endsWith(".m2ts");
     }
 
-    return false;
+    android.util.Log.e("xuameng_M2TS", "hit=" + hit + " uri=" + uri);
+    return hit;
 }
 
     private static MediaItem getMediaItem(String uri, int errorCode) {
