@@ -46,7 +46,7 @@ public final class ExoMediaSourceHelper {
     private OkHttpDataSource.Factory mHttpDataSourceFactory;
     private OkHttpClient mOkClient = null;
     private Cache mCache;
-    private static final int TYPE_M2TS = 4;
+    private static final int TYPE_M2TS = 100;
 
     private ExoMediaSourceHelper(Context context) {
         mAppContext = context.getApplicationContext();
