@@ -27,7 +27,6 @@ import androidx.media3.extractor.DefaultExtractorsFactory;
 import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory;
 import androidx.media3.extractor.ts.TsExtractor;
-import androidx.media3.extractor.Extractor;
 
 import com.github.tvbox.osc.util.FileUtils;
 
@@ -127,28 +126,25 @@ public final class ExoMediaSourceHelper {
     if (looksLikeM2ts(contentUri)) {
         MediaItem item = new MediaItem.Builder()
                 .setUri(contentUri)
-                .setMimeType("video/mp2t")
+                .setMimeType("video/mp2t") // ✅ 强制 TS
                 .build();
 
-        // ✅ TVBox Media3 唯一可用的 TsExtractor 构造方式
-        TsExtractor tsExtractor = new TsExtractor(
-                TsExtractor.MODE_HLS, // 宽容模式
-                DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
-                        | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
-                        | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES,
-                TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3
-        );
+        DefaultExtractorsFactory extractorsFactory =
+                new DefaultExtractorsFactory()
+                        .setTsExtractorFlags(
+                                DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
+                                        | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+                                        | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
+                        )
+                        .setTsExtractorTimestampSearchBytes(
+                                TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3
+                        )
+                        // ✅ 关键：强制使用 HLS 模式解析 TS
+                        .setTsExtractorMode(TsExtractor.MODE_HLS);
 
-        // ✅ 不用 createMediaSource(item, extractor)
-        // ✅ 用 ExtractorsFactory 匿名内部类（只返回这一个）
         return new ProgressiveMediaSource.Factory(
                 factory,
-                new ExtractorsFactory() {
-                    @Override
-                    public Extractor[] createExtractors() {
-                        return new Extractor[]{tsExtractor};
-                    }
-                }
+                extractorsFactory
         ).createMediaSource(item);
     }
 
