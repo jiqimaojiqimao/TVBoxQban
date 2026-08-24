@@ -141,7 +141,8 @@ if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
         return psf.createMediaSource(item);
     }
     return psf.createMediaSource(MediaItem.fromUri(uri));
-
+        }
+    }
 private static boolean looksLikeM2ts(Uri uri) {
     String raw = uri.toString().toLowerCase();
     // 1) path 本身
