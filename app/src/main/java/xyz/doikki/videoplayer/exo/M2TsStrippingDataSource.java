@@ -121,19 +121,38 @@ if (scratch[4] != 0x47) {
 
             this.bytesRead = 0;
             this.isBdav = true;
-            return result;
+// ✅ 123 网盘必须重新 open，否则后续 read 会错
+upstream.close();
+DataSpec finalSpec = dataSpec.buildUpon()
+        .setPosition(finalPosition)
+        .build();
+long realResult = upstream.open(finalSpec);
 
-        } catch (HttpDataSource.InvalidResponseCodeException e) {
-            if (e.responseCode == 416) {
-                android.util.Log.w("M2TS_xuameng",
-                        "❌ 416 at " + finalPosition + ", rollback 192");
-            } else {
-                throw e;
-            }
-        } catch (IOException e) {
-            android.util.Log.w("M2TS_xuameng",
-                    "❌ probe failed at " + finalPosition + ", rollback 192");
-        }
+android.util.Log.d("M2TS_xuameng",
+        "✅ final open success at " + finalPosition);
+
+ensurePendingCapacity(TS_PACKET_SIZE);
+System.arraycopy(scratch, 4, pending, 0, TS_PACKET_SIZE);
+pendingOffset = 0;
+pendingLength = TS_PACKET_SIZE;
+
+this.bytesRead = 0;
+this.isBdav = true;
+return realResult;
+
+} catch (HttpDataSource.InvalidResponseCodeException e) {
+    if (e.responseCode == 416) {
+        android.util.Log.w("M2TS_xuameng",
+                "❌ 416 at " + finalPosition + ", rollback 192");
+        try { upstream.close(); } catch (Exception ignored) {}
+    } else {
+        throw e;
+    }
+} catch (IOException e) {
+    android.util.Log.w("M2TS_xuameng",
+            "❌ probe failed at " + finalPosition);
+    try { upstream.close(); } catch (Exception ignored) {}
+}
 
         finalPosition -= BDAV_PACKET_SIZE;
         if (finalPosition < 0) {
@@ -165,12 +184,11 @@ public int read(@NonNull byte[] buffer, int offset, int length) throws IOExcepti
     }
 
     // ✅ BDAV 模式下，必须严格校验同步头
-    if (scratch[4] != 0x47) {
-        android.util.Log.w("M2TS_xuameng",
-                "❌ BDAV sync lost at position=" + bytesRead + ", throw exception");
-        // ✅ 关键：抛异常，让 ExoPlayer 重新 seek
-        throw new IOException("BDAV sync lost, need reseek");
-    }
+if (scratch[4] != 0x47) {
+    android.util.Log.w("M2TS_xuameng",
+            "❌ BDAV sync lost at " + bytesRead);
+    throw new IOException("BDAV sync lost");
+}
 
     System.arraycopy(scratch, 4, buffer, offset, TS_PACKET_SIZE);
     bytesRead += TS_PACKET_SIZE;
