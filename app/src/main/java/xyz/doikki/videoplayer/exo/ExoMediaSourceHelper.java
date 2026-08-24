@@ -112,9 +112,7 @@ public final class ExoMediaSourceHelper {
         }
 
         if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-            MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
-            builder.setMimeType(MimeTypes.APPLICATION_M3U8);
-            return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(getMediaItem(uri, errorCode));
+            return createM2TsMediaSource(contentUri, factory);
         }
 
         switch (contentType) {
@@ -131,21 +129,7 @@ public final class ExoMediaSourceHelper {
 
             // xuameng m2ts 播放分支
             case TYPE_M2TS: {
-                DataSource.Factory m2tsFactory =
-                        new M2TsStrippingDataSourceFactory(factory);
-
-                ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
-                        .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
-                        .setTsExtractorTimestampSearchBytes(1024 * 1024);
-
-                MediaItem mediaItem = new MediaItem.Builder()
-                        .setUri(contentUri)
-                        .setMimeType("video/mp2t") 
-                        .build();
-
-                return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
-                        .createMediaSource(mediaItem);
-            }
+                return createM2TsMediaSource(contentUri, factory);
 
             default:
             case C.TYPE_OTHER:
@@ -177,6 +161,22 @@ public final class ExoMediaSourceHelper {
         public DataSource createDataSource() {
             return new M2TsStrippingDataSource(upstreamFactory.createDataSource());
         }
+    }
+
+    private MediaSource createM2TsMediaSource(String uri, DataSource.Factory factory) {  //xuameng m2ts专用
+        DataSource.Factory m2tsFactory = new M2TsStrippingDataSourceFactory(factory);
+        ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
+                .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
+                .setTsExtractorTimestampSearchBytes(
+                        .setTsExtractorTimestampSearchBytes(1024 * 1024); // 1MB
+
+        MediaItem mediaItem = new MediaItem.Builder()
+                .setUri(uri)
+                .setMimeType("video/mp2t")
+                .build();
+
+        return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
+                .createMediaSource(mediaItem);
     }
 
     private int inferContentType(String fileName) {
