@@ -104,7 +104,7 @@ public final class ExoMediaSourceHelper {
 
 
 
-boolean isTsUri = looksLikeM2ts(uri);
+boolean isTsUri = looksLikeM2ts(contentUri);
 if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
         || errorCode == 3004 || errorCode == 2000)) {
     return new HlsMediaSource.Factory(factory)
@@ -130,10 +130,9 @@ if (!isTsUri && (errorCode == 3001 || errorCode == 3002 || errorCode == 3003
                         .createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
-    Uri uri = contentUri;
     ProgressiveMediaSource.Factory psf =
         new ProgressiveMediaSource.Factory(factory, getExtractorsFactory());
-    if (looksLikeM2ts(uri)) {
+    if (looksLikeM2ts(contentUri)) {
         MediaItem item = new MediaItem.Builder()
                 .setUri(uri)
                 .setMimeType("video/mp2t")
