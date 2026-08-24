@@ -124,33 +124,15 @@ public final class ExoMediaSourceHelper {
             default:
             case C.TYPE_OTHER:
 if (looksLikeM2ts(contentUri)) {
-    ExtractorsFactory tsOnlyFactory = new ExtractorsFactory() {
-        @Override
-        public Extractor[] createExtractors() {
-            return new Extractor[]{
-                new TsExtractor(
-                        TsExtractor.MODE_HLS,
-                        DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
-                                | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
-                                | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES,
-                        TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3
-                )
-            };
-        }
-
-        @Override
-        public Extractor[] createExtractors(Uri uri, Map<String, List<String>> responseHeaders) {
-            return createExtractors();
-        }
-    };
-
     MediaItem item = new MediaItem.Builder()
             .setUri(contentUri)
             .setMimeType("video/mp2t")
             .build();
 
-    return new ProgressiveMediaSource.Factory(factory, tsOnlyFactory)
-            .createMediaSource(item);
+    return new ProgressiveMediaSource.Factory(
+            factory,
+            getTsOnlyExtractorsFactory()
+    ).createMediaSource(item);
 }
                 return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
         }
@@ -177,6 +159,22 @@ private static boolean looksLikeM2ts(Uri uri) {
             builder.setMimeType(MimeTypes.APPLICATION_M3U8);
         return builder.build();
     }
+
+private static synchronized ExtractorsFactory getTsOnlyExtractorsFactory() {
+    return new DefaultExtractorsFactory()
+            .setTsExtractorFlags(
+                    DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS
+                            | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+                            | DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES
+            )
+            .setTsExtractorTimestampSearchBytes(
+                    TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3
+            )
+            // 禁用其它 extractor，避免 sniff 干扰
+            .setMp4ExtractorFlags(0)
+            .setMatroskaExtractorFlags(0)
+            .setFragmentedMp4ExtractorFlags(0);
+}
 
 private static synchronized ExtractorsFactory getExtractorsFactory() {
     return new DefaultExtractorsFactory()
