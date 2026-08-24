@@ -167,12 +167,11 @@ public final class ExoMediaSourceHelper {
         DataSource.Factory m2tsFactory = new M2TsStrippingDataSourceFactory(factory);
         ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
                 .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
-                .setTsExtractorTimestampSearchBytes(
-                        .setTsExtractorTimestampSearchBytes(188 * 1024)
+                .setTsExtractorTimestampSearchBytes(188 * 1024);
 
         MediaItem mediaItem = new MediaItem.Builder()
                 .setUri(uri)
-                .setMimeType("video/mp2t")
+                .setMimeType(MimeTypes.APPLICATION_M3U8)
                 .build();
 
         return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
