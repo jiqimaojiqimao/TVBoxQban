@@ -1,5 +1,8 @@
 package xyz.doikki.videoplayer.exo;
 
+import android.net.Uri;
+import java.util.List;
+import java.util.Map;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.media3.common.C;
