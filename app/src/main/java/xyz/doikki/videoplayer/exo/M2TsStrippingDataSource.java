@@ -52,6 +52,7 @@ public final class M2TsStrippingDataSource implements DataSource {
     private boolean stripping = true;
     private int syncFailCount = 0;
     private boolean modeDecided = false;
+    private boolean isBdav = false;
 
     public M2TsStrippingDataSource(DataSource upstream) {
         this.upstream = Assertions.checkNotNull(upstream);
