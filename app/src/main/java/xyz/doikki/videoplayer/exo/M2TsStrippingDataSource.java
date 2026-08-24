@@ -1,6 +1,7 @@
 package xyz.doikki.videoplayer.exo;
 
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -8,31 +9,27 @@ import androidx.media3.common.C;
 import androidx.media3.common.util.Assertions;
 import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DataSpec;
-import androidx.media3.datasource.TransferListener;
 import androidx.media3.datasource.HttpDataSource;
+import androidx.media3.datasource.TransferListener;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
-import java.io.IOException;
 
 /**
- * 把 Blu-ray BDAV m2ts 的 192 字节包剥成 188 字节标准 MPEG-TS 再交给 Extractor。
+ * Blu-ray BDAV m2ts（192B） → 标准 MPEG-TS（188B）
  *
- * 每个 BDAV 包结构：4 字节时间戳 + 188 字节 TS 包（首字节 0x47）。
- * 本类每次从上游读 192 字节，校验第 5 字节(下标4)==0x47，然后把后面 188 字节
- * 填入调用方的 buffer。这样 TsExtractor 看到的完全是标准 188 对齐 TS，sniff 必过。
- *
- * 说明：
- * - open() 会向上游透传 DataSpec，但把 position 按 192/188 比例换算后定位到最近包边界，
- *   避免 seek 到包中间导致 0x47 对不齐。
- * - 若上游不是 192 对齐的 BDAV（如已经是 188 TS），本类会回退为直接透传，不破坏原有播放。
+ * ✅ 适配 123 网盘严格 Range 行为
+ * ✅ 自动探测真实文件大小
+ * ✅ 尾部 seek 永不越界
+ * ✅ Media3 / ExoPlayer 通用
  */
 public final class M2TsStrippingDataSource implements DataSource {
 
+    private static final String TAG = "M2TS_xuameng";
+
     private static final int BDAV_PACKET_SIZE = 192;
     private static final int TS_PACKET_SIZE = 188;
-    // 连续多少次读不到 0x47 就判定为"非 BDAV"，进入透传模式
     private static final int SYNC_FAIL_LIMIT = 8;
 
     private final DataSource upstream;
@@ -40,22 +37,18 @@ public final class M2TsStrippingDataSource implements DataSource {
     @Nullable
     private TransferListener transferListener;
 
-    // 从上游一次读一个 BDAV 包
     private final byte[] scratch = new byte[BDAV_PACKET_SIZE];
-    // 已剥头、等待被消费的标准 TS 数据
     private byte[] pending = new byte[0];
     private int pendingOffset = 0;
     private int pendingLength = 0;
 
-    private long upstreamOpenPosition = 0; // 本次 open 时上游起始 position
-    private long streamLength = C.LENGTH_UNSET;
     private long bytesRead = 0;
-
-    // 模式：true=按 192 剥头；false=直接透传（非 BDAV 或已确认不是）
     private boolean stripping = true;
     private int syncFailCount = 0;
     private boolean modeDecided = false;
-    private boolean isBdav = false;
+
+    /** 123 网盘真实文件大小（通过 HEAD / Range 探测） */
+    private long realFileLength = C.LENGTH_UNSET;
 
     public M2TsStrippingDataSource(DataSource upstream) {
         this.upstream = Assertions.checkNotNull(upstream);
@@ -67,183 +60,184 @@ public final class M2TsStrippingDataSource implements DataSource {
         upstream.addTransferListener(transferListener);
     }
 
-@Override
-public long open(@NonNull DataSpec dataSpec) throws IOException {
-    long requestedPosition = dataSpec.position;
+    @Override
+    public long open(@NonNull DataSpec dataSpec) throws IOException {
+        long requestedPosition = dataSpec.position;
 
-    android.util.Log.d("M2TS_xuameng",
-            "open uri=" + dataSpec.uri + " position=" + requestedPosition);
+        Log.d(TAG, "open uri=" + dataSpec.uri + " position=" + requestedPosition);
 
-long upstreamPosition;
-if (requestedPosition == 0) {
-    upstreamPosition = 0;
-} else {
-    // 用真实文件长度计算最后一个合法 BDAV 包
-    if (realFileLength > 0) {
-        long lastPacketStart =
-                (realFileLength / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
-        if (lastPacketStart >= BDAV_PACKET_SIZE) {
-            upstreamPosition = lastPacketStart - BDAV_PACKET_SIZE;
-        } else {
-            upstreamPosition = 0;
+        // ✅ 第一次 open 时，必须探测真实文件大小
+        if (realFileLength == C.LENGTH_UNSET) {
+            detectRealFileLength(dataSpec);
         }
-    } else {
-        // 还没探测到真实长度，用保守策略
-        long packets = requestedPosition / TS_PACKET_SIZE;
-        long remainder = requestedPosition % TS_PACKET_SIZE;
-        upstreamPosition = packets * BDAV_PACKET_SIZE + remainder;
-        upstreamPosition =
-                (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
-    }
-}
 
-    upstreamPosition =
-            (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
+        long upstreamPosition;
 
-    long finalPosition = upstreamPosition;
+        if (requestedPosition == 0) {
+            upstreamPosition = 0;
+        } else if (realFileLength > 0) {
+            // ✅ 尾部 seek：只 seek 到最后一个合法 BDAV 包
+            long lastPacketStart =
+                    (realFileLength / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
 
-    for (int retry = 0; retry < 100; retry++) {
-        try {
-            DataSpec trySpec = dataSpec.buildUpon()
-                    .setPosition(finalPosition)
-                    .build();
-
-            long result = upstream.open(trySpec);
-
-            // ✅ probe 一个 BDAV 包
-            int probeRead = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
-            if (probeRead != BDAV_PACKET_SIZE) {
-                upstream.close();
-                throw new IOException("probe read failed");
+            if (lastPacketStart >= BDAV_PACKET_SIZE) {
+                upstreamPosition = lastPacketStart - BDAV_PACKET_SIZE;
+            } else {
+                upstreamPosition = 0;
             }
 
-if (scratch[4] != 0x47) {
-    upstream.close();
-    android.util.Log.w("M2TS_xuameng",
-            "❌ BDAV sync failed at " + finalPosition);
-    throw new IOException("BDAV sync failed");
-}
-
-            android.util.Log.d("M2TS_xuameng",
-                    "✅ open + probe success at " + finalPosition);
-
-            // ✅ 关键：probe 后必须剥头，只缓存 188
-            ensurePendingCapacity(TS_PACKET_SIZE);
-            System.arraycopy(scratch, 4, pending, 0, TS_PACKET_SIZE);
-            pendingOffset = 0;
-            pendingLength = TS_PACKET_SIZE; // ✅ 188
-
-            this.bytesRead = 0;
-            this.isBdav = true;
-// ✅ 123 网盘必须重新 open，否则后续 read 会错
-upstream.close();
-DataSpec finalSpec = dataSpec.buildUpon()
-        .setPosition(finalPosition)
-        .build();
-long realResult = upstream.open(finalSpec);
-
-android.util.Log.d("M2TS_xuameng",
-        "✅ final open success at " + finalPosition);
-
-ensurePendingCapacity(TS_PACKET_SIZE);
-System.arraycopy(scratch, 4, pending, 0, TS_PACKET_SIZE);
-pendingOffset = 0;
-pendingLength = TS_PACKET_SIZE;
-
-this.bytesRead = 0;
-this.isBdav = true;
-return realResult;
-
-} catch (HttpDataSource.InvalidResponseCodeException e) {
-    if (e.responseCode == 416) {
-        android.util.Log.w("M2TS_xuameng",
-                "❌ 416 at " + finalPosition + ", rollback 192");
-        try { upstream.close(); } catch (Exception ignored) {}
-    } else {
-        throw e;
-    }
-} catch (IOException e) {
-    android.util.Log.w("M2TS_xuameng",
-            "❌ probe failed at " + finalPosition);
-    try { upstream.close(); } catch (Exception ignored) {}
-}
-
-        finalPosition -= BDAV_PACKET_SIZE;
-        if (finalPosition < 0) {
-            finalPosition = 0;
+            Log.d(TAG, "tail seek: realFileLength=" + realFileLength
+                    + " upstreamPosition=" + upstreamPosition);
+        } else {
+            // fallback（理论上不会走到）
+            long packets = requestedPosition / TS_PACKET_SIZE;
+            long remainder = requestedPosition % TS_PACKET_SIZE;
+            upstreamPosition = packets * BDAV_PACKET_SIZE + remainder;
+            upstreamPosition =
+                    (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
         }
+
+        // 192 对齐
+        upstreamPosition =
+                (upstreamPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
+
+        long finalPosition = upstreamPosition;
+
+        // ✅ 最多回退 100 次，防止死循环
+        for (int retry = 0; retry < 100; retry++) {
+            try {
+                DataSpec trySpec = dataSpec.buildUpon()
+                        .setPosition(finalPosition)
+                        .build();
+
+                long result = upstream.open(trySpec);
+
+                // probe 一个 BDAV 包
+                int read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
+                if (read != BDAV_PACKET_SIZE) {
+                    upstream.close();
+                    throw new IOException("probe read failed");
+                }
+
+                if (scratch[4] != 0x47) {
+                    upstream.close();
+                    throw new IOException("BDAV sync failed");
+                }
+
+                Log.d(TAG, "✅ open + probe success at " + finalPosition);
+
+                // 缓存剥头后的 188 字节
+                ensurePendingCapacity(TS_PACKET_SIZE);
+                System.arraycopy(scratch, 4, pending, 0, TS_PACKET_SIZE);
+                pendingOffset = 0;
+                pendingLength = TS_PACKET_SIZE;
+
+                this.bytesRead = 0;
+                this.stripping = true;
+                this.modeDecided = true;
+
+                return result;
+
+            } catch (HttpDataSource.InvalidResponseCodeException e) {
+                if (e.responseCode == 416) {
+                    Log.w(TAG, "❌ 416 at " + finalPosition + ", rollback 192");
+                    try { upstream.close(); } catch (Exception ignored) {}
+                } else {
+                    throw e;
+                }
+            } catch (IOException e) {
+                Log.w(TAG, "❌ probe failed at " + finalPosition);
+                try { upstream.close(); } catch (Exception ignored) {}
+            }
+
+            finalPosition -= BDAV_PACKET_SIZE;
+            if (finalPosition < 0) {
+                finalPosition = 0;
+            }
+        }
+
+        throw new IOException("BDAV open failed after retries");
     }
 
-    throw new IOException("BDAV open failed after retries");
-}
+    /**
+     * ✅ 强制探测真实文件大小
+     * 123 网盘支持 Range: bytes=0-0，并返回 Content-Range
+     */
+    private void detectRealFileLength(DataSpec dataSpec) throws IOException {
+        try {
+            DataSpec probe = dataSpec.buildUpon()
+                    .setPosition(0)
+                    .setLength(1)
+                    .build();
 
-@Override
-public int read(@NonNull byte[] buffer, int offset, int length) throws IOException {
-    if (length == 0) return 0;
+            upstream.open(probe);
 
-    // 优先消费 pending
-    if (pendingLength > 0) {
-        int copy = Math.min(pendingLength, length);
-        System.arraycopy(pending, pendingOffset, buffer, offset, copy);
-        pendingOffset += copy;
-        pendingLength -= copy;
-        bytesRead += copy;
-        return copy;
-    }
+            Map<String, List<String>> headers = upstream.getResponseHeaders();
+            for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+                String key = entry.getKey();
+                if (key == null) continue;
 
-    int read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
-    if (read != BDAV_PACKET_SIZE) {
-        android.util.Log.d("M2TS_xuameng", "END_OF_INPUT");
-        return C.RESULT_END_OF_INPUT;
-    }
+                if ("Content-Range".equalsIgnoreCase(key)) {
+                    for (String value : entry.getValue()) {
+                        if (value != null && value.startsWith("bytes")) {
+                            int slash = value.lastIndexOf('/');
+                            if (slash > 0) {
+                                realFileLength =
+                                        Long.parseLong(value.substring(slash + 1));
+                                Log.d(TAG, "✅ real file length=" + realFileLength);
+                                return;
+                            }
+                        }
+                    }
+                }
 
-    // ✅ BDAV 模式下，必须严格校验同步头
-if (scratch[4] != 0x47) {
-    android.util.Log.w("M2TS_xuameng",
-            "❌ BDAV sync lost at " + bytesRead);
-    throw new IOException("BDAV sync lost");
-}
-
-    System.arraycopy(scratch, 4, buffer, offset, TS_PACKET_SIZE);
-    bytesRead += TS_PACKET_SIZE;
-    return TS_PACKET_SIZE;
-}
-
-
-
-private long realFileLength = -1;
-
-private void detectRealFileLength(DataSpec dataSpec) throws IOException {
-    if (realFileLength != -1) return;
-
-    // 用 Range: bytes=0-0 探测
-    DataSpec probeSpec = dataSpec.buildUpon()
-            .setPosition(0)
-            .setLength(1)
-            .build();
-
-    upstream.open(probeSpec);
-    upstream.close();
-
-    // 从 response headers 拿 Content-Range
-    Map<String, List<String>> headers = upstream.getResponseHeaders();
-    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-        if ("Content-Range".equalsIgnoreCase(entry.getKey())) {
-            for (String value : entry.getValue()) {
-                // bytes 0-0/89540871234
-                if (value != null && value.startsWith("bytes")) {
-                    int slash = value.lastIndexOf('/');
-                    if (slash > 0) {
-                        realFileLength = Long.parseLong(value.substring(slash + 1));
-                        android.util.Log.d("M2TS_xuameng",
-                                "✅ real file length=" + realFileLength);
+                if ("Content-Length".equalsIgnoreCase(key)) {
+                    for (String value : entry.getValue()) {
+                        realFileLength = Long.parseLong(value);
+                        Log.d(TAG, "✅ real file length from Content-Length="
+                                + realFileLength);
                         return;
                     }
                 }
             }
+        } catch (Exception e) {
+            Log.w(TAG, "detectRealFileLength failed", e);
+        } finally {
+            try { upstream.close(); } catch (Exception ignored) {}
         }
     }
-}
+
+    @Override
+    public int read(@NonNull byte[] buffer, int offset, int length)
+            throws IOException {
+
+        if (length == 0) return 0;
+
+        // 优先消费 pending
+        if (pendingLength > 0) {
+            int copy = Math.min(pendingLength, length);
+            System.arraycopy(pending, pendingOffset, buffer, offset, copy);
+            pendingOffset += copy;
+            pendingLength -= copy;
+            bytesRead += copy;
+            return copy;
+        }
+
+        int read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
+        if (read != BDAV_PACKET_SIZE) {
+            Log.d(TAG, "END_OF_INPUT");
+            return C.RESULT_END_OF_INPUT;
+        }
+
+        if (scratch[4] != 0x47) {
+            Log.w(TAG, "❌ BDAV sync lost at " + bytesRead);
+            throw new IOException("BDAV sync lost");
+        }
+
+        System.arraycopy(scratch, 4, buffer, offset, TS_PACKET_SIZE);
+        bytesRead += TS_PACKET_SIZE;
+        return TS_PACKET_SIZE;
+    }
 
     @Override
     public Uri getUri() {
