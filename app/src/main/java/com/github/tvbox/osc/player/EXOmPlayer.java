@@ -20,6 +20,9 @@ import xyz.doikki.videoplayer.exo.ExoMediaPlayer;
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.util.StringUtils;
 
+import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
+import com.orhanobut.hawk.Hawk; //xuameng EXO解码
+
 import android.util.Pair;  //xuameng记忆选择音轨
 import java.util.Map;  //xuameng记忆选择音轨
 
@@ -297,6 +300,22 @@ public class EXOmPlayer extends ExoMediaPlayer {
                     }
                 }
             } else {
+
+        // xuameng渲染器配置  自动exoDecode=true为软解  false为硬解  手动exoSelect 0为没记录 1为硬解 2为软解。exoSelect优先
+        boolean exoDecode = Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false);
+        int exoSelect = Hawk.get(HawkConfig.EXO_PLAY_SELECTCODE, 0);
+
+        // ExoPlayer 解码模式选择逻辑
+        boolean useSoftDecode;
+
+        if (exoSelect > 0) {
+            // 手动选择模式
+            useSoftDecode = (exoSelect == 2); // 1=硬解，2=软解
+        } else {
+            // 自动模式：由 exoDecode 决定
+            useSoftDecode = exoDecode;
+        }
+
                 TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(videoTrackBean.renderId);
                 @SuppressLint("UnsafeOptInUsageError") DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(videoTrackBean.trackGroupId, videoTrackBean.trackId);
                 DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().buildUponParameters();
@@ -307,6 +326,16 @@ public class EXOmPlayer extends ExoMediaPlayer {
                 if (!playKey.isEmpty()) {
                     memory.save(playKey, videoTrackBean.trackGroupId, videoTrackBean.trackId);
                 }
+        if (useSoftDecode) {
+        if (mMediaSource != null) {
+        // 1. 停止播放并清空
+            mMediaPlayer.stop();
+            mMediaPlayer.clearMediaItems();
+            mMediaPlayer.setMediaSource(mMediaSource);
+            mMediaPlayer.prepare();
+            mMediaPlayer.setPlayWhenReady(true);
+        }
+		}
             }
         }
     }
