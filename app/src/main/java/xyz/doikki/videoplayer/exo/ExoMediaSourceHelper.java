@@ -172,7 +172,6 @@ public final class ExoMediaSourceHelper {
 
         MediaItem mediaItem = new MediaItem.Builder()
                 .setUri(contentUri)
-                .setMimeType(MimeTypes.APPLICATION_M3U8)
                 .build();
 
         return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
