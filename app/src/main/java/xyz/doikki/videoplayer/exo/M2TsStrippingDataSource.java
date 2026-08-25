@@ -69,110 +69,58 @@ public class M2TsStrippingDataSource implements DataSource {
         return upstream.open(dataSpec);
     }
 
-    @Override
-    public int read(byte[] buffer, int offset, int length) throws IOException {
-        int totalOut = 0;
+@Override
+public int read(byte[] buffer, int offset, int length) throws IOException {
+    int total = 0;
 
-        while (totalOut < length) {
-            // 1. 补充内部缓冲（所有模式下都补充，直到缓冲满或 upstream 耗尽）
-            while (bufValid < INTERNAL_BUFFER_SIZE) {
-                int read = upstream.read(internalBuf, bufValid, INTERNAL_BUFFER_SIZE - bufValid);
-                if (read == C.RESULT_END_OF_INPUT) break;
-                bufValid += read;
-                totalUpstreamRead += read;
-            }
-
-            // 2. 未知模式：尝试判定
-            if (syncMode == 0) {
-                int detected = detectSyncMode();
-                if (detected == 0) {
-                    // 数据不足以判定
-                    if (bufValid >= INTERNAL_BUFFER_SIZE) {
-                        // 缓冲已满仍无法判定：退化为 TS188 透传，避免死循环
-                        if (DEBUG) Log.w(TAG, "Buffer full but sync undetectable, fallback TS188");
-                        syncMode = 1;
-                    } else if (totalOut == 0 && bufValid == 0) {
-                        // upstream 已耗尽且缓冲为空
-                        return C.RESULT_END_OF_INPUT;
-                    } else {
-                        // 已有部分数据但不足以判定：若 upstream 也耗尽，按 TS188 透传残余
-                        if (bufValid > 0) syncMode = 1; else break;
-                    }
-                } else {
-                    syncMode = detected;
-                    if (DEBUG) Log.d(TAG, "Sync mode detected: " + (syncMode == 2 ? "BDAV192" : "TS188"));
-                }
-            }
-
-            // 3. 按当前模式处理
-            if (syncMode == 2) {
-                // BDAV192：需要凑齐至少一个 192 字节包
-                if (bufValid < BDAV_PACKET_SIZE) {
-                    if (totalOut > 0) break; // 已有产出，先返回，下次再读
-                    else if (bufValid == 0) return C.RESULT_END_OF_INPUT;
-                    else { syncMode = 1; continue; } // 残余不足一包，退化为 TS188
-                }
-                if (isBdavHeader(internalBuf, 0)) {
-                    // 合法 BDAV 包：跳过 4 字节头，输出 188 字节 TS
-                    int outAvail = length - totalOut;
-                    int copy = Math.min(TS_PACKET_SIZE, outAvail);
-                    System.arraycopy(internalBuf, 4, buffer, offset + totalOut, copy);
-                    totalOut += copy;
-                    totalOutputBytes += copy;
-                    bdavFailCount = 0; // 校验成功，重置失败计数
-                    // 从缓冲移除已消费的 192 字节
-                    int consumed = BDAV_PACKET_SIZE;
-                    int left = bufValid - consumed;
-                    if (left > 0) System.arraycopy(internalBuf, consumed, internalBuf, 0, left);
-                    bufValid = left;
-                } else {
-                    // BDAV 头校验失败
-                    bdavFailCount++;
-                    if (DEBUG) Log.d(TAG, "BDAV header mismatch (fail=" + bdavFailCount + ")");
-
-                    // 若缓冲首字节已是 0x47（TS 同步头），说明当前已是标准 TS188 数据，
-                    // BDAV 判定可能是前期误判或格式已切换，立即降级为 TS188。
-                    if ((internalBuf[0] & 0xFF) == TS_SYNC_BYTE) {
-                        if (DEBUG) Log.i(TAG, "BDAV mismatch but 0x47 at buf[0], downgrade to TS188");
-                        syncMode = 1;
-                        bdavFailCount = 0;
-                        // 重新判定/对齐后进入 TS188 分支（下一轮循环处理）
-                        continue;
-                    }
-
-                    if (bdavFailCount >= BDAV_FAIL_THRESHOLD) {
-                        if (DEBUG) Log.i(TAG, "BDAV fail threshold reached, downgrade to TS188");
-                        syncMode = 1;
-                        bdavFailCount = 0;
-                    }
-                    resyncToNextSyncByte();
-                }
-            } else {
-                // TS188 模式：按 0x47 对齐后，以 188 字节为块透传输出
-                // 先对齐：若缓冲首字节不是 0x47，丢弃直到找到
-                if (bufValid > 0 && (internalBuf[0] & 0xFF) != TS_SYNC_BYTE) {
-                    resyncToNextSyncByte();
-                }
-                if (bufValid < TS_PACKET_SIZE) {
-                    if (totalOut > 0) break;
-                    else if (bufValid == 0) return C.RESULT_END_OF_INPUT;
-                    else { copyRemaining(buffer, offset, length, totalOut); return totalOut; }
-                }
-                int can = (bufValid / TS_PACKET_SIZE) * TS_PACKET_SIZE;
-                int outAvail = length - totalOut;
-                int produce = Math.min(can, outAvail);
-                if (produce == 0) break; // 输出空间不足一包
-                System.arraycopy(internalBuf, 0, buffer, offset + totalOut, produce);
-                totalOut += produce;
-                totalOutputBytes += produce;
-                int left = bufValid - produce;
-                if (left > 0) System.arraycopy(internalBuf, produce, internalBuf, 0, left);
-                bufValid = left;
-            }
+    while (total < length) {
+        // 1. 补缓冲
+        while (bufValid < INTERNAL_BUFFER_SIZE) {
+            int r = upstream.read(internalBuf, bufValid, INTERNAL_BUFFER_SIZE - bufValid);
+            if (r == C.RESULT_END_OF_INPUT) break;
+            bufValid += r;
         }
 
-        return totalOut;
+        if (bufValid == 0) {
+            return total == 0 ? C.RESULT_END_OF_INPUT : total;
+        }
+
+        // 2. 对齐 0x47
+        if ((internalBuf[0] & 0xFF) != TS_SYNC_BYTE) {
+            int sync = indexOfSyncByte(1);
+            if (sync < 0) {
+                bufValid = 0;
+                break;
+            }
+            int left = bufValid - sync;
+            System.arraycopy(internalBuf, sync, internalBuf, 0, left);
+            bufValid = left;
+            continue;
+        }
+
+        // 3. 如果是 BDAV，跳过 4 字节头（被动确认）
+        if (bufValid >= BDAV_PACKET_SIZE
+                && isBdavStartCode(internalBuf, 0)
+                && (internalBuf[4] & 0xFF) == TS_SYNC_BYTE) {
+
+            int left = bufValid - 4;
+            System.arraycopy(internalBuf, 4, internalBuf, 0, left);
+            bufValid = left;
+            continue;
+        }
+
+        // 4. 输出标准 TS 包
+        int produce = Math.min(TS_PACKET_SIZE, Math.min(bufValid, length - total));
+        System.arraycopy(internalBuf, 0, buffer, offset + total, produce);
+        total += produce;
+
+        int left = bufValid - produce;
+        if (left > 0) System.arraycopy(internalBuf, produce, internalBuf, 0, left);
+        bufValid = left;
     }
+
+    return total;
+}
 
     /** 把缓冲中残余数据（不足一包的最后片段）拷贝到输出 */
     private void copyRemaining(byte[] buffer, int offset, int length, int totalOut) {
