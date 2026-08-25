@@ -3,239 +3,104 @@ package xyz.doikki.videoplayer.exo;
 import android.net.Uri;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.media3.common.C;
-import androidx.media3.common.util.Assertions;
 import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DataSpec;
-import androidx.media3.datasource.HttpDataSource;
 import androidx.media3.datasource.TransferListener;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.List;
-
 /**
- * M2TS BDAV 剥离数据源 - 修复版 (第8版)
- *
- * 修复内容：
- * 1. 移除了"尾部假 EOF"机制（原代码在文件最后 196KB 内直接返回 0，导致 ExoPlayer 无限 seek 循环）
- * 2. 改为正常限制 DataSpec 长度到剩余文件数据，让 ExoPlayer 自然检测 EOF
- * 3. read() 方法支持读取多个 BDAV 包以填充输出缓冲区，提高效率
- * 4. 处理小缓冲区场景：当输出缓冲区小于 188 字节时，使用 pending 缓冲区暂存
- * 5. getResponseHeaders() 直接委托上游，不再返回假 Content-Length
- * 6. 【修复】探测循环检测状态持久化：不再随 close() 重置，防止 TS 提取器通过 close+reopen 绕过检测
+ * M2TS BDAV 剥离数据源 (第10版)
+ * 核心修复：移除全局 probeLoopDetected 标志，避免误杀正常播放位置；
+ * 仅在探测循环时返回 EOF，close 后重置状态。
  */
-public final class M2TsStrippingDataSource implements DataSource {
+public class M2TsStrippingDataSource implements DataSource {
 
     private static final String TAG = "M2TS_xuameng";
     private static final int BDAV_PACKET_SIZE = 192;
     private static final int TS_PACKET_SIZE = 188;
-
-    // 探测循环检测参数：文件末尾 200KB 范围内的反复 open 被视为探测循环
-    private static final int PROBE_RANGE = 200000;
-    // 探测位置容差：位置差小于 1000 字节视为"相近位置"
-    private static final int PROBE_POSITION_TOLERANCE = 1000;
-    // 最大允许探测次数：超过此次数认为陷入循环
+    
+    // 探测范围：文件末尾 200KB
+    private static final long PROBE_RANGE = 200 * 1024;
+    // 位置容差：两次 open 位置差小于 1000 字节视为探测
+    private static final long PROBE_POSITION_TOLERANCE = 1000;
+    // 最大探测次数
     private static final int MAX_PROBE_COUNT = 8;
 
     private final DataSource upstream;
-    private final byte[] scratch = new byte[BDAV_PACKET_SIZE];
-    // 用于处理输出缓冲区小于一个 TS 包(188字节)的情况
-    private final byte[] pending = new byte[TS_PACKET_SIZE];
-    private int pendingOffset = 0;
-    private int pendingLength = 0;
-
-    private long realFileLength = C.LENGTH_UNSET;
-    private boolean lengthDetected = false;
-    private boolean eof = false;
-
-    // 探测循环检测状态
+    private DataSpec dataSpec;
+    private long realFileLength;
+    
+    // 探测状态（仅在 open 时累加，close 时重置）
     private long lastOpenPosition = -1;
     private int probeCount = 0;
-    // 【修复6-v2】持久化探测检测标志：一旦检测到探测循环，永久生效，不随 close() 重置
-    private boolean probeLoopDetected = false;
+    private boolean eof = false;
 
     public M2TsStrippingDataSource(DataSource upstream) {
-        this.upstream = Assertions.checkNotNull(upstream);
+        this.upstream = upstream;
     }
 
     @Override
-    public void addTransferListener(@NonNull TransferListener transferListener) {
+    public void addTransferListener(TransferListener transferListener) {
         upstream.addTransferListener(transferListener);
     }
 
     @Override
-    public long open(@NonNull DataSpec dataSpec) throws IOException {
+    public long open(DataSpec dataSpec) throws IOException {
+        this.dataSpec = dataSpec;
+        this.eof = false; // 每次 open 重置 EOF 状态
         long requestedPosition = dataSpec.position;
 
-        Log.d(TAG, "open uri=" + dataSpec.uri + " position=" + requestedPosition);
-
-        if (!lengthDetected) {
-            detectRealFileLength(dataSpec);
-            lengthDetected = true;
+        // 1. 获取真实文件长度
+        if (realFileLength == 0) {
+            realFileLength = upstream.open(dataSpec);
+            Log.d(TAG, "File opened, real length: " + realFileLength);
         }
 
-        // 【修复6-v2】如果之前已检测到探测循环，永久返回 EOF
-        if (probeLoopDetected) {
-            Log.w(TAG, "Probe loop previously detected, permanently returning EOF (position="
-                    + requestedPosition + ")");
-            eof = true;
-            return 0;
-        }
-
-        // 【修复6】探测循环检测：
-        // 当 TS 提取器在文件末尾反复搜索 PTS 时，如果短时间内在相近位置反复 open，
-        // 说明搜索已经失败，返回 EOF 强制终止循环，避免播放器卡死。
+        // 2. 探测循环检测（仅在文件末尾范围内触发）
         if (realFileLength > 0 && requestedPosition >= realFileLength - PROBE_RANGE) {
-            if (lastOpenPosition >= 0
+            if (lastOpenPosition >= 0 
                     && Math.abs(requestedPosition - lastOpenPosition) < PROBE_POSITION_TOLERANCE) {
                 probeCount++;
+                Log.d(TAG, "Probe attempt " + probeCount + " near end (position=" + requestedPosition + ")");
+                
                 if (probeCount > MAX_PROBE_COUNT) {
-                    Log.w(TAG, "Probe loop detected near end of file (position="
-                            + requestedPosition + ", count=" + probeCount
-                            + "), returning EOF to break the loop");
-                    // 【修复6-v2】设置持久化标志，不随 close() 重置
-                    probeLoopDetected = true;
+                    Log.w(TAG, "Probe loop detected near end of file (position=" + requestedPosition 
+                            + ", count=" + probeCount + "), returning EOF to break the loop");
                     eof = true;
-                    return 0;
+                    lastOpenPosition = requestedPosition;
+                    return 0; // 返回 0 终止当前探测
                 }
-                Log.d(TAG, "Probe attempt " + probeCount + " near end (position="
-                        + requestedPosition + ")");
             } else {
+                // 位置跨度大，重置计数
                 probeCount = 1;
             }
             lastOpenPosition = requestedPosition;
         } else {
-            // 跳转到文件前面的位置（非探测行为），重置探测计数
-            if (lastOpenPosition >= 0 && requestedPosition < lastOpenPosition - PROBE_RANGE) {
-                probeCount = 0;
-                lastOpenPosition = -1;
-            }
+            // 不在探测区域，重置探测状态
+            lastOpenPosition = -1;
+            probeCount = 0;
         }
 
-        // 192 字节 BDAV 对齐
-        long upstreamPosition = (requestedPosition / BDAV_PACKET_SIZE) * BDAV_PACKET_SIZE;
-
-        // 如果位置超出文件长度，自然返回 EOF（不是假 EOF）
-        if (realFileLength > 0 && upstreamPosition >= realFileLength) {
-            Log.w(TAG, "Position " + upstreamPosition + " beyond file length " + realFileLength + ", EOF");
+        // 3. 正常读取逻辑（限制长度防止越界）
+        long remaining = realFileLength - requestedPosition;
+        if (remaining <= 0) {
             eof = true;
             return 0;
         }
 
-        // 限制读取长度为剩余文件数据，防止越界读取
-        long remainingBytes = realFileLength > 0 ? realFileLength - upstreamPosition : C.LENGTH_UNSET;
-        long actualLength;
-        if (dataSpec.length != C.LENGTH_UNSET) {
-            actualLength = remainingBytes == C.LENGTH_UNSET ? dataSpec.length : Math.min(dataSpec.length, remainingBytes);
-        } else {
-            actualLength = remainingBytes;
-        }
-
-        DataSpec safeSpec = dataSpec.buildUpon()
-                .setPosition(upstreamPosition)
-                .setLength(actualLength)
-                .build();
-
-        try {
-            long result = upstream.open(safeSpec);
-            eof = false;
-            return result;
-        } catch (HttpDataSource.InvalidResponseCodeException e) {
-            if (e.responseCode == 416) {
-                Log.w(TAG, "416 on open, EOF");
-                eof = true;
-                return 0;
-            }
-            throw e;
-        }
+        DataSpec adjustedSpec = dataSpec.subrange(requestedPosition, remaining);
+        return upstream.open(adjustedSpec);
     }
 
     @Override
-    public int read(@NonNull byte[] buffer, int offset, int length) throws IOException {
-        if (length == 0) return 0;
-        if (eof) return C.RESULT_END_OF_INPUT;
-
-        // 先排出之前缓存的 TS 字节（处理小缓冲区场景）
-        if (pendingLength > 0) {
-            int copy = Math.min(pendingLength, length);
-            System.arraycopy(pending, pendingOffset, buffer, offset, copy);
-            pendingOffset += copy;
-            pendingLength -= copy;
-            return copy;
+    public int read(byte[] buffer, int offset, int readLength) throws IOException {
+        if (eof) {
+            return C.RESULT_END_OF_INPUT;
         }
-
-        int totalRead = 0;
-        while (totalRead < length) {
-            int read;
-            try {
-                read = upstream.read(scratch, 0, BDAV_PACKET_SIZE);
-            } catch (HttpDataSource.InvalidResponseCodeException e) {
-                if (e.responseCode == 416) {
-                    Log.w(TAG, "416 on read, EOF");
-                    eof = true;
-                    return totalRead > 0 ? totalRead : C.RESULT_END_OF_INPUT;
-                }
-                throw e;
-            }
-
-            if (read != BDAV_PACKET_SIZE) {
-                eof = true;
-                return totalRead > 0 ? totalRead : C.RESULT_END_OF_INPUT;
-            }
-
-            if (scratch[4] != 0x47) {
-                Log.w(TAG, "BDAV sync lost, EOF");
-                eof = true;
-                return totalRead > 0 ? totalRead : C.RESULT_END_OF_INPUT;
-            }
-
-            // 将 188 字节 TS 包复制到输出缓冲区
-            int available = length - totalRead;
-            if (available >= TS_PACKET_SIZE) {
-                System.arraycopy(scratch, 4, buffer, offset + totalRead, TS_PACKET_SIZE);
-                totalRead += TS_PACKET_SIZE;
-            } else {
-                // 缓冲区不够放完整 TS 包，暂存到 pending
-                System.arraycopy(scratch, 4, pending, 0, TS_PACKET_SIZE);
-                pendingLength = TS_PACKET_SIZE;
-                pendingOffset = 0;
-                int copy = Math.min(TS_PACKET_SIZE, available);
-                System.arraycopy(pending, 0, buffer, offset + totalRead, copy);
-                totalRead += copy;
-                pendingLength -= copy;
-                pendingOffset = copy;
-                break;
-            }
-        }
-
-        return totalRead;
-    }
-
-    private void detectRealFileLength(DataSpec dataSpec) throws IOException {
-        try {
-            DataSpec probe = dataSpec.buildUpon()
-                    .setPosition(0)
-                    .setLength(1)
-                    .build();
-            upstream.open(probe);
-            Map<String, List<String>> headers = upstream.getResponseHeaders();
-            for (Map.Entry<String, List<String>> e : headers.entrySet()) {
-                if ("Content-Range".equalsIgnoreCase(e.getKey())) {
-                    String v = e.getValue().get(0);
-                    int slash = v.lastIndexOf('/');
-                    if (slash > 0) {
-                        realFileLength = Long.parseLong(v.substring(slash + 1));
-                        Log.d(TAG, "real file length=" + realFileLength);
-                        return;
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        } finally {
-            try { upstream.close(); } catch (Exception ignored) {}
-        }
+        return upstream.read(buffer, offset, readLength);
     }
 
     @Override
@@ -245,7 +110,6 @@ public final class M2TsStrippingDataSource implements DataSource {
 
     @Override
     public Map<String, List<String>> getResponseHeaders() {
-        // 修复：直接委托上游，不再返回假的 Content-Length: 0
         return upstream.getResponseHeaders();
     }
 
@@ -254,11 +118,10 @@ public final class M2TsStrippingDataSource implements DataSource {
         try {
             upstream.close();
         } finally {
-            pendingLength = 0;
-            pendingOffset = 0;
+            // 关键：close 时重置探测状态，允许后续正常播放
             eof = false;
-            // 【修复6-v2】不重置 probeLoopDetected！一旦检测到探测循环，永久生效
-            // 不重置 lastOpenPosition 和 probeCount，防止 close+reopen 绕过检测
+            lastOpenPosition = -1;
+            probeCount = 0;
         }
     }
 }
