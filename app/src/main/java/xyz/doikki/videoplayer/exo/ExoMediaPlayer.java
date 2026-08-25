@@ -93,7 +93,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         if (useSoftDecode) {
             // 软解场景
             mRenderersFactory = new NextRenderersFactory(mAppContext)
-                    .setEnableDecoderFallback(true)
+                    .setEnableDecoderFallback(false)
                     .setExtensionRendererMode(
                             NextRenderersFactory.EXTENSION_RENDERER_MODE_ON
                     );
