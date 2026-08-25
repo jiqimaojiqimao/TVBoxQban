@@ -1040,11 +1040,14 @@ public class PlayFragment extends BaseLazyFragment {
             }else{
                 mController.mSubtitleView.hasInternal = false;   //xuameng修复切换播放器内置字幕不刷新
             }
+
+			//xuameng 选择默认音轨、选中上次记忆音轨
             final int selectedIdIjk = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
             Hawk.put(HawkConfig.IJK_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
             if (selectedIdIjk != 99999) { // xuameng99999表示未选中
                ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).loadDefaultTrack(trackInfo,progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
+			//xuameng 显示字幕
             ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setOnTimedTextListener(new IMediaPlayer.OnTimedTextListener() {
                 @Override
                 public void onTimedText(IMediaPlayer mp, IjkTimedText text) {
@@ -1058,9 +1061,17 @@ public class PlayFragment extends BaseLazyFragment {
             });
         }
 
-     if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
+        if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
             trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
 
+            //xuameng 选中默认音轨、上次记忆音轨
+            final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
+            Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
+            if (selectedIdExo != 99999) { // xuameng99999表示未选中
+               ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
+            }
+
+            //xuameng 选择字幕
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
                 mController.mSubtitleView.hasInternal = true;
 
@@ -1101,11 +1112,6 @@ public class PlayFragment extends BaseLazyFragment {
                 mController.mSubtitleView.hasInternal = false;
             }
 
-            final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
-            Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
-            if (selectedIdExo != 99999) { // xuameng99999表示未选中
-               ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
-            }
             ((EXOmPlayer) (mVideoView.getMediaPlayer())).setOnTimedTextListener(new Player.Listener() {
                 @Override
                 public void onCues(@NonNull List<Cue> cues) {
@@ -1144,21 +1150,61 @@ public class PlayFragment extends BaseLazyFragment {
                             String lowerLang = subtitleTrackInfoBean.name.toLowerCase();
                             if (isChineseSubtitle(subtitleTrackInfoBean)){    //xuameng修复EXO播放器也可以默认选择中文字幕
                                 hasCh=true;                               
-                                    if (mVideoView.getMediaPlayer() instanceof IjkMediaPlayer){
-                                        if (selectedIndex != subtitleTrackInfoBean.trackId) {
+                                if (mVideoView.getMediaPlayer() instanceof IjkMediaPlayer){
+                                    if (selectedIndex != subtitleTrackInfoBean.trackId) {
                                         ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setTrack(subtitleTrackInfoBean.trackId);
-										}
-                                    }else if (mVideoView.getMediaPlayer() instanceof EXOmPlayer){
-                                        ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackInfoBean);
                                     }
-                                    break;
+                                }else if (mVideoView.getMediaPlayer() instanceof EXOmPlayer){
+                                    if (selectedIndex != subtitleTrackInfoBean) {
+                                        ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackInfoBean);
+                                        // xuameng 补充：自动选中时同步处理EXO字幕视图切换
+                                        boolean isPgsSelected = subtitleTrackInfoBean.name != null 
+                                                && (subtitleTrackInfoBean.name.toLowerCase().contains("pgs")
+                                                || subtitleTrackInfoBean.name.toLowerCase().contains("vobsub")
+                                                || subtitleTrackInfoBean.name.toLowerCase().contains("dvb"));
+                                        if (isPgsSelected) {
+                                            // 当前选中的是 PGS 字幕，使用 ExoPlayer 内置视图
+                                            ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);   //xuameng绑定Exo字幕视图
+                                            mController.mExoSubtitleView.setVisibility(View.VISIBLE);
+                                            mController.mSubtitleView.setVisibility(View.GONE);
+                                            HawkConfig.exoSubtitle = true;  //xuameng 判断当前是否播放EXO内置字幕
+                                        } else {
+                                           // 当前选中的是其他格式字幕，使用外部视图
+                                            mController.mExoSubtitleView.setVisibility(View.GONE);
+                                            mController.mSubtitleView.setVisibility(View.VISIBLE);
+                                            HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
+                                        }
+                                    }
+                                }
+                                break;
                             }
                         }
                         if(!hasCh){
                             if (mVideoView.getMediaPlayer() instanceof IjkMediaPlayer){
-                                ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setTrack(subtitleTrackList.get(0).trackId);
+                                if (selectedIndex != subtitleTrackList.get(0).trackId) {
+                                    ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setTrack(subtitleTrackList.get(0).trackId);
+                                }
                             }else if (mVideoView.getMediaPlayer() instanceof EXOmPlayer){
-                                ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackList.get(0));
+                                if (selectedIndex != subtitleTrackList.get(0)) {
+                                    ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackList.get(0));
+                                    // xuameng 补充：自动选中时同步处理EXO字幕视图切换
+                                    boolean isPgsSelected = subtitleTrackList.get(0) != null 
+                                            && (subtitleTrackList.get(0).name.toLowerCase().contains("pgs")
+                                            || subtitleTrackList.get(0).name.toLowerCase().contains("vobsub")
+                                            || subtitleTrackList.get(0).name.toLowerCase().contains("dvb"));
+                                    if (isPgsSelected) {
+                                        // 当前选中的是 PGS 字幕，使用 ExoPlayer 内置视图
+                                        ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);   //xuameng绑定Exo字幕视图
+                                        mController.mExoSubtitleView.setVisibility(View.VISIBLE);
+                                        mController.mSubtitleView.setVisibility(View.GONE);
+                                        HawkConfig.exoSubtitle = true;  //xuameng 判断当前是否播放EXO内置字幕
+                                    } else {
+                                        // 当前选中的是其他格式字幕，使用外部视图
+                                        mController.mExoSubtitleView.setVisibility(View.GONE);
+                                        mController.mSubtitleView.setVisibility(View.VISIBLE);
+                                        HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
+                                    }
+                                }
                             }
                         }
                     }
@@ -1646,8 +1692,8 @@ public class PlayFragment extends BaseLazyFragment {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        // 如果距离上次重试超过 30 秒（30000 毫秒），重置重试次数
-        if (currentTime - lastRetryTime > 30_000) {
+        // 如果距离上次重试超过 60 秒（60000 毫秒），重置重试次数
+        if (currentTime - lastRetryTime > 60_000) {
             LOG.i("echo-reset-autoRetryCount");
             autoRetryCount = 0;
             mRetryCountExo = 0;  //xuameng播放出错计数器重置
