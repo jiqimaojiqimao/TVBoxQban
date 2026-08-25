@@ -1,9 +1,9 @@
 package xyz.doikki.videoplayer.exo;
 
 import androidx.annotation.NonNull;
-import androidx.media3.exo.mediacodec.MediaCodecSelector;
-import androidx.media3.exo.mediacodec.MediaCodecUtil;
-import androidx.media3.exo.mediacodec.MediaCodecInfo;
+import androidx.media3.mediacodec.MediaCodecSelector;
+import androidx.media3.mediacodec.MediaCodecUtil;
+import androidx.media3.mediacodec.MediaCodecInfo;
 
 import java.util.ArrayList;
 import java.util.List;
