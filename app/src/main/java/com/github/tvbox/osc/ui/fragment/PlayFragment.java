@@ -662,8 +662,7 @@ public class PlayFragment extends BaseLazyFragment {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            if(mediaPlayer instanceof IjkMediaPlayer)mediaPlayer.seekTo(progress);
-                            mediaPlayer.start();
+                            mediaPlayer.seekTo(progress);
                         }
                     }, 200);
                     dialog.dismiss();
@@ -732,7 +731,6 @@ public class PlayFragment extends BaseLazyFragment {
                         @Override
                         public void run() {
                             mediaPlayer.seekTo(progress);
-                            mediaPlayer.start();
                         }
                     }, 200);
                     dialog.dismiss();
