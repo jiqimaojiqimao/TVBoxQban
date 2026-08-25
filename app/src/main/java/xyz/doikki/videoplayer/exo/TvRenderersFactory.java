@@ -16,18 +16,18 @@ import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory;
 import java.util.ArrayList;
 
 /**
- * TV ×¨ÓÃ RenderersFactory£º
- * - ÒôÆµ£ºFFmpeg ÓÀÔ¶ÓÅÏÈ
- * - ÊÓÆµ£ºMediaCodec ÓÅÏÈ£¬Ó²½âÊ§°Ü²ÅÊ¹ÓÃ FFmpeg Èí½â¶µµ×
+ * TV ä¸“ç”¨ RenderersFactoryï¼š
+ * - éŸ³é¢‘ï¼šFFmpeg æ°¸è¿œä¼˜å…ˆ
+ * - è§†é¢‘ï¼šMediaCodec ä¼˜å…ˆï¼Œç¡¬è§£å¤±è´¥æ‰ä½¿ç”¨ FFmpeg è½¯è§£å…œåº•
  */
 @UnstableApi
 public class TvRenderersFactory extends NextRenderersFactory {
 
     public TvRenderersFactory(Context context) {
         super(context);
-        // ¹Ø±Õ nextlib µÄÍ³Ò»À©Õ¹Ä£Ê½
+        // å…³é—­ nextlib çš„ç»Ÿä¸€æ‰©å±•æ¨¡å¼
         setExtensionRendererMode(EXTENSION_RENDERER_MODE_OFF);
-        // ¹Ø¼ü£ºÔÊĞíÓ²½âÊ§°Üºó»ØÍËµ½Èí½â
+        // å…³é”®ï¼šå…è®¸ç¡¬è§£å¤±è´¥åå›é€€åˆ°è½¯è§£
         setEnableDecoderFallback(true);
     }
 
@@ -42,7 +42,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
             @NonNull AudioRendererEventListener eventListener,
             @NonNull ArrayList<Renderer> out
     ) {
-        // 1. ÏÈ¼Ó MediaCodec ÒôÆµäÖÈ¾Æ÷
+        // 1. å…ˆåŠ  MediaCodec éŸ³é¢‘æ¸²æŸ“å™¨
         super.buildAudioRenderers(
                 context,
                 EXTENSION_RENDERER_MODE_OFF,
@@ -54,7 +54,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
                 out
         );
 
-        // 2. ÒôÆµ FFmpeg ²åµ½×îÇ°£¨ÓÀÔ¶ÓÅÏÈ£©
+        // 2. éŸ³é¢‘ FFmpeg æ’åˆ°æœ€å‰ï¼ˆæ°¸è¿œä¼˜å…ˆï¼‰
         try {
             out.add(
                     0,
@@ -65,7 +65,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
                     )
             );
         } catch (Exception ignored) {
-            // FFmpeg so ²»´æÔÚÊ±ºöÂÔ
+            // FFmpeg so ä¸å­˜åœ¨æ—¶å¿½ç•¥
         }
     }
 
@@ -80,7 +80,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
             long allowedVideoJoiningTimeMs,
             @NonNull ArrayList<Renderer> out
     ) {
-        // 1. MediaCodec ÓÀÔ¶ÔÚÇ°Ãæ
+        // 1. MediaCodec æ°¸è¿œåœ¨å‰é¢
         super.buildVideoRenderers(
                 context,
                 EXTENSION_RENDERER_MODE_OFF,
@@ -92,7 +92,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
                 out
         );
 
-        // 2. FFmpeg ÊÓÆµäÖÈ¾Æ÷·ÅÔÚ×îºó£¨½ö¶µµ×£©
+        // 2. FFmpeg è§†é¢‘æ¸²æŸ“å™¨æ”¾åœ¨æœ€åï¼ˆä»…å…œåº•ï¼‰
         try {
             out.add(
                     new FfmpegVideoRenderer(
@@ -103,7 +103,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
                     )
             );
         } catch (Exception ignored) {
-            // FFmpeg so ²»´æÔÚÊ±ºöÂÔ
+            // FFmpeg so ä¸å­˜åœ¨æ—¶å¿½ç•¥
         }
     }
 }
