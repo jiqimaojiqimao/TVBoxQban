@@ -30,7 +30,6 @@ import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
 import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory; //xuameng  NextRenderers
 
 import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
@@ -91,10 +90,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         // 构建 RendererFactory
         if (useSoftDecode) {
-            // 软解场景
+            // 软解场景 TvRenderersFactory 是自定义的 NextRenderersFactory
             mRenderersFactory = new TvRenderersFactory(mAppContext);
         } else {
-            // 硬解场景
+            // 硬解场景 DefaultRenderersFactory 加 ffmpeg扩展
             mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                     .setEnableDecoderFallback(true)
                     .setExtensionRendererMode(
