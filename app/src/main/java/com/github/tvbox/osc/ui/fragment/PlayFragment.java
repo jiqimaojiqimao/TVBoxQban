@@ -664,7 +664,7 @@ public class PlayFragment extends BaseLazyFragment {
                         public void run() {
                             mediaPlayer.seekTo(progress);
                         }
-                    }, 300);
+                    }, 200);
                     dialog.dismiss();
                 } catch (Exception e) {
                     LOG.e("切换音轨出错");
@@ -801,7 +801,7 @@ public class PlayFragment extends BaseLazyFragment {
                             public void run() {
                                 mediaPlayer.seekTo(progress);
                             }
-                        }, 300);
+                        }, 200);
                     }
 
                     // xuameng判断选中的字幕是否为 PGS 格式 或图形字幕
@@ -836,7 +836,7 @@ public class PlayFragment extends BaseLazyFragment {
                             public void run() {
                                 mediaPlayer.seekTo(progress);
                             }
-                        }, 300);
+                        }, 200);
                     }
                     dialog.dismiss();
                 } catch (Exception e) {
