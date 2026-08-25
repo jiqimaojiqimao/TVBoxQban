@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.List;
 
 /**
- * M2TS BDAV 剥离数据源 - 修复版
+ * M2TS BDAV 剥离数据源 - 修复版 (第8版)
  *
  * 修复内容：
  * 1. 移除了"尾部假 EOF"机制（原代码在文件最后 196KB 内直接返回 0，导致 ExoPlayer 无限 seek 循环）
@@ -24,7 +24,7 @@ import java.util.List;
  * 3. read() 方法支持读取多个 BDAV 包以填充输出缓冲区，提高效率
  * 4. 处理小缓冲区场景：当输出缓冲区小于 188 字节时，使用 pending 缓冲区暂存
  * 5. getResponseHeaders() 直接委托上游，不再返回假 Content-Length
- * 6. 【新增】探测循环检测：当 TS 提取器在文件末尾反复搜索 PTS 时，超过阈值后返回 EOF 终止循环
+ * 6. 【修复】探测循环检测状态持久化：不再随 close() 重置，防止 TS 提取器通过 close+reopen 绕过检测
  */
 public final class M2TsStrippingDataSource implements DataSource {
 
@@ -53,6 +53,8 @@ public final class M2TsStrippingDataSource implements DataSource {
     // 探测循环检测状态
     private long lastOpenPosition = -1;
     private int probeCount = 0;
+    // 【修复6-v2】持久化探测检测标志：一旦检测到探测循环，永久生效，不随 close() 重置
+    private boolean probeLoopDetected = false;
 
     public M2TsStrippingDataSource(DataSource upstream) {
         this.upstream = Assertions.checkNotNull(upstream);
@@ -74,6 +76,14 @@ public final class M2TsStrippingDataSource implements DataSource {
             lengthDetected = true;
         }
 
+        // 【修复6-v2】如果之前已检测到探测循环，永久返回 EOF
+        if (probeLoopDetected) {
+            Log.w(TAG, "Probe loop previously detected, permanently returning EOF (position="
+                    + requestedPosition + ")");
+            eof = true;
+            return 0;
+        }
+
         // 【修复6】探测循环检测：
         // 当 TS 提取器在文件末尾反复搜索 PTS 时，如果短时间内在相近位置反复 open，
         // 说明搜索已经失败，返回 EOF 强制终止循环，避免播放器卡死。
@@ -85,6 +95,8 @@ public final class M2TsStrippingDataSource implements DataSource {
                     Log.w(TAG, "Probe loop detected near end of file (position="
                             + requestedPosition + ", count=" + probeCount
                             + "), returning EOF to break the loop");
+                    // 【修复6-v2】设置持久化标志，不随 close() 重置
+                    probeLoopDetected = true;
                     eof = true;
                     return 0;
                 }
@@ -245,9 +257,8 @@ public final class M2TsStrippingDataSource implements DataSource {
             pendingLength = 0;
             pendingOffset = 0;
             eof = false;
-            // 重置探测循环检测状态
-            lastOpenPosition = -1;
-            probeCount = 0;
+            // 【修复6-v2】不重置 probeLoopDetected！一旦检测到探测循环，永久生效
+            // 不重置 lastOpenPosition 和 probeCount，防止 close+reopen 绕过检测
         }
     }
 }
