@@ -82,8 +82,8 @@ import com.lzy.okgo.model.Response;
 import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.orhanobut.hawk.Hawk;
 
-import androidx.media3.common.Player;
-import androidx.media3.common.text.Cue;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.text.Cue;
 import com.github.tvbox.osc.bean.IJKCode;  //xuamengIJK切换用
 
 import org.greenrobot.eventbus.EventBus;
@@ -1156,7 +1156,7 @@ public class PlayFragment extends BaseLazyFragment {
                                     }
                                 }else if (mVideoView.getMediaPlayer() instanceof EXOmPlayer){
                                     if (selectedIndex != subtitleTrackInfoBean) {
-                                        ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackInfoBean);
+                                        ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackInfoBean.trackId);
                                         // xuameng 补充：自动选中时同步处理EXO字幕视图切换
                                         boolean isPgsSelected = subtitleTrackInfoBean.name != null 
                                                 && (subtitleTrackInfoBean.name.toLowerCase().contains("pgs")
@@ -1185,7 +1185,7 @@ public class PlayFragment extends BaseLazyFragment {
                                     ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setTrack(subtitleTrackList.get(0).trackId);
                                 }
                             }else if (mVideoView.getMediaPlayer() instanceof EXOmPlayer){
-                                if (selectedIndex != subtitleTrackList.get(0)) {
+                                if (selectedIndex != subtitleTrackList.get(0).trackId) {
                                     ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackList.get(0));
                                     // xuameng 补充：自动选中时同步处理EXO字幕视图切换
                                     boolean isPgsSelected = subtitleTrackList.get(0) != null 
