@@ -46,6 +46,7 @@ public final class ExoMediaSourceHelper {
     private OkHttpDataSource.Factory mHttpDataSourceFactory;
     private OkHttpClient mOkClient = null;
     private Cache mCache;
+    private static final int TYPE_M2TS = 100;
 
     private ExoMediaSourceHelper(Context context) {
         mAppContext = context.getApplicationContext();
@@ -101,7 +102,9 @@ public final class ExoMediaSourceHelper {
         if (mHttpDataSourceFactory != null) {
             setHeaders(headers);
         }
-
+        if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
+            return createM2TsMediaSource(uri, factory);
+        }
         if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {      // xuameng当错误码为3003时，强制使用 HLS 源进行播放
             return new HlsMediaSource.Factory(factory)
                     .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
@@ -110,23 +113,28 @@ public final class ExoMediaSourceHelper {
                     .createMediaSource(MediaItem.fromUri(contentUri));
         }
 
-        if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-            MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
-            builder.setMimeType(MimeTypes.APPLICATION_M3U8);
-            return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(getMediaItem(uri, errorCode));
-        }
+
+
         switch (contentType) {
             case C.TYPE_DASH:
-                return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+                return new DashMediaSource.Factory(factory)
+                        .createMediaSource(MediaItem.fromUri(contentUri));
+
             case C.TYPE_HLS:
                 return new HlsMediaSource.Factory(factory)
-                        .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
+                        .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())
                         .setAllowChunklessPreparation(true)
                         .setExtractorFactory(new MyHlsExtractorFactory())
                         .createMediaSource(MediaItem.fromUri(contentUri));
+
+            // xuameng m2ts 播放分支
+            case TYPE_M2TS:
+                return createM2TsMediaSource(uri, factory);
+
             default:
             case C.TYPE_OTHER:
-                return new ProgressiveMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
+                return new ProgressiveMediaSource.Factory(factory)
+                        .createMediaSource(MediaItem.fromUri(contentUri));
         }
     }
 
@@ -142,12 +150,47 @@ public final class ExoMediaSourceHelper {
 
     }
 
+    private static class M2TsStrippingDataSourceFactory implements DataSource.Factory {  //xuameng m2ts专用
+        private final DataSource.Factory upstreamFactory;
+
+        M2TsStrippingDataSourceFactory(DataSource.Factory upstreamFactory) {
+            this.upstreamFactory = upstreamFactory;
+        }
+
+        @Override
+        public DataSource createDataSource() {
+            return new M2TsStrippingDataSource(upstreamFactory.createDataSource());
+        }
+    }
+
+    private MediaSource createM2TsMediaSource(String uri, DataSource.Factory factory) {  //xuameng m2ts专用
+        Uri contentUri = Uri.parse(uri);
+        DataSource.Factory m2tsFactory = new M2TsStrippingDataSourceFactory(factory);
+        ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory()
+                .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
+                .setTsExtractorTimestampSearchBytes(188 * 1024);
+
+        MediaItem mediaItem = new MediaItem.Builder()
+                .setUri(contentUri)
+                .setMimeType(MimeTypes.APPLICATION_M3U8)
+                .build();
+
+        return new ProgressiveMediaSource.Factory(m2tsFactory, extractorsFactory)
+                .createMediaSource(mediaItem);
+    }
+
     private int inferContentType(String fileName) {
         fileName = fileName.toLowerCase();
         if (fileName.contains(".mpd") || fileName.contains("type=mpd") || fileName.contains("type=dash") || fileName.contains("format=mpd") || fileName.contains("format=dash")) { //xuameng   type=mpd有这样写的
             return C.TYPE_DASH;
         } else if (fileName.contains("m3u8") || fileName.contains("type=hls") || fileName.contains("format=hls")) {
             return C.TYPE_HLS;
+        } else if (fileName.contains(".m2ts") 
+            || fileName.contains(".mts") 
+            || fileName.contains(".bdmv") 
+            || fileName.contains("type=m2ts") 
+            || fileName.contains("format=m2ts")) {
+            return TYPE_M2TS;
         } else {
             return C.TYPE_OTHER;
         }
