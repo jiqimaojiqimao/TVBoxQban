@@ -1155,8 +1155,8 @@ public class PlayFragment extends BaseLazyFragment {
                                         ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setTrack(subtitleTrackInfoBean.trackId);
                                     }
                                 }else if (mVideoView.getMediaPlayer() instanceof EXOmPlayer){
-                                    if (selectedIndex != subtitleTrackInfoBean) {
-                                        ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackInfoBean.trackId);
+                                    if (selectedIndex != subtitleTrackInfoBean.trackId) {
+                                        ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackInfoBean);
                                         // xuameng 补充：自动选中时同步处理EXO字幕视图切换
                                         boolean isPgsSelected = subtitleTrackInfoBean.name != null 
                                                 && (subtitleTrackInfoBean.name.toLowerCase().contains("pgs")
