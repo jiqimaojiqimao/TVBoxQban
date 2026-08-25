@@ -23,11 +23,12 @@ import java.util.ArrayList;
 @UnstableApi
 public class TvRenderersFactory extends NextRenderersFactory {
 
+    /** 与旧版 ExoPlayer 默认值保持一致 */
+    private static final int DEFAULT_MAX_DROPPED_FRAMES = 50;
+
     public TvRenderersFactory(Context context) {
         super(context);
-        // 关闭 nextlib 的统一扩展模式
         setExtensionRendererMode(EXTENSION_RENDERER_MODE_OFF);
-        // 关键：允许硬解失败后回退到软解
         setEnableDecoderFallback(true);
     }
 
@@ -42,7 +43,6 @@ public class TvRenderersFactory extends NextRenderersFactory {
             @NonNull AudioRendererEventListener eventListener,
             @NonNull ArrayList<Renderer> out
     ) {
-        // 1. 先加 MediaCodec 音频渲染器
         super.buildAudioRenderers(
                 context,
                 EXTENSION_RENDERER_MODE_OFF,
@@ -54,7 +54,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
                 out
         );
 
-        // 2. 音频 FFmpeg 插到最前（永远优先）
+        // 音频 FFmpeg 永远优先
         try {
             out.add(
                     0,
@@ -65,7 +65,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
                     )
             );
         } catch (Exception ignored) {
-            // FFmpeg so 不存在时忽略
+            // FFmpeg so 未加载时忽略
         }
     }
 
@@ -80,7 +80,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
             long allowedVideoJoiningTimeMs,
             @NonNull ArrayList<Renderer> out
     ) {
-        // 1. MediaCodec 永远在前面
+        // MediaCodec 永远优先
         super.buildVideoRenderers(
                 context,
                 EXTENSION_RENDERER_MODE_OFF,
@@ -92,18 +92,18 @@ public class TvRenderersFactory extends NextRenderersFactory {
                 out
         );
 
-        // 2. FFmpeg 视频渲染器放在最后（仅兜底）
+        // FFmpeg 视频软解兜底（排在最后）
         try {
             out.add(
                     new FfmpegVideoRenderer(
                             allowedVideoJoiningTimeMs,
                             eventHandler,
                             eventListener,
-                            DefaultRenderersFactory.MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY
+                            DEFAULT_MAX_DROPPED_FRAMES
                     )
             );
         } catch (Exception ignored) {
-            // FFmpeg so 不存在时忽略
+            // FFmpeg so 未加载时忽略
         }
     }
 }
