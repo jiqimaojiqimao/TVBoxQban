@@ -21,6 +21,7 @@ import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
 import androidx.media3.ui.PlayerView;
 import androidx.media3.ui.SubtitleView;   //xuameng用于显示字幕
 import androidx.media3.common.text.Cue;   //xuameng用于显示字幕
@@ -89,9 +90,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
 
         // 构建 RendererFactory
+        MediaCodecSelector codecSelector = new ExoMediaCodecSelector();
         if (useSoftDecode) {
             // 软解场景 TvRenderersFactory 是自定义的 NextRenderersFactory
-            mRenderersFactory = new TvRenderersFactory(mAppContext);
+            mRenderersFactory = new TvRenderersFactory(mAppContext, codecSelector);
         } else {
             // 硬解场景 DefaultRenderersFactory 加 ffmpeg扩展
             mRenderersFactory = new DefaultRenderersFactory(mAppContext)
