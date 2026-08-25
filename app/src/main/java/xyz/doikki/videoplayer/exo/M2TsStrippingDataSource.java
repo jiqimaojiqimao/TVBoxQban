@@ -48,10 +48,6 @@ public class M2TsStrippingDataSource implements DataSource {
     /** 同步模式：0=未知(需判定) 1=标准 TS188 2=BDAV192 */
     private int syncMode = 0;
 
-    /** BDAV 模式连续头校验失败计数，超过阈值降级为 TS188 */
-    private int bdavFailCount = 0;
-    private static final int BDAV_FAIL_THRESHOLD = 4;
-
     // 调试统计
     private long totalUpstreamRead = 0;
     private long totalOutputBytes = 0;
@@ -74,20 +70,42 @@ public int read(byte[] buffer, int offset, int length) throws IOException {
     int total = 0;
 
     while (total < length) {
-        if (bufValid < TS_PACKET_SIZE) {
-            int filled = fillBuffer();
-            if (filled == C.RESULT_END_OF_INPUT) {
+        // 1. 补缓冲（关键：r == 0 必须等待）
+        while (bufValid < TS_PACKET_SIZE) {
+            int r = upstream.read(internalBuf, bufValid, INTERNAL_BUFFER_SIZE - bufValid);
+            if (r == C.RESULT_END_OF_INPUT) {
+                // 真 EOF
                 return total == 0 ? C.RESULT_END_OF_INPUT : total;
             }
+            if (r == 0) {
+                // sniff 阶段：宁可慢，不能 EOF
+                if (total == 0) {
+                    try { Thread.sleep(1); } catch (InterruptedException ignored) {}
+                    continue;
+                }
+                break;
+            }
+            bufValid += r;
         }
 
-        // 对齐 0x47
+        if (bufValid == 0) {
+            return total == 0 ? C.RESULT_END_OF_INPUT : total;
+        }
+
+        // 2. 对齐 0x47
         if ((internalBuf[0] & 0xFF) != TS_SYNC_BYTE) {
-            resyncToNextSyncByte();
+            int sync = indexOfSyncByte(1);
+            if (sync < 0) {
+                bufValid = 0;
+                continue;
+            }
+            int left = bufValid - sync;
+            System.arraycopy(internalBuf, sync, internalBuf, 0, left);
+            bufValid = left;
             continue;
         }
 
-        // 被动跳过 BDAV 头
+        // 3. 被动跳过 BDAV 头（不判定）
         if (bufValid >= BDAV_PACKET_SIZE
                 && isBdavStartCode(internalBuf, 0)
                 && (internalBuf[4] & 0xFF) == TS_SYNC_BYTE) {
@@ -97,6 +115,7 @@ public int read(byte[] buffer, int offset, int length) throws IOException {
             continue;
         }
 
+        // 4. 输出 TS 包
         int produce = Math.min(TS_PACKET_SIZE, Math.min(bufValid, length - total));
         System.arraycopy(internalBuf, 0, buffer, offset + total, produce);
         total += produce;
@@ -136,31 +155,6 @@ private int fillBuffer() throws IOException {
         }
     }
 
-    /**
-     * 扫描内部缓冲，根据 0x47 同步头间距判定封装格式。
-     * 间距 188 → TS188；间距 192 且 preceding 4 字节为 BDAV 起始码 → BDAV192。
-     */
-    private int detectSyncMode() {
-        if (bufValid < BDAV_PACKET_SIZE + TS_PACKET_SIZE) return 0;
-
-        int first = indexOfSyncByte(0);
-        if (first < 0) return 0;
-        int second = indexOfSyncByte(first + TS_PACKET_SIZE);
-        if (second < 0) return 0;
-
-        int gap = second - first;
-        if (gap == TS_PACKET_SIZE) {
-            return 1; // TS188
-        } else if (gap == BDAV_PACKET_SIZE) {
-            // 校验是否为 BDAV：first 之前的 4 字节应为起始码 00 00 00 01
-            if (first >= 4 && isBdavStartCode(internalBuf, first - 4)) return 2;
-            // 单次 192 间距无起始码佐证：再做一次多包验证
-            int third = indexOfSyncByte(second + TS_PACKET_SIZE);
-            if (third > 0 && (third - second) == BDAV_PACKET_SIZE) return 2;
-            return 0;
-        }
-        return 0;
-    }
 
     /** 从 start 起查找下一个 0x47 同步字节索引 */
     private int indexOfSyncByte(int start) {
@@ -186,21 +180,6 @@ private int fillBuffer() throws IOException {
         return isBdavStartCode(buf, offset)
                 && (offset + 4 < buf.length)
                 && ((buf[offset + 4] & 0xFF) == TS_SYNC_BYTE);
-    }
-
-    /** 重同步：丢弃缓冲中第一个 0x47 之前的数据，重置模式判定 */
-    private void resyncToNextSyncByte() {
-        int sync = indexOfSyncByte(0);
-        if (sync > 0) {
-            int left = bufValid - sync;
-            System.arraycopy(internalBuf, sync, internalBuf, 0, left);
-            bufValid = left;
-        } else {
-            bufValid = 0;
-        }
-        syncMode = 0; // 重新判定
-        resyncCount++;
-        if (DEBUG) Log.d(TAG, "Resynced to next 0x47, resyncCount=" + resyncCount);
     }
 
     @Override
