@@ -16,7 +16,7 @@ import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory;
 import java.util.ArrayList;
 
 /**
- * TV 专用 RenderersFactory：
+ * xuameng TV 专用 RenderersFactory：
  * - 音频：FFmpeg 永远优先
  * - 视频：MediaCodec 优先，硬解失败才使用 FFmpeg 软解兜底
  */
