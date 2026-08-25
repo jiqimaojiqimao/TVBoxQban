@@ -24,12 +24,20 @@ import java.util.List;
  * 3. read() 方法支持读取多个 BDAV 包以填充输出缓冲区，提高效率
  * 4. 处理小缓冲区场景：当输出缓冲区小于 188 字节时，使用 pending 缓冲区暂存
  * 5. getResponseHeaders() 直接委托上游，不再返回假 Content-Length
+ * 6. 【新增】探测循环检测：当 TS 提取器在文件末尾反复搜索 PTS 时，超过阈值后返回 EOF 终止循环
  */
 public final class M2TsStrippingDataSource implements DataSource {
 
     private static final String TAG = "M2TS_xuameng";
     private static final int BDAV_PACKET_SIZE = 192;
     private static final int TS_PACKET_SIZE = 188;
+
+    // 探测循环检测参数：文件末尾 200KB 范围内的反复 open 被视为探测循环
+    private static final int PROBE_RANGE = 200000;
+    // 探测位置容差：位置差小于 1000 字节视为"相近位置"
+    private static final int PROBE_POSITION_TOLERANCE = 1000;
+    // 最大允许探测次数：超过此次数认为陷入循环
+    private static final int MAX_PROBE_COUNT = 8;
 
     private final DataSource upstream;
     private final byte[] scratch = new byte[BDAV_PACKET_SIZE];
@@ -41,6 +49,10 @@ public final class M2TsStrippingDataSource implements DataSource {
     private long realFileLength = C.LENGTH_UNSET;
     private boolean lengthDetected = false;
     private boolean eof = false;
+
+    // 探测循环检测状态
+    private long lastOpenPosition = -1;
+    private int probeCount = 0;
 
     public M2TsStrippingDataSource(DataSource upstream) {
         this.upstream = Assertions.checkNotNull(upstream);
@@ -60,6 +72,34 @@ public final class M2TsStrippingDataSource implements DataSource {
         if (!lengthDetected) {
             detectRealFileLength(dataSpec);
             lengthDetected = true;
+        }
+
+        // 【修复6】探测循环检测：
+        // 当 TS 提取器在文件末尾反复搜索 PTS 时，如果短时间内在相近位置反复 open，
+        // 说明搜索已经失败，返回 EOF 强制终止循环，避免播放器卡死。
+        if (realFileLength > 0 && requestedPosition >= realFileLength - PROBE_RANGE) {
+            if (lastOpenPosition >= 0
+                    && Math.abs(requestedPosition - lastOpenPosition) < PROBE_POSITION_TOLERANCE) {
+                probeCount++;
+                if (probeCount > MAX_PROBE_COUNT) {
+                    Log.w(TAG, "Probe loop detected near end of file (position="
+                            + requestedPosition + ", count=" + probeCount
+                            + "), returning EOF to break the loop");
+                    eof = true;
+                    return 0;
+                }
+                Log.d(TAG, "Probe attempt " + probeCount + " near end (position="
+                        + requestedPosition + ")");
+            } else {
+                probeCount = 1;
+            }
+            lastOpenPosition = requestedPosition;
+        } else {
+            // 跳转到文件前面的位置（非探测行为），重置探测计数
+            if (lastOpenPosition >= 0 && requestedPosition < lastOpenPosition - PROBE_RANGE) {
+                probeCount = 0;
+                lastOpenPosition = -1;
+            }
         }
 
         // 192 字节 BDAV 对齐
@@ -205,6 +245,9 @@ public final class M2TsStrippingDataSource implements DataSource {
             pendingLength = 0;
             pendingOffset = 0;
             eof = false;
+            // 重置探测循环检测状态
+            lastOpenPosition = -1;
+            probeCount = 0;
         }
     }
 }
