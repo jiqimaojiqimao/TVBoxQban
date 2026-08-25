@@ -74,42 +74,29 @@ public int read(byte[] buffer, int offset, int length) throws IOException {
     int total = 0;
 
     while (total < length) {
-        // 1. 补缓冲
-        while (bufValid < INTERNAL_BUFFER_SIZE) {
-            int r = upstream.read(internalBuf, bufValid, INTERNAL_BUFFER_SIZE - bufValid);
-            if (r == C.RESULT_END_OF_INPUT) break;
-            bufValid += r;
-        }
-
-        if (bufValid == 0) {
-            return total == 0 ? C.RESULT_END_OF_INPUT : total;
-        }
-
-        // 2. 对齐 0x47
-        if ((internalBuf[0] & 0xFF) != TS_SYNC_BYTE) {
-            int sync = indexOfSyncByte(1);
-            if (sync < 0) {
-                bufValid = 0;
-                break;
+        if (bufValid < TS_PACKET_SIZE) {
+            int filled = fillBuffer();
+            if (filled == C.RESULT_END_OF_INPUT) {
+                return total == 0 ? C.RESULT_END_OF_INPUT : total;
             }
-            int left = bufValid - sync;
-            System.arraycopy(internalBuf, sync, internalBuf, 0, left);
-            bufValid = left;
+        }
+
+        // 对齐 0x47
+        if ((internalBuf[0] & 0xFF) != TS_SYNC_BYTE) {
+            resyncToNextSyncByte();
             continue;
         }
 
-        // 3. 如果是 BDAV，跳过 4 字节头（被动确认）
+        // 被动跳过 BDAV 头
         if (bufValid >= BDAV_PACKET_SIZE
                 && isBdavStartCode(internalBuf, 0)
                 && (internalBuf[4] & 0xFF) == TS_SYNC_BYTE) {
-
             int left = bufValid - 4;
             System.arraycopy(internalBuf, 4, internalBuf, 0, left);
             bufValid = left;
             continue;
         }
 
-        // 4. 输出标准 TS 包
         int produce = Math.min(TS_PACKET_SIZE, Math.min(bufValid, length - total));
         System.arraycopy(internalBuf, 0, buffer, offset + total, produce);
         total += produce;
@@ -120,6 +107,21 @@ public int read(byte[] buffer, int offset, int length) throws IOException {
     }
 
     return total;
+}
+
+private int fillBuffer() throws IOException {
+    while (bufValid < TS_PACKET_SIZE) {
+        int r = upstream.read(internalBuf, bufValid, INTERNAL_BUFFER_SIZE - bufValid);
+        if (r == C.RESULT_END_OF_INPUT) {
+            return C.RESULT_END_OF_INPUT;
+        }
+        if (r == 0) {
+            // 暂时没数据，继续等（不要 break）
+            continue;
+        }
+        bufValid += r;
+    }
+    return bufValid;
 }
 
     /** 把缓冲中残余数据（不足一包的最后片段）拷贝到输出 */
