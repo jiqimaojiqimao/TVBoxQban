@@ -26,8 +26,9 @@ public class TvRenderersFactory extends NextRenderersFactory {
     /** 与旧版 ExoPlayer 默认值保持一致 */
     private static final int DEFAULT_MAX_DROPPED_FRAMES = 50;
 
-    public TvRenderersFactory(Context context) {
+    public TvRenderersFactory(Context context, MediaCodecSelector selector) {
         super(context);
+        setMediaCodecSelector(selector);   // ← 关键
         setExtensionRendererMode(EXTENSION_RENDERER_MODE_OFF);
         setEnableDecoderFallback(true);
     }
