@@ -460,53 +460,65 @@ public final class MyTsExtractor implements Extractor {
      * <p>This may be a position beyond the buffer limit if the packet has not been read fully into
      * the buffer, or if no packet could be found within the buffer.
      */
-    private int findEndOfFirstTsPacketInBuffer() throws ParserException {
-        int searchStart = tsPacketBuffer.getPosition();
-        int limit = tsPacketBuffer.limit();
-        int syncBytePosition = TsUtil.findSyncBytePosition(tsPacketBuffer.getData(), searchStart, limit);
-        tsPacketBuffer.setPosition(syncBytePosition);
+private int findEndOfFirstTsPacketInBuffer() throws ParserException {
+    int searchStart = tsPacketBuffer.getPosition();
+    int limit = tsPacketBuffer.limit();
 
-if (packetSize == 192) {
-    int currentPos = tsPacketBuffer.getPosition();
-    int lim = tsPacketBuffer.limit();
-    byte[] data = tsPacketBuffer.getData();
+    if (packetSize == 192) {
+        byte[] data = tsPacketBuffer.getData();
+        int pos = searchStart;
 
-    // 当前 buffer position 对应的文件偏移
-    long fileOffset = inputPos + currentPos;
-
-    // 找到下一个 192 对齐的文件偏移
-    long alignedFileOffset = ((fileOffset / 192) + 1) * 192; // 下一个 192 边界
-    int alignedBufferPos = (int) (alignedFileOffset - inputPos); // 转回 buffer 偏移
-    int syncPos = alignedBufferPos + 4;
-
-    // 扫描：从 syncPos 开始，每次跳 192，找 0x47
-    for (int i = 0; i < 10; i++) {
-        if (syncPos + 188 > lim) {
-            break;
+        // 如果 pos 不在 192 边界上，跳到下一个 192 边界
+        int remainder = pos % 192;
+        if (remainder != 0) {
+            pos += (192 - remainder);
         }
-        if (data[syncPos] == (byte) TS_SYNC_BYTE) {
-            tsPacketBuffer.setPosition(syncPos);
-            tsPacketBuffer.skipBytes(4);
-            int result = syncPos + 188;
-            Log.e("MyTsExtractor", "📍 192 ALIGNED: fileOffset=" + (inputPos + syncPos)
-                  + " syncPos=" + syncPos
-                  + " skip→" + tsPacketBuffer.getPosition()
-                  + " endOfPacket=" + result);
-            return result;
+        // sync byte 在每个 192 块的第 5 字节（偏移 +4）
+        int syncPos = pos + 4;
+
+        for (int i = 0; i < 10; i++) {
+            if (syncPos + 188 > limit) {
+                // 需要更多数据，等 fillBuffer 后再试
+                return limit + 1;
+            }
+            if (data[syncPos] == (byte) TS_SYNC_BYTE) {
+                tsPacketBuffer.setPosition(syncPos);
+                tsPacketBuffer.skipBytes(4);
+                int result = syncPos + 188;
+                Log.e("MyTsExtractor", "📍 192 ALIGNED: searchStart=" + searchStart
+                      + " syncPos=" + syncPos
+                      + " skip→" + tsPacketBuffer.getPosition()
+                      + " endOfPacket=" + result
+                      + " limit=" + limit);
+                return result;
+            }
+            // 没找到，跳到下一个 192 块
+            pos += 192;
+            syncPos = pos + 4;
         }
-        syncPos += 192;
+
+        // 10 个包都没找到 0x47，等更多数据
+        Log.e("MyTsExtractor", "⚠️ No 0x47 in 10 aligned blocks, searchStart=" + searchStart + " limit=" + limit);
+        return limit + 1;
     }
 
-    // 没找到，等更多数据
-    Log.e("MyTsExtractor", "⚠️ No aligned 0x47 found, currentPos=" + currentPos
-          + " inputPos=" + inputPos + " fileOffset=" + fileOffset + " limit=" + lim);
-    return lim + 1;
-}
-
-        int endOfPacket = syncBytePosition + packetSize;
-        // ... bytesSinceLastSync 逻辑 ...
+    // ===== 188-byte 原始逻辑 =====
+    int syncBytePosition = TsUtil.findSyncBytePosition(tsPacketBuffer.getData(), searchStart, limit);
+    tsPacketBuffer.setPosition(syncBytePosition);
+    int endOfPacket = syncBytePosition + 188;
+    if (endOfPacket > limit) {
         return endOfPacket;
     }
+    int header, payloadUnitStartIndicator;
+    do {
+        searchStart = endOfPacket;
+        tsPacketBuffer.setPosition(searchStart);
+        header = tsPacketBuffer.readInt();
+        payloadUnitStartIndicator = (header & 0x40000000) >> 30;
+        endOfPacket = searchStart + 188;
+    } while (payloadUnitStartIndicator != 1 && endOfPacket < limit);
+    return endOfPacket;
+}
 
     private boolean shouldConsumePacketPayload(int packetPid) {
         return mode == MODE_HLS
