@@ -342,26 +342,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         if (errorCode == 5001 || errorCode == 5002 || errorCode == 4001 || errorCode == 4002 || errorCode == 4003){
             memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
-
-            // 2. 强制降级到 2声道
-            if (mTrackSelector != null) {
-                mTrackSelector.setParameters(
-                        mTrackSelector.getParameters()
-                                .buildUpon()
-                                .setMaxAudioChannelCount(2)
-                                .build()
-                );
-            }
-        // 重新播放
-        if (mLastUri != null && mMediaPlayer != null) {
-            mMediaPlayer.stop();
-            mMediaPlayer.clearMediaItems();
-            mIsPreparing = false; 
-            setDataSource(mLastUri, mLastHeaders);
-            prepareAsync();
-            start();
-            return;
-        }
         }
 
         // ====== xuameng 新增：处理 BehindLiveWindowException 错误======
