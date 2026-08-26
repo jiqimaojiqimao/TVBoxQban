@@ -142,7 +142,7 @@ if (isTsUri(contentUri)) {
     }
 
 private static synchronized ExtractorsFactory getExtractorsFactory() {
-    return (uri, responseHeaders) -> {
+    return (uri) -> {
         Log.e("ExoMediaSource_xuameng", "🔥 ExtractorsFactory lambda CALLED");
 
         MyTsExtractor myExtractor = new MyTsExtractor(
@@ -152,7 +152,6 @@ private static synchronized ExtractorsFactory getExtractorsFactory() {
         );
         Log.e("ExoMediaSource_xuameng", "🔥 MyTsExtractor instance created: " + myExtractor);
 
-        // 第二个：官方 TsExtractor 兜底，确保 extractors.length > 1 → sniff() 一定被调
         TsExtractor fallback = new TsExtractor(
                 TsExtractor.MODE_MULTI_PMT,
                 0,
