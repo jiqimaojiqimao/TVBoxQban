@@ -309,12 +309,6 @@ public final class MyTsExtractor implements Extractor {
 public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
     Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
 
-    // ★ 强制文件位置 192 对齐
-    int remainder = (int) (input.getPosition() % 192);
-    if (remainder != 0) {
-        input.skipFully(192 - remainder);
-    }
-
     long inputLength = input.getLength();
     if (tracksEnded) {
         boolean canReadDuration = inputLength != C.LENGTH_UNSET && mode != MODE_HLS;
@@ -444,16 +438,15 @@ public int read(ExtractorInput input, PositionHolder seekPosition) throws IOExce
 private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
     byte[] data = tsPacketBuffer.getData();
 
-    // ★ 关键修复：如果 buffer 剩余空间为 0 但数据不够一个包，
-    //   说明之前 endOfPacket > limit 导致 position 没推进，buffer 卡死了。
-    //   直接丢弃所有数据，从头填充。
-    if (tsPacketBuffer.bytesLeft() < packetSize
-            && tsPacketBuffer.limit() >= BUFFER_SIZE) {
+    // 如果 buffer 满了但数据不够一个包，清空重来
+    if (tsPacketBuffer.bytesLeft() < packetSize && tsPacketBuffer.limit() >= BUFFER_SIZE) {
         tsPacketBuffer.reset(data, 0);
     }
 
-    // 常规压缩：把未消费的数据移到 buffer 头部
-    if (BUFFER_SIZE - tsPacketBuffer.getPosition() < packetSize) {
+    // ★ 只有当 position 追上了 limit（或空间真的不够）才压缩
+    // 不要仅仅因为 BUFFER_SIZE - position < packetSize 就压缩，
+    // 因为 position 可能还很小，后面有大把空间
+    if (tsPacketBuffer.getPosition() >= BUFFER_SIZE - packetSize * 2) {
         int bytesLeft = tsPacketBuffer.bytesLeft();
         if (bytesLeft > 0) {
             System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
@@ -461,7 +454,6 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
         tsPacketBuffer.reset(data, bytesLeft);
     }
 
-    // 读取直到至少有一个完整包
     while (tsPacketBuffer.bytesLeft() < packetSize) {
         int limit = tsPacketBuffer.limit();
         int read = input.read(data, limit, BUFFER_SIZE - limit);
