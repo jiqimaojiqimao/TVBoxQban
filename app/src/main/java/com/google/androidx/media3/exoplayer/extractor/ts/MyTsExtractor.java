@@ -340,6 +340,12 @@ public boolean sniff(ExtractorInput input) throws IOException {
             return RESULT_CONTINUE;
         }
 
+// For 192-byte Blu-ray m2ts: skip 4-byte TP_extra_header before TS header
+if (packetSize == 192) {
+	Log.e("MyTsExtractor", "📦 192-byte: skipped 4B extra header, endOfPacket=" + endOfPacket);
+    tsPacketBuffer.skipBytes(4);   // skip TP_extra_header (sync byte + 3 bytes)
+    endOfPacket -= 4;              // adjust end position (188-byte TS payload)
+}
         @TsPayloadReader.Flags int packetHeaderFlags = 0;
 
         // Note: See ISO/IEC 13818-1, section 2.4.3.2 for details of the header format.
