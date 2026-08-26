@@ -466,16 +466,30 @@ public final class MyTsExtractor implements Extractor {
         int syncBytePosition = TsUtil.findSyncBytePosition(tsPacketBuffer.getData(), searchStart, limit);
         tsPacketBuffer.setPosition(syncBytePosition);
 
-        if (packetSize == 192) {
+if (packetSize == 192) {
+    int pos = tsPacketBuffer.getPosition();
+    // 找到下一个合法的 192-byte 包起点：pos 应该对齐到 192 的倍数，sync byte 在 +4
+    int alignedPos = (pos / 192) * 192;
+    if (alignedPos < pos) alignedPos += 192; // 下一个边界
+    int expectedSyncPos = alignedPos + 4;
+    
+    // 扫描：从 expectedSyncPos 开始，每次跳 192 字节，找 0x47
+    int scanPos = expectedSyncPos;
+    while (scanPos + 188 <= limit && scanPos < searchStart + 192 * 10) {
+        if (tsPacketBuffer.getData()[scanPos] == TS_SYNC_BYTE) {
+            tsPacketBuffer.setPosition(scanPos);
             tsPacketBuffer.skipBytes(4);
-            int result = syncBytePosition + 188;
-            Log.e("MyTsExtractor", "📍 192: searchStart=" + searchStart 
-                  + " syncPos=" + syncBytePosition 
+            int result = scanPos + 188;
+            Log.e("MyTsExtractor", "📍 192 ALIGNED: scanPos=" + scanPos 
                   + " skip→" + tsPacketBuffer.getPosition() 
-                  + " endOfPacket=" + result 
-                  + " bufferLimit=" + limit);
+                  + " endOfPacket=" + result);
             return result;
         }
+        scanPos += 192;
+    }
+    // 没找到，等更多数据
+    return limit + 1;
+}
 
         int endOfPacket = syncBytePosition + packetSize;
         // ... bytesSinceLastSync 逻辑 ...
