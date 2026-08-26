@@ -29,6 +29,7 @@ import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory;
 import androidx.media3.extractor.ts.TsExtractor;
 
 import com.google.androidx.media3.exoplayer.extractor.ts.MyTsExtractor;
+import androidx.media3.extractor.Extractor;
 
 import com.github.tvbox.osc.util.FileUtils;
 
@@ -105,9 +106,14 @@ public final class ExoMediaSourceHelper {
         }
 
 
-        if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-            return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(MediaItem.fromUri(contentUri));
-        }
+    // ✅ 兜底：只有炸了才用（而且放宽 errorCode）
+    if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED
+            || errorCode == PlaybackException.ERROR_CODE_UNSPECIFIED) {
+        return new ProgressiveMediaSource.Factory(
+                factory,
+                getExtractorsFactory()
+        ).createMediaSource(MediaItem.fromUri(contentUri));
+    }
 
 
         switch (contentType) {
