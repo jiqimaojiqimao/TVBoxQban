@@ -23,51 +23,15 @@ import java.util.ArrayList;
 @UnstableApi
 public class TvRenderersFactory extends NextRenderersFactory {
 
-    /** 与旧版 ExoPlayer 默认值保持一致 */
     private static final int DEFAULT_MAX_DROPPED_FRAMES = 50;
+    private final MediaCodecSelector selector;
 
     public TvRenderersFactory(Context context, MediaCodecSelector selector) {
         super(context);
-        setMediaCodecSelector(selector);   // ← 关键
+        this.selector = selector;
+        setMediaCodecSelector(selector);
         setExtensionRendererMode(EXTENSION_RENDERER_MODE_OFF);
         setEnableDecoderFallback(true);
-    }
-
-    @Override
-    protected void buildAudioRenderers(
-            @NonNull Context context,
-            int extensionRendererMode,
-            @NonNull MediaCodecSelector mediaCodecSelector,
-            boolean enableDecoderFallback,
-            @NonNull AudioSink audioSink,
-            @NonNull Handler eventHandler,
-            @NonNull AudioRendererEventListener eventListener,
-            @NonNull ArrayList<Renderer> out
-    ) {
-        super.buildAudioRenderers(
-                context,
-                EXTENSION_RENDERER_MODE_OFF,
-                mediaCodecSelector,
-                enableDecoderFallback,
-                audioSink,
-                eventHandler,
-                eventListener,
-                out
-        );
-
-        // 音频 FFmpeg 永远优先
-        try {
-            out.add(
-                    0,
-                    new FfmpegAudioRenderer(
-                            eventHandler,
-                            eventListener,
-                            audioSink
-                    )
-            );
-        } catch (Exception ignored) {
-            // FFmpeg so 未加载时忽略
-        }
     }
 
     @Override
@@ -81,11 +45,53 @@ public class TvRenderersFactory extends NextRenderersFactory {
             long allowedVideoJoiningTimeMs,
             @NonNull ArrayList<Renderer> out
     ) {
-        // MediaCodec 永远优先
+        // ✅ 强制把 DV 当成 HEVC 处理，绕过 DV 专用解码器
         super.buildVideoRenderers(
                 context,
                 EXTENSION_RENDERER_MODE_OFF,
-                mediaCodecSelector,
+                new MediaCodecSelector() {
+                    @NonNull
+                    @Override
+                    public List<MediaCodecInfo> getDecoderInfos(
+                            @NonNull String mimeType,
+                            boolean requiresSecureDecoder,
+                            boolean requiresTunnelingDecoder
+                    ) throws MediaCodecUtil.DecoderQueryException {
+
+                        // ✅ 关键：DV 直接降级为 HEVC
+                        if (mimeType.equals("video/dolby-vision")) {
+                            mimeType = "video/hevc";
+                        }
+
+                        List<MediaCodecInfo> infos =
+                                selector.getDecoderInfos(
+                                        mimeType,
+                                        requiresSecureDecoder,
+                                        requiresTunnelingDecoder
+                                );
+
+                        if (!mimeType.startsWith("video/")) {
+                            return infos;
+                        }
+
+                        // ✅ Amlogic 专用拦截
+                        if (!"amlogic".equalsIgnoreCase(Build.MANUFACTURER)) {
+                            return infos;
+                        }
+
+                        List<MediaCodecInfo> filtered = new ArrayList<>();
+                        for (MediaCodecInfo info : infos) {
+                            String name = info.name;
+                            if (name.contains("OMX.amlogic.dolby-vision")
+                                    || name.contains("dvhe.decoder.awesome2")) {
+                                continue;
+                            }
+                            filtered.add(info);
+                        }
+
+                        return filtered.isEmpty() ? infos : filtered;
+                    }
+                },
                 enableDecoderFallback,
                 eventHandler,
                 eventListener,
@@ -93,7 +99,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
                 out
         );
 
-        // FFmpeg 视频软解兜底（排在最后）
+        // FFmpeg 软解兜底
         try {
             out.add(
                     new FfmpegVideoRenderer(
@@ -103,8 +109,6 @@ public class TvRenderersFactory extends NextRenderersFactory {
                             DEFAULT_MAX_DROPPED_FRAMES
                     )
             );
-        } catch (Exception ignored) {
-            // FFmpeg so 未加载时忽略
-        }
+        } catch (Exception ignored) {}
     }
 }
