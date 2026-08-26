@@ -224,25 +224,11 @@ public final class MyTsExtractor implements Extractor {
         Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
 
         long inputLength = input.getLength();
-        if (tracksEnded) {
-            boolean canReadDuration = inputLength != C.LENGTH_UNSET && mode != MODE_HLS;
-            if (canReadDuration && !durationReader.isDurationReadFinished()) {
-                return durationReader.readDuration(input, seekPosition, pcrPid);
-            }
-            maybeOutputSeekMap(inputLength);
-
-            if (pendingSeekToStart) {
-                pendingSeekToStart = false;
-                seek(0, 0);
-                if (input.getPosition() != 0) {
-                    seekPosition.position = 0;
-                    return RESULT_SEEK;
-                }
-            }
-            if (tsBinarySearchSeeker != null && tsBinarySearchSeeker.isSeeking()) {
-                return tsBinarySearchSeeker.handlePendingSeek(input, seekPosition);
-            }
-        }
+if (tracksEnded) {
+    maybeOutputSeekMap(inputLength);
+    // 已经建好 tracks，直接继续，让播放器正常读媒体数据
+    // 不要走 durationReader，它会提前返回 EOF 导致 3001
+}
 
         if (!fillBufferWithAtLeastOnePacket(input)) {
             return RESULT_END_OF_INPUT;
