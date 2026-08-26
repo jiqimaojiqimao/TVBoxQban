@@ -21,6 +21,7 @@ import static androidx.media3.extractor.ts.TsPayloadReader.FLAG_PAYLOAD_UNIT_STA
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import android.util.SparseIntArray;
+import android.util.Log;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
