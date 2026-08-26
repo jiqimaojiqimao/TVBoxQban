@@ -1,5 +1,10 @@
 package xyz.doikki.videoplayer.exo;
 
+import android.os.Build;
+
+import androidx.annotation.Nullable;
+
+
 import android.content.Context;
 import android.os.Handler;
 import androidx.annotation.NonNull;
@@ -8,12 +13,15 @@ import androidx.media3.exoplayer.Renderer;
 import androidx.media3.exoplayer.audio.AudioRendererEventListener;
 import androidx.media3.exoplayer.audio.AudioSink;
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
+import androidx.media3.exoplayer.mediacodec.MediaCodecUtil;
+import androidx.media3.exoplayer.mediacodec.MediaCodecInfo;
 import androidx.media3.exoplayer.video.VideoRendererEventListener;
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.FfmpegAudioRenderer;
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.FfmpegVideoRenderer;
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * xuameng TV 专用 RenderersFactory：
