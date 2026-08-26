@@ -142,7 +142,7 @@ if (isTsUri(contentUri)) {
     }
 
 private static synchronized ExtractorsFactory getExtractorsFactory() {
-    return (uri) -> {
+    return () -> {
         Log.e("ExoMediaSource_xuameng", "🔥 ExtractorsFactory lambda CALLED");
 
         MyTsExtractor myExtractor = new MyTsExtractor(
