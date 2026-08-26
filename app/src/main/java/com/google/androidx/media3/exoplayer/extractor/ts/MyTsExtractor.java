@@ -225,9 +225,6 @@ public final class MyTsExtractor implements Extractor {
 
         long inputLength = input.getLength();
 
-        if (tracksEnded) {
-        }
-
         if (!fillBufferWithAtLeastOnePacket(input)) {
             return RESULT_END_OF_INPUT;
         }
@@ -296,11 +293,9 @@ public final class MyTsExtractor implements Extractor {
         // Consume payload
         boolean wereTracksEnded = tracksEnded;
         if (shouldConsumePacketPayload(pid)) {
-            Log.e("MyTsExtractor", "📦 CONSUME pid=" + pid
-                    + " pos=" + tsPacketBuffer.getPosition()
-                    + " limit=" + endOfPacket
-                    + " bytesLeft=" + (endOfPacket - tsPacketBuffer.getPosition())
-                    + " tsPacketHeader=0x" + Integer.toHexString(tsPacketHeader));
+if ((packetHeaderFlags & FLAG_PAYLOAD_UNIT_START_INDICATOR) != 0) {
+    Log.e("MyTs6", "🎬 PUSI pid=" + pid + " cc=" + (tsPacketHeader & 0xF));
+}
             tsPacketBuffer.setLimit(endOfPacket);
             payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
         }
@@ -416,7 +411,9 @@ private void maybeOutputSeekMap(long inputLength) {
                     if (tsPayloadReaders.get(pid) == null) {
                         tsPayloadReaders.put(pid, new SectionReader(new PmtReader(pid)));
                         remainingPmts++;
-                        Log.e("MyTsExtractor", "📊 PAT done: remainingPmts=" + remainingPmts);
+                        Log.e("MyTsExtractor", "🎯 TRACK: pid=" + trackPid + " streamType=0x" 
+        + Integer.toHexString(streamType) + " reader=" 
+        + (reader != null ? reader.getClass().getSimpleName() : "NULL"));
                     }
                 }
             }
