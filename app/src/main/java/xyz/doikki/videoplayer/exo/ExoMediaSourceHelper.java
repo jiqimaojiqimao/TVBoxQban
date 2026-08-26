@@ -28,6 +28,8 @@ import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory;
 import androidx.media3.extractor.ts.TsExtractor;
 
+import com.google.androidx.media3.exoplayer.extractor.ts.MyTsExtractor;
+
 import com.github.tvbox.osc.util.FileUtils;
 
 import java.io.File;
@@ -130,10 +132,15 @@ public final class ExoMediaSourceHelper {
         return builder.build();
     }
 
-    private static synchronized ExtractorsFactory getExtractorsFactory() {
-        return new DefaultExtractorsFactory().setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS).setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 10);
-
-    }
+private static synchronized ExtractorsFactory getExtractorsFactory() {
+    return () -> new Extractor[] {
+        new MyTsExtractor(
+            MyTsExtractor.MODE_SINGLE_PMT,
+            DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS,
+            1024 * 1024 // 1MB 内找同步字节
+        )
+    };
+}
 
     private int inferContentType(String fileName) {
         fileName = fileName.toLowerCase();
