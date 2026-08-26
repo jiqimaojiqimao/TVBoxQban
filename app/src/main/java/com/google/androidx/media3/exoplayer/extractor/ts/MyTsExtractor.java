@@ -163,6 +163,7 @@ public final class MyTsExtractor implements Extractor {
                 new TimestampAdjuster(0),
                 new DefaultTsPayloadReaderFactory(defaultTsPayloadReaderFlags),
                 timestampSearchBytes);
+Log.e("MyTsExtractor", "🏗️ CONSTRUCTOR called, mode=" + mode + " searchBytes=" + timestampSearchBytes);
     }
 
     /**
