@@ -277,9 +277,6 @@ public final class MyTsExtractor implements Extractor {
             if (previousCounter == continuityCounter) {
                 tsPacketBuffer.setPosition(endOfPacket);
                 return RESULT_CONTINUE;
-            } else if (continuityCounter != ((previousCounter + 1) & 0xF)) {
-                payloadReader.seek();
-            }
         }
 
         // Skip adaptation field
@@ -478,6 +475,8 @@ public final class MyTsExtractor implements Extractor {
             while (remainingEntriesLength > 0) {
                 sectionData.readBytes(pmtScratch, 5);
                 int streamType = pmtScratch.readBits(8);
+Log.e("MyTsExtractor", "🔍 ES: rawStreamType=0x" + Integer.toHexString(streamType) 
+        + " elementaryPid=" + elementaryPid);
                 pmtScratch.skipBits(3);
                 int elementaryPid = pmtScratch.readBits(13);
                 pmtScratch.skipBits(4);
@@ -506,9 +505,9 @@ public final class MyTsExtractor implements Extractor {
                     }
                     tsPayloadReaders.put(trackPid, reader);
                 }
-    Log.e("MyTsExtractor", "🎯 TRACK: pid=" + trackPid
-            + " streamType=0x" + Integer.toHexString(trackIdToReaderScratch.keyAt(i))
-            + " reader=" + (reader != null ? reader.getClass().getSimpleName() : "NULL"));
+                Log.e("MyTsExtractor", "🎯 TRACK: pid=" + trackPid
+                        + " streamType=0x" + Integer.toHexString(trackIdToReaderScratch.keyAt(i))
+                        + " reader=" + (reader != null ? reader.getClass().getSimpleName() : "NULL"));
             }
 
             if (mode == MODE_HLS) {
