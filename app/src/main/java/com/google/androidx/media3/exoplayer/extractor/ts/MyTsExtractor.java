@@ -467,28 +467,40 @@ public final class MyTsExtractor implements Extractor {
         tsPacketBuffer.setPosition(syncBytePosition);
 
 if (packetSize == 192) {
-    int pos = tsPacketBuffer.getPosition();
-    // 找到下一个合法的 192-byte 包起点：pos 应该对齐到 192 的倍数，sync byte 在 +4
-    int alignedPos = (pos / 192) * 192;
-    if (alignedPos < pos) alignedPos += 192; // 下一个边界
-    int expectedSyncPos = alignedPos + 4;
-    
-    // 扫描：从 expectedSyncPos 开始，每次跳 192 字节，找 0x47
-    int scanPos = expectedSyncPos;
-    while (scanPos + 188 <= limit && scanPos < searchStart + 192 * 10) {
-        if (tsPacketBuffer.getData()[scanPos] == TS_SYNC_BYTE) {
-            tsPacketBuffer.setPosition(scanPos);
+    int currentPos = tsPacketBuffer.getPosition();
+    int lim = tsPacketBuffer.limit();
+    byte[] data = tsPacketBuffer.getData();
+
+    // 当前 buffer position 对应的文件偏移
+    long fileOffset = inputPos + currentPos;
+
+    // 找到下一个 192 对齐的文件偏移
+    long alignedFileOffset = ((fileOffset / 192) + 1) * 192; // 下一个 192 边界
+    int alignedBufferPos = (int) (alignedFileOffset - inputPos); // 转回 buffer 偏移
+    int syncPos = alignedBufferPos + 4;
+
+    // 扫描：从 syncPos 开始，每次跳 192，找 0x47
+    for (int i = 0; i < 10; i++) {
+        if (syncPos + 188 > lim) {
+            break;
+        }
+        if (data[syncPos] == (byte) TS_SYNC_BYTE) {
+            tsPacketBuffer.setPosition(syncPos);
             tsPacketBuffer.skipBytes(4);
-            int result = scanPos + 188;
-            Log.e("MyTsExtractor", "📍 192 ALIGNED: scanPos=" + scanPos 
-                  + " skip→" + tsPacketBuffer.getPosition() 
+            int result = syncPos + 188;
+            Log.e("MyTsExtractor", "📍 192 ALIGNED: fileOffset=" + (inputPos + syncPos)
+                  + " syncPos=" + syncPos
+                  + " skip→" + tsPacketBuffer.getPosition()
                   + " endOfPacket=" + result);
             return result;
         }
-        scanPos += 192;
+        syncPos += 192;
     }
+
     // 没找到，等更多数据
-    return limit + 1;
+    Log.e("MyTsExtractor", "⚠️ No aligned 0x47 found, currentPos=" + currentPos
+          + " inputPos=" + inputPos + " fileOffset=" + fileOffset + " limit=" + lim);
+    return lim + 1;
 }
 
         int endOfPacket = syncBytePosition + packetSize;
