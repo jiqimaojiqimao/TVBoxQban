@@ -142,15 +142,24 @@ if (isTsUri(contentUri)) {
     }
 
 private static synchronized ExtractorsFactory getExtractorsFactory() {
-    return () -> {
-        Log.e("ExoMediaSource_xuameng", "🔥 ExtractorsFactory lambda CALLED, creating MyTsExtractor...");
-        MyTsExtractor extractor = new MyTsExtractor(
-            MyTsExtractor.MODE_SINGLE_PMT,
-            DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS,
-            1024 * 1024
+    return (uri, responseHeaders) -> {
+        Log.e("ExoMediaSource_xuameng", "🔥 ExtractorsFactory lambda CALLED");
+
+        MyTsExtractor myExtractor = new MyTsExtractor(
+                MyTsExtractor.MODE_SINGLE_PMT,
+                DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS,
+                1024 * 1024
         );
-        Log.e("ExoMediaSource_xuameng", "🔥 MyTsExtractor instance created: " + extractor);
-        return new Extractor[]{extractor};
+        Log.e("ExoMediaSource_xuameng", "🔥 MyTsExtractor instance created: " + myExtractor);
+
+        // 第二个：官方 TsExtractor 兜底，确保 extractors.length > 1 → sniff() 一定被调
+        TsExtractor fallback = new TsExtractor(
+                TsExtractor.MODE_MULTI_PMT,
+                0,
+                1024 * 1024
+        );
+
+        return new Extractor[]{myExtractor, fallback};
     };
 }
 
