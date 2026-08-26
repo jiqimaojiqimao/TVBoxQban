@@ -220,8 +220,9 @@ Log.e("MyTsExtractor", "🏗️ CONSTRUCTOR called, mode=" + mode + " searchByte
 
 @Override
 public boolean sniff(ExtractorInput input) throws IOException {
-	     Log.e("MyTsExtractor", "🔍 sniff() CALLED input=" + input.getClass().getSimpleName() 
-            + " pos=" + input.getPosition());
+    Log.e("MyTsExtractor", "🔍 sniff() pos=" + input.getPosition() 
+            + " length=" + input.getLength()   // ← 加这行
+            + " input=" + input.getClass().getSimpleName());
     int searchSize = Math.min(timestampSearchBytes, 1024 * 1024); // 最多 1MB
     if (tsPacketBuffer.getData().length < searchSize) {
         tsPacketBuffer.reset(new byte[searchSize], 0);
