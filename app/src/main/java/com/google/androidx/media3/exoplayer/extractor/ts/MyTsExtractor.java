@@ -293,9 +293,9 @@ public final class MyTsExtractor implements Extractor {
         // Consume payload
         boolean wereTracksEnded = tracksEnded;
         if (shouldConsumePacketPayload(pid)) {
-if ((packetHeaderFlags & FLAG_PAYLOAD_UNIT_START_INDICATOR) != 0) {
-    Log.e("MyTs6", "🎬 PUSI pid=" + pid + " cc=" + (tsPacketHeader & 0xF));
-}
+            if ((packetHeaderFlags & FLAG_PAYLOAD_UNIT_START_INDICATOR) != 0) {
+                Log.e("MyTs6", "🎬 PUSI pid=" + pid + " cc=" + (tsPacketHeader & 0xF));
+            }
             tsPacketBuffer.setLimit(endOfPacket);
             payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
         }
@@ -310,10 +310,10 @@ if ((packetHeaderFlags & FLAG_PAYLOAD_UNIT_START_INDICATOR) != 0) {
     // endregion
 
     // region Internals
-private void maybeOutputSeekMap(long inputLength) {
-    // 暂时不输出 seekMap，避免 UNSET duration 导致 NPE
-    hasOutputSeekMap = true;
-}
+    private void maybeOutputSeekMap(long inputLength) {
+        // 暂时不输出 seekMap，避免 UNSET duration 导致 NPE
+        hasOutputSeekMap = true;
+    }
 
     private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
         byte[] data = tsPacketBuffer.getData();
@@ -411,9 +411,6 @@ private void maybeOutputSeekMap(long inputLength) {
                     if (tsPayloadReaders.get(pid) == null) {
                         tsPayloadReaders.put(pid, new SectionReader(new PmtReader(pid)));
                         remainingPmts++;
-                        Log.e("MyTsExtractor", "🎯 TRACK: pid=" + trackPid + " streamType=0x" 
-        + Integer.toHexString(streamType) + " reader=" 
-        + (reader != null ? reader.getClass().getSimpleName() : "NULL"));
                     }
                 }
             }
@@ -509,6 +506,9 @@ private void maybeOutputSeekMap(long inputLength) {
                     }
                     tsPayloadReaders.put(trackPid, reader);
                 }
+    Log.e("MyTsExtractor", "🎯 TRACK: pid=" + trackPid
+            + " streamType=0x" + Integer.toHexString(trackIdToReaderScratch.keyAt(i))
+            + " reader=" + (reader != null ? reader.getClass().getSimpleName() : "NULL"));
             }
 
             if (mode == MODE_HLS) {
