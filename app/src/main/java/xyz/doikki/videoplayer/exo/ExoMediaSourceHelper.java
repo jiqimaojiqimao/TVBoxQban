@@ -142,12 +142,15 @@ if (isTsUri(contentUri)) {
     }
 
 private static synchronized ExtractorsFactory getExtractorsFactory() {
-    return () -> new Extractor[] {
-        new MyTsExtractor(
+    return () -> {
+        Log.e("ExoMediaSource_xuameng", "🔥 ExtractorsFactory lambda CALLED, creating MyTsExtractor...");
+        MyTsExtractor extractor = new MyTsExtractor(
             MyTsExtractor.MODE_SINGLE_PMT,
             DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS,
-            1024 * 1024 // 1MB 内找同步字节
-        )
+            1024 * 1024
+        );
+        Log.e("ExoMediaSource_xuameng", "🔥 MyTsExtractor instance created: " + extractor);
+        return new Extractor[]{extractor};
     };
 }
 
