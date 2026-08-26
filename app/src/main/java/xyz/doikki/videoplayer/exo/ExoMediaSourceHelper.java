@@ -106,14 +106,15 @@ public final class ExoMediaSourceHelper {
         }
 
 
-    // ✅ 兜底：只有炸了才用（而且放宽 errorCode）
-    if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED
-            || errorCode == PlaybackException.ERROR_CODE_UNSPECIFIED) {
-        return new ProgressiveMediaSource.Factory(
-                factory,
-                getExtractorsFactory()
-        ).createMediaSource(MediaItem.fromUri(contentUri));
-    }
+String uriStr = contentUri.toString().toLowerCase();
+
+// ✅ 优先判断 m2ts / ts
+if (uriStr.contains(".m2ts") || uriStr.contains(".ts")) {
+    return new ProgressiveMediaSource.Factory(
+            getDataSourceFactory(),
+            getExtractorsFactory() // ✅ MyTsExtractor
+    ).createMediaSource(MediaItem.fromUri(contentUri));
+}
 
 
         switch (contentType) {
