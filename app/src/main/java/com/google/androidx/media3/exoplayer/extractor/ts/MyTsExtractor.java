@@ -107,6 +107,7 @@ public final class MyTsExtractor implements Extractor {
     private static final long HEVC_FORMAT_IDENTIFIER = 0x48455643;
     private static final int BUFFER_SIZE = TS_PACKET_SIZE * 50;
     private static final int SNIFF_TS_PACKET_COUNT = 5;
+	private int packetSize = TS_PACKET_SIZE; // 默认 188
     @Mode
     private final int mode;
     private final int timestampSearchBytes;
@@ -221,32 +222,30 @@ Log.e("MyTsExtractor", "🏗️ CONSTRUCTOR called, mode=" + mode + " searchByte
 @Override
 public boolean sniff(ExtractorInput input) throws IOException {
     Log.e("MyTsExtractor", "🔍 sniff() pos=" + input.getPosition() 
-            + " length=" + input.getLength()   // ← 加这行
-            + " input=" + input.getClass().getSimpleName());
-    int searchSize = Math.min(timestampSearchBytes, 1024 * 1024); // 最多 1MB
+            + " length=" + input.getLength());
+    
+    int searchSize = Math.min(timestampSearchBytes, 1024 * 1024);
     if (tsPacketBuffer.getData().length < searchSize) {
         tsPacketBuffer.reset(new byte[searchSize], 0);
     }
-
     byte[] buffer = tsPacketBuffer.getData();
     int bytesPeeked = input.peek(buffer, 0, searchSize);
-
-    int[] packetSizes = {188, 192}; // 支持标准 TS 和 BD m2ts
-
-    for (int packetSize : packetSizes) {
-        if (bytesPeeked < packetSize * 5) {
-            continue;
-        }
-        for (int startPos = 0; startPos < packetSize; startPos++) {
+    
+    int[] packetSizes = {188, 192};
+    for (int ps : packetSizes) {
+        if (bytesPeeked < ps * 5) continue;
+        for (int startPos = 0; startPos < ps; startPos++) {
             boolean sync = true;
             for (int i = 0; i < 5; i++) {
-                int offset = startPos + i * packetSize;
+                int offset = startPos + i * ps;
                 if (offset >= bytesPeeked || buffer[offset] != TS_SYNC_BYTE) {
                     sync = false;
                     break;
                 }
             }
             if (sync) {
+                Log.e("MyTsExtractor", "✅ TS sync found! packetSize=" + ps + " skipBytes=" + startPos);
+                this.packetSize = ps;  // ← 记录 packetSize
                 input.skipFully(startPos);
                 return true;
             }
@@ -308,7 +307,7 @@ public boolean sniff(ExtractorInput input) throws IOException {
     @Override
     @ReadResult
     public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
-		Log.e("MyTsExtractor_xuameng", "🔍 read() CALLED inputPos=" + input.getPosition());
+		Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
         long inputLength = input.getLength();
         if (tracksEnded) {
             boolean canReadDuration = inputLength != C.LENGTH_UNSET && mode != MODE_HLS;
@@ -431,7 +430,7 @@ public boolean sniff(ExtractorInput input) throws IOException {
     private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
         byte[] data = tsPacketBuffer.getData();
         // Shift bytes to the start of the buffer if there isn't enough space left at the end.
-        if (BUFFER_SIZE - tsPacketBuffer.getPosition() < TS_PACKET_SIZE) {
+        if (BUFFER_SIZE - tsPacketBuffer.getPosition() < packetSize) {
             int bytesLeft = tsPacketBuffer.bytesLeft();
             if (bytesLeft > 0) {
                 System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
@@ -439,7 +438,7 @@ public boolean sniff(ExtractorInput input) throws IOException {
             tsPacketBuffer.reset(data, bytesLeft);
         }
         // Read more bytes until we have at least one packet.
-        while (tsPacketBuffer.bytesLeft() < TS_PACKET_SIZE) {
+        while (tsPacketBuffer.bytesLeft() < packetSize) {
             int limit = tsPacketBuffer.limit();
             int read = input.read(data, limit, BUFFER_SIZE - limit);
             if (read == C.RESULT_END_OF_INPUT) {
@@ -456,27 +455,24 @@ public boolean sniff(ExtractorInput input) throws IOException {
      * <p>This may be a position beyond the buffer limit if the packet has not been read fully into
      * the buffer, or if no packet could be found within the buffer.
      */
-    private int findEndOfFirstTsPacketInBuffer() throws ParserException {
-        int searchStart = tsPacketBuffer.getPosition();
-        int limit = tsPacketBuffer.limit();
-        int syncBytePosition =
-                TsUtil.findSyncBytePosition(tsPacketBuffer.getData(), searchStart, limit);
-        // Discard all bytes before the sync byte.
-        // If sync byte is not found, this means discard the whole buffer.
-        tsPacketBuffer.setPosition(syncBytePosition);
-        int endOfPacket = syncBytePosition + TS_PACKET_SIZE;
-        if (endOfPacket > limit) {
-            bytesSinceLastSync += syncBytePosition - searchStart;
-            if (mode == MODE_HLS && bytesSinceLastSync > TS_PACKET_SIZE * 2) {
-                throw ParserException.createForMalformedContainer(
-                        "Cannot find sync byte. Most likely not a Transport Stream.", /* cause= */ null);
-            }
-        } else {
-            // We have found a packet within the buffer.
-            bytesSinceLastSync = 0;
+private int findEndOfFirstTsPacketInBuffer() throws ParserException {
+    int searchStart = tsPacketBuffer.getPosition();
+    int limit = tsPacketBuffer.limit();
+    int syncBytePosition = TsUtil.findSyncBytePosition(tsPacketBuffer.getData(), searchStart, limit);
+    tsPacketBuffer.setPosition(syncBytePosition);
+    int endOfPacket = syncBytePosition + packetSize;  // ← 用 packetSize！
+    // ... 后面 bytesSinceLastSync 判断也用 packetSize
+    if (endOfPacket > limit) {
+        bytesSinceLastSync += syncBytePosition - searchStart;
+        if (mode == MODE_HLS && bytesSinceLastSync > packetSize * 2) {  // ← 用 packetSize
+            throw ParserException.createForMalformedContainer(
+                    "Cannot find sync byte. Most likely not a Transport Stream.", null);
         }
-        return endOfPacket;
+    } else {
+        bytesSinceLastSync = 0;
     }
+    return endOfPacket;
+}
 
     private boolean shouldConsumePacketPayload(int packetPid) {
         return mode == MODE_HLS
