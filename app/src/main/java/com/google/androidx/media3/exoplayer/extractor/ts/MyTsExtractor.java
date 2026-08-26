@@ -308,6 +308,11 @@ public final class MyTsExtractor implements Extractor {
     @ReadResult
     public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
         Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
+// ★ 强制文件位置 192 对齐
+int remainder = (int) (input.getPosition() % 192);
+if (remainder != 0) {
+    input.skipFully(192 - remainder);
+}
         long inputLength = input.getLength();
         if (tracksEnded) {
             boolean canReadDuration = inputLength != C.LENGTH_UNSET && mode != MODE_HLS;
@@ -432,27 +437,27 @@ public final class MyTsExtractor implements Extractor {
 
     // Internals.
 
-    private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
-        byte[] data = tsPacketBuffer.getData();
-        // Shift bytes to the start of the buffer if there isn't enough space left at the end.
-        if (BUFFER_SIZE - tsPacketBuffer.getPosition() < packetSize) {
-            int bytesLeft = tsPacketBuffer.bytesLeft();
-            if (bytesLeft > 0) {
-                System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
-            }
-            tsPacketBuffer.reset(data, bytesLeft);
+private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
+    byte[] data = tsPacketBuffer.getData();
+    
+    if (BUFFER_SIZE - tsPacketBuffer.getPosition() < packetSize) {
+        int bytesLeft = tsPacketBuffer.bytesLeft();
+        if (bytesLeft > 0) {
+            System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
         }
-        // Read more bytes until we have at least one packet.
-        while (tsPacketBuffer.bytesLeft() < packetSize) {
-            int limit = tsPacketBuffer.limit();
-            int read = input.read(data, limit, BUFFER_SIZE - limit);
-            if (read == C.RESULT_END_OF_INPUT) {
-                return false;
-            }
-            tsPacketBuffer.setLimit(limit + read);
-        }
-        return true;
+        tsPacketBuffer.reset(data, bytesLeft);
     }
+
+    while (tsPacketBuffer.bytesLeft() < packetSize) {
+        int limit = tsPacketBuffer.limit();
+        int read = input.read(data, limit, BUFFER_SIZE - limit);
+        if (read == C.RESULT_END_OF_INPUT) {
+            return false;
+        }
+        tsPacketBuffer.setLimit(limit + read);
+    }
+    return true;
+}
 
     /**
      * Returns the position of the end of the first TS packet (exclusive) in the packet buffer.
@@ -463,61 +468,27 @@ public final class MyTsExtractor implements Extractor {
 private int findEndOfFirstTsPacketInBuffer() throws ParserException {
     int searchStart = tsPacketBuffer.getPosition();
     int limit = tsPacketBuffer.limit();
+    byte[] data = tsPacketBuffer.getData();
 
-    if (packetSize == 192) {
-        byte[] data = tsPacketBuffer.getData();
-        int pos = searchStart;
+    // buffer position 一定是 192 的倍数（因为文件对齐 + 每次消费 192 字节）
+    int syncPos = searchStart + 4;
 
-        // 如果 pos 不在 192 边界上，跳到下一个 192 边界
-        int remainder = pos % 192;
-        if (remainder != 0) {
-            pos += (192 - remainder);
+    for (int i = 0; i < 20; i++) {
+        if (syncPos + 188 > limit) {
+            return limit + 1;
         }
-        // sync byte 在每个 192 块的第 5 字节（偏移 +4）
-        int syncPos = pos + 4;
-
-        for (int i = 0; i < 10; i++) {
-            if (syncPos + 188 > limit) {
-                // 需要更多数据，等 fillBuffer 后再试
-                return limit + 1;
-            }
-            if (data[syncPos] == (byte) TS_SYNC_BYTE) {
-                tsPacketBuffer.setPosition(syncPos);
-                tsPacketBuffer.skipBytes(4);
-                int result = syncPos + 188;
-                Log.e("MyTsExtractor", "📍 192 ALIGNED: searchStart=" + searchStart
-                      + " syncPos=" + syncPos
-                      + " skip→" + tsPacketBuffer.getPosition()
-                      + " endOfPacket=" + result
-                      + " limit=" + limit);
-                return result;
-            }
-            // 没找到，跳到下一个 192 块
-            pos += 192;
-            syncPos = pos + 4;
+        if (data[syncPos] == (byte) TS_SYNC_BYTE) {
+            tsPacketBuffer.setPosition(syncPos);
+            tsPacketBuffer.skipBytes(4);
+            int result = syncPos + 188;
+            Log.e("MyTsExtractor", "📍 192 ALIGNED: syncPos=" + syncPos + " endOfPacket=" + result);
+            return result;
         }
-
-        // 10 个包都没找到 0x47，等更多数据
-        Log.e("MyTsExtractor", "⚠️ No 0x47 in 10 aligned blocks, searchStart=" + searchStart + " limit=" + limit);
-        return limit + 1;
+        syncPos += 192;
     }
 
-    // ===== 188-byte 原始逻辑 =====
-    int syncBytePosition = TsUtil.findSyncBytePosition(tsPacketBuffer.getData(), searchStart, limit);
-    tsPacketBuffer.setPosition(syncBytePosition);
-    int endOfPacket = syncBytePosition + 188;
-    if (endOfPacket > limit) {
-        return endOfPacket;
-    }
-    int header, payloadUnitStartIndicator;
-    do {
-        searchStart = endOfPacket;
-        tsPacketBuffer.setPosition(searchStart);
-        header = tsPacketBuffer.readInt();
-        payloadUnitStartIndicator = (header & 0x40000000) >> 30;
-        endOfPacket = searchStart + 188;
-    } while (payloadUnitStartIndicator != 1 && endOfPacket < limit);
-    return endOfPacket;
+    Log.e("MyTsExtractor", "⚠️ No 0x47, searchStart=" + searchStart + " limit=" + limit);
+    return limit + 1;
 }
 
     private boolean shouldConsumePacketPayload(int packetPid) {
