@@ -229,10 +229,8 @@ public final class MyTsExtractor implements Extractor {
             return RESULT_END_OF_INPUT;
         }
 
-        // ★ 逐字节搜索 + 同步验证
         int syncPos = findEndOfFirstTsPacketInBuffer();
         if (syncPos < 0) {
-            // ★ 文件位置不对齐 → seek 到下一个 packetSize 边界
             long currentPos = input.getPosition();
             long remainder = currentPos % packetSize;
             if (remainder != 0) {
@@ -277,6 +275,7 @@ public final class MyTsExtractor implements Extractor {
             if (previousCounter == continuityCounter) {
                 tsPacketBuffer.setPosition(endOfPacket);
                 return RESULT_CONTINUE;
+            }
         }
 
         // Skip adaptation field
@@ -308,19 +307,16 @@ public final class MyTsExtractor implements Extractor {
 
     // region Internals
     private void maybeOutputSeekMap(long inputLength) {
-        // 暂时不输出 seekMap，避免 UNSET duration 导致 NPE
         hasOutputSeekMap = true;
     }
 
     private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
         byte[] data = tsPacketBuffer.getData();
 
-        // 满了但不够一个包 → 清空
         if (tsPacketBuffer.bytesLeft() < packetSize && tsPacketBuffer.limit() >= BUFFER_SIZE) {
             tsPacketBuffer.reset(data, 0);
         }
 
-        // 空间不够放两个包 → 压缩
         if (tsPacketBuffer.getPosition() >= BUFFER_SIZE - packetSize * 2) {
             int bytesLeft = tsPacketBuffer.bytesLeft();
             if (bytesLeft > 0) {
@@ -332,7 +328,6 @@ public final class MyTsExtractor implements Extractor {
         while (tsPacketBuffer.bytesLeft() < packetSize) {
             int limit = tsPacketBuffer.limit();
             int read = input.read(data, limit, BUFFER_SIZE - limit);
-			Log.e("MyTsExtractor", "📖 input.read() at pos=" + input.getPosition() + " requested=" + (BUFFER_SIZE - limit) + " actual=" + read);
             if (read == C.RESULT_END_OF_INPUT) {
                 return false;
             }
@@ -341,15 +336,11 @@ public final class MyTsExtractor implements Extractor {
         return true;
     }
 
-    /**
-     * ★ 逐字节搜索 + 同步验证（验证 data[i+packetSize] 也是 0x47）
-     */
     private int findEndOfFirstTsPacketInBuffer() {
         int searchStart = tsPacketBuffer.getPosition();
         int limit = tsPacketBuffer.limit();
         byte[] data = tsPacketBuffer.getData();
 
-        // 至少需要 2 个包的间距才能做同步验证
         for (int i = searchStart; i + packetSize * 2 <= limit; i++) {
             if (data[i] == (byte) TS_SYNC_BYTE && data[i + packetSize] == (byte) TS_SYNC_BYTE) {
                 Log.e("MyTsExtractor", "📍 SYNC FOUND: syncPos=" + i + " endOfPacket=" + (i + packetSize));
@@ -379,7 +370,7 @@ public final class MyTsExtractor implements Extractor {
     }
     // endregion
 
-    // region PAT / PMT readers (unchanged logic, just cleaned up)
+    // region PAT / PMT readers
     @Documented
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({MODE_MULTI_PMT, MODE_SINGLE_PMT, MODE_HLS})
@@ -475,12 +466,13 @@ public final class MyTsExtractor implements Extractor {
             while (remainingEntriesLength > 0) {
                 sectionData.readBytes(pmtScratch, 5);
                 int streamType = pmtScratch.readBits(8);
-Log.e("MyTsExtractor", "🔍 ES: rawStreamType=0x" + Integer.toHexString(streamType) 
-        + " elementaryPid=" + elementaryPid);
                 pmtScratch.skipBits(3);
                 int elementaryPid = pmtScratch.readBits(13);
                 pmtScratch.skipBits(4);
                 int esInfoLength = pmtScratch.readBits(12);
+                // ★ 原始 streamType + PID，在 descriptor 覆盖之前打
+                Log.e("MyTsExtractor", "🔍 ES raw: streamType=0x" + Integer.toHexString(streamType)
+                        + " elementaryPid=" + elementaryPid + " esInfoLength=" + esInfoLength);
                 TsPayloadReader.EsInfo esInfo = readEsInfo(sectionData, esInfoLength);
                 if (streamType == 0x06 || streamType == 0x05) streamType = esInfo.streamType;
                 remainingEntriesLength -= esInfoLength + 5;
@@ -500,14 +492,15 @@ Log.e("MyTsExtractor", "🔍 ES: rawStreamType=0x" + Integer.toHexString(streamT
                 trackPids.put(trackPid, true);
                 TsPayloadReader reader = trackIdToReaderScratch.valueAt(i);
                 if (reader != null) {
+                    Log.e("MyTsExtractor", "🎯 TRACK: pid=" + trackPid
+                            + " reader=" + reader.getClass().getSimpleName());
                     if (reader != id3Reader) {
                         reader.init(timestampAdjuster, output, new TsPayloadReader.TrackIdGenerator(programNumber, trackId, MAX_PID_PLUS_ONE));
                     }
                     tsPayloadReaders.put(trackPid, reader);
+                } else {
+                    Log.e("MyTsExtractor", "🎯 TRACK: pid=" + trackPid + " reader=NULL");
                 }
-                Log.e("MyTsExtractor", "🎯 TRACK: pid=" + trackPid
-                        + " streamType=0x" + Integer.toHexString(trackIdToReaderScratch.keyAt(i))
-                        + " reader=" + (reader != null ? reader.getClass().getSimpleName() : "NULL"));
             }
 
             if (mode == MODE_HLS) {
@@ -523,7 +516,6 @@ Log.e("MyTsExtractor", "🔍 ES: rawStreamType=0x" + Integer.toHexString(streamT
                     output.endTracks();
                     tracksEnded = true;
                 }
-                Log.e("MyTsExtractor", "📊 PMT done: remainingPmts=" + remainingPmts + " tracksEnded=" + tracksEnded);
             }
         }
 
