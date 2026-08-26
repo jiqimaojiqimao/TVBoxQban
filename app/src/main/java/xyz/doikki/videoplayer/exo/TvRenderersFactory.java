@@ -101,20 +101,14 @@ public class TvRenderersFactory extends NextRenderersFactory {
                     ) throws MediaCodecUtil.DecoderQueryException {
 
                         // 关键：DV 直接降级为 HEVC
-                        if (mimeType.equals("video/dolby-vision")) {
+                        if ("video/dolby-vision".equals(mimeType)) {
                             mimeType = "video/hevc";
                         }
-
-                        List<MediaCodecInfo> infos =
-                                selector.getDecoderInfos(
-                                        mimeType,
-                                        requiresSecureDecoder,
-                                        requiresTunnelingDecoder
-                                );
-
-                        if (!mimeType.startsWith("video/")) {
-                            return infos;
-                        }
+                        return MediaCodecSelector.DEFAULT.getDecoderInfos(
+                                mimeType,
+                                requiresSecureDecoder,
+                                requiresTunnelingDecoder
+                        );
                     }
                 },
                 enableDecoderFallback,
