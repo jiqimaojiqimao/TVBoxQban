@@ -343,7 +343,7 @@ public int read(ExtractorInput input, PositionHolder seekPosition) throws IOExce
         return RESULT_CONTINUE;
     }
 
-    int endOfPacket = syncPos + 192;
+    int endOfPacket = syncPos + packetSize;
     if (endOfPacket > tsPacketBuffer.limit()) {
         tsPacketBuffer.setPosition(tsPacketBuffer.limit());
         return RESULT_CONTINUE;
@@ -476,9 +476,9 @@ private int findEndOfFirstTsPacketInBuffer() {
     int limit = tsPacketBuffer.limit();
     byte[] data = tsPacketBuffer.getData();
 
-    for (int syncPos = searchStart + 4; syncPos + 192 <= limit; syncPos += 192) {
+    for (int syncPos = searchStart; syncPos + packetSize <= limit; syncPos += packetSize) {
         if (data[syncPos] == (byte) TS_SYNC_BYTE) {
-            Log.e("MyTsExtractor", "📍 192 ALIGNED: syncPos=" + syncPos + " endOfPacket=" + (syncPos + 192));
+            Log.e("MyTsExtractor", "📍 192 ALIGNED: syncPos=" + syncPos + " endOfPacket=" + (syncPos + packetSize));
             return syncPos;
         }
     }
