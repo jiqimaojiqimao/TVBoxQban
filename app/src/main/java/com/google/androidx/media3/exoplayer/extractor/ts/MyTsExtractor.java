@@ -272,10 +272,6 @@ public final class MyTsExtractor implements Extractor {
             int continuityCounter = tsPacketHeader & 0xF;
             int previousCounter = continuityCounters.get(pid, continuityCounter - 1);
             continuityCounters.put(pid, continuityCounter);
-            if (previousCounter == continuityCounter) {
-                tsPacketBuffer.setPosition(endOfPacket);
-                return RESULT_CONTINUE;
-            }
         }
 
         // Skip adaptation field
@@ -310,29 +306,34 @@ public final class MyTsExtractor implements Extractor {
         hasOutputSeekMap = true;
     }
 
-    private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
+private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
         byte[] data = tsPacketBuffer.getData();
 
-        if (tsPacketBuffer.bytesLeft() < packetSize && tsPacketBuffer.limit() >= BUFFER_SIZE) {
-            tsPacketBuffer.reset(data, 0);
-        }
-
-        if (tsPacketBuffer.getPosition() >= BUFFER_SIZE - packetSize * 2) {
-            int bytesLeft = tsPacketBuffer.bytesLeft();
-            if (bytesLeft > 0) {
-                System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
+        // 如果剩余空间不够一个包，且已经读了很多数据，把未消费的数据移到前面
+        if (tsPacketBuffer.bytesLeft() < packetSize) {
+            if (tsPacketBuffer.getPosition() > 0) {
+                // 需要压缩：把剩余数据移到开头
+                int bytesLeft = tsPacketBuffer.bytesLeft();
+                if (bytesLeft > 0) {
+                    System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
+                }
+                tsPacketBuffer.reset(data, bytesLeft);
+                // ★ 重置后 position=0，limit=bytesLeft，后续 findEndOfFirstTsPacketInBuffer 从 0 搜
             }
-            tsPacketBuffer.reset(data, bytesLeft);
-        }
-
-        while (tsPacketBuffer.bytesLeft() < packetSize) {
+            // 现在 position=0，读新数据追加到 limit 后面
             int limit = tsPacketBuffer.limit();
-            int read = input.read(data, limit, BUFFER_SIZE - limit);
+            int maxRead = BUFFER_SIZE - limit;
+            if (maxRead <= 0) {
+                // buffer 满了但 bytesLeft >= packetSize 应该已经满足了，不应该到这里
+                return true;
+            }
+            int read = input.read(data, limit, maxRead);
             if (read == C.RESULT_END_OF_INPUT) {
                 return false;
             }
             tsPacketBuffer.setLimit(limit + read);
         }
+
         return true;
     }
 
@@ -441,9 +442,9 @@ public final class MyTsExtractor implements Extractor {
             }
             int secondHeaderByte = sectionData.readUnsignedByte();
             if ((secondHeaderByte & 0x80) == 0) return;
-            sectionData.skipBytes(1);
-            int programNumber = sectionData.readUnsignedShort();
-            sectionData.skipBytes(3);
+sectionData.skipBytes(1);
+int programNumber = sectionData.readUnsignedShort();
+sectionData.skipBytes(1);  // ← 只跳 last_section_number
             sectionData.readBytes(pmtScratch, 2);
             pmtScratch.skipBits(3);
             pcrPid = pmtScratch.readBits(13);
@@ -478,7 +479,15 @@ public final class MyTsExtractor implements Extractor {
                 remainingEntriesLength -= esInfoLength + 5;
                 int trackId = mode == MODE_HLS ? streamType : elementaryPid;
                 if (trackIds.get(trackId)) continue;
-                TsPayloadReader reader = mode == MODE_HLS && streamType == TS_STREAM_TYPE_ID3 ? id3Reader : payloadReaderFactory.createPayloadReader(streamType, esInfo);
+// PGS 字幕 → ExoPlayer 不支持，直接跳过
+if (streamType == 0x90) {
+    continue;
+}
+// AC-3 (0x86) → 映射成 0x81 让工厂建 Ac3Reader
+int mappedStreamType = (streamType == 0x86) ? 0x81 : streamType;
+TsPayloadReader reader = mode == MODE_HLS && mappedStreamType == TS_STREAM_TYPE_ID3
+        ? id3Reader
+        : payloadReaderFactory.createPayloadReader(mappedStreamType, esInfo);
                 if (mode != MODE_HLS || elementaryPid < trackIdToPidScratch.get(trackId, MAX_PID_PLUS_ONE)) {
                     trackIdToPidScratch.put(trackId, elementaryPid);
                     trackIdToReaderScratch.put(trackId, reader);
