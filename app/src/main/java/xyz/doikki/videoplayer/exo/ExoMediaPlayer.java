@@ -127,11 +127,6 @@ mTrackSelector.setParameters(
                 .setMaxAudioChannelCount(6)
                 // 禁用 tunneling（TCL / 部分 Amlogic 必关）
                 .setTunnelingEnabled(false)
-                // 可选：禁用 DTS-HD MA（如果还崩）
-                .setPreferredAudioMimeType("audio/vnd.dts.hd", 0)
-                .setPreferredAudioMimeType("audio/ac3")
-                .setPreferredAudioMimeType("audio/eac3")
-                .setPreferredAudioMimeType("audio/mp4a-latm")
                 .build()
 );
 
