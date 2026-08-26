@@ -337,19 +337,26 @@ public int read(ExtractorInput input, PositionHolder seekPosition) throws IOExce
         }
     }
 
+    // ★ 只调一次 fillBuffer
     if (!fillBufferWithAtLeastOnePacket(input)) {
         return RESULT_END_OF_INPUT;
     }
 
-    int endOfPacket = findEndOfFirstTsPacketInBuffer();
-
-    // ★ 修复：数据不够一个完整包时，把 position 推到 limit，
-    //   下次 fillBuffer 会做 arraycopy 腾出空间继续读文件
-    int limit = tsPacketBuffer.limit();  
-    if (endOfPacket > limit) {
-        tsPacketBuffer.setPosition(limit);
+    // ★ 找 syncPos
+    int syncPos = findEndOfFirstTsPacketInBuffer();
+    if (syncPos < 0) {
+        tsPacketBuffer.setPosition(tsPacketBuffer.limit());
         return RESULT_CONTINUE;
     }
+
+    int endOfPacket = syncPos + 192;
+    if (endOfPacket > tsPacketBuffer.limit()) {
+        tsPacketBuffer.setPosition(tsPacketBuffer.limit());
+        return RESULT_CONTINUE;
+    }
+
+    // ★ 跳到 TS 包头起点（只一次！）
+    tsPacketBuffer.setPosition(syncPos);
 
     @TsPayloadReader.Flags int packetHeaderFlags = 0;
 
@@ -396,16 +403,16 @@ public int read(ExtractorInput input, PositionHolder seekPosition) throws IOExce
 
     // Read the payload.
     boolean wereTracksEnded = tracksEnded;
-if (shouldConsumePacketPayload(pid)) {
-    Log.e("MyTsExtractor", "📦 CONSUME pid=" + pid
-            + " pos=" + tsPacketBuffer.getPosition()
-            + " limit=" + endOfPacket   // ← 用 endOfPacket 不是 tsPacketBuffer.limit()
-            + " bytesLeft=" + (endOfPacket - tsPacketBuffer.getPosition())
-            + " tsPacketHeader=0x" + Integer.toHexString(tsPacketHeader));
-    tsPacketBuffer.setLimit(endOfPacket);
-    payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
-    // 不恢复 limit！让它保持 endOfPacket
-}
+    if (shouldConsumePacketPayload(pid)) {
+        Log.e("MyTsExtractor", "📦 CONSUME pid=" + pid
+                + " pos=" + tsPacketBuffer.getPosition()
+                + " limit=" + endOfPacket
+                + " bytesLeft=" + (endOfPacket - tsPacketBuffer.getPosition())
+                + " tsPacketHeader=0x" + Integer.toHexString(tsPacketHeader));
+        tsPacketBuffer.setLimit(endOfPacket);
+        payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
+    }
+
     if (mode != MODE_HLS && !wereTracksEnded && tracksEnded && inputLength != C.LENGTH_UNSET) {
         pendingSeekToStart = true;
     }
@@ -472,27 +479,19 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
      * <p>This may be a position beyond the buffer limit if the packet has not been read fully into
      * the buffer, or if no packet could be found within the buffer.
      */
-private int findEndOfFirstTsPacketInBuffer() throws ParserException {
+private int findEndOfFirstTsPacketInBuffer() {
     int searchStart = tsPacketBuffer.getPosition();
     int limit = tsPacketBuffer.limit();
     byte[] data = tsPacketBuffer.getData();
 
-    int syncPos = searchStart + 4;
-    for (int i = 0; i < 20; i++) {
-        if (syncPos + 192 > limit) {     // ← 192 不是 188
-            return limit + 1;
-        }
+    for (int syncPos = searchStart + 4; syncPos + 192 <= limit; syncPos += 192) {
         if (data[syncPos] == (byte) TS_SYNC_BYTE) {
-            tsPacketBuffer.setPosition(syncPos);
-            tsPacketBuffer.skipBytes(4);  // 过 TS_header，停在 payload 起点
-            int result = syncPos + 192;   // ← 192 不是 188
-            Log.e("MyTsExtractor", "📍 192 ALIGNED: syncPos=" + syncPos + " endOfPacket=" + result);
-            return result;
+            Log.e("MyTsExtractor", "📍 192 ALIGNED: syncPos=" + syncPos + " endOfPacket=" + (syncPos + 192));
+            return syncPos;
         }
-        syncPos += 192;
     }
     Log.e("MyTsExtractor", "⚠️ No 0x47, searchStart=" + searchStart + " limit=" + limit);
-    return limit + 1;
+    return -1;
 }
 
     private boolean shouldConsumePacketPayload(int packetPid) {
