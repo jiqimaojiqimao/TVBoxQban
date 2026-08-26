@@ -472,31 +472,28 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
      * <p>This may be a position beyond the buffer limit if the packet has not been read fully into
      * the buffer, or if no packet could be found within the buffer.
      */
-    private int findEndOfFirstTsPacketInBuffer() throws ParserException {
-        int searchStart = tsPacketBuffer.getPosition();
-        int limit = tsPacketBuffer.limit();
-        byte[] data = tsPacketBuffer.getData();
+private int findEndOfFirstTsPacketInBuffer() throws ParserException {
+    int searchStart = tsPacketBuffer.getPosition();
+    int limit = tsPacketBuffer.limit();
+    byte[] data = tsPacketBuffer.getData();
 
-        // buffer position 一定是 192 的倍数（因为文件对齐 + 每次消费 192 字节）
-        int syncPos = searchStart + 4;
-
-        for (int i = 0; i < 20; i++) {
-            if (syncPos + 188 > limit) {
-                return limit + 1;
-            }
-            if (data[syncPos] == (byte) TS_SYNC_BYTE) {
-                tsPacketBuffer.setPosition(syncPos);
-                tsPacketBuffer.skipBytes(4);
-                int result = syncPos + 188;
-                Log.e("MyTsExtractor", "📍 192 ALIGNED: syncPos=" + syncPos + " endOfPacket=" + result);
-                return result;
-            }
-            syncPos += 192;
+    int syncPos = searchStart + 4;
+    for (int i = 0; i < 20; i++) {
+        if (syncPos + 192 > limit) {     // ← 192 不是 188
+            return limit + 1;
         }
-
-        Log.e("MyTsExtractor", "⚠️ No 0x47, searchStart=" + searchStart + " limit=" + limit);
-        return limit + 1;
+        if (data[syncPos] == (byte) TS_SYNC_BYTE) {
+            tsPacketBuffer.setPosition(syncPos);
+            tsPacketBuffer.skipBytes(4);  // 过 TS_header，停在 payload 起点
+            int result = syncPos + 192;   // ← 192 不是 188
+            Log.e("MyTsExtractor", "📍 192 ALIGNED: syncPos=" + syncPos + " endOfPacket=" + result);
+            return result;
+        }
+        syncPos += 192;
     }
+    Log.e("MyTsExtractor", "⚠️ No 0x47, searchStart=" + searchStart + " limit=" + limit);
+    return limit + 1;
+}
 
     private boolean shouldConsumePacketPayload(int packetPid) {
         return mode == MODE_HLS
