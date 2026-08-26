@@ -21,7 +21,6 @@ import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
-import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
 import androidx.media3.ui.PlayerView;
 import androidx.media3.ui.SubtitleView;   //xuameng用于显示字幕
 import androidx.media3.common.text.Cue;   //xuameng用于显示字幕
@@ -90,10 +89,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         }
 
         // 构建 RendererFactory
-        MediaCodecSelector codecSelector = new ExoMediaCodecSelector();
         if (useSoftDecode) {
             // 软解场景 TvRenderersFactory 是自定义的 NextRenderersFactory
-            mRenderersFactory = new TvRenderersFactory(mAppContext, codecSelector);
+            mRenderersFactory = new TvRenderersFactory(mAppContext);
         } else {
             // 硬解场景 DefaultRenderersFactory 加 ffmpeg扩展
             mRenderersFactory = new DefaultRenderersFactory(mAppContext)
@@ -116,19 +114,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             .setBackBuffer(0, false)
             .build();
 
-mTrackSelector.setParameters(
-        mTrackSelector.getParameters()
-                .buildUpon()
-                // 字幕
-                .setPreferredTextLanguages("zh", "chi", "zh-CN", "zh-TW", "en")
-                // 音频
-                .setPreferredAudioLanguages("zh", "chi", "zh-CN", "zh-TW", "en")
-                // ✅ 关键：防止 DTS-HD MA 7.1 AudioTrack 内存失败
-                .setMaxAudioChannelCount(6)
-                // 禁用 tunneling（TCL / 部分 Amlogic 必关）
-                .setTunnelingEnabled(false)
-                .build()
-);
+		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
+            .setPreferredTextLanguages("zh", "chi", "zh-CN", "zh-TW", "en")      // 设置首选字幕语言为中文
+            .setPreferredAudioLanguages("zh", "chi", "zh-CN", "zh-TW", "en")     // 设置首选音频语言为中文
+            .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
 
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
@@ -353,6 +342,16 @@ mTrackSelector.setParameters(
 
         if (errorCode == 5001 || errorCode == 5002 || errorCode == 4001 || errorCode == 4002 || errorCode == 4003){
             memory.getInstance(mAppContext).deleteExoTrack(progressKey);   //xuameng删除记忆音轨
+
+            // 2. 强制降级到 2声道
+            if (mTrackSelector != null) {
+                mTrackSelector.setParameters(
+                        mTrackSelector.getParameters()
+                                .buildUpon()
+                                .setMaxAudioChannelCount(2)
+                                .build()
+                );
+            }
         }
 
         // ====== xuameng 新增：处理 BehindLiveWindowException 错误======
