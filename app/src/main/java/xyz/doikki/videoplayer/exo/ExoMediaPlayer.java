@@ -352,6 +352,16 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                                 .build()
                 );
             }
+        // 重新播放
+        if (mLastUri != null && mMediaPlayer != null) {
+            mMediaPlayer.stop();
+            mMediaPlayer.clearMediaItems();
+            mIsPreparing = false; 
+            setDataSource(mLastUri, mLastHeaders);
+            prepareAsync();
+            start();
+            return;
+        }
         }
 
         // ====== xuameng 新增：处理 BehindLiveWindowException 错误======
