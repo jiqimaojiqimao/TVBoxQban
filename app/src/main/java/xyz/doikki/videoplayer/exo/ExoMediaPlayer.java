@@ -116,10 +116,24 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             .setBackBuffer(0, false)
             .build();
 
-		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
-            .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
-            .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")          // 设置首选音频语言为中文
-            .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
+mTrackSelector.setParameters(
+        mTrackSelector.getParameters()
+                .buildUpon()
+                // 字幕
+                .setPreferredTextLanguages("zh", "chi", "zh-CN", "zh-TW", "en")
+                // 音频
+                .setPreferredAudioLanguages("zh", "chi", "zh-CN", "zh-TW", "en")
+                // ✅ 关键：防止 DTS-HD MA 7.1 AudioTrack 内存失败
+                .setMaxAudioChannelCount(6)
+                // 禁用 tunneling（TCL / 部分 Amlogic 必关）
+                .setTunnelingEnabled(false)
+                // 可选：禁用 DTS-HD MA（如果还崩）
+                .setPreferredAudioMimeType("audio/vnd.dts.hd", 0)
+                .setPreferredAudioMimeType("audio/ac3")
+                .setPreferredAudioMimeType("audio/eac3")
+                .setPreferredAudioMimeType("audio/mp4a-latm")
+                .build()
+);
 
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(mLoadControl)
