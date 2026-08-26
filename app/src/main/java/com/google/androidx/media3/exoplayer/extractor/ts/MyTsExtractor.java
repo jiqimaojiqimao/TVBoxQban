@@ -107,7 +107,7 @@ public final class MyTsExtractor implements Extractor {
     private static final long HEVC_FORMAT_IDENTIFIER = 0x48455643;
     private static final int BUFFER_SIZE = TS_PACKET_SIZE * 50;
     private static final int SNIFF_TS_PACKET_COUNT = 5;
-	private int packetSize = TS_PACKET_SIZE; // 默认 188
+    private int packetSize = TS_PACKET_SIZE; // 默认 188
     @Mode
     private final int mode;
     private final int timestampSearchBytes;
@@ -164,7 +164,7 @@ public final class MyTsExtractor implements Extractor {
                 new TimestampAdjuster(0),
                 new DefaultTsPayloadReaderFactory(defaultTsPayloadReaderFlags),
                 timestampSearchBytes);
-Log.e("MyTsExtractor", "🏗️ CONSTRUCTOR called, mode=" + mode + " searchBytes=" + timestampSearchBytes);
+                Log.e("MyTsExtractor", "🏗️ CONSTRUCTOR called, mode=" + mode + " searchBytes=" + timestampSearchBytes);
     }
 
     /**
@@ -219,46 +219,46 @@ Log.e("MyTsExtractor", "🏗️ CONSTRUCTOR called, mode=" + mode + " searchByte
         resetPayloadReaders();
     }
 
-@Override
-public boolean sniff(ExtractorInput input) throws IOException {
-    Log.e("MyTsExtractor", "🔍 sniff() pos=" + input.getPosition() 
-            + " length=" + input.getLength());
+    @Override
+    public boolean sniff(ExtractorInput input) throws IOException {
+        Log.e("MyTsExtractor", "🔍 sniff() pos=" + input.getPosition() 
+                + " length=" + input.getLength());
     
-    int searchSize = Math.min(timestampSearchBytes, 1024 * 1024);
-    if (tsPacketBuffer.getData().length < searchSize) {
-        tsPacketBuffer.reset(new byte[searchSize], 0);
-    }
-    byte[] buffer = tsPacketBuffer.getData();
-    int bytesPeeked = input.peek(buffer, 0, searchSize);
+        int searchSize = Math.min(timestampSearchBytes, 1024 * 1024);
+        if (tsPacketBuffer.getData().length < searchSize) {
+            tsPacketBuffer.reset(new byte[searchSize], 0);
+        }
+        byte[] buffer = tsPacketBuffer.getData();
+        int bytesPeeked = input.peek(buffer, 0, searchSize);
     
-    int[] packetSizes = {188, 192};
-    for (int ps : packetSizes) {
-        if (bytesPeeked < ps * 5) continue;
-        for (int startPos = 0; startPos < ps; startPos++) {
-            boolean sync = true;
-            for (int i = 0; i < 5; i++) {
-                int offset = startPos + i * ps;
-                if (offset >= bytesPeeked || buffer[offset] != TS_SYNC_BYTE) {
-                    sync = false;
-                    break;
+        int[] packetSizes = {188, 192};
+        for (int ps : packetSizes) {
+            if (bytesPeeked < ps * 5) continue;
+            for (int startPos = 0; startPos < ps; startPos++) {
+                boolean sync = true;
+                for (int i = 0; i < 5; i++) {
+                    int offset = startPos + i * ps;
+                    if (offset >= bytesPeeked || buffer[offset] != TS_SYNC_BYTE) {
+                        sync = false;
+                        break;
+                    }
+                }
+                if (sync) {
+                    Log.e("MyTsExtractor", "✅ TS sync found! packetSize=" + ps + " skipBytes=" + startPos);
+                    this.packetSize = ps;  // ← 记录 packetSize
+                    input.skipFully(startPos);
+                    return true;
                 }
             }
-            if (sync) {
-                Log.e("MyTsExtractor", "✅ TS sync found! packetSize=" + ps + " skipBytes=" + startPos);
-                this.packetSize = ps;  // ← 记录 packetSize
-                input.skipFully(startPos);
-                return true;
-            }
         }
+        return false;
     }
-    return false;
-}
 
     // Extractor implementation.
 
     @Override
     public void init(ExtractorOutput output) {
-		Log.e("MyTsExtractor_xuameng", "🔍 init() CALLED");
+        Log.e("MyTsExtractor_xuameng", "🔍 init() CALLED");
         this.output = output;
     }
 
@@ -307,7 +307,7 @@ public boolean sniff(ExtractorInput input) throws IOException {
     @Override
     @ReadResult
     public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
-		Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
+        Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
         long inputLength = input.getLength();
         if (tracksEnded) {
             boolean canReadDuration = inputLength != C.LENGTH_UNSET && mode != MODE_HLS;
@@ -392,6 +392,11 @@ public boolean sniff(ExtractorInput input) throws IOException {
         // Read the payload.
         boolean wereTracksEnded = tracksEnded;
         if (shouldConsumePacketPayload(pid)) {
+            Log.e("MyTsExtractor", "📦 CONSUME pid=" + pid
+                  + " pos=" + tsPacketBuffer.getPosition()
+                  + " limit=" + tsPacketBuffer.limit()
+                  + " bytesLeft=" + tsPacketBuffer.bytesLeft()
+                  + " tsPacketHeader=0x" + Integer.toHexString(tsPacketHeader));
             tsPacketBuffer.setLimit(endOfPacket);
             payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
             tsPacketBuffer.setLimit(limit);
@@ -455,27 +460,27 @@ public boolean sniff(ExtractorInput input) throws IOException {
      * <p>This may be a position beyond the buffer limit if the packet has not been read fully into
      * the buffer, or if no packet could be found within the buffer.
      */
-private int findEndOfFirstTsPacketInBuffer() throws ParserException {
-    int searchStart = tsPacketBuffer.getPosition();
-    int limit = tsPacketBuffer.limit();
-    int syncBytePosition = TsUtil.findSyncBytePosition(tsPacketBuffer.getData(), searchStart, limit);
-    tsPacketBuffer.setPosition(syncBytePosition);
+    private int findEndOfFirstTsPacketInBuffer() throws ParserException {
+        int searchStart = tsPacketBuffer.getPosition();
+        int limit = tsPacketBuffer.limit();
+        int syncBytePosition = TsUtil.findSyncBytePosition(tsPacketBuffer.getData(), searchStart, limit);
+        tsPacketBuffer.setPosition(syncBytePosition);
 
-    if (packetSize == 192) {
-        tsPacketBuffer.skipBytes(4);
-        int result = syncBytePosition + 188;
-        Log.e("MyTsExtractor", "📍 192: searchStart=" + searchStart 
-              + " syncPos=" + syncBytePosition 
-              + " skip→" + tsPacketBuffer.getPosition() 
-              + " endOfPacket=" + result 
-              + " bufferLimit=" + limit);
-        return result;
+        if (packetSize == 192) {
+            tsPacketBuffer.skipBytes(4);
+            int result = syncBytePosition + 188;
+            Log.e("MyTsExtractor", "📍 192: searchStart=" + searchStart 
+                  + " syncPos=" + syncBytePosition 
+                  + " skip→" + tsPacketBuffer.getPosition() 
+                  + " endOfPacket=" + result 
+                  + " bufferLimit=" + limit);
+            return result;
+        }
+
+        int endOfPacket = syncBytePosition + packetSize;
+        // ... bytesSinceLastSync 逻辑 ...
+        return endOfPacket;
     }
-
-    int endOfPacket = syncBytePosition + packetSize;
-    // ... bytesSinceLastSync 逻辑 ...
-    return endOfPacket;
-}
 
     private boolean shouldConsumePacketPayload(int packetPid) {
         return mode == MODE_HLS
