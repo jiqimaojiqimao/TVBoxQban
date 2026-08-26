@@ -218,6 +218,7 @@ public final class MyTsExtractor implements Extractor {
 
 @Override
 public boolean sniff(ExtractorInput input) throws IOException {
+	        Log.e("MyTsExtractor", "xuameng");      //xuameng音频出错后尝试重播
     int searchSize = Math.min(timestampSearchBytes, 1024 * 1024); // 最多 1MB
     if (tsPacketBuffer.getData().length < searchSize) {
         tsPacketBuffer.reset(new byte[searchSize], 0);
