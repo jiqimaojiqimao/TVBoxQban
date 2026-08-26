@@ -257,6 +257,7 @@ public boolean sniff(ExtractorInput input) throws IOException {
 
     @Override
     public void init(ExtractorOutput output) {
+		Log.e("MyTsExtractor_xuameng", "🔍 init() CALLED");
         this.output = output;
     }
 
@@ -305,6 +306,7 @@ public boolean sniff(ExtractorInput input) throws IOException {
     @Override
     @ReadResult
     public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
+		Log.e("MyTsExtractor_xuameng", "🔍 read() CALLED inputPos=" + input.getPosition());
         long inputLength = input.getLength();
         if (tracksEnded) {
             boolean canReadDuration = inputLength != C.LENGTH_UNSET && mode != MODE_HLS;
