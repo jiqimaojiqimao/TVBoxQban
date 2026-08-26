@@ -368,6 +368,7 @@ public final class MyTsExtractor implements Extractor {
         while (tsPacketBuffer.bytesLeft() < packetSize) {
             int limit = tsPacketBuffer.limit();
             int read = input.read(data, limit, BUFFER_SIZE - limit);
+			Log.e("MyTsExtractor", "📖 input.read() at pos=" + input.getPosition() + " requested=" + (BUFFER_SIZE - limit) + " actual=" + read);
             if (read == C.RESULT_END_OF_INPUT) {
                 return false;
             }
@@ -443,6 +444,7 @@ public final class MyTsExtractor implements Extractor {
                     if (tsPayloadReaders.get(pid) == null) {
                         tsPayloadReaders.put(pid, new SectionReader(new PmtReader(pid)));
                         remainingPmts++;
+						Log.e("MyTsExtractor", "📊 PAT done: remainingPmts=" + remainingPmts);
                     }
                 }
             }
@@ -553,6 +555,7 @@ public final class MyTsExtractor implements Extractor {
                     output.endTracks();
                     tracksEnded = true;
                 }
+				Log.e("MyTsExtractor", "📊 PMT done: remainingPmts=" + remainingPmts + " tracksEnded=" + tracksEnded);
             }
         }
 
