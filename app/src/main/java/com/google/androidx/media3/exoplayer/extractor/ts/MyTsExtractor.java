@@ -304,118 +304,115 @@ public final class MyTsExtractor implements Extractor {
         // Do nothing
     }
 
-    @Override
-    @ReadResult
-    public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
-        Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
-// ★ 强制文件位置 192 对齐
-int remainder = (int) (input.getPosition() % 192);
-if (remainder != 0) {
-    input.skipFully(192 - remainder);
-}
-        long inputLength = input.getLength();
-        if (tracksEnded) {
-            boolean canReadDuration = inputLength != C.LENGTH_UNSET && mode != MODE_HLS;
-            if (canReadDuration && !durationReader.isDurationReadFinished()) {
-                return durationReader.readDuration(input, seekPosition, pcrPid);
-            }
-            maybeOutputSeekMap(inputLength);
+@Override
+@ReadResult
+public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
+    Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
 
-            if (pendingSeekToStart) {
-                pendingSeekToStart = false;
-                seek(/* position= */ 0, /* timeUs= */ 0);
-                if (input.getPosition() != 0) {
-                    seekPosition.position = 0;
-                    return RESULT_SEEK;
-                }
-            }
+    // ★ 强制文件位置 192 对齐
+    int remainder = (int) (input.getPosition() % 192);
+    if (remainder != 0) {
+        input.skipFully(192 - remainder);
+    }
 
-            if (tsBinarySearchSeeker != null && tsBinarySearchSeeker.isSeeking()) {
-                return tsBinarySearchSeeker.handlePendingSeek(input, seekPosition);
+    long inputLength = input.getLength();
+    if (tracksEnded) {
+        boolean canReadDuration = inputLength != C.LENGTH_UNSET && mode != MODE_HLS;
+        if (canReadDuration && !durationReader.isDurationReadFinished()) {
+            return durationReader.readDuration(input, seekPosition, pcrPid);
+        }
+        maybeOutputSeekMap(inputLength);
+
+        if (pendingSeekToStart) {
+            pendingSeekToStart = false;
+            seek(/* position= */ 0, /* timeUs= */ 0);
+            if (input.getPosition() != 0) {
+                seekPosition.position = 0;
+                return RESULT_SEEK;
             }
         }
 
-        if (!fillBufferWithAtLeastOnePacket(input)) {
-            return RESULT_END_OF_INPUT;
+        if (tsBinarySearchSeeker != null && tsBinarySearchSeeker.isSeeking()) {
+            return tsBinarySearchSeeker.handlePendingSeek(input, seekPosition);
         }
+    }
 
-        int endOfPacket = findEndOfFirstTsPacketInBuffer();
-        int limit = tsPacketBuffer.limit();
-        if (endOfPacket > limit) {
-            return RESULT_CONTINUE;
-        }
+    if (!fillBufferWithAtLeastOnePacket(input)) {
+        return RESULT_END_OF_INPUT;
+    }
 
-        @TsPayloadReader.Flags int packetHeaderFlags = 0;
+    int endOfPacket = findEndOfFirstTsPacketInBuffer();
+    int limit = tsPacketBuffer.limit();
 
-        // Note: See ISO/IEC 13818-1, section 2.4.3.2 for details of the header format.
-        int tsPacketHeader = tsPacketBuffer.readInt();
-        if ((tsPacketHeader & 0x800000) != 0) { // transport_error_indicator
-            // There are uncorrectable errors in this packet.
-            tsPacketBuffer.setPosition(endOfPacket);
-            return RESULT_CONTINUE;
-        }
-        packetHeaderFlags |= (tsPacketHeader & 0x400000) != 0 ? FLAG_PAYLOAD_UNIT_START_INDICATOR : 0;
-        // Ignoring transport_priority (tsPacketHeader & 0x200000)
-        int pid = (tsPacketHeader & 0x1FFF00) >> 8;
-        // Ignoring transport_scrambling_control (tsPacketHeader & 0xC0)
-        boolean adaptationFieldExists = (tsPacketHeader & 0x20) != 0;
-        boolean payloadExists = (tsPacketHeader & 0x10) != 0;
+    // ★ 修复：数据不够一个完整包时，把 position 推到 limit，
+    //   下次 fillBuffer 会做 arraycopy 腾出空间继续读文件
+    if (endOfPacket > limit) {
+        tsPacketBuffer.setPosition(limit);
+        return RESULT_CONTINUE;
+    }
 
-        TsPayloadReader payloadReader = payloadExists ? tsPayloadReaders.get(pid) : null;
-        if (payloadReader == null) {
-            tsPacketBuffer.setPosition(endOfPacket);
-            return RESULT_CONTINUE;
-        }
+    @TsPayloadReader.Flags int packetHeaderFlags = 0;
 
-        // Discontinuity check.
-        if (mode != MODE_HLS) {
-            int continuityCounter = tsPacketHeader & 0xF;
-            int previousCounter = continuityCounters.get(pid, continuityCounter - 1);
-            continuityCounters.put(pid, continuityCounter);
-            if (previousCounter == continuityCounter) {
-                // Duplicate packet found.
-                tsPacketBuffer.setPosition(endOfPacket);
-                return RESULT_CONTINUE;
-            } else if (continuityCounter != ((previousCounter + 1) & 0xF)) {
-                // Discontinuity found.
-                payloadReader.seek();
-            }
-        }
-
-        // Skip the adaptation field.
-        if (adaptationFieldExists) {
-            int adaptationFieldLength = tsPacketBuffer.readUnsignedByte();
-            int adaptationFieldFlags = tsPacketBuffer.readUnsignedByte();
-
-            packetHeaderFlags |=
-                    (adaptationFieldFlags & 0x40) != 0 // random_access_indicator.
-                            ? TsPayloadReader.FLAG_RANDOM_ACCESS_INDICATOR
-                            : 0;
-            tsPacketBuffer.skipBytes(adaptationFieldLength - 1 /* flags */);
-        }
-
-        // Read the payload.
-        boolean wereTracksEnded = tracksEnded;
-        if (shouldConsumePacketPayload(pid)) {
-            Log.e("MyTsExtractor", "📦 CONSUME pid=" + pid
-                  + " pos=" + tsPacketBuffer.getPosition()
-                  + " limit=" + tsPacketBuffer.limit()
-                  + " bytesLeft=" + tsPacketBuffer.bytesLeft()
-                  + " tsPacketHeader=0x" + Integer.toHexString(tsPacketHeader));
-            tsPacketBuffer.setLimit(endOfPacket);
-            payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
-            tsPacketBuffer.setLimit(limit);
-        }
-        if (mode != MODE_HLS && !wereTracksEnded && tracksEnded && inputLength != C.LENGTH_UNSET) {
-            // We have read all tracks from all PMTs in this non-live stream. Now seek to the beginning
-            // and read again to make sure we output all media, including any contained in packets prior
-            // to those containing the track information.
-            pendingSeekToStart = true;
-        }
-
+    // Note: See ISO/IEC 13818-1, section 2.4.3.2 for details of the header format.
+    int tsPacketHeader = tsPacketBuffer.readInt();
+    if ((tsPacketHeader & 0x800000) != 0) { // transport_error_indicator
         tsPacketBuffer.setPosition(endOfPacket);
         return RESULT_CONTINUE;
     }
+    packetHeaderFlags |= (tsPacketHeader & 0x400000) != 0 ? FLAG_PAYLOAD_UNIT_START_INDICATOR : 0;
+    int pid = (tsPacketHeader & 0x1FFF00) >> 8;
+    boolean adaptationFieldExists = (tsPacketHeader & 0x20) != 0;
+    boolean payloadExists = (tsPacketHeader & 0x10) != 0;
+
+    TsPayloadReader payloadReader = payloadExists ? tsPayloadReaders.get(pid) : null;
+    if (payloadReader == null) {
+        tsPacketBuffer.setPosition(endOfPacket);
+        return RESULT_CONTINUE;
+    }
+
+    // Discontinuity check.
+    if (mode != MODE_HLS) {
+        int continuityCounter = tsPacketHeader & 0xF;
+        int previousCounter = continuityCounters.get(pid, continuityCounter - 1);
+        continuityCounters.put(pid, continuityCounter);
+        if (previousCounter == continuityCounter) {
+            tsPacketBuffer.setPosition(endOfPacket);
+            return RESULT_CONTINUE;
+        } else if (continuityCounter != ((previousCounter + 1) & 0xF)) {
+            payloadReader.seek();
+        }
+    }
+
+    // Skip the adaptation field.
+    if (adaptationFieldExists) {
+        int adaptationFieldLength = tsPacketBuffer.readUnsignedByte();
+        int adaptationFieldFlags = tsPacketBuffer.readUnsignedByte();
+        packetHeaderFlags |=
+                (adaptationFieldFlags & 0x40) != 0
+                        ? TsPayloadReader.FLAG_RANDOM_ACCESS_INDICATOR
+                        : 0;
+        tsPacketBuffer.skipBytes(adaptationFieldLength - 1);
+    }
+
+    // Read the payload.
+    boolean wereTracksEnded = tracksEnded;
+    if (shouldConsumePacketPayload(pid)) {
+        Log.e("MyTsExtractor", "📦 CONSUME pid=" + pid
+                + " pos=" + tsPacketBuffer.getPosition()
+                + " limit=" + tsPacketBuffer.limit()
+                + " bytesLeft=" + tsPacketBuffer.bytesLeft()
+                + " tsPacketHeader=0x" + Integer.toHexString(tsPacketHeader));
+        tsPacketBuffer.setLimit(endOfPacket);
+        payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
+        tsPacketBuffer.setLimit(limit);
+    }
+    if (mode != MODE_HLS && !wereTracksEnded && tracksEnded && inputLength != C.LENGTH_UNSET) {
+        pendingSeekToStart = true;
+    }
+
+    tsPacketBuffer.setPosition(endOfPacket);
+    return RESULT_CONTINUE;
+}
 
     private void maybeOutputSeekMap(long inputLength) {
         if (!hasOutputSeekMap) {
@@ -439,7 +436,16 @@ if (remainder != 0) {
 
 private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
     byte[] data = tsPacketBuffer.getData();
-    
+
+    // ★ 关键修复：如果 buffer 剩余空间为 0 但数据不够一个包，
+    //   说明之前 endOfPacket > limit 导致 position 没推进，buffer 卡死了。
+    //   直接丢弃所有数据，从头填充。
+    if (tsPacketBuffer.bytesLeft() < packetSize
+            && tsPacketBuffer.limit() >= BUFFER_SIZE) {
+        tsPacketBuffer.reset(data, 0);
+    }
+
+    // 常规压缩：把未消费的数据移到 buffer 头部
     if (BUFFER_SIZE - tsPacketBuffer.getPosition() < packetSize) {
         int bytesLeft = tsPacketBuffer.bytesLeft();
         if (bytesLeft > 0) {
@@ -448,6 +454,7 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
         tsPacketBuffer.reset(data, bytesLeft);
     }
 
+    // 读取直到至少有一个完整包
     while (tsPacketBuffer.bytesLeft() < packetSize) {
         int limit = tsPacketBuffer.limit();
         int read = input.read(data, limit, BUFFER_SIZE - limit);
@@ -465,31 +472,31 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
      * <p>This may be a position beyond the buffer limit if the packet has not been read fully into
      * the buffer, or if no packet could be found within the buffer.
      */
-private int findEndOfFirstTsPacketInBuffer() throws ParserException {
-    int searchStart = tsPacketBuffer.getPosition();
-    int limit = tsPacketBuffer.limit();
-    byte[] data = tsPacketBuffer.getData();
+    private int findEndOfFirstTsPacketInBuffer() throws ParserException {
+        int searchStart = tsPacketBuffer.getPosition();
+        int limit = tsPacketBuffer.limit();
+        byte[] data = tsPacketBuffer.getData();
 
-    // buffer position 一定是 192 的倍数（因为文件对齐 + 每次消费 192 字节）
-    int syncPos = searchStart + 4;
+        // buffer position 一定是 192 的倍数（因为文件对齐 + 每次消费 192 字节）
+        int syncPos = searchStart + 4;
 
-    for (int i = 0; i < 20; i++) {
-        if (syncPos + 188 > limit) {
-            return limit + 1;
+        for (int i = 0; i < 20; i++) {
+            if (syncPos + 188 > limit) {
+                return limit + 1;
+            }
+            if (data[syncPos] == (byte) TS_SYNC_BYTE) {
+                tsPacketBuffer.setPosition(syncPos);
+                tsPacketBuffer.skipBytes(4);
+                int result = syncPos + 188;
+                Log.e("MyTsExtractor", "📍 192 ALIGNED: syncPos=" + syncPos + " endOfPacket=" + result);
+                return result;
+            }
+            syncPos += 192;
         }
-        if (data[syncPos] == (byte) TS_SYNC_BYTE) {
-            tsPacketBuffer.setPosition(syncPos);
-            tsPacketBuffer.skipBytes(4);
-            int result = syncPos + 188;
-            Log.e("MyTsExtractor", "📍 192 ALIGNED: syncPos=" + syncPos + " endOfPacket=" + result);
-            return result;
-        }
-        syncPos += 192;
+
+        Log.e("MyTsExtractor", "⚠️ No 0x47, searchStart=" + searchStart + " limit=" + limit);
+        return limit + 1;
     }
-
-    Log.e("MyTsExtractor", "⚠️ No 0x47, searchStart=" + searchStart + " limit=" + limit);
-    return limit + 1;
-}
 
     private boolean shouldConsumePacketPayload(int packetPid) {
         return mode == MODE_HLS
