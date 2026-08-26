@@ -108,14 +108,15 @@ public final class ExoMediaSourceHelper {
 
 
 // ✅ 优先判断 m2ts / ts
-if (contentUri.contains(".m2ts") || contentUri.contains(".ts")) {
 
-	Log.e("MyTsExtractor", "sniff() CALLED: " + contentUri);
+if (isTsUri(contentUri)) {
+    Log.e("ExoMediaSource_xuameng", "✅ TS branch hit: " + contentUri);
     return new ProgressiveMediaSource.Factory(
-            getDataSourceFactory(),
-            getExtractorsFactory() // ✅ MyTsExtractor
+            factory,                       // ✅ 用前面算好的（cache/http 一致）
+            getExtractorsFactory()         // ✅ MyTsExtractor
     ).createMediaSource(MediaItem.fromUri(contentUri));
 }
+
 
 
         switch (contentType) {
@@ -148,6 +149,35 @@ private static synchronized ExtractorsFactory getExtractorsFactory() {
             1024 * 1024 // 1MB 内找同步字节
         )
     };
+}
+
+
+private boolean isTsUri(Uri uri) {
+    // 1) path 本身
+    String path = uri.getPath();
+    if (path != null) {
+        String p = path.toLowerCase();
+        if (p.endsWith(".m2ts") || p.endsWith(".ts") || p.endsWith(".mts")
+                || p.endsWith(".tp") || p.endsWith(".trp")) {
+            return true;
+        }
+    }
+    // 2) 整个 uri 明文包含（兼容不 encode 的情况）
+    String raw = uri.toString().toLowerCase();
+    if (raw.contains(".m2ts") || raw.contains(".ts") || raw.contains(".mts")
+            || raw.contains(".tp") || raw.contains(".trp")) {
+        return true;
+    }
+    // 3) query 里 filename= 参数（decode 后再判）
+    String filename = uri.getQueryParameter("filename");
+    if (filename != null) {
+        String f = Uri.decode(filename).toLowerCase();
+        if (f.endsWith(".m2ts") || f.endsWith(".ts") || f.endsWith(".mts")
+                || f.endsWith(".tp") || f.endsWith(".trp")) {
+            return true;
+        }
+    }
+    return false;
 }
 
     private int inferContentType(String fileName) {
