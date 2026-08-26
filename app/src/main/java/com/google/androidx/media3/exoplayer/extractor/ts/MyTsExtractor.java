@@ -216,35 +216,39 @@ public final class MyTsExtractor implements Extractor {
         resetPayloadReaders();
     }
 
-    @Override
-    public boolean sniff(ExtractorInput input) throws IOException {
-        byte[] buffer = tsPacketBuffer.getData();
+@Override
+public boolean sniff(ExtractorInput input) throws IOException {
+    int searchSize = Math.min(timestampSearchBytes, 1024 * 1024); // 最多 1MB
+    if (tsPacketBuffer.getData().length < searchSize) {
+        tsPacketBuffer.reset(new byte[searchSize], 0);
+    }
 
-        input.peekFully(buffer, 0, TS_PACKET_SIZE * 2);
-        for (int i = 0; i < TS_PACKET_SIZE * 2; i++) {
-            if (buffer[i] == TS_SYNC_BYTE && buffer[i + 1] == 0x40) {
-                if (i > 0) input.skipFully(i);
-                break;
-            }
+    byte[] buffer = tsPacketBuffer.getData();
+    int bytesPeeked = input.peek(buffer, 0, searchSize);
+
+    int[] packetSizes = {188, 192}; // 支持标准 TS 和 BD m2ts
+
+    for (int packetSize : packetSizes) {
+        if (bytesPeeked < packetSize * 5) {
+            continue;
         }
-        input.peekFully(buffer, 0, TS_PACKET_SIZE * SNIFF_TS_PACKET_COUNT);
-        for (int startPosCandidate = 0; startPosCandidate < TS_PACKET_SIZE; startPosCandidate++) {
-            // Try to identify at least SNIFF_TS_PACKET_COUNT packets starting with TS_SYNC_BYTE.
-            boolean isSyncBytePatternCorrect = true;
-            for (int i = 0; i < SNIFF_TS_PACKET_COUNT; i++) {
-                int ii = startPosCandidate + i * TS_PACKET_SIZE;
-                if (buffer[ii] != TS_SYNC_BYTE) {
-                    isSyncBytePatternCorrect = false;
+        for (int startPos = 0; startPos < packetSize; startPos++) {
+            boolean sync = true;
+            for (int i = 0; i < 5; i++) {
+                int offset = startPos + i * packetSize;
+                if (offset >= bytesPeeked || buffer[offset] != TS_SYNC_BYTE) {
+                    sync = false;
                     break;
                 }
             }
-            if (isSyncBytePatternCorrect) {
-                input.skipFully(startPosCandidate);
+            if (sync) {
+                input.skipFully(startPos);
                 return true;
             }
         }
-        return false;
     }
+    return false;
+}
 
     // Extractor implementation.
 
