@@ -340,12 +340,6 @@ public boolean sniff(ExtractorInput input) throws IOException {
             return RESULT_CONTINUE;
         }
 
-// For 192-byte Blu-ray m2ts: skip 4-byte TP_extra_header before TS header
-if (packetSize == 192) {
-	Log.e("MyTsExtractor", "📦 192-byte: skipped 4B extra header, endOfPacket=" + endOfPacket);
-    tsPacketBuffer.skipBytes(4);   // skip TP_extra_header (sync byte + 3 bytes)
-    endOfPacket -= 4;              // adjust end position (188-byte TS payload)
-}
         @TsPayloadReader.Flags int packetHeaderFlags = 0;
 
         // Note: See ISO/IEC 13818-1, section 2.4.3.2 for details of the header format.
@@ -466,17 +460,20 @@ private int findEndOfFirstTsPacketInBuffer() throws ParserException {
     int limit = tsPacketBuffer.limit();
     int syncBytePosition = TsUtil.findSyncBytePosition(tsPacketBuffer.getData(), searchStart, limit);
     tsPacketBuffer.setPosition(syncBytePosition);
-    int endOfPacket = syncBytePosition + packetSize;  // ← 用 packetSize！
-    // ... 后面 bytesSinceLastSync 判断也用 packetSize
-    if (endOfPacket > limit) {
-        bytesSinceLastSync += syncBytePosition - searchStart;
-        if (mode == MODE_HLS && bytesSinceLastSync > packetSize * 2) {  // ← 用 packetSize
-            throw ParserException.createForMalformedContainer(
-                    "Cannot find sync byte. Most likely not a Transport Stream.", null);
-        }
-    } else {
-        bytesSinceLastSync = 0;
+
+    if (packetSize == 192) {
+        tsPacketBuffer.skipBytes(4);
+        int result = syncBytePosition + 188;
+        Log.e("MyTsExtractor", "📍 192: searchStart=" + searchStart 
+              + " syncPos=" + syncBytePosition 
+              + " skip→" + tsPacketBuffer.getPosition() 
+              + " endOfPacket=" + result 
+              + " bufferLimit=" + limit);
+        return result;
     }
+
+    int endOfPacket = syncBytePosition + packetSize;
+    // ... bytesSinceLastSync 逻辑 ...
     return endOfPacket;
 }
 
