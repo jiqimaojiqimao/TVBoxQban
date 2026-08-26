@@ -224,11 +224,9 @@ public final class MyTsExtractor implements Extractor {
         Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
 
         long inputLength = input.getLength();
-if (tracksEnded) {
-    maybeOutputSeekMap(inputLength);
-    // 已经建好 tracks，直接继续，让播放器正常读媒体数据
-    // 不要走 durationReader，它会提前返回 EOF 导致 3001
-}
+
+        if (tracksEnded) {
+        }
 
         if (!fillBufferWithAtLeastOnePacket(input)) {
             return RESULT_END_OF_INPUT;
@@ -317,22 +315,10 @@ if (tracksEnded) {
     // endregion
 
     // region Internals
-    private void maybeOutputSeekMap(long inputLength) {
-        if (!hasOutputSeekMap) {
-            hasOutputSeekMap = true;
-            if (durationReader.getDurationUs() != C.TIME_UNSET) {
-                tsBinarySearchSeeker = new TsBinarySearchSeeker(
-                        durationReader.getPcrTimestampAdjuster(),
-                        durationReader.getDurationUs(),
-                        inputLength,
-                        pcrPid,
-                        timestampSearchBytes);
-                output.seekMap(tsBinarySearchSeeker.getSeekMap());
-            } else {
-                output.seekMap(new SeekMap.Unseekable(durationReader.getDurationUs()));
-            }
-        }
-    }
+private void maybeOutputSeekMap(long inputLength) {
+    // 暂时不输出 seekMap，避免 UNSET duration 导致 NPE
+    hasOutputSeekMap = true;
+}
 
     private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
         byte[] data = tsPacketBuffer.getData();
@@ -430,7 +416,7 @@ if (tracksEnded) {
                     if (tsPayloadReaders.get(pid) == null) {
                         tsPayloadReaders.put(pid, new SectionReader(new PmtReader(pid)));
                         remainingPmts++;
-						Log.e("MyTsExtractor", "📊 PAT done: remainingPmts=" + remainingPmts);
+                        Log.e("MyTsExtractor", "📊 PAT done: remainingPmts=" + remainingPmts);
                     }
                 }
             }
@@ -541,7 +527,7 @@ if (tracksEnded) {
                     output.endTracks();
                     tracksEnded = true;
                 }
-				Log.e("MyTsExtractor", "📊 PMT done: remainingPmts=" + remainingPmts + " tracksEnded=" + tracksEnded);
+                Log.e("MyTsExtractor", "📊 PMT done: remainingPmts=" + remainingPmts + " tracksEnded=" + tracksEnded);
             }
         }
 
