@@ -33,6 +33,7 @@ import androidx.media3.extractor.Extractor;
 
 import com.github.tvbox.osc.util.FileUtils;
 
+import android.util.Log;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -106,10 +107,10 @@ public final class ExoMediaSourceHelper {
         }
 
 
-String uriStr = contentUri.toString().toLowerCase();
-
 // ✅ 优先判断 m2ts / ts
-if (uriStr.contains(".m2ts") || uriStr.contains(".ts")) {
+if (contentUri.contains(".m2ts") || contentUri.contains(".ts")) {
+
+	Log.e("MyTsExtractor", "sniff() CALLED: " + contentUri);
     return new ProgressiveMediaSource.Factory(
             getDataSourceFactory(),
             getExtractorsFactory() // ✅ MyTsExtractor
