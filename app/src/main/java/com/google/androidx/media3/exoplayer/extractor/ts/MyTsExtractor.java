@@ -327,26 +327,18 @@ int syncPos = findEndOfFirstTsPacketInBuffer();
         }
 
         // Consume payload
-// Consume payload
         boolean wereTracksEnded = tracksEnded;
-        if (shouldConsumePacketPayload(pid)) {
-            if ((packetHeaderFlags & FLAG_PAYLOAD_UNIT_START_INDICATOR) != 0) {
-                Log.e("MyTsExtractor", "🎬 PUSI pid=" + pid + " cc=" + (tsPacketHeader & 0xF));
-            }
-            // Save original limit and set to end of this packet
-            int originalLimit = tsPacketBuffer.limit();
-            if (endOfPacket <= originalLimit) {
-                tsPacketBuffer.setLimit(endOfPacket);
-                try {
-                    payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
-                } catch (IllegalArgumentException e) {
-                    Log.e("MyTsExtractor", "💥 consume() threw, pid=" + pid + " endOfPacket=" + endOfPacket + " limit=" + originalLimit, e);
-                    payloadReader.seek();
-                }
-            } else {
-                Log.e("MyTsExtractor", "⚠️ Skipping consume: endOfPacket=" + endOfPacket + " > limit=" + originalLimit);
-            }
-        }
+if (shouldConsumePacketPayload(pid)) {
+    if ((packetHeaderFlags & FLAG_PAYLOAD_UNIT_START_INDICATOR) != 0) {
+        Log.e("MyTsExtractor", "🎬 PUSI pid=" + pid + " cc=" + (tsPacketHeader & 0xF));
+    }
+    int posBefore = tsPacketBuffer.getPosition();
+    int limitBefore = tsPacketBuffer.limit();
+    Log.e("MyTsExtractor", "📦 consume START pid=" + pid + " pos=" + posBefore + " limit=" + limitBefore + " bytesAvail=" + (limitBefore - posBefore));
+    payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
+    int posAfter = tsPacketBuffer.getPosition();
+    Log.e("MyTsExtractor", "📦 consume END pid=" + pid + " posAfter=" + posAfter + " consumed=" + (posAfter - posBefore));
+}
 
         if (mode != MODE_HLS && !wereTracksEnded && tracksEnded && inputLength != C.LENGTH_UNSET) {
             pendingSeekToStart = true;
