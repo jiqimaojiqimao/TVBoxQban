@@ -114,7 +114,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             .setBackBuffer(0, false)
             .build();
 
-		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
+        mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("zh", "chi", "zh-CN", "zh-TW", "en")      // 设置首选字幕语言为中文
             .setPreferredAudioLanguages("zh", "chi", "zh-CN", "zh-TW", "en")     // 设置首选音频语言为中文
             .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
