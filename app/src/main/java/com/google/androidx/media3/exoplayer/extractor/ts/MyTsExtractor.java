@@ -604,5 +604,6 @@ private TsPayloadReader.EsInfo readEsInfo(ParsableByteArray data, int length) {
             Arrays.copyOfRange(data.getData(), descriptorsStartPosition,
                     Math.min(descriptorsEndPosition, data.limit())));
 }
+	}
     // endregion
 }
