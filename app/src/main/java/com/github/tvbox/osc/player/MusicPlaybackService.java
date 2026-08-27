@@ -117,7 +117,6 @@ public class MusicPlaybackService extends Service {
                 PlayFragment fragment = getOwner();
                 if (fragment != null) {
                     pauseForSwitch();
-                    fragment.playPrevious();
                 }
             }
 
@@ -126,7 +125,7 @@ public class MusicPlaybackService extends Service {
                 PlayFragment fragment = getOwner();
                 if (fragment != null) {
                     pauseForSwitch();
-                    fragment.playNext(false);
+    
                 }
             }
 
@@ -175,7 +174,7 @@ public class MusicPlaybackService extends Service {
             PlayFragment fragment = getOwner();
             if (fragment != null) {
                 pauseForSwitch();
-                fragment.playPrevious();
+        
             }
             return;
         }
@@ -183,7 +182,7 @@ public class MusicPlaybackService extends Service {
             PlayFragment fragment = getOwner();
             if (fragment != null) {
                 pauseForSwitch();
-                fragment.playNext(false);
+          
             }
             return;
         }
