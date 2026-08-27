@@ -245,26 +245,25 @@ public int read(ExtractorInput input, PositionHolder seekPosition) throws IOExce
     }
 
     tsPacketBuffer.setPosition(syncPos);
-
     int tsPacketHeader = tsPacketBuffer.readInt();
 
-    // transport_error_indicator (byte[0] bit 7 = int bit 31)
+    // transport_error_indicator (byte[0] bit 7 → int bit 31)
     if ((tsPacketHeader & 0x80000000) != 0) {
         tsPacketBuffer.setPosition(endOfPacket);
         return RESULT_CONTINUE;
     }
 
-    // payload_unit_start_indicator (byte[0] bit 6 = int bit 30)
+    // payload_unit_start_indicator (byte[0] bit 6 → int bit 30)
     @TsPayloadReader.Flags int packetHeaderFlags = 0;
     packetHeaderFlags |= (tsPacketHeader & 0x40000000) != 0 ? FLAG_PAYLOAD_UNIT_START_INDICATOR : 0;
 
-    // PID (byte[1] bits 0-4 + byte[2] all = int bits 8-20)
+    // PID (byte[1] bits 4-0 + byte[2] → int bits 20-8)
     int pid = (tsPacketHeader & 0x1FFF00) >> 8;
 
-    // ★ 修正：adaptation_field_control 在 byte[3] 的 bits 6-5
-    // bit 6 (0x40) = payload exists, bit 5 (0x20) = AF exists
-    boolean adaptationFieldExists = (tsPacketHeader & 0x20) != 0;
-    boolean payloadExists = (tsPacketHeader & 0x40) != 0;
+    // adaptation_field_control (byte[3] bits 6-5 → int bits 6-5)
+    // bit 6 (0x40) = AF exists, bit 5 (0x20) = payload exists
+    boolean adaptationFieldExists = (tsPacketHeader & 0x40) != 0;
+    boolean payloadExists = (tsPacketHeader & 0x20) != 0;
 
     TsPayloadReader payloadReader = payloadExists ? tsPayloadReaders.get(pid) : null;
     if (payloadReader == null) {
