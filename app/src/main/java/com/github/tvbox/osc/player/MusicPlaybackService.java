@@ -57,8 +57,6 @@ public class MusicPlaybackService extends Service {
     private long position;
     private long duration;
     private boolean playing;
-    private CustomTarget<Bitmap> artworkTarget;
-
     public static boolean isSupported(Context context) {
         if (context == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false;
         return !ScreenUtils.isTv(context);
@@ -107,13 +105,11 @@ public class MusicPlaybackService extends Service {
             @Override
             public void onPlay() {
                 PlayFragment fragment = getOwner();
-                if (fragment != null) fragment.resumeFromMediaSession();
             }
 
             @Override
             public void onPause() {
                 PlayFragment fragment = getOwner();
-                if (fragment != null) fragment.pauseFromMediaSession();
             }
 
             @Override
@@ -137,14 +133,12 @@ public class MusicPlaybackService extends Service {
             @Override
             public void onStop() {
                 PlayFragment fragment = getOwner();
-                if (fragment != null) fragment.stopFromMediaSession();
                 stopPlaybackService();
             }
 
             @Override
             public void onSeekTo(long pos) {
                 PlayFragment fragment = getOwner();
-                if (fragment != null) fragment.seekFromMediaSession(pos);
             }
         }, new Handler(Looper.getMainLooper()));
         Intent launchIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
@@ -166,18 +160,15 @@ public class MusicPlaybackService extends Service {
         String action = intent.getAction();
         if (ACTION_STOP.equals(action)) {
             PlayFragment fragment = getOwner();
-            if (fragment != null) fragment.stopFromMediaSession();
             stopPlaybackService();
             return;
         }
         if (ACTION_PLAY.equals(action)) {
             PlayFragment fragment = getOwner();
-            if (fragment != null) fragment.resumeFromMediaSession();
             return;
         }
         if (ACTION_PAUSE.equals(action)) {
             PlayFragment fragment = getOwner();
-            if (fragment != null) fragment.pauseFromMediaSession();
             return;
         }
         if (ACTION_PREVIOUS.equals(action)) {
@@ -198,7 +189,6 @@ public class MusicPlaybackService extends Service {
         }
         if (ACTION_SEEK.equals(action)) {
             PlayFragment fragment = getOwner();
-            if (fragment != null) fragment.seekFromMediaSession(intent.getLongExtra(EXTRA_SEEK, 0));
             return;
         }
         if (ACTION_UPDATE.equals(action)) {
