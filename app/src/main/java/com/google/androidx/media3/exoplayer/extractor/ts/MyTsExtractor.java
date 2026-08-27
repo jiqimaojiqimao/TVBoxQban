@@ -82,6 +82,8 @@ public final class MyTsExtractor implements Extractor {
     public static final int TS_STREAM_TYPE_DVBSUBS = 0x59;
     public static final int TS_STREAM_TYPE_DC2_H262 = 0x80;
     public static final int TS_STREAM_TYPE_AIT = 0x101;
+    public static final int TS_STREAM_TYPE_DTS_HD = 0x88;
+    public static final int TS_STREAM_TYPE_DTS_UHD = 0x8B;
     public static final int TS_SYNC_BYTE = 0x47;
     private static final int TS_PAT_PID = 0;
     private static final int MAX_PID_PLUS_ONE = 0x2000;
@@ -272,6 +274,12 @@ public final class MyTsExtractor implements Extractor {
             int continuityCounter = tsPacketHeader & 0xF;
             int previousCounter = continuityCounters.get(pid, continuityCounter - 1);
             continuityCounters.put(pid, continuityCounter);
+            if (previousCounter == continuityCounter) {
+                tsPacketBuffer.setPosition(endOfPacket);
+                return RESULT_CONTINUE;
+            } else if (continuityCounter != ((previousCounter + 1) & 0xF)) {
+                payloadReader.seek();
+            }
         }
 
         // Skip adaptation field
@@ -288,8 +296,10 @@ public final class MyTsExtractor implements Extractor {
             if ((packetHeaderFlags & FLAG_PAYLOAD_UNIT_START_INDICATOR) != 0) {
                 Log.e("MyTs6", "🎬 PUSI pid=" + pid + " cc=" + (tsPacketHeader & 0xF));
             }
+            int limit = tsPacketBuffer.limit();
             tsPacketBuffer.setLimit(endOfPacket);
             payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
+            tsPacketBuffer.setLimit(limit);
         }
 
         if (mode != MODE_HLS && !wereTracksEnded && tracksEnded && inputLength != C.LENGTH_UNSET) {
@@ -306,34 +316,24 @@ public final class MyTsExtractor implements Extractor {
         hasOutputSeekMap = true;
     }
 
-private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
+    private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
         byte[] data = tsPacketBuffer.getData();
-
-        // 如果剩余空间不够一个包，且已经读了很多数据，把未消费的数据移到前面
-        if (tsPacketBuffer.bytesLeft() < packetSize) {
-            if (tsPacketBuffer.getPosition() > 0) {
-                // 需要压缩：把剩余数据移到开头
-                int bytesLeft = tsPacketBuffer.bytesLeft();
-                if (bytesLeft > 0) {
-                    System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
-                }
-                tsPacketBuffer.reset(data, bytesLeft);
-                // ★ 重置后 position=0，limit=bytesLeft，后续 findEndOfFirstTsPacketInBuffer 从 0 搜
+        // 对齐官方：位置到末尾不足一个包时，把未消费数据移到 buffer 开头
+        if (BUFFER_SIZE - tsPacketBuffer.getPosition() < packetSize) {
+            int bytesLeft = tsPacketBuffer.bytesLeft();
+            if (bytesLeft > 0) {
+                System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
             }
-            // 现在 position=0，读新数据追加到 limit 后面
+            tsPacketBuffer.reset(data, bytesLeft);
+        }
+        while (tsPacketBuffer.bytesLeft() < packetSize) {
             int limit = tsPacketBuffer.limit();
-            int maxRead = BUFFER_SIZE - limit;
-            if (maxRead <= 0) {
-                // buffer 满了但 bytesLeft >= packetSize 应该已经满足了，不应该到这里
-                return true;
-            }
-            int read = input.read(data, limit, maxRead);
+            int read = input.read(data, limit, BUFFER_SIZE - limit);
             if (read == C.RESULT_END_OF_INPUT) {
                 return false;
             }
             tsPacketBuffer.setLimit(limit + read);
         }
-
         return true;
     }
 
@@ -419,6 +419,8 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
         private static final int TS_PMT_DESC_DVB_EXT = 0x7F;
         private static final int TS_PMT_DESC_DVBSUBS = 0x59;
         private static final int TS_PMT_DESC_DVB_EXT_AC4 = 0x15;
+        private static final int TS_PMT_DESC_DVB_EXT_DTS_HD = 0x0E;
+        private static final int TS_PMT_DESC_DVB_EXT_DTS_UHD = 0x21;
 
         private final ParsableBitArray pmtScratch = new ParsableBitArray(new byte[5]);
         private final SparseArray<TsPayloadReader> trackIdToReaderScratch = new SparseArray<>();
@@ -431,21 +433,7 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
         public void init(TimestampAdjuster ta, ExtractorOutput eo, TsPayloadReader.TrackIdGenerator idGen) {}
 
         @Override
-@Override
-public void consume(ParsableByteArray sectionData) {
-    // ★ 检查 PMT section 是否完整
-    if (sectionData.bytesLeft() < 4) return;
-    int savedPos = sectionData.getPosition();
-    int tableId = sectionData.readUnsignedByte();
-    if (tableId != 0x02) { sectionData.setPosition(savedPos); return; }
-    int lengthHigh = sectionData.readUnsignedByte();
-    int lengthLow = sectionData.readUnsignedByte();
-    int sectionLength = ((lengthHigh & 0x0F) << 8) | lengthLow;
-    sectionData.setPosition(savedPos); // 恢复
-    if (sectionData.bytesLeft() < 3 + sectionLength) {
-        // 不完整，等下一个 TS packet
-        return;
-    }
+        public void consume(ParsableByteArray sectionData) {
             if (sectionData.readUnsignedByte() != 0x02) return;
             TimestampAdjuster timestampAdjuster;
             if (mode == MODE_SINGLE_PMT || mode == MODE_HLS || remainingPmts == 1) {
@@ -454,11 +442,15 @@ public void consume(ParsableByteArray sectionData) {
                 timestampAdjuster = new TimestampAdjuster(timestampAdjusters.get(0).getFirstSampleTimestampUs());
                 timestampAdjusters.add(timestampAdjuster);
             }
+
             int secondHeaderByte = sectionData.readUnsignedByte();
             if ((secondHeaderByte & 0x80) == 0) return;
-            sectionData.skipBytes(3);    
-            int programNumber = sectionData.readUnsignedShort();
-            sectionData.skipBytes(1);  // ← 只跳 last_section_number
+
+            // ★ 对齐官方：skipBytes(1) + readUnsignedShort() + skipBytes(3)
+            sectionData.skipBytes(1); // section_length 低 8 位
+            int programNumber = sectionData.readUnsignedShort(); // program_number
+            sectionData.skipBytes(3); // version + section_number + last_section_number
+
             sectionData.readBytes(pmtScratch, 2);
             pmtScratch.skipBits(3);
             pcrPid = pmtScratch.readBits(13);
@@ -485,7 +477,6 @@ public void consume(ParsableByteArray sectionData) {
                 int elementaryPid = pmtScratch.readBits(13);
                 pmtScratch.skipBits(4);
                 int esInfoLength = pmtScratch.readBits(12);
-                // ★ 原始 streamType + PID，在 descriptor 覆盖之前打
                 Log.e("MyTsExtractor", "🔍 ES raw: streamType=0x" + Integer.toHexString(streamType)
                         + " elementaryPid=" + elementaryPid + " esInfoLength=" + esInfoLength);
                 TsPayloadReader.EsInfo esInfo = readEsInfo(sectionData, esInfoLength);
@@ -493,15 +484,9 @@ public void consume(ParsableByteArray sectionData) {
                 remainingEntriesLength -= esInfoLength + 5;
                 int trackId = mode == MODE_HLS ? streamType : elementaryPid;
                 if (trackIds.get(trackId)) continue;
-                // PGS 字幕 → 跳过（ExoPlayer 不支持）
-                if (streamType == 0x90) {
-                    continue;
-                }
-                // DTS-HD MA (0x86) → 映射成 DTS (0x8A) 让工厂建 DtsReader
-                int mappedStreamType = (streamType == 0x86) ? TS_STREAM_TYPE_DTS : streamType;
-                TsPayloadReader reader = mode == MODE_HLS && mappedStreamType == TS_STREAM_TYPE_ID3
+                TsPayloadReader reader = mode == MODE_HLS && streamType == TS_STREAM_TYPE_ID3
                         ? id3Reader
-                        : payloadReaderFactory.createPayloadReader(mappedStreamType, esInfo);
+                        : payloadReaderFactory.createPayloadReader(streamType, esInfo);
                 if (mode != MODE_HLS || elementaryPid < trackIdToPidScratch.get(trackId, MAX_PID_PLUS_ONE)) {
                     trackIdToPidScratch.put(trackId, elementaryPid);
                     trackIdToReaderScratch.put(trackId, reader);
@@ -542,82 +527,84 @@ public void consume(ParsableByteArray sectionData) {
             }
         }
 
-private TsPayloadReader.EsInfo readEsInfo(ParsableByteArray data, int length) {
-    int descriptorsStartPosition = data.getPosition();
-    int descriptorsEndPosition = descriptorsStartPosition + length;
+        private TsPayloadReader.EsInfo readEsInfo(ParsableByteArray data, int length) {
+            int descriptorsStartPosition = data.getPosition();
+            int descriptorsEndPosition = descriptorsStartPosition + length;
+            // 防御：不超过 buffer limit
+            descriptorsEndPosition = Math.min(descriptorsEndPosition, data.limit());
 
-    // 防御：descriptorsEndPosition 不能超过 buffer 的 limit
-    descriptorsEndPosition = Math.min(descriptorsEndPosition, data.limit());
+            int streamType = -1;
+            @TsPayloadReader.EsInfo.AudioType int audioType = AUDIO_TYPE_UNDEFINED;
+            String language = null;
+            List<TsPayloadReader.DvbSubtitleInfo> dvbSubtitleInfos = null;
 
-    int streamType = -1;
-    @TsPayloadReader.EsInfo.AudioType int audioType = AUDIO_TYPE_UNDEFINED;
-    String language = null;
-    List<TsPayloadReader.DvbSubtitleInfo> dvbSubtitleInfos = null;
+            while (data.getPosition() < descriptorsEndPosition && data.bytesLeft() >= 2) {
+                int descriptorTag = data.readUnsignedByte();
+                int descriptorLength = data.readUnsignedByte();
+                int positionOfNextDescriptor = data.getPosition() + descriptorLength;
 
-    while (data.getPosition() < descriptorsEndPosition && data.bytesLeft() >= 2) {
-        int descriptorTag = data.readUnsignedByte();
-        int descriptorLength = data.readUnsignedByte();
-        int positionOfNextDescriptor = data.getPosition() + descriptorLength;
+                if (positionOfNextDescriptor > data.limit()) {
+                    Log.e("MyTsExtractor", "⚠️ Descriptor 0x" + Integer.toHexString(descriptorTag)
+                            + " length=" + descriptorLength + " exceeds buffer limit");
+                    break;
+                }
+                if (positionOfNextDescriptor > descriptorsEndPosition) {
+                    Log.e("MyTsExtractor", "⚠️ Descriptor 0x" + Integer.toHexString(descriptorTag)
+                            + " length=" + descriptorLength + " exceeds esInfoLength");
+                    break;
+                }
 
-        // 防御：descriptor 声明的长度超出 buffer 范围
-        if (positionOfNextDescriptor > data.limit()) {
-            Log.e("MyTsExtractor", "⚠️ Descriptor 0x" + Integer.toHexString(descriptorTag)
-                    + " length=" + descriptorLength + " exceeds buffer limit, skipping to end");
-            data.setPosition(descriptorsEndPosition);
-            break;
-        }
-        if (positionOfNextDescriptor > descriptorsEndPosition) {
-            Log.e("MyTsExtractor", "⚠️ Descriptor 0x" + Integer.toHexString(descriptorTag)
-                    + " length=" + descriptorLength + " exceeds esInfoLength, truncating");
-            data.setPosition(descriptorsEndPosition);
-            break;
-        }
+                if (descriptorTag == TS_PMT_DESC_REGISTRATION) {
+                    long formatId = data.readUnsignedInt();
+                    if (formatId == AC3_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_AC3;
+                    else if (formatId == E_AC3_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_E_AC3;
+                    else if (formatId == AC4_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_AC4;
+                    else if (formatId == HEVC_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_H265;
+                } else if (descriptorTag == TS_PMT_DESC_AC3) {
+                    streamType = TS_STREAM_TYPE_AC3;
+                } else if (descriptorTag == TS_PMT_DESC_EAC3) {
+                    streamType = TS_STREAM_TYPE_E_AC3;
+                } else if (descriptorTag == TS_PMT_DESC_DVB_EXT) {
+                    if (data.bytesLeft() > 0) {
+                        int descriptorTagExt = data.readUnsignedByte();
+                        if (descriptorTagExt == TS_PMT_DESC_DVB_EXT_AC4) {
+                            streamType = TS_STREAM_TYPE_AC4;
+                        } else if (descriptorTagExt == TS_PMT_DESC_DVB_EXT_DTS_HD) {
+                            streamType = TS_STREAM_TYPE_DTS_HD;
+                        } else if (descriptorTagExt == TS_PMT_DESC_DVB_EXT_DTS_UHD) {
+                            streamType = TS_STREAM_TYPE_DTS_UHD;
+                        }
+                    }
+                } else if (descriptorTag == TS_PMT_DESC_DTS) {
+                    streamType = TS_STREAM_TYPE_DTS;
+                } else if (descriptorTag == TS_PMT_DESC_ISO639_LANG) {
+                    if (data.bytesLeft() >= 4) {
+                        language = data.readString(3).trim();
+                        audioType = data.readUnsignedByte();
+                    }
+                } else if (descriptorTag == TS_PMT_DESC_DVBSUBS) {
+                    streamType = TS_STREAM_TYPE_DVBSUBS;
+                    dvbSubtitleInfos = new ArrayList<>();
+                    while (data.getPosition() < positionOfNextDescriptor && data.bytesLeft() >= 8) {
+                        String dvbLanguage = data.readString(3).trim();
+                        int dvbSubtitlingType = data.readUnsignedByte();
+                        byte[] initData = new byte[4];
+                        data.readBytes(initData, 0, 4);
+                        dvbSubtitleInfos.add(new TsPayloadReader.DvbSubtitleInfo(dvbLanguage, dvbSubtitlingType, initData));
+                    }
+                } else if (descriptorTag == TS_PMT_DESC_AIT) {
+                    streamType = TS_STREAM_TYPE_AIT;
+                }
 
-        if (descriptorTag == TS_PMT_DESC_REGISTRATION) {
-            long formatId = data.readUnsignedInt();
-            if (formatId == AC3_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_AC3;
-            else if (formatId == E_AC3_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_E_AC3;
-            else if (formatId == AC4_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_AC4;
-            else if (formatId == HEVC_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_H265;
-        } else if (descriptorTag == TS_PMT_DESC_AC3) {
-            streamType = TS_STREAM_TYPE_AC3;
-        } else if (descriptorTag == TS_PMT_DESC_EAC3) {
-            streamType = TS_STREAM_TYPE_E_AC3;
-        } else if (descriptorTag == TS_PMT_DESC_DVB_EXT) {
-            if (data.bytesLeft() > 0 && data.readUnsignedByte() == TS_PMT_DESC_DVB_EXT_AC4)
-                streamType = TS_STREAM_TYPE_AC4;
-        } else if (descriptorTag == TS_PMT_DESC_DTS) {
-            streamType = TS_STREAM_TYPE_DTS;
-        } else if (descriptorTag == TS_PMT_DESC_ISO639_LANG) {
-            if (data.bytesLeft() >= 4) {
-                language = data.readString(3).trim();
-                audioType = data.readUnsignedByte();
+                data.setPosition(positionOfNextDescriptor);
             }
-        } else if (descriptorTag == TS_PMT_DESC_DVBSUBS) {
-            streamType = TS_STREAM_TYPE_DVBSUBS;
-            dvbSubtitleInfos = new ArrayList<>();
-            while (data.getPosition() < positionOfNextDescriptor && data.bytesLeft() >= 8) {
-                String dvbLanguage = data.readString(3).trim();
-                int dvbSubtitlingType = data.readUnsignedByte();
-                byte[] initData = new byte[4];
-                data.readBytes(initData, 0, 4);
-                dvbSubtitleInfos.add(new TsPayloadReader.DvbSubtitleInfo(dvbLanguage, dvbSubtitlingType, initData));
-            }
-        } else if (descriptorTag == TS_PMT_DESC_AIT) {
-            streamType = TS_STREAM_TYPE_AIT;
-        }
 
-        // 安全跳到下一个 descriptor
-        data.setPosition(positionOfNextDescriptor);
+            data.setPosition(Math.min(descriptorsEndPosition, data.limit()));
+
+            return new TsPayloadReader.EsInfo(streamType, language, audioType, dvbSubtitleInfos,
+                    Arrays.copyOfRange(data.getData(), descriptorsStartPosition,
+                            Math.min(descriptorsEndPosition, data.limit())));
+        }
     }
-
-    // 确保 position 不会超过 esInfo 边界
-    data.setPosition(Math.min(descriptorsEndPosition, data.limit()));
-
-    return new TsPayloadReader.EsInfo(streamType, language, audioType, dvbSubtitleInfos,
-            Arrays.copyOfRange(data.getData(), descriptorsStartPosition,
-                    Math.min(descriptorsEndPosition, data.limit())));
-}
-	}
     // endregion
 }
