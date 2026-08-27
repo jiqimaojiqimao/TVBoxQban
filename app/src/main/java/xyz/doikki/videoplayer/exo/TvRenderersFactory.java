@@ -15,6 +15,7 @@ import androidx.media3.exoplayer.video.MediaCodecVideoRenderer;
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
 import androidx.media3.exoplayer.mediacodec.MediaCodecUtil;
 import androidx.media3.exoplayer.mediacodec.MediaCodecInfo;
+import androidx.media3.exoplayer.mediacodec.FormatHolder;
 import androidx.media3.exoplayer.audio.AudioRendererEventListener;
 import androidx.media3.exoplayer.audio.AudioSink;
 
@@ -117,7 +118,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
 
     /**
      * 重写以实现对 DV 流的精确过滤：
-     * 只有 codec 以 "dvhe" 开头 且 colorInfo.transferCharacteristic == PQ(ST.2084) 的 DV 流
+     * 只有 codec 以 "dvhe" 开头 且 colorInfo.transferFunction == PQ(ST.2084) 的 DV 流
      * 才会被降级为 HEVC 解码。
      *
      * 注意：如果 NextRenderersFactory 内部重写了 createMediaCodecVideoRenderer 且不调用 super，
@@ -137,31 +138,34 @@ public class TvRenderersFactory extends NextRenderersFactory {
                 allowedJoiningTimeMs,
                 mediaCodecSelector,
                 enableDecoderFallback,
-                (androidx.media3.exoplayer.video.MediaCodecVideoDecoderSelector) decoderSelector,
+                decoderSelector,
                 eventLoggers
         ) {
             /**
              * 在格式确定后、创建解码器之前拦截，检查完整 Format 信息（codec + color），
              * 满足条件时才将 mimeType 改为 video/hevc。
              */
+            @Override
             protected void onInputFormatChanged(
-                    @NonNull Format format,
+                    @NonNull FormatHolder formatHolder,
                     @Nullable Object decoderReuseEvaluation
             ) {
+                Format format = formatHolder.format;
                 // 精确过滤：mimeType=dolby-vision + codec=dvhe* + color=PQ(ST.2084)
-                if ("video/dolby-vision".equals(format.mimeType)
+                if ("video/dolby-vision".equals(format.sampleMimeType)
                         && format.codecs != null
                         && format.codecs.startsWith("dvhe")
                         && format.colorInfo != null
-                        && format.colorInfo.transferCharacteristic == C.TRANSFER_ST2084) {
+                        && format.colorInfo.transferFunction == C.TRANSFER_SMPTE2084) {
                     // 降级为 HEVC
                     Format hevcFormat = format.buildUpon()
-                            .setMimeType("video/hevc")
+                            .setSampleMimeType("video/hevc")
                             .build();
-                    super.onInputFormatChanged(hevcFormat, null);
+                    formatHolder.format = hevcFormat;
+                    super.onInputFormatChanged(formatHolder, decoderReuseEvaluation);
                     return;
                 }
-                super.onInputFormatChanged(format, decoderReuseEvaluation);
+                super.onInputFormatChanged(formatHolder, decoderReuseEvaluation);
             }
         };
     }
