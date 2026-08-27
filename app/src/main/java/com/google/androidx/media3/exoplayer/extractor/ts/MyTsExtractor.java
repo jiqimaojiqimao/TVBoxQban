@@ -327,22 +327,40 @@ int syncPos = findEndOfFirstTsPacketInBuffer();
         }
 
         // Consume payload
+// Consume payload
         boolean wereTracksEnded = tracksEnded;
         if (shouldConsumePacketPayload(pid)) {
             if ((packetHeaderFlags & FLAG_PAYLOAD_UNIT_START_INDICATOR) != 0) {
                 Log.e("MyTsExtractor", "🎬 PUSI pid=" + pid + " cc=" + (tsPacketHeader & 0xF));
             }
-            tsPacketBuffer.setLimit(endOfPacket);
-            payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
+            // Save original limit and set to end of this packet
+            int originalLimit = tsPacketBuffer.limit();
+            if (endOfPacket <= originalLimit) {
+                tsPacketBuffer.setLimit(endOfPacket);
+                try {
+                    payloadReader.consume(tsPacketBuffer, packetHeaderFlags);
+                } catch (IllegalArgumentException e) {
+                    Log.e("MyTsExtractor", "💥 consume() threw, pid=" + pid + " endOfPacket=" + endOfPacket + " limit=" + originalLimit, e);
+                    payloadReader.seek();
+                }
+            } else {
+                Log.e("MyTsExtractor", "⚠️ Skipping consume: endOfPacket=" + endOfPacket + " > limit=" + originalLimit);
+            }
         }
 
         if (mode != MODE_HLS && !wereTracksEnded && tracksEnded && inputLength != C.LENGTH_UNSET) {
             pendingSeekToStart = true;
         }
 
-        tsPacketBuffer.setPosition(endOfPacket);
+        // Safe setPosition — never exceed limit
+        int safeEndPos = Math.min(endOfPacket, tsPacketBuffer.limit());
+        if (safeEndPos >= 0 && safeEndPos <= tsPacketBuffer.getData().length) {
+            tsPacketBuffer.setPosition(safeEndPos);
+        } else {
+            Log.e("MyTsExtractor", "⚠️ Cannot setPosition(" + safeEndPos + "), resetting buffer");
+            tsPacketBuffer.reset(0);
+        }
         return RESULT_CONTINUE;
-    }
     // endregion
 
     // region Internals
@@ -377,6 +395,10 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
         }
 
         int read = input.read(data, bytesLeft, maxRead);
+        if (read == 0) {
+            // No data available right now, return true to let caller retry
+            return true;
+        }
         if (read == C.RESULT_END_OF_INPUT) {
             if (bytesLeft < packetSize) {
                 return false; // Not even one full packet available and EOF
