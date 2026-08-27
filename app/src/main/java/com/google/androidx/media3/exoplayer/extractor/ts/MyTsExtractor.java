@@ -249,9 +249,9 @@ public final class MyTsExtractor implements Extractor {
             return RESULT_END_OF_INPUT;
         }
 
-        int syncPos = findEndOfFirstTsPacketInBuffer();
+int syncPos = findEndOfFirstTsPacketInBuffer();
         if (syncPos < 0) {
-            // No sync found — try to realign
+            // No sync found — discard all data and realign on next read
             long currentPos = input.getPosition() - tsPacketBuffer.bytesLeft();
             long remainder = currentPos % packetSize;
             if (remainder != 0) {
@@ -260,15 +260,21 @@ public final class MyTsExtractor implements Extractor {
                 tsPacketBuffer.reset(0);
                 input.skipFully(skipBytes);
             } else {
+                // No sync byte found at all — discard buffer and skip ahead
+                Log.e("MyTsExtractor", "⚠️ No sync, discarding " + tsPacketBuffer.bytesLeft() + " bytes");
                 tsPacketBuffer.reset(0);
             }
             return RESULT_CONTINUE;
         }
 
         int endOfPacket = syncPos + packetSize;
+
+        // Safety: make sure the full packet is within buffer bounds
         if (endOfPacket > tsPacketBuffer.limit()) {
-            // Packet not fully in buffer yet
-            tsPacketBuffer.setPosition(syncPos);
+            Log.e("MyTsExtractor", "⚠️ Packet spans beyond buffer: syncPos=" + syncPos
+                    + " endOfPacket=" + endOfPacket + " limit=" + tsPacketBuffer.limit()
+                    + " — waiting for more data");
+            // Don't consume, just return and let fillBuffer bring in more data
             return RESULT_CONTINUE;
         }
 
@@ -351,52 +357,58 @@ public final class MyTsExtractor implements Extractor {
         }
     }
 
-    private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
-        byte[] data = tsPacketBuffer.getData();
+private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
+    byte[] data = tsPacketBuffer.getData();
 
-        if (tsPacketBuffer.bytesLeft() < packetSize) {
-            // Compact: move remaining data to front
-            int bytesLeft = tsPacketBuffer.bytesLeft();
-            if (bytesLeft > 0) {
-                System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
-            }
-            tsPacketBuffer.reset(data, bytesLeft);
-            // Now position=0, limit=bytesLeft
+    // Compact remaining data to front
+    int bytesLeft = tsPacketBuffer.bytesLeft();
+    if (bytesLeft < packetSize) {
+        int position = tsPacketBuffer.getPosition();
+        if (bytesLeft > 0) {
+            System.arraycopy(data, position, data, 0, bytesLeft);
+        }
+        tsPacketBuffer.reset(data, bytesLeft);
+        // Now position=0, limit=bytesLeft
 
-            int limit = tsPacketBuffer.limit();
-            int maxRead = BUFFER_SIZE - limit;
-            if (maxRead <= 0) {
-                return true; // Buffer full but we have data
-            }
-            int read = input.read(data, limit, maxRead);
-            if (read == C.RESULT_END_OF_INPUT) {
-                return bytesLeft > 0; // Return true if we still have data to process
-            }
-            tsPacketBuffer.setLimit(limit + read);
+        int maxRead = BUFFER_SIZE - bytesLeft;
+        if (maxRead <= 0) {
+            // Buffer is full but still less than a packet — shouldn't happen with BUFFER_SIZE=9400
+            return bytesLeft >= packetSize;
         }
 
-        return true;
+        int read = input.read(data, bytesLeft, maxRead);
+        if (read == C.RESULT_END_OF_INPUT) {
+            if (bytesLeft < packetSize) {
+                return false; // Not even one full packet available and EOF
+            }
+            return true;
+        }
+        tsPacketBuffer.setLimit(bytesLeft + read);
     }
+
+    return tsPacketBuffer.bytesLeft() >= packetSize;
+}
 
     /**
      * Searches for two consecutive sync bytes (0x47) spaced by {@link #packetSize}.
      * Returns the position of the first sync byte, or -1 if not found.
      */
-    private int findEndOfFirstTsPacketInBuffer() {
-        int searchStart = tsPacketBuffer.getPosition();
-        int limit = tsPacketBuffer.limit();
-        byte[] data = tsPacketBuffer.getData();
+private int findEndOfFirstTsPacketInBuffer() {
+    int searchStart = tsPacketBuffer.getPosition();
+    int limit = tsPacketBuffer.limit();
+    byte[] data = tsPacketBuffer.getData();
 
-        for (int i = searchStart; i + packetSize * 2 <= limit; i++) {
-            if (data[i] == (byte) TS_SYNC_BYTE && data[i + packetSize] == (byte) TS_SYNC_BYTE) {
-                Log.e("MyTsExtractor", "📍 SYNC FOUND: syncPos=" + i + " endOfPacket=" + (i + packetSize));
-                return i;
-            }
+    // Need at least 2 sync bytes (packetSize apart) to confirm
+    for (int i = searchStart; i + packetSize * 2 <= limit; i++) {
+        if (data[i] == (byte) TS_SYNC_BYTE && data[i + packetSize] == (byte) TS_SYNC_BYTE) {
+            Log.e("MyTsExtractor", "📍 SYNC FOUND: syncPos=" + i + " endOfPacket=" + (i + packetSize));
+            return i;
         }
-
-        Log.e("MyTsExtractor", "⚠️ No 0x47 sync pattern found, searchStart=" + searchStart + " limit=" + limit);
-        return -1;
     }
+
+    Log.e("MyTsExtractor", "⚠️ No 0x47 sync pattern found, searchStart=" + searchStart + " limit=" + limit);
+    return -1;
+}
 
     private boolean shouldConsumePacketPayload(int packetPid) {
         return mode == MODE_HLS
