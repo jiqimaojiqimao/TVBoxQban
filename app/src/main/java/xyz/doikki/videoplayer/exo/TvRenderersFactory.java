@@ -101,7 +101,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
                     ) throws MediaCodecUtil.DecoderQueryException {
 
                         // 关键：DV 直接降级为 HEVC
-                        if ("video/dolby-vision".equals(mimeType)) {  //只在TV端执行
+                        if ("video/dolby-vision".equals(mimeType)) {
                             mimeType = "video/hevc";
                         }
                         return MediaCodecSelector.DEFAULT.getDecoderInfos(
