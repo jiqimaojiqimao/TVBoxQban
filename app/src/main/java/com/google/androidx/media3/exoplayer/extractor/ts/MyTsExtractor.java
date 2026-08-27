@@ -229,14 +229,20 @@ public final class MyTsExtractor implements Extractor {
         bytesSinceLastSync = 0;
         pendingSeekToStart = false;
     }
-
+private boolean loggedPids = false;
     @Override
     public void release() {}
 
     @Override
     public @ReadResult int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
         Log.e("MyTsExtractor", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
-
+if (!loggedPids) {
+    Log.e("MyTsExtractor", "📋 tsPayloadReaders size=" + tsPayloadReaders.size());
+    for (int i = 0; i < tsPayloadReaders.size(); i++) {
+        Log.e("MyTsExtractor", "📋 pid=" + tsPayloadReaders.keyAt(i) + " reader=" + tsPayloadReaders.valueAt(i));
+    }
+    loggedPids = true;
+}
         long inputLength = input.getLength();
 
         if (tracksEnded && inputLength != C.LENGTH_UNSET && !hasOutputSeekMap) {
