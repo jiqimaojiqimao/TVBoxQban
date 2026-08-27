@@ -528,60 +528,81 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
             }
         }
 
-        private TsPayloadReader.EsInfo readEsInfo(ParsableByteArray data, int length) {
-            int descriptorsStartPosition = data.getPosition();
-            int descriptorsEndPosition = descriptorsStartPosition + length;
-            int streamType = -1;
-            @TsPayloadReader.EsInfo.AudioType int audioType = AUDIO_TYPE_UNDEFINED;
-            String language = null;
-            List<TsPayloadReader.DvbSubtitleInfo> dvbSubtitleInfos = null;
-            while (data.getPosition() < descriptorsEndPosition) {
-                int descriptorTag = data.readUnsignedByte();
-                int descriptorLength = data.readUnsignedByte();
-                int positionOfNextDescriptor = data.getPosition() + descriptorLength;
-                if (positionOfNextDescriptor > descriptorsEndPosition) break;
-                if (descriptorTag == TS_PMT_DESC_REGISTRATION) {
-                    long formatId = data.readUnsignedInt();
-                    if (formatId == AC3_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_AC3;
-                    else if (formatId == E_AC3_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_E_AC3;
-                    else if (formatId == AC4_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_AC4;
-                    else if (formatId == HEVC_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_H265;
-                } else if (descriptorTag == TS_PMT_DESC_AC3) {
-                    streamType = TS_STREAM_TYPE_AC3;
-                } else if (descriptorTag == TS_PMT_DESC_EAC3) {
-                    streamType = TS_STREAM_TYPE_E_AC3;
-                } else if (descriptorTag == TS_PMT_DESC_DVB_EXT) {
-                    if (data.readUnsignedByte() == TS_PMT_DESC_DVB_EXT_AC4) streamType = TS_STREAM_TYPE_AC4;
-                } else if (descriptorTag == TS_PMT_DESC_DTS) {
-                    streamType = TS_STREAM_TYPE_DTS;
-                } else if (descriptorTag == TS_PMT_DESC_ISO639_LANG) {
-                    language = data.readString(3).trim();
-                    audioType = data.readUnsignedByte();
-                } else if (descriptorTag == TS_PMT_DESC_DVBSUBS) {
-                    streamType = TS_STREAM_TYPE_DVBSUBS;
-                    dvbSubtitleInfos = new ArrayList<>();
-                    while (data.getPosition() < positionOfNextDescriptor) {
-                        String dvbLanguage = data.readString(3).trim();
-                        int dvbSubtitlingType = data.readUnsignedByte();
-                        byte[] initData = new byte[4];
-                        data.readBytes(initData, 0, 4);
-                        dvbSubtitleInfos.add(new TsPayloadReader.DvbSubtitleInfo(dvbLanguage, dvbSubtitlingType, initData));
-                    }
-                } else if (descriptorTag == TS_PMT_DESC_AIT) {
-                    streamType = TS_STREAM_TYPE_AIT;
-                }
-int skip = positionOfNextDescriptor - data.getPosition();
-if (skip > 0 && skip <= data.bytesLeft()) {
-    data.skipBytes(skip);
-} else if (skip > data.bytesLeft()) {
-    // descriptor 声明的长度超出 buffer，直接跳到末尾
-    data.skipBytes(data.bytesLeft());
-}
-            }
+private TsPayloadReader.EsInfo readEsInfo(ParsableByteArray data, int length) {
+    int descriptorsStartPosition = data.getPosition();
+    int descriptorsEndPosition = descriptorsStartPosition + length;
+
+    // 防御：descriptorsEndPosition 不能超过 buffer 的 limit
+    descriptorsEndPosition = Math.min(descriptorsEndPosition, data.limit());
+
+    int streamType = -1;
+    @TsPayloadReader.EsInfo.AudioType int audioType = AUDIO_TYPE_UNDEFINED;
+    String language = null;
+    List<TsPayloadReader.DvbSubtitleInfo> dvbSubtitleInfos = null;
+
+    while (data.getPosition() < descriptorsEndPosition && data.bytesLeft() >= 2) {
+        int descriptorTag = data.readUnsignedByte();
+        int descriptorLength = data.readUnsignedByte();
+        int positionOfNextDescriptor = data.getPosition() + descriptorLength;
+
+        // 防御：descriptor 声明的长度超出 buffer 范围
+        if (positionOfNextDescriptor > data.limit()) {
+            Log.e("MyTsExtractor", "⚠️ Descriptor 0x" + Integer.toHexString(descriptorTag)
+                    + " length=" + descriptorLength + " exceeds buffer limit, skipping to end");
             data.setPosition(descriptorsEndPosition);
-            return new TsPayloadReader.EsInfo(streamType, language, audioType, dvbSubtitleInfos,
-                    Arrays.copyOfRange(data.getData(), descriptorsStartPosition, descriptorsEndPosition));
+            break;
         }
+        if (positionOfNextDescriptor > descriptorsEndPosition) {
+            Log.e("MyTsExtractor", "⚠️ Descriptor 0x" + Integer.toHexString(descriptorTag)
+                    + " length=" + descriptorLength + " exceeds esInfoLength, truncating");
+            data.setPosition(descriptorsEndPosition);
+            break;
+        }
+
+        if (descriptorTag == TS_PMT_DESC_REGISTRATION) {
+            long formatId = data.readUnsignedInt();
+            if (formatId == AC3_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_AC3;
+            else if (formatId == E_AC3_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_E_AC3;
+            else if (formatId == AC4_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_AC4;
+            else if (formatId == HEVC_FORMAT_IDENTIFIER) streamType = TS_STREAM_TYPE_H265;
+        } else if (descriptorTag == TS_PMT_DESC_AC3) {
+            streamType = TS_STREAM_TYPE_AC3;
+        } else if (descriptorTag == TS_PMT_DESC_EAC3) {
+            streamType = TS_STREAM_TYPE_E_AC3;
+        } else if (descriptorTag == TS_PMT_DESC_DVB_EXT) {
+            if (data.bytesLeft() > 0 && data.readUnsignedByte() == TS_PMT_DESC_DVB_EXT_AC4)
+                streamType = TS_STREAM_TYPE_AC4;
+        } else if (descriptorTag == TS_PMT_DESC_DTS) {
+            streamType = TS_STREAM_TYPE_DTS;
+        } else if (descriptorTag == TS_PMT_DESC_ISO639_LANG) {
+            if (data.bytesLeft() >= 4) {
+                language = data.readString(3).trim();
+                audioType = data.readUnsignedByte();
+            }
+        } else if (descriptorTag == TS_PMT_DESC_DVBSUBS) {
+            streamType = TS_STREAM_TYPE_DVBSUBS;
+            dvbSubtitleInfos = new ArrayList<>();
+            while (data.getPosition() < positionOfNextDescriptor && data.bytesLeft() >= 8) {
+                String dvbLanguage = data.readString(3).trim();
+                int dvbSubtitlingType = data.readUnsignedByte();
+                byte[] initData = new byte[4];
+                data.readBytes(initData, 0, 4);
+                dvbSubtitleInfos.add(new TsPayloadReader.DvbSubtitleInfo(dvbLanguage, dvbSubtitlingType, initData));
+            }
+        } else if (descriptorTag == TS_PMT_DESC_AIT) {
+            streamType = TS_STREAM_TYPE_AIT;
+        }
+
+        // 安全跳到下一个 descriptor
+        data.setPosition(positionOfNextDescriptor);
     }
+
+    // 确保 position 不会超过 esInfo 边界
+    data.setPosition(Math.min(descriptorsEndPosition, data.limit()));
+
+    return new TsPayloadReader.EsInfo(streamType, language, audioType, dvbSubtitleInfos,
+            Arrays.copyOfRange(data.getData(), descriptorsStartPosition,
+                    Math.min(descriptorsEndPosition, data.limit())));
+}
     // endregion
 }
