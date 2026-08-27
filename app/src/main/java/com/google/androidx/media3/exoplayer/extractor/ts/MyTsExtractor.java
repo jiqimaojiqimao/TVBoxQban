@@ -431,7 +431,21 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
         public void init(TimestampAdjuster ta, ExtractorOutput eo, TsPayloadReader.TrackIdGenerator idGen) {}
 
         @Override
-        public void consume(ParsableByteArray sectionData) {
+@Override
+public void consume(ParsableByteArray sectionData) {
+    // ★ 检查 PMT section 是否完整
+    if (sectionData.bytesLeft() < 4) return;
+    int savedPos = sectionData.getPosition();
+    int tableId = sectionData.readUnsignedByte();
+    if (tableId != 0x02) { sectionData.setPosition(savedPos); return; }
+    int lengthHigh = sectionData.readUnsignedByte();
+    int lengthLow = sectionData.readUnsignedByte();
+    int sectionLength = ((lengthHigh & 0x0F) << 8) | lengthLow;
+    sectionData.setPosition(savedPos); // 恢复
+    if (sectionData.bytesLeft() < 3 + sectionLength) {
+        // 不完整，等下一个 TS packet
+        return;
+    }
             if (sectionData.readUnsignedByte() != 0x02) return;
             TimestampAdjuster timestampAdjuster;
             if (mode == MODE_SINGLE_PMT || mode == MODE_HLS || remainingPmts == 1) {
@@ -442,7 +456,7 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
             }
             int secondHeaderByte = sectionData.readUnsignedByte();
             if ((secondHeaderByte & 0x80) == 0) return;
-            sectionData.skipBytes(1);
+            sectionData.skipBytes(3);    
             int programNumber = sectionData.readUnsignedShort();
             sectionData.skipBytes(1);  // ← 只跳 last_section_number
             sectionData.readBytes(pmtScratch, 2);
