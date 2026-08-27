@@ -442,9 +442,9 @@ private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOEx
             }
             int secondHeaderByte = sectionData.readUnsignedByte();
             if ((secondHeaderByte & 0x80) == 0) return;
-sectionData.skipBytes(1);
-int programNumber = sectionData.readUnsignedShort();
-sectionData.skipBytes(1);  // ← 只跳 last_section_number
+            sectionData.skipBytes(1);
+            int programNumber = sectionData.readUnsignedShort();
+            sectionData.skipBytes(1);  // ← 只跳 last_section_number
             sectionData.readBytes(pmtScratch, 2);
             pmtScratch.skipBits(3);
             pcrPid = pmtScratch.readBits(13);
@@ -479,15 +479,15 @@ sectionData.skipBytes(1);  // ← 只跳 last_section_number
                 remainingEntriesLength -= esInfoLength + 5;
                 int trackId = mode == MODE_HLS ? streamType : elementaryPid;
                 if (trackIds.get(trackId)) continue;
-// PGS 字幕 → ExoPlayer 不支持，直接跳过
-if (streamType == 0x90) {
-    continue;
-}
-// AC-3 (0x86) → 映射成 0x81 让工厂建 Ac3Reader
-int mappedStreamType = (streamType == 0x86) ? 0x81 : streamType;
-TsPayloadReader reader = mode == MODE_HLS && mappedStreamType == TS_STREAM_TYPE_ID3
-        ? id3Reader
-        : payloadReaderFactory.createPayloadReader(mappedStreamType, esInfo);
+                // PGS 字幕 → 跳过（ExoPlayer 不支持）
+                if (streamType == 0x90) {
+                    continue;
+                }
+                // DTS-HD MA (0x86) → 映射成 DTS (0x8A) 让工厂建 DtsReader
+                int mappedStreamType = (streamType == 0x86) ? TS_STREAM_TYPE_DTS : streamType;
+                TsPayloadReader reader = mode == MODE_HLS && mappedStreamType == TS_STREAM_TYPE_ID3
+                        ? id3Reader
+                        : payloadReaderFactory.createPayloadReader(mappedStreamType, esInfo);
                 if (mode != MODE_HLS || elementaryPid < trackIdToPidScratch.get(trackId, MAX_PID_PLUS_ONE)) {
                     trackIdToPidScratch.put(trackId, elementaryPid);
                     trackIdToReaderScratch.put(trackId, reader);
@@ -570,7 +570,13 @@ TsPayloadReader reader = mode == MODE_HLS && mappedStreamType == TS_STREAM_TYPE_
                 } else if (descriptorTag == TS_PMT_DESC_AIT) {
                     streamType = TS_STREAM_TYPE_AIT;
                 }
-                data.skipBytes(positionOfNextDescriptor - data.getPosition());
+int skip = positionOfNextDescriptor - data.getPosition();
+if (skip > 0 && skip <= data.bytesLeft()) {
+    data.skipBytes(skip);
+} else if (skip > data.bytesLeft()) {
+    // descriptor 声明的长度超出 buffer，直接跳到末尾
+    data.skipBytes(data.bytesLeft());
+}
             }
             data.setPosition(descriptorsEndPosition);
             return new TsPayloadReader.EsInfo(streamType, language, audioType, dvbSubtitleInfos,
