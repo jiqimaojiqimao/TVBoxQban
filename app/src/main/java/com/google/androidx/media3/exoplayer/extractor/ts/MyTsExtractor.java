@@ -299,9 +299,11 @@ public final class MyTsExtractor implements Extractor {
         // Continuity check
         if (mode != MODE_HLS) {
             int continuityCounter = tsPacketHeader & 0xF;
-            int previousCounter = continuityCounters.get(pid, (continuityCounter - 1) & 0xF);
+            int expectedPrevious = ((continuityCounter - 1) & 0xF);
+            int previousCounter = continuityCounters.get(pid, expectedPrevious);
             continuityCounters.put(pid, continuityCounter);
             if (previousCounter != expectedPrevious) {
+                // Continuity discontinuity detected (not just duplicate)
                 if (previousCounter != continuityCounter) {
                     payloadReader.seek();
                 }
