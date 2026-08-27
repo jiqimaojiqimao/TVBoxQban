@@ -21,11 +21,13 @@ import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.tvbox.osc.util.ScreenUtils; 
+
 /**
  * xuameng TV 专用 RenderersFactory：
  * - 音频：FFmpeg 永远优先
  * - 视频：MediaCodec 优先，硬解失败才使用 FFmpeg 软解兜底
- * - 强制把 DV 当成 HEVC 处理，绕过 DV 专用解码器
+ * - 强制把 DV 当成 HEVC 处理，绕过 DV 专用解码器 只在TV端执行
  */
 @UnstableApi
 public class TvRenderersFactory extends NextRenderersFactory {
@@ -101,7 +103,7 @@ public class TvRenderersFactory extends NextRenderersFactory {
                     ) throws MediaCodecUtil.DecoderQueryException {
 
                         // 关键：DV 直接降级为 HEVC
-                        if ("video/dolby-vision".equals(mimeType)) {
+                        if ("video/dolby-vision".equals(mimeType) && ScreenUtils.isTv(context)) {  //只在TV端执行
                             mimeType = "video/hevc";
                         }
                         return MediaCodecSelector.DEFAULT.getDecoderInfos(
