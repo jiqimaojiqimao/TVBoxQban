@@ -21,12 +21,8 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.ui.fragment.PlayFragment;
-import com.github.tvbox.osc.util.ImgUtil;
 import com.github.tvbox.osc.util.ScreenUtils;
 
 import java.lang.ref.WeakReference;
@@ -223,21 +219,6 @@ public class MusicPlaybackService extends Service {
         artworkUrl = url == null ? "" : url;
         artwork = null;
         if (TextUtils.isEmpty(artworkUrl)) return;
-        if (artworkTarget != null) Glide.with(this).clear(artworkTarget);
-        artworkTarget = new CustomTarget<Bitmap>() {
-            @Override
-            public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
-                artwork = resource;
-                updateSession();
-                NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                if (manager != null) manager.notify(NOTIFICATION_ID, buildNotification());
-            }
-
-            @Override
-            public void onLoadCleared(@Nullable android.graphics.drawable.Drawable placeholder) {
-            }
-        };
-        Glide.with(this).asBitmap().load(ImgUtil.getImageModel(artworkUrl)).override(256, 256).into(artworkTarget);
     }
 
     private void updateSession() {
@@ -317,7 +298,6 @@ public class MusicPlaybackService extends Service {
 
     private void stopPlaybackService() {
         playing = false;
-        if (artworkTarget != null) Glide.with(this).clear(artworkTarget);
         if (mediaSession != null) {
             mediaSession.setActive(false);
             mediaSession.release();
