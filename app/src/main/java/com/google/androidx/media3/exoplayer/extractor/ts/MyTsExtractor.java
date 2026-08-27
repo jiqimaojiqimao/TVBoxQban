@@ -37,8 +37,6 @@ import androidx.media3.extractor.ExtractorInput;
 import androidx.media3.extractor.ExtractorOutput;
 import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.extractor.PositionHolder;
-import androidx.media3.extractor.SeekMap;
-import androidx.media3.extractor.TrackOutput;
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory;
 import androidx.media3.extractor.ts.SectionPayloadReader;
 import androidx.media3.extractor.ts.SectionReader;
@@ -55,7 +53,6 @@ import java.util.List;
 
 @SuppressWarnings("ALL")
 @UnstableApi
-/** Extracts data from the MPEG-2 TS container format. */
 public final class MyTsExtractor implements Extractor {
 
     public static final ExtractorsFactory FACTORY = () -> new Extractor[]{new MyTsExtractor()};
@@ -92,7 +89,6 @@ public final class MyTsExtractor implements Extractor {
     private static final long AC4_FORMAT_IDENTIFIER = 0x41432d34;
     private static final long HEVC_FORMAT_IDENTIFIER = 0x48455643;
     private static final int BUFFER_SIZE = TS_PACKET_SIZE * 50;
-    private static final int SNIFF_TS_PACKET_COUNT = 5;
 
     private int packetSize = TS_PACKET_SIZE;
     @Mode
@@ -106,6 +102,7 @@ public final class MyTsExtractor implements Extractor {
     private final SparseBooleanArray trackIds;
     private final SparseBooleanArray trackPids;
     private final TsDurationReader durationReader;
+    @Nullable
     private TsBinarySearchSeeker tsBinarySearchSeeker;
     private ExtractorOutput output;
     private int remainingPmts;
@@ -118,7 +115,7 @@ public final class MyTsExtractor implements Extractor {
     private int pcrPid;
 
     // region Constructors
-    public MyTsExtractor() { this(0); }
+    public MyTsExtractor() { this(MODE_SINGLE_PMT); }
 
     public MyTsExtractor(@TsPayloadReader.Flags int defaultTsPayloadReaderFlags) {
         this(MODE_SINGLE_PMT, defaultTsPayloadReaderFlags, DEFAULT_TIMESTAMP_SEARCH_BYTES);
@@ -221,11 +218,8 @@ public final class MyTsExtractor implements Extractor {
     public void release() {}
 
     @Override
-    @ReadResult
     public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
         Log.e("MyTsExtractor_xuameng", "🔍 read() packetSize=" + packetSize + " inputPos=" + input.getPosition());
-
-        long inputLength = input.getLength();
 
         if (!fillBufferWithAtLeastOnePacket(input)) {
             return RESULT_END_OF_INPUT;
@@ -252,16 +246,26 @@ public final class MyTsExtractor implements Extractor {
 
         tsPacketBuffer.setPosition(syncPos);
 
-        @TsPayloadReader.Flags int packetHeaderFlags = 0;
+        // ★ 修正：读 4 字节 TS header，位掩码对齐官方
         int tsPacketHeader = tsPacketBuffer.readInt();
+
+        // transport_error_indicator (byte[0] bit 7)
         if ((tsPacketHeader & 0x800000) != 0) {
             tsPacketBuffer.setPosition(endOfPacket);
             return RESULT_CONTINUE;
         }
+
+        // payload_unit_start_indicator (byte[0] bit 6)
+        @TsPayloadReader.Flags int packetHeaderFlags = 0;
         packetHeaderFlags |= (tsPacketHeader & 0x400000) != 0 ? FLAG_PAYLOAD_UNIT_START_INDICATOR : 0;
+
+        // PID (byte[1] bits 0-4 + byte[2] all)
         int pid = (tsPacketHeader & 0x1FFF00) >> 8;
-        boolean adaptationFieldExists = (tsPacketHeader & 0x20) != 0;
-        boolean payloadExists = (tsPacketHeader & 0x10) != 0;
+
+        // ★ 修正：adaptation_field_control 在 byte[3] 的 bits 6-7
+        // bit 6 = 0x40 → AF exists, bit 7 = 0x80 → payload exists
+        boolean adaptationFieldExists = (tsPacketHeader & 0x40) != 0;
+        boolean payloadExists = (tsPacketHeader & 0x80) != 0;
 
         TsPayloadReader payloadReader = payloadExists ? tsPayloadReaders.get(pid) : null;
         if (payloadReader == null) {
@@ -285,9 +289,10 @@ public final class MyTsExtractor implements Extractor {
         // Skip adaptation field
         if (adaptationFieldExists) {
             int adaptationFieldLength = tsPacketBuffer.readUnsignedByte();
-            int adaptationFieldFlags = tsPacketBuffer.readUnsignedByte();
-            packetHeaderFlags |= (adaptationFieldFlags & 0x40) != 0 ? TsPayloadReader.FLAG_RANDOM_ACCESS_INDICATOR : 0;
-            tsPacketBuffer.skipBytes(adaptationFieldLength - 1);
+            if (adaptationFieldLength > 0) {
+                // AF 数据部分长度 = adaptationFieldLength 字节
+                tsPacketBuffer.skipBytes(adaptationFieldLength);
+            }
         }
 
         // Consume payload
@@ -302,7 +307,7 @@ public final class MyTsExtractor implements Extractor {
             tsPacketBuffer.setLimit(limit);
         }
 
-        if (mode != MODE_HLS && !wereTracksEnded && tracksEnded && inputLength != C.LENGTH_UNSET) {
+        if (mode != MODE_HLS && !wereTracksEnded && tracksEnded && input.getLength() != C.LENGTH_UNSET) {
             pendingSeekToStart = true;
         }
 
@@ -312,13 +317,8 @@ public final class MyTsExtractor implements Extractor {
     // endregion
 
     // region Internals
-    private void maybeOutputSeekMap(long inputLength) {
-        hasOutputSeekMap = true;
-    }
-
     private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
         byte[] data = tsPacketBuffer.getData();
-        // 对齐官方：位置到末尾不足一个包时，把未消费数据移到 buffer 开头
         if (BUFFER_SIZE - tsPacketBuffer.getPosition() < packetSize) {
             int bytesLeft = tsPacketBuffer.bytesLeft();
             if (bytesLeft > 0) {
@@ -348,7 +348,6 @@ public final class MyTsExtractor implements Extractor {
                 return i;
             }
         }
-
         Log.e("MyTsExtractor", "⚠️ No 0x47, searchStart=" + searchStart + " limit=" + limit);
         return -1;
     }
@@ -443,10 +442,9 @@ public final class MyTsExtractor implements Extractor {
                 timestampAdjusters.add(timestampAdjuster);
             }
 
-            int secondHeaderByte = sectionData.readUnsignedByte();
-            if ((secondHeaderByte & 0x80) == 0) return;
+            if ((sectionData.readUnsignedByte() & 0x80) == 0) return;
 
-            // ★ 对齐官方：skipBytes(1) + readUnsignedShort() + skipBytes(3)
+            // ★ 对齐官方 PMT header 解析
             sectionData.skipBytes(1); // section_length 低 8 位
             int programNumber = sectionData.readUnsignedShort(); // program_number
             sectionData.skipBytes(3); // version + section_number + last_section_number
@@ -479,14 +477,36 @@ public final class MyTsExtractor implements Extractor {
                 int esInfoLength = pmtScratch.readBits(12);
                 Log.e("MyTsExtractor", "🔍 ES raw: streamType=0x" + Integer.toHexString(streamType)
                         + " elementaryPid=" + elementaryPid + " esInfoLength=" + esInfoLength);
+
                 TsPayloadReader.EsInfo esInfo = readEsInfo(sectionData, esInfoLength);
-                if (streamType == 0x06 || streamType == 0x05) streamType = esInfo.streamType;
+
+                // ★ Blu-ray 私用映射：0x86 DTS-HD MA → 0x8A DTS
+                int mappedStreamType = streamType;
+                if (streamType == 0x86) {
+                    Log.e("MyTsExtractor", "🔧 0x86 DTS-HD MA → mapping to 0x8A DTS");
+                    mappedStreamType = TS_STREAM_TYPE_DTS;
+                }
+
+                // 0x06/0x05 私有流靠 descriptor 纠正
+                if (streamType == 0x06 || streamType == 0x05) {
+                    mappedStreamType = esInfo.streamType != -1 ? esInfo.streamType : streamType;
+                }
+
                 remainingEntriesLength -= esInfoLength + 5;
-                int trackId = mode == MODE_HLS ? streamType : elementaryPid;
+                int trackId = mode == MODE_HLS ? mappedStreamType : elementaryPid;
+
                 if (trackIds.get(trackId)) continue;
-                TsPayloadReader reader = mode == MODE_HLS && streamType == TS_STREAM_TYPE_ID3
+
+                // ★ 0x90 PGS：官方工厂返回 null，自己处理（先跳过，不建 reader）
+                if (mappedStreamType == 0x90) {
+                    Log.w("MyTsExtractor", "⚠️ PGS pid=" + elementaryPid + " skipped (no PgsReader yet)");
+                    continue;
+                }
+
+                TsPayloadReader reader = mode == MODE_HLS && mappedStreamType == TS_STREAM_TYPE_ID3
                         ? id3Reader
-                        : payloadReaderFactory.createPayloadReader(streamType, esInfo);
+                        : payloadReaderFactory.createPayloadReader(mappedStreamType, esInfo);
+
                 if (mode != MODE_HLS || elementaryPid < trackIdToPidScratch.get(trackId, MAX_PID_PLUS_ONE)) {
                     trackIdToPidScratch.put(trackId, elementaryPid);
                     trackIdToReaderScratch.put(trackId, reader);
@@ -503,7 +523,8 @@ public final class MyTsExtractor implements Extractor {
                     Log.e("MyTsExtractor", "🎯 TRACK: pid=" + trackPid
                             + " reader=" + reader.getClass().getSimpleName());
                     if (reader != id3Reader) {
-                        reader.init(timestampAdjuster, output, new TsPayloadReader.TrackIdGenerator(programNumber, trackId, MAX_PID_PLUS_ONE));
+                        reader.init(timestampAdjuster, output, new TsPayloadReader.TrackIdGenerator(
+                                /* programNumber= */ 1, trackId, MAX_PID_PLUS_ONE));
                     }
                     tsPayloadReaders.put(trackPid, reader);
                 } else {
@@ -530,7 +551,6 @@ public final class MyTsExtractor implements Extractor {
         private TsPayloadReader.EsInfo readEsInfo(ParsableByteArray data, int length) {
             int descriptorsStartPosition = data.getPosition();
             int descriptorsEndPosition = descriptorsStartPosition + length;
-            // 防御：不超过 buffer limit
             descriptorsEndPosition = Math.min(descriptorsEndPosition, data.limit());
 
             int streamType = -1;
@@ -543,16 +563,8 @@ public final class MyTsExtractor implements Extractor {
                 int descriptorLength = data.readUnsignedByte();
                 int positionOfNextDescriptor = data.getPosition() + descriptorLength;
 
-                if (positionOfNextDescriptor > data.limit()) {
-                    Log.e("MyTsExtractor", "⚠️ Descriptor 0x" + Integer.toHexString(descriptorTag)
-                            + " length=" + descriptorLength + " exceeds buffer limit");
-                    break;
-                }
-                if (positionOfNextDescriptor > descriptorsEndPosition) {
-                    Log.e("MyTsExtractor", "⚠️ Descriptor 0x" + Integer.toHexString(descriptorTag)
-                            + " length=" + descriptorLength + " exceeds esInfoLength");
-                    break;
-                }
+                if (positionOfNextDescriptor > data.limit()) break;
+                if (positionOfNextDescriptor > descriptorsEndPosition) break;
 
                 if (descriptorTag == TS_PMT_DESC_REGISTRATION) {
                     long formatId = data.readUnsignedInt();
@@ -600,7 +612,6 @@ public final class MyTsExtractor implements Extractor {
             }
 
             data.setPosition(Math.min(descriptorsEndPosition, data.limit()));
-
             return new TsPayloadReader.EsInfo(streamType, language, audioType, dvbSubtitleInfos,
                     Arrays.copyOfRange(data.getData(), descriptorsStartPosition,
                             Math.min(descriptorsEndPosition, data.limit())));
