@@ -288,12 +288,14 @@ public final class MyTsExtractor implements Extractor {
         boolean adaptationFieldExists = (tsPacketHeader & 0x20) != 0;
         boolean payloadExists = (tsPacketHeader & 0x10) != 0;
 
-        TsPayloadReader payloadReader = payloadExists ? tsPayloadReaders.get(pid) : null;
-        if (payloadReader == null) {
-            tsPacketBuffer.setPosition(tsEnd);
-            return RESULT_CONTINUE;
-        }
-
+TsPayloadReader payloadReader = payloadExists ? tsPayloadReaders.get(pid) : null;
+if (payloadReader == null) {
+    if (pid != 0 && pid != 0x1FFF) { // 不打 PAT 和 null packet
+        Log.e("MyTsExtractor", "⚠️ NO READER for pid=" + pid + " payloadExists=" + payloadExists + " tsStart=" + tsStart);
+    }
+    tsPacketBuffer.setPosition(tsEnd);
+    return RESULT_CONTINUE;
+}
         // Continuity check
         if (mode != MODE_HLS) {
             int continuityCounter = tsPacketHeader & 0xF;
