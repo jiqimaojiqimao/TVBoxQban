@@ -4,8 +4,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.content.Context;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.Renderer;
@@ -101,15 +99,9 @@ public class TvRenderersFactory extends NextRenderersFactory {
                             boolean requiresSecureDecoder,
                             boolean requiresTunnelingDecoder
                     ) throws MediaCodecUtil.DecoderQueryException {
-						Log.d("DV_DEBUG_xuameng", "getDecoderInfos called with: " + mimeType);
 
                         // 关键：DV 直接降级为 HEVC
                         if ("video/dolby-vision".equals(mimeType)) {
-							Log.d("DV_DEBUG_xuameng", "DV detected, redirecting to video/hevc");
-                            mimeType = "video/hevc";
-                        }
-                        if ("video/hevc".equals(mimeType)) {
-							Log.d("DV_hevc_xuameng", "hevc detected, redirecting to video/hevc");
                             mimeType = "video/hevc";
                         }
                         return MediaCodecSelector.DEFAULT.getDecoderInfos(
