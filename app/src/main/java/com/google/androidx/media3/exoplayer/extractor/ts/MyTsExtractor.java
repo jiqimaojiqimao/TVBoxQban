@@ -301,7 +301,7 @@ public final class MyTsExtractor implements Extractor {
             int continuityCounter = tsPacketHeader & 0xF;
             int previousCounter = continuityCounters.get(pid, (continuityCounter - 1) & 0xF);
             continuityCounters.put(pid, continuityCounter);
-            if (previousCounter != (continuityCounter - 1) & 0xF) {
+            if (previousCounter != expectedPrevious) {
                 if (previousCounter != continuityCounter) {
                     payloadReader.seek();
                 }
