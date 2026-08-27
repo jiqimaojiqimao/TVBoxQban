@@ -362,7 +362,7 @@ int syncPos = findEndOfFirstTsPacketInBuffer();
         }
         return RESULT_CONTINUE;
     // endregion
-
+	}
     // region Internals
     private void maybeOutputSeekMap(long inputLength) {
         if (hasOutputSeekMap) return;
