@@ -451,6 +451,7 @@ public class VodController extends BaseController {
                     }
                 }
                 if(width.length() > 1 && height.length() > 1) {
+                    noHaveVideo = false;   //xuameng 判断是否有视频
                     if(iv_circle_bg.getVisibility() == View.VISIBLE) { //xuameng音乐播放时图标
                         iv_circle_bg.setVisibility(GONE);
                     }
@@ -460,7 +461,7 @@ public class VodController extends BaseController {
                 } else {
                     noHaveVideo = true;   //xuameng 判断是否有视频
                     if(MxuamengMusic.getVisibility() == View.GONE) { //xuameng播放音乐背景
-                    //    MxuamengMusic.setVisibility(VISIBLE);
+                        MxuamengMusic.setVisibility(VISIBLE);
                     }
                     FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) iv_circle_bg.getLayoutParams(); //xuameng 新增给vod显示旋转图片用
                     if(mLrcView.getVisibility() == View.VISIBLE) {   //xuameng LRC歌词字幕
@@ -2078,6 +2079,8 @@ public class VodController extends BaseController {
                 String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
                 if(width.length() <= 1 && height.length() <= 1) {
                     noHaveVideo = true;   //xuameng 判断是否有视频
+                } else {
+                    noHaveVideo = false;   //xuameng 判断是否有视频
                 }
                 mVideoSize.setText("[ " + width + " X " + height + " ]");
                 initialVisualizer();
