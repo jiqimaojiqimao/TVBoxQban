@@ -1559,20 +1559,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     private Boolean getAudioOnlyPlayback() {  //xuameng音乐小窗口
-        if (mVideoView == null) return null;
-        try {
-            AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
-            TrackInfo trackInfo = null;
-            if (mediaPlayer instanceof IjkMediaPlayer) {
-                trackInfo = ((IjkMediaPlayer) mediaPlayer).getTrackInfo();
-            } else if (mediaPlayer instanceof EXOmPlayer) {
-                trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
-            }
-            if (trackInfo == null) return null;
-            return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
-        } catch (Throwable ignored) {
-            return null;
-        }
+        return mController.noHaveVideo;
     }
 
     private void updateMusicSession() {  //xuameng音乐小窗口
