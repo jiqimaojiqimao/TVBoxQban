@@ -97,6 +97,11 @@
             android:name=".dlna.DLNACastService"
             android:exported="false" />
 
+        <service
+            android:name=".player.MusicPlaybackService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="false" />
+
         <receiver android:name=".receiver.SearchReceiver">
             <intent-filter>
                 <action android:name="android.content.movie.search.Action" />
