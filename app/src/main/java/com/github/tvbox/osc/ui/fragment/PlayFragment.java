@@ -309,7 +309,7 @@ public class PlayFragment extends BaseLazyFragment {
                         }
                     }
                 }
-             //   if (!switchingPlayback) updateMusicSession();  //xuameng音乐小窗口完
+                if (!switchingPlayback) updateMusicSession();  //xuameng音乐小窗口完
 
             }
         });
@@ -1593,10 +1593,11 @@ public class PlayFragment extends BaseLazyFragment {
         }
         VodInfo.VodSeries currentSeries = getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
         String episode = currentSeries == null || TextUtils.isEmpty(currentSeries.name) ? "" : currentSeries.name;
+        String progressKey = progressKey != null ? MD5.string2MD5(progressKey) : null;
         MusicPlaybackService.update(getContext(), this,
                 TextUtils.isEmpty(mVodInfo.name) ? "聚汇影视" : mVodInfo.name,
                 episode, playArtwork, mVideoView.getCurrentPosition(),
-                mVideoView.getDuration(), mVideoView.isPlaying());
+                mVideoView.getDuration(), mVideoView.isPlaying(),progressKey);
                 exoPlayerswitchingPlayback = true;   //xuameng音乐小窗口 EXO进入后台小窗口
     }
 
