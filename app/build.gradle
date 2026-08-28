@@ -111,7 +111,6 @@ dependencies {
     compileOnly "com.google.errorprone:error_prone_annotations:2.23.0"  //xuameng exo okhttpdatasource用
     implementation 'com.google.zxing:core:3.5.1'            //xuameng 二维码
     implementation 'androidx.appcompat:appcompat:1.7.0'     //xuameng UI 组件
-    implementation 'androidx.media:media:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'   //xuameng响应布局
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0'  //xuameng生命周期管理
     implementation 'androidx.recyclerview:recyclerview:1.4.0'      //xuaemng列表展示
