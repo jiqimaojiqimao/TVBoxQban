@@ -55,7 +55,7 @@ public class MusicPlaybackService extends Service {
 
     private MediaSessionCompat mediaSession;
     private PendingIntent sessionActivity;
-    private String title = "TVBox";
+    private String title = "聚汇影视";
     private String subtitle = "";
     private String artworkUrl = "";
     private Bitmap artwork;
@@ -105,7 +105,7 @@ public class MusicPlaybackService extends Service {
         super.onCreate();
         instance = this;
         createNotificationChannel();
-        mediaSession = new MediaSessionCompat(this, "TVBoxMusic");
+        mediaSession = new MediaSessionCompat(this, "聚汇影视");
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
                 | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
@@ -290,10 +290,10 @@ public class MusicPlaybackService extends Service {
                         .setShowActionsInCompactView(1, 2, 3));
         if (artwork != null) builder.setLargeIcon(artwork);
         builder.addAction(new NotificationCompat.Action(R.drawable.media_action_placeholder, "", actionIntent(ACTION_PLACEHOLDER)));
-        builder.addAction(new NotificationCompat.Action(android.R.drawable.ic_media_previous, "上一首", actionIntent(ACTION_PREVIOUS)));
-        builder.addAction(new NotificationCompat.Action(playing ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play,
+        builder.addAction(new NotificationCompat.Action(R.drawable.exo_icon_previous, "上一首", actionIntent(ACTION_PREVIOUS)));
+        builder.addAction(new NotificationCompat.Action(playing ? R.drawable.exo_icon_pause : R.drawable.exo_icon_play,
                 playing ? "暂停" : "播放", actionIntent(playing ? ACTION_PAUSE : ACTION_PLAY)));
-        builder.addAction(new NotificationCompat.Action(android.R.drawable.ic_media_next, "下一首", actionIntent(ACTION_NEXT)));
+        builder.addAction(new NotificationCompat.Action(R.drawable.exo_icon_next, "下一首", actionIntent(ACTION_NEXT)));
         return builder.build();
     }
 
