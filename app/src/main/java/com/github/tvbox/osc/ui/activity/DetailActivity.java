@@ -749,6 +749,7 @@ public class DetailActivity extends BaseActivity {
         }
         previewVodInfo.id = vodInfo.id;
         previewVodInfo.name = vodInfo.name;
+        previewVodInfo.pic = vodInfo.pic;
         previewVodInfo.sourceKey = vodInfo.sourceKey;
         previewVodInfo.playNote = vodInfo.playNote;
         previewVodInfo.seriesFlags = vodInfo.seriesFlags;
@@ -1710,6 +1711,7 @@ public class DetailActivity extends BaseActivity {
         if (playFragment != null) return;
         playFragment = new PlayFragment();
         getSupportFragmentManager().beginTransaction().add(R.id.previewPlayer, playFragment).commitNowAllowingStateLoss();
+        playFragment.setPreviewMode(!fullWindows);
     }
 
     void releasePlayFragment() {
