@@ -111,6 +111,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1054,7 +1055,7 @@ public class PlayFragment extends BaseLazyFragment {
 
     private void initSubtitleView() {
         TrackInfo trackInfo = null;
-
+        AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
         mController.mLyricView.setTextSize(previewMode ? 16 : 24);
         mController.mLyricView.setVisibility(View.GONE);
         mController.mLyricView.reset();
