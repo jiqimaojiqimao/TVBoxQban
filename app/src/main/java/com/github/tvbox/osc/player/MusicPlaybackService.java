@@ -26,7 +26,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.ui.fragment.PlayFragment;
-import com.github.tvbox.osc.util.ImgUtil;
+import com.github.tvbox.osc.util.ImgUtilMusic;
 import com.github.tvbox.osc.util.ScreenUtils;
 
 import java.lang.ref.WeakReference;
@@ -238,7 +238,7 @@ public class MusicPlaybackService extends Service {
             public void onLoadCleared(@Nullable android.graphics.drawable.Drawable placeholder) {
             }
         };
-        Glide.with(this).asBitmap().load(ImgUtil.getImageModel(artworkUrl)).override(256, 256).into(artworkTarget);
+        Glide.with(this).asBitmap().load(ImgUtilMusic.getImageModel(artworkUrl)).override(256, 256).into(artworkTarget);
     }
 
     private void updateSession() {
