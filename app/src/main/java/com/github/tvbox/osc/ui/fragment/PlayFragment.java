@@ -310,7 +310,7 @@ public class PlayFragment extends BaseLazyFragment {
                         }
                     }
                 }
-                if (!switchingPlayback && isStartedPlayState(playState) && audioOnly) {   //xuameng音乐小窗口完
+                if (!switchingPlayback && isStartedPlayState(playState) && audioPlayback) {   //xuameng音乐小窗口完
                     updateMusicSession();
                 }
             }
