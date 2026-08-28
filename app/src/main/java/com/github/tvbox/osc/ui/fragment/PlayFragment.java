@@ -223,6 +223,53 @@ public class PlayFragment extends BaseLazyFragment {
         if (danmuLoadController != null) danmuLoadController.reset();
     }
 
+    boolean isPlaybackStarted() {
+        if (playbackStarted) return true;
+        if (mVideoView == null) return false;
+        int state = mVideoView.getCurrentPlayState();
+        return isStartedPlayState(state) || hasPlaybackProgress(mVideoView.getCurrentPosition()) || mVideoView.isPlaying();
+    }
+
+    boolean isStartedPlayState(int state) {
+        return state == VideoView.STATE_PREPARED || state == VideoView.STATE_BUFFERED || state == VideoView.STATE_PLAYING;
+    }
+
+    boolean hasPlaybackProgress(long progress) {
+        return progress > Math.max(playTimeoutBasePosition, 0) + 1000;
+    }
+
+    void handleResolvePlayUrlTimeout() {
+        LOG.i("echo-resolvePlayUrl timeout, try next line");
+        if (sourceViewModel != null) sourceViewModel.cancelPlayRequest();
+        stopParse();
+        if (!tryNextLineIfEnabled()) setTip("获取播放地址超时", false, true);
+    }
+
+    void handleResolvePlayUrlFailed(String err) {
+        LOG.i("echo-resolvePlayUrl failed, try next line: " + err);
+        if (sourceViewModel != null) sourceViewModel.cancelPlayRequest();
+        stopParse();
+        if (tryNextLineIfEnabled()) return;
+        cancelPlayTimeout();
+        setTip(err, false, true);
+    }
+
+    void handleSwitchLinePlayTimeout() {
+        int state = mVideoView == null ? -1 : mVideoView.getCurrentPlayState();
+        LOG.i("echo-switchLinePlay timeout state: " + state + ", started: " + playbackStarted);
+        if (isPlaybackStarted()) {
+            cancelPlayTimeout();
+            hideTipOnUiThread();
+            return;
+        }
+        LOG.i("echo-switchLinePlay timeout, try next line");
+        stopParse();
+        if (hasAutoSwitchedPlayer) {
+            if (!tryNextLineIfEnabled()) setTip("播放超时", false, true);
+            return;
+        }
+        if (!autoRetry()) setTip("播放超时", false, true);
+    }
     public long getSavedProgress(String url) {
         int st = 0;
         try {
@@ -1564,8 +1611,8 @@ public class PlayFragment extends BaseLazyFragment {
             TrackInfo trackInfo = null;
             if (mediaPlayer instanceof IjkMediaPlayer) {
                 trackInfo = ((IjkMediaPlayer) mediaPlayer).getTrackInfo();
-            } else if (mediaPlayer instanceof ExoPlayer) {
-                trackInfo = ((ExoPlayer) mediaPlayer).getTrackInfo();
+            } else if (mediaPlayer instanceof EXOmPlayer) {
+                trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
             }
             if (trackInfo == null) return null;
             return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
