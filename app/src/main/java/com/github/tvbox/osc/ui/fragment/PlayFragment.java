@@ -154,6 +154,10 @@ public class PlayFragment extends BaseLazyFragment {
 
     private boolean audioPlayback;
     private boolean switchingPlayback;
+    private boolean previewMode;
+    private String playLyric;
+    private String lyricCacheKey;
+    private String playArtwork;
 
     private DanmakuView mDanmuView; //xuameng 弹幕
     private DanmuLoadController danmuLoadController; //xuameng 弹幕
@@ -271,6 +275,7 @@ public class PlayFragment extends BaseLazyFragment {
         mPlayLoading = findViewById(R.id.play_loading);
         mPlayLoadErr = findViewById(R.id.play_load_error);
         mController = new VodController(requireContext());
+        mController.mLyricView.setTextSize(previewMode ? 16 : 24);
         mController.setCanChangePosition(true);
         mController.setEnableInNormal(true);
         mController.setGestureEnabled(true);
@@ -1050,6 +1055,18 @@ public class PlayFragment extends BaseLazyFragment {
     private void initSubtitleView() {
         TrackInfo trackInfo = null;
 
+        mController.mLyricView.setTextSize(previewMode ? 16 : 24);
+        mController.mLyricView.setVisibility(View.GONE);
+        mController.mLyricView.reset();
+        mController.mLyricView.bindToMediaPlayer(mediaPlayer);
+        mController.mLyricView.setMergeSameTime(true);
+        mController.mLyricView.setLyricMode(true);
+        mController.mLyricView.setPlaySubtitleCacheKey(lyricCacheKey);
+        if (!TextUtils.isEmpty(playLyric)) {
+            mController.mLyricView.setSubtitlePath(playLyric);
+            mController.mLyricView.setVisibility(View.VISIBLE);
+        }
+
         // xuameng应用保存的字幕颜色
         int savedStyle = SubtitleHelper.getTextStyle();
         if (savedStyle >= 0 && savedStyle < subtitleColors.length) {
@@ -1262,9 +1279,42 @@ public class PlayFragment extends BaseLazyFragment {
         return false;
     }
 
+    private String getSubtitleUrl(JSONObject object) {
+        if (object == null) return "";
+        String url = object.optString("url", "");
+        if (!TextUtils.isEmpty(url) && !FileUtils.hasExtension(url)) {
+            String format = object.optString("format", "");
+            String name = object.optString("name", "字幕");
+            String ext = ".srt";
+            if ("text/x-ssa".equals(format)) {
+                ext = ".ass";
+            } else if ("text/vtt".equals(format)) {
+                ext = ".vtt";
+            } else if ("text/lrc".equals(format)) {
+                ext = ".lrc";
+            }
+            String filename = name + (name.toLowerCase(Locale.ROOT).endsWith(ext) ? "" : ext);
+            url += "#" + mController.encodeUrl(filename);
+        }
+        return url;
+    }
+
+    private boolean isLyricSubtitle(String name) {
+        if (TextUtils.isEmpty(name)) return false;
+        String value = name.toLowerCase(Locale.ROOT);
+        return value.contains("lyric") || value.contains("lrc") || name.contains("歌词");
+    }
+
+    private void clearLyricView() {
+        if (mController == null || mController.mLyricView == null) return;
+        mController.mLyricView.setVisibility(View.GONE);
+        mController.mLyricView.destroy();
+        mController.mLyricView.setText("");
+    }
+
     private void initViewModel() {
         sourceViewModel = new ViewModelProvider(this).get(SourceViewModel.class);
-        sourceViewModel.playResult.observe(this, new Observer<JSONObject>() {
+        playResultObserver = new Observer<JSONObject>() {
             @Override
             public void onChanged(JSONObject info) {
                 if (info != null) {
@@ -1309,53 +1359,49 @@ public class PlayFragment extends BaseLazyFragment {
                         }
 
                         // 如果 playSubtitle 仍为空，且存在 subs 字段，则按原有逻辑处理字幕数组
-                        if(playSubtitle.isEmpty() && info.has("subs")) {
-                            try {
-                                JSONObject obj = info.getJSONArray("subs").optJSONObject(0);
-                                String url = obj.optString("url", "");
-                                if (url.contains("base64,")) {
-                                    url = resolveDataUriSubtitle(url);  //xuameng base64字幕转换并缓存
+                        playLyric = info.optString("lyric", "");
+                        lyricCacheKey = info.optString("lyricKey", null);
+                        if (TextUtils.isEmpty(lyricCacheKey) && !TextUtils.isEmpty(progressKey)) {
+                            lyricCacheKey = progressKey + "-lyric";
+                        }
+                        JSONArray lyrics = info.optJSONArray("lyrics");
+                        if (lyrics != null && lyrics.length() > 0) {
+                            playLyric = getSubtitleUrl(lyrics.optJSONObject(0));
+                        }
+                        JSONArray subtitles = info.optJSONArray("subs");
+                        if (subtitles != null) {
+                            for (int i = 0; i < subtitles.length(); i++) {
+                                JSONObject obj = subtitles.optJSONObject(i);
+                                if (obj == null) continue;
+                                String url = getSubtitleUrl(obj);
+                                String name = obj.optString("name", "");
+                                if (isLyricSubtitle(name)) {
+                                    if (TextUtils.isEmpty(playLyric)) playLyric = url;
+                                } else if (TextUtils.isEmpty(playSubtitle)) {
                                     playSubtitle = url;
                                 }
-                                if (!TextUtils.isEmpty(url) && !FileUtils.hasExtension(url)) {
-                                    String format = obj.optString("format", "");
-                                    String name = obj.optString("name", "字幕");
-                                    String ext = ".srt";
-                                    switch (format) {
-                                        case "text/x-ssa":
-                                            ext = ".ass";
-                                            break;
-                                        case "text/vtt":
-                                            ext = ".vtt";
-                                            break;
-                                        case "application/x-subrip":
-                                            ext = ".srt";
-                                            break;
-                                        case "text/lrc":
-                                            ext = ".lrc";
-                                            break;
-                                    }
-                                    String filename = name + (name.toLowerCase().endsWith(ext) ? "" : ext);
-                                    url += "#" + mController.encodeUrl(filename);
-                                }
-                                 playSubtitle = url;
-                             } catch (Throwable th) {
-                                 // 异常处理
-                             }
+                            }
                         }
                         subtitleCacheKey = info.optString("subtKey", null);
                         String playUrl = info.optString("playUrl", "");
+                        String flag = info.optString("flag");
+                        Object rawUrl = info.opt("url");
+                        String url = rawUrl instanceof JSONArray ? rawUrl.toString() : String.valueOf(rawUrl);
+                        if(url.startsWith("[")){
+                            url=mController.firstUrlByArray(url);
+                        }
+                        String artwork = info.optString("artwork", "");
+                        if (TextUtils.isEmpty(artwork) && !TextUtils.isEmpty(playLyric) && mVodInfo != null) {
+                            artwork = mVodInfo.pic;
+                        }
+                        playArtwork = artwork;
+                        mVideoView.setArtwork(playArtwork);
                         String msg = info.optString("msg", "");
                         if(!msg.isEmpty()){
                             App.showToastShort(mContext, msg);
                         }
-                        String flag = info.optString("flag");
-                        String url = info.getString("url");
                         String danmaku = info.optString("danmaku", "").trim();  //xuameng弹幕
                         final String danmuProgressKey = progressKey;
-                        if(url.startsWith("[")){
-                            url=mController.firstUrlByArray(url);
-                        }
                         HashMap<String, String> headers = null;
                         webUserAgent = null;
                         webHeaderMap = null;
@@ -1390,7 +1436,8 @@ public class PlayFragment extends BaseLazyFragment {
                     errorWithRetry("获取播放信息错误", true);
                 }
             }
-        });
+        };
+        sourceViewModel.playResult.observeForever(playResultObserver);
     }
 
     private String resolveDataUriSubtitle(String dataUri) {   //xuameng base64字幕转换并缓存
@@ -1966,6 +2013,7 @@ public class PlayFragment extends BaseLazyFragment {
         if(mVodInfo==null)return;
         switchingPlayback = true;
         audioPlayback = false;
+        playArtwork = "";
         exitingPreview = false;
         isJianpian = false;
         reLoadDanmu  = false;  //xuameng 如果是解析嗅探地址重新下载弹幕
@@ -1988,6 +2036,8 @@ public class PlayFragment extends BaseLazyFragment {
         webHeaderMap = null;
         initParseLoadFound();
         resetDanmuState(); //xuameng 弹幕
+        clearLyricView();
+        mVideoView.clearArtwork();
         mController.stopOther();
         if(mVideoView!= null) mVideoView.release();
         subtitleCacheKey = mVodInfo.sourceKey + "-" + mVodInfo.id + "-" + mVodInfo.playFlag + "-" + mVodInfo.playIndex+ "-" + vs.name + "-subt";
@@ -2174,6 +2224,14 @@ public class PlayFragment extends BaseLazyFragment {
             }
         }
         return null;
+    }
+
+    public void setPreviewMode(boolean previewMode) {
+        this.previewMode = previewMode;
+        if (mController != null) {
+            mController.setPreviewMode(previewMode);
+            mController.mLyricView.setTextSize(previewMode ? 16 : 24);
+        }
     }
 
     public void pauseForHidden() {
