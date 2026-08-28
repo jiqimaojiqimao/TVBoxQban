@@ -1354,7 +1354,6 @@ public class PlayFragment extends BaseLazyFragment {
                             artwork = mVodInfo.pic;
                         }
                         playArtwork = artwork;
-                        mVideoView.setArtwork(playArtwork);
                         mController.setVideoPicUrl(playArtwork);  //xuameng 新增给vod显示旋转图片用   artwork 字段（歌手图片）
                         HashMap<String, String> headers = null;
                         webUserAgent = null;
@@ -1988,7 +1987,6 @@ public class PlayFragment extends BaseLazyFragment {
         webHeaderMap = null;
         initParseLoadFound();
         resetDanmuState(); //xuameng 弹幕
-        mVideoView.clearArtwork();  //xuameng音乐小窗口
         mController.stopOther();
         if(mVideoView!= null) mVideoView.release();
         subtitleCacheKey = mVodInfo.sourceKey + "-" + mVodInfo.id + "-" + mVodInfo.playFlag + "-" + mVodInfo.playIndex+ "-" + vs.name + "-subt";
