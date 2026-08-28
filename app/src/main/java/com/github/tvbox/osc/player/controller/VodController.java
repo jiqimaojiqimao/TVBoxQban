@@ -350,6 +350,7 @@ public class VodController extends BaseController {
     TextView mPlayLoadNetSpeed;
     TextView mVideoSize;
     public SimpleSubtitleView mSubtitleView;
+    public SimpleSubtitleView mLyricView;
     TextView mZimuBtn;
     TextView mAudioTrackBtn;
     TextView mVideoTrackBtn;  //xuameng视轨
@@ -605,6 +606,7 @@ public class VodController extends BaseController {
         mPlayLoadNetSpeed = findViewById(R.id.tv_play_load_net_speed);
         mVideoSize = findViewById(R.id.tv_videosize);
         mSubtitleView = findViewById(R.id.subtitle_view);
+        mLyricView = findViewById(R.id.lyric_view);
         mZimuBtn = findViewById(R.id.zimu_select);
         mAudioTrackBtn = findViewById(R.id.audio_track_select);
         mVideoTrackBtn = findViewById(R.id.video_track_select); //xuameng视轨
@@ -1486,6 +1488,7 @@ public class VodController extends BaseController {
 
                 if(mSubtitleView.getVisibility() == View.GONE && mLrcView.getVisibility() == View.GONE) {  //xuameng 打开关闭外置方法字幕
                     mSubtitleView.setVisibility(VISIBLE);
+                    mLyricView.setVisibility(View.VISIBLE);
                     if (!TextUtils.isEmpty(mLrcContent) && mLrcContent.length() > 10) {
                         mLrcView.setVisibility(View.VISIBLE);  //xuameng LRC歌词字幕
                     }
@@ -1493,9 +1496,7 @@ public class VodController extends BaseController {
                 } else {
                     mSubtitleView.setVisibility(View.GONE);
                     mLrcView.setVisibility(View.GONE);  //xuameng LRC歌词字幕
-                    //                  mSubtitleView.destroy();
-                    //                  mSubtitleView.clearSubtitleCache();
-                    //                  mSubtitleView.isInternal = false;
+                    mLyricView.setVisibility(View.GONE);
                     App.showToastShort(getContext(), "字幕已关闭！");
                 }
                 return true;
@@ -2807,6 +2808,10 @@ public class VodController extends BaseController {
         mSubtitleView.clearSubtitleCache();
         mSubtitleView.onSubtitleChanged(null);
         mSubtitleView.setVisibility(View.VISIBLE);
+        mLrcView.setVisibility(View.GONE);
+        mLrcView.destroy();
+        mLrcView.clearSubtitleCache();
+        mLrcView.onSubtitleChanged(null);
         mExoSubtitleView.setVisibility(View.GONE);    //xuameng EXO内置字幕
         mExoSubtitleView.setCues(null); // xuameng清除EXO字幕数据
         mLrcView.setVisibility(View.GONE);  //xuameng LRC歌词字幕
