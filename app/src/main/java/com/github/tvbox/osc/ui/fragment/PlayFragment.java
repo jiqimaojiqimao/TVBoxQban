@@ -1578,7 +1578,7 @@ public class PlayFragment extends BaseLazyFragment {
                 return mController.noHaveVideo;  //xuameng 系统播放器用图像尺寸判断
             }
         } catch (Throwable ignored) {
-            return null;
+            return false;
         }
     }
 
