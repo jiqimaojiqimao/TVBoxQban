@@ -27,8 +27,6 @@
 
 package com.github.tvbox.osc.subtitle.model;
 
-import java.util.List;
-
 public class Subtitle {
 	
 	public Style style;
@@ -38,7 +36,5 @@ public class Subtitle {
 	public Time end;
 	
 	public String content="";
-	public List<Subtitle> lines;
-	public boolean lyricCurrent;
 
 }
