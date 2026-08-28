@@ -1663,12 +1663,13 @@ public class PlayFragment extends BaseLazyFragment {
         super.onResume();
         exitingPreview = false;
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
-        trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
-        if (mVideoView != null && mediaPlayer instanceof EXOmPlayer && exoPlayerswitchingPlayback
-                && !trackInfo.getAudio().isEmpty() && !trackInfo.getVideo().isEmpty()) {  //xuameng 音乐后台返回前台如果是视频的话解决无画面的BUG
-            exoPlayerswitchingPlayback = false;
-            play(false);
-            return;
+        if (mVideoView != null && mediaPlayer instanceof EXOmPlayer) {
+            trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
+            if (exoPlayerswitchingPlayback && !trackInfo.getAudio().isEmpty() && !trackInfo.getVideo().isEmpty()) {  //xuameng 音乐后台返回前台如果是视频的话解决无画面的BUG
+                exoPlayerswitchingPlayback = false;
+                play(false);
+                return;
+            }
         }
         if (mVideoView != null) {
             mVideoView.resume();
