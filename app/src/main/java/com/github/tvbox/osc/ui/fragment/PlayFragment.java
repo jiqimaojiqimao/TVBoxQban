@@ -139,6 +139,7 @@ public class PlayFragment extends BaseLazyFragment {
     private ProgressBar mPlayLoading;
     private VodController mController;
     private SourceViewModel sourceViewModel;
+    private Observer<JSONObject> playResultObserver;
     private Handler mHandler;
     private boolean isJianpian = false;  //xuameng判断视频是否为荐片
     private boolean selectExoTrack = false;  //xuameng判断exo选择音轨
@@ -309,8 +310,9 @@ public class PlayFragment extends BaseLazyFragment {
                         }
                     }
                 }
-                if (!switchingPlayback) updateMusicSession();  //xuameng音乐小窗口完
-
+                if (!switchingPlayback && isStartedPlayState(playState)) {   //xuameng音乐小窗口完
+                    updateMusicSession();
+                }
             }
         });
         mController.setListener(new VodController.VodControlListener() {
@@ -1268,7 +1270,7 @@ public class PlayFragment extends BaseLazyFragment {
 
     private void initViewModel() {
         sourceViewModel = new ViewModelProvider(this).get(SourceViewModel.class);
-        sourceViewModel.playResult.observe(this, new Observer<JSONObject>() {
+        playResultObserver = new Observer<JSONObject>() {
             @Override
             public void onChanged(JSONObject info) {
                 if (info != null) {
@@ -1392,7 +1394,8 @@ public class PlayFragment extends BaseLazyFragment {
                     errorWithRetry("获取播放信息错误", true);
                 }
             }
-        });
+        };
+        sourceViewModel.playResult.observeForever(playResultObserver);
     }
 
     private String resolveDataUriSubtitle(String dataUri) {   //xuameng base64字幕转换并缓存
@@ -1593,11 +1596,10 @@ public class PlayFragment extends BaseLazyFragment {
         }
         VodInfo.VodSeries currentSeries = getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
         String episode = currentSeries == null || TextUtils.isEmpty(currentSeries.name) ? "" : currentSeries.name;
-        String progressMd5 = webPlayUrl != null ? MD5.string2MD5(webPlayUrl) : null;
         MusicPlaybackService.update(getContext(), this,
                 TextUtils.isEmpty(mVodInfo.name) ? "聚汇影视" : mVodInfo.name,
                 episode, playArtwork, mVideoView.getCurrentPosition(),
-                mVideoView.getDuration(), mVideoView.isPlaying(),progressKey);
+                mVideoView.getDuration(), mVideoView.isPlaying());
                 exoPlayerswitchingPlayback = true;   //xuameng音乐小窗口 EXO进入后台小窗口
     }
 
@@ -1701,6 +1703,10 @@ public class PlayFragment extends BaseLazyFragment {
         audioPlayback = false;  //xuameng音乐小窗口
         switchingPlayback = false;  //xuameng音乐小窗口
         MusicPlaybackService.stop(getContext(), this);  //xuameng音乐小窗口
+        if (sourceViewModel != null && playResultObserver != null) {
+            sourceViewModel.playResult.removeObserver(playResultObserver);
+            playResultObserver = null;
+        }
         super.onDestroyView();
         ApiConfig.get().setCurrentPlaySourceKey("");
         EventBus.getDefault().unregister(this);
