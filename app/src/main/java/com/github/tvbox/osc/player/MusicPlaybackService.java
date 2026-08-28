@@ -28,7 +28,6 @@ import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.ui.fragment.PlayFragment;
 import com.github.tvbox.osc.util.ImgUtilMusic;
 import com.github.tvbox.osc.util.ScreenUtils;
-import com.github.tvbox.osc.cache.CacheManager;
 
 import java.lang.ref.WeakReference;
 
@@ -50,7 +49,6 @@ public class MusicPlaybackService extends Service {
     private static final String EXTRA_DURATION = "duration";
     private static final String EXTRA_PLAYING = "playing";
     private static final String EXTRA_SEEK = "seek";
-    private static final String EXTRA_POSITION_KEY = "progress_key";
 
     private static MusicPlaybackService instance;
     private static WeakReference<PlayFragment> owner;
@@ -72,8 +70,7 @@ public class MusicPlaybackService extends Service {
     }
 
     public static void update(Context context, PlayFragment fragment, String title, String subtitle,
-                              String artwork, long position, long duration, boolean playing,
-                              String progressKey) {
+                              String artwork, long position, long duration, boolean playing) {
         if (!isSupported(context)) return;
         owner = new WeakReference<>(fragment);
         Intent intent = new Intent(context, MusicPlaybackService.class).setAction(ACTION_UPDATE);
@@ -83,7 +80,6 @@ public class MusicPlaybackService extends Service {
         intent.putExtra(EXTRA_POSITION, position);
         intent.putExtra(EXTRA_DURATION, duration);
         intent.putExtra(EXTRA_PLAYING, playing);
-        intent.putExtra(EXTRA_POSITION_KEY, progressKey);  // 新增
         if (instance != null) {
             instance.handleIntent(intent);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -217,16 +213,9 @@ public class MusicPlaybackService extends Service {
             position = intent.getLongExtra(EXTRA_POSITION, 0);
             duration = intent.getLongExtra(EXTRA_DURATION, 0);
             playing = intent.getBooleanExtra(EXTRA_PLAYING, false);
-            String progressKey = intent.getStringExtra(EXTRA_POSITION_KEY); // 新增：传入URL的MD5
-    
             updateArtwork(newArtworkUrl);
             updateSession();
             startForeground(NOTIFICATION_ID, buildNotification());
-    
-            // 【新增】独立保存音乐播放进度到 CacheManager
-            if (progressKey != null && position > 0) {
-                CacheManager.save(progressKey, position);
-            }
         }
     }
 
