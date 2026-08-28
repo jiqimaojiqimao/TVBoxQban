@@ -304,13 +304,13 @@ public class PlayFragment extends BaseLazyFragment {
                         audioPlayback = false;
                     } else if (isStartedPlayState(playState)) {
                         Boolean audioOnly = getAudioOnlyPlayback();
-                        if (audioOnly != null) {
+                        if (audioOnly) {
                             switchingPlayback = false;
                             audioPlayback = audioOnly;
                         }
                     }
                 }
-                if (!switchingPlayback && isStartedPlayState(playState)) {   //xuameng音乐小窗口完
+                if (!switchingPlayback && isStartedPlayState(playState) && audioOnly) {   //xuameng音乐小窗口完
                     updateMusicSession();
                 }
             }
@@ -1586,7 +1586,7 @@ public class PlayFragment extends BaseLazyFragment {
         if (!MusicPlaybackService.isSupported(getContext())) return;
         if (switchingPlayback) return;
         Boolean audioOnly = getAudioOnlyPlayback();
-        if (audioOnly != null) audioPlayback = audioOnly;
+        audioPlayback = audioOnly;
         if (mVodInfo == null || mVideoView == null || !audioPlayback
                 || mVideoView.getCurrentPlayState() == VideoView.STATE_ERROR
                 || mVideoView.getCurrentPlayState() == VideoView.STATE_PLAYBACK_COMPLETED) {
