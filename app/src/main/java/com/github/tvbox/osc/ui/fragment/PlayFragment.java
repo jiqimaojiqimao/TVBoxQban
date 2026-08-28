@@ -155,6 +155,7 @@ public class PlayFragment extends BaseLazyFragment {
     private boolean audioPlayback;  //xuameng音乐小窗口
     private boolean switchingPlayback;  //xuameng音乐小窗口
     private String playArtwork;  //xuameng音乐小窗口
+    private boolean exoPlayerswitchingPlayback;  //xuameng音乐小窗口
 
     private DanmakuView mDanmuView; //xuameng 弹幕
     private DanmuLoadController danmuLoadController; //xuameng 弹幕
@@ -1595,6 +1596,7 @@ public class PlayFragment extends BaseLazyFragment {
                 TextUtils.isEmpty(mVodInfo.name) ? "聚汇影视" : mVodInfo.name,
                 episode, playArtwork, mVideoView.getCurrentPosition(),
                 mVideoView.getDuration(), mVideoView.isPlaying());
+                exoPlayerswitchingPlayback = true;
     }
 
     public void resumeFromMediaSession() {  //xuameng音乐小窗口
@@ -1662,6 +1664,11 @@ public class PlayFragment extends BaseLazyFragment {
     public void onResume() {
         super.onResume();
         exitingPreview = false;
+        if (mVideoView != null && mediaPlayer instanceof EXOmPlayer && exoPlayerswitchingPlayback) {
+            exoPlayerswitchingPlayback = false;
+            play(false);
+            return;
+        }
         if (mVideoView != null) {
             mVideoView.resume();
         }
