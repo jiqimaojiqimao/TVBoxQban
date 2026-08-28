@@ -138,7 +138,7 @@ public class ImgUtilMusic {
     public static void load(String url, ImageView view, int roundingRadius, int newWidth, int newHeight, String label) {
         view.setScaleType(ImageView.ScaleType.CENTER_CROP);
         if (roundingRadius <= 0) roundingRadius = 1;
-        Drawable fallback = createTextDrawable(TextUtils.isEmpty(label) ? "TVBox" : label, newWidth, newHeight, roundingRadius);
+        Drawable fallback = createTextDrawable(TextUtils.isEmpty(label) ? "聚汇影视" : label, newWidth, newHeight, roundingRadius);
         Drawable placeholder = createImagePlaceholderDrawable(newWidth, newHeight, roundingRadius);
         if (isInvalidImageUrl(url)) {
             view.setImageDrawable(fallback);
@@ -186,7 +186,7 @@ public class ImgUtilMusic {
     }
 
     private static Drawable createTextDrawable(String text, int width, int height, float cornerRadius) {
-        if (TextUtils.isEmpty(text)) text = "TVBox";
+        if (TextUtils.isEmpty(text)) text = "聚汇影视";
         if (width <= 0) width = 180;
         if (height <= 0) height = 240;
         if (cornerRadius <= 0) cornerRadius = 1;
