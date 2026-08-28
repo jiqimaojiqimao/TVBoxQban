@@ -154,7 +154,6 @@ public class PlayFragment extends BaseLazyFragment {
 
     private boolean audioPlayback;
     private boolean switchingPlayback;
-    private String playArtwork;
 
     private DanmakuView mDanmuView; //xuameng 弹幕
     private DanmuLoadController danmuLoadController; //xuameng 弹幕
@@ -1583,10 +1582,6 @@ public class PlayFragment extends BaseLazyFragment {
         if (switchingPlayback) return;
         Boolean audioOnly = getAudioOnlyPlayback();
         if (audioOnly != null) audioPlayback = audioOnly;
-        if (audioPlayback && TextUtils.isEmpty(playArtwork) && mVodInfo != null && !TextUtils.isEmpty(mVodInfo.pic)) {
-            playArtwork = mVodInfo.pic;
-            mVideoView.setArtwork(playArtwork);
-        }
         if (mVodInfo == null || mVideoView == null || !audioPlayback
                 || mVideoView.getCurrentPlayState() == VideoView.STATE_ERROR
                 || mVideoView.getCurrentPlayState() == VideoView.STATE_PLAYBACK_COMPLETED) {
@@ -1594,13 +1589,10 @@ public class PlayFragment extends BaseLazyFragment {
             audioPlayback = false;
             return;
         }
-        String episode = String.valueOf(Math.max(0, mVodInfo.playIndex) + 1);
         VodInfo.VodSeries currentSeries = getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
-        if (currentSeries != null && !TextUtils.isEmpty(currentSeries.name)) {
-            episode += " - " + currentSeries.name;
-        }
+        String episode = currentSeries == null || TextUtils.isEmpty(currentSeries.name) ? "" : currentSeries.name;
         MusicPlaybackService.update(getContext(), this,
-                TextUtils.isEmpty(mVodInfo.name) ? "TVBox" : mVodInfo.name,
+                TextUtils.isEmpty(mVodInfo.name) ? "聚汇影视" : mVodInfo.name,
                 episode, mVodInfo.pic, mVideoView.getCurrentPosition(),
                 mVideoView.getDuration(), mVideoView.isPlaying());
     }
@@ -1974,7 +1966,6 @@ public class PlayFragment extends BaseLazyFragment {
         if(mVodInfo==null)return;
         switchingPlayback = true;
         audioPlayback = false;
-        playArtwork = "";
         exitingPreview = false;
         isJianpian = false;
         reLoadDanmu  = false;  //xuameng 如果是解析嗅探地址重新下载弹幕
@@ -1997,7 +1988,6 @@ public class PlayFragment extends BaseLazyFragment {
         webHeaderMap = null;
         initParseLoadFound();
         resetDanmuState(); //xuameng 弹幕
-        mVideoView.clearArtwork();
         mController.stopOther();
         if(mVideoView!= null) mVideoView.release();
         subtitleCacheKey = mVodInfo.sourceKey + "-" + mVodInfo.id + "-" + mVodInfo.playFlag + "-" + mVodInfo.playIndex+ "-" + vs.name + "-subt";
