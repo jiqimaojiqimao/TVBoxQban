@@ -648,6 +648,7 @@ public class PlayFragment extends BaseLazyFragment {
 
 
     void selectMyAudioTrack() {
+        if (mVideoView == null) return;
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
 
         TrackInfo trackInfo = null;
@@ -725,6 +726,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     void selectMyVideoTrack() {    //xuameng切换视轨
+        if (mVideoView == null) return;
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
         TrackInfo trackInfo = null;
         if (mediaPlayer instanceof IjkMediaPlayer) {
@@ -787,6 +789,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     void selectMyInternalSubtitle() {
+        if (mVideoView == null) return;
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
 
         TrackInfo trackInfo = null;
@@ -1662,8 +1665,10 @@ public class PlayFragment extends BaseLazyFragment {
     public void onResume() {
         super.onResume();
         exitingPreview = false;
+        TrackInfo trackInfo = null;
+        if (mVideoView == null) return;
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
-        if (mVideoView != null && mediaPlayer instanceof EXOmPlayer) {
+        if (mediaPlayer instanceof EXOmPlayer) {
             trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
             if (exoPlayerswitchingPlayback && !trackInfo.getAudio().isEmpty() && !trackInfo.getVideo().isEmpty()) {  //xuameng 音乐后台返回前台如果是视频的话解决无画面的BUG
                 exoPlayerswitchingPlayback = false;
