@@ -111,7 +111,7 @@ public class ImgUtilMusic {
     public static void load(String url, ImageView view, int roundingRadius, int newWidth, int newHeight, String label, ImageView.ScaleType scaleType) {
         view.setScaleType(scaleType);
         if (roundingRadius <= 0) roundingRadius = 1;
-        Drawable fallback = createTextDrawable(TextUtils.isEmpty(label) ? "TVBox" : label, newWidth, newHeight, roundingRadius);
+        Drawable fallback = createTextDrawable(TextUtils.isEmpty(label) ? "聚汇影视" : label, newWidth, newHeight, roundingRadius);
         Drawable placeholder = createImagePlaceholderDrawable(newWidth, newHeight, roundingRadius);
         if (isInvalidImageUrl(url)) {
             view.setImageDrawable(fallback);
