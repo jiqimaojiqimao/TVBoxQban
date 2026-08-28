@@ -154,9 +154,6 @@ public class PlayFragment extends BaseLazyFragment {
 
     private boolean audioPlayback;
     private boolean switchingPlayback;
-    private boolean previewMode;
-    private String playLyric;
-    private String lyricCacheKey;
     private String playArtwork;
 
     private DanmakuView mDanmuView; //xuameng 弹幕
