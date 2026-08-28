@@ -81,8 +81,6 @@ import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
 import android.media.AudioManager;  //xuameng音乐播放动画
 
-public boolean noHaveVideo = false;   //xuameng 判断是否有视频
-
 import com.github.tvbox.osc.subtitle.LrcView;  //xuameng LRC歌词字幕
 import android.text.TextUtils;  //xuameng LRC歌词字幕
 import com.github.tvbox.osc.picasso.RoundTransformation; //xuameng 新增给vod显示旋转图片用
@@ -374,6 +372,7 @@ public class VodController extends BaseController {
     private boolean isBufferIng = false; //xuameng 判断是否进在缓冲视频
     private Visualizer mVisualizer;  //xuameng音乐播放动画
     private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
+    public boolean noHaveVideo = false;   //xuameng 判断是否有视频
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
     private boolean musicAnimation = Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false);     //xuameng 音柱动画 加载设置
     public SubtitleView mExoSubtitleView;   // 用于显示ExoPlayer内置字幕
