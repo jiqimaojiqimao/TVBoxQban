@@ -460,7 +460,7 @@ public class VodController extends BaseController {
                 } else {
                     noHaveVideo = true;   //xuameng 判断是否有视频
                     if(MxuamengMusic.getVisibility() == View.GONE) { //xuameng播放音乐背景
-                        MxuamengMusic.setVisibility(VISIBLE);
+                    //    MxuamengMusic.setVisibility(VISIBLE);
                     }
                     FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) iv_circle_bg.getLayoutParams(); //xuameng 新增给vod显示旋转图片用
                     if(mLrcView.getVisibility() == View.VISIBLE) {   //xuameng LRC歌词字幕
