@@ -81,6 +81,8 @@ import android.util.Log; //xuameng音乐播放动画
 import android.os.Looper; //xuameng音乐播放动画
 import android.media.AudioManager;  //xuameng音乐播放动画
 
+public boolean noHaveVideo = false;   //xuameng 判断是否有视频
+
 import com.github.tvbox.osc.subtitle.LrcView;  //xuameng LRC歌词字幕
 import android.text.TextUtils;  //xuameng LRC歌词字幕
 import com.github.tvbox.osc.picasso.RoundTransformation; //xuameng 新增给vod显示旋转图片用
@@ -457,6 +459,7 @@ public class VodController extends BaseController {
                         MxuamengMusic.setVisibility(GONE);
                     }
                 } else {
+                    noHaveVideo = true;   //xuameng 判断是否有视频
                     if(MxuamengMusic.getVisibility() == View.GONE) { //xuameng播放音乐背景
                         MxuamengMusic.setVisibility(VISIBLE);
                     }
@@ -2074,6 +2077,9 @@ public class VodController extends BaseController {
                 listener.prepared();
                 String width = Integer.toString(mControlWrapper.getVideoSize()[0]);
                 String height = Integer.toString(mControlWrapper.getVideoSize()[1]);
+                if(width.length() <= 1 && height.length() <= 1) {
+                    noHaveVideo = true;   //xuameng 判断是否有视频
+                }
                 mVideoSize.setText("[ " + width + " X " + height + " ]");
                 initialVisualizer();
                 break;
@@ -2104,7 +2110,6 @@ public class VodController extends BaseController {
             case VideoView.STATE_PLAYBACK_COMPLETED:
                 imageHide();  //xuameng 隐藏图片
                 mHidePauseIng(); //xuameng 隐藏暂停图标
-                clearSubtitleCache();
                 releaseVisualizer();  //xuameng播放音乐背景
                 clearSubtitleCache();  //xuameng清除字幕缓存
                 isVideoPlay = false;
@@ -2134,6 +2139,7 @@ public class VodController extends BaseController {
         iv_circle_bg.setVisibility(GONE); //xuameng音乐播放时图标
         customVisualizer.setVisibility(GONE); //xuameng播放音乐柱状图
         mPlayLoadNetSpeed.setVisibility(View.GONE); //xuameng 网速显示
+        noHaveVideo = false;   //xuameng 判断是否有视频
     }
 
     boolean isBottomVisible() { //xuameng底部菜单是否显示
