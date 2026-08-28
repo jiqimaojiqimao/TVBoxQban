@@ -9,7 +9,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.tvbox.osc.util.ImgUtil;
+import com.github.tvbox.osc.util.ImgUtilMusic;
 
 import master.flame.danmaku.controller.DrawHandler;
 import master.flame.danmaku.danmaku.model.BaseDanmaku;
@@ -53,7 +53,7 @@ public class MyVideoView extends VideoView implements DrawHandler.Callback {
             mPlayerContainer.addView(artworkView, index, new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT, Gravity.CENTER));
         }
         artworkView.setVisibility(VISIBLE);
-        ImgUtil.load(url, artworkView, 0, 0, 0, "", ImageView.ScaleType.FIT_CENTER);
+        ImgUtilMusic.load(url, artworkView, 0, 0, 0, "", ImageView.ScaleType.FIT_CENTER);
     }
 
     public void clearArtwork() {
