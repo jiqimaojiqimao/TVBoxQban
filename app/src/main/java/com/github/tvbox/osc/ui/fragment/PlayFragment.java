@@ -1564,7 +1564,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     private Boolean getAudioOnlyPlayback() {  //xuameng音乐小窗口
-        if (mVideoView == null) return null;
+        if (mVideoView == null) return false;
         try {
             AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
             TrackInfo trackInfo = null;
