@@ -1560,7 +1560,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     private boolean hasAudioOnlyPlayback() {  //xuameng音乐小窗口
-        return Boolean.TRUE.equals(getAudioOnlyPlayback());
+        return getAudioOnlyPlayback();
     }
 
     private Boolean getAudioOnlyPlayback() {  //xuameng音乐小窗口
@@ -1570,9 +1570,11 @@ public class PlayFragment extends BaseLazyFragment {
             TrackInfo trackInfo = null;
             if (mediaPlayer instanceof IjkMediaPlayer) {
                 trackInfo = ((IjkMediaPlayer) mediaPlayer).getTrackInfo();
+                if (trackInfo == null) return false;
                 return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
             } else if (mediaPlayer instanceof EXOmPlayer) {
                 trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
+                if (trackInfo == null) return false;
                 return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
             } else {
                 return mController.noHaveVideo;  //xuameng 系统播放器用图像尺寸判断
