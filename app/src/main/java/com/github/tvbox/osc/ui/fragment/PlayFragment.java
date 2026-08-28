@@ -1279,13 +1279,6 @@ public class PlayFragment extends BaseLazyFragment {
                         boolean parse = info.optString("parse", "1").equals("1");
                         boolean jx = info.optString("jx", "0").equals("1");
 
-                        // xuameng优先检查 artwork 字段（歌手图片）
-                        if (info.has("artwork")) {
-                            String picUrl = info.optString("artwork", "");
-                            if (!TextUtils.isEmpty(picUrl)) {
-                                mController.setVideoPicUrl(picUrl);  //xuameng 新增给vod显示旋转图片用
-                            }
-                        }
                         // xuameng优先检查 lrc 字段（歌词字符串）
                         if (info.has("lrc")) {
                             String lrcContent = info.optString("lrc", "");
@@ -1362,6 +1355,7 @@ public class PlayFragment extends BaseLazyFragment {
                         }
                         playArtwork = artwork;
                         mVideoView.setArtwork(playArtwork);
+                        mController.setVideoPicUrl(playArtwork);  //xuameng 新增给vod显示旋转图片用   artwork 字段（歌手图片）
                         HashMap<String, String> headers = null;
                         webUserAgent = null;
                         webHeaderMap = null;
@@ -1485,8 +1479,6 @@ public class PlayFragment extends BaseLazyFragment {
         sourceKey = bundle.getString("sourceKey");
         sourceBean = ApiConfig.get().getSource(sourceKey);
         ApiConfig.get().setCurrentPlaySourceKey(sourceKey);
-        String picUrl = bundle.getString("videoPic");  //xuameng 新增给vod显示旋转图片用
-        mController.setVideoPicUrl(picUrl);  //xuameng 新增给vod显示旋转图片用
         initPlayerCfg();
         play(false);
     }
