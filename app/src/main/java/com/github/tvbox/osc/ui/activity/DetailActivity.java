@@ -1711,7 +1711,6 @@ public class DetailActivity extends BaseActivity {
         if (playFragment != null) return;
         playFragment = new PlayFragment();
         getSupportFragmentManager().beginTransaction().add(R.id.previewPlayer, playFragment).commitNowAllowingStateLoss();
-        playFragment.setPreviewMode(!fullWindows);
     }
 
     void releasePlayFragment() {
