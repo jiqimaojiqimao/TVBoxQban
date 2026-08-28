@@ -1664,6 +1664,7 @@ public class PlayFragment extends BaseLazyFragment {
     public void onResume() {
         super.onResume();
         exitingPreview = false;
+        AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
         if (mVideoView != null && mediaPlayer instanceof EXOmPlayer && exoPlayerswitchingPlayback) {
             exoPlayerswitchingPlayback = false;
             play(false);
