@@ -1593,7 +1593,7 @@ public class PlayFragment extends BaseLazyFragment {
         }
         VodInfo.VodSeries currentSeries = getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
         String episode = currentSeries == null || TextUtils.isEmpty(currentSeries.name) ? "" : currentSeries.name;
-        String progressKey = progressKey != null ? MD5.string2MD5(progressKey) : null;
+        String progressMd5 = webPlayUrl != null ? MD5.string2MD5(webPlayUrl) : null;
         MusicPlaybackService.update(getContext(), this,
                 TextUtils.isEmpty(mVodInfo.name) ? "聚汇影视" : mVodInfo.name,
                 episode, playArtwork, mVideoView.getCurrentPosition(),
