@@ -562,6 +562,11 @@ public class VodController extends BaseController {
         mHandler.removeCallbacks(lockRunnable);
         mHandler.postDelayed(lockRunnable, 3000);
     }
+
+    public void setPreviewMode(boolean previewMode) {
+        this.previewMode = previewMode;
+    }
+
     @Override
     protected void initView() {
         super.initView();
