@@ -42,7 +42,7 @@ import java.util.Random;
 
 import me.jessyan.autosize.utils.AutoSizeUtils;
 
-public class ImgUtil {
+public class ImgUtilMusic {
     private static final Map<String, Drawable> drawableCache = new HashMap<>();
     public static int defaultWidth = 244;
     public static int defaultHeight = 320;
