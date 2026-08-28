@@ -363,6 +363,7 @@ public class VodController extends BaseController {
     private double DOUBLE_CLICK_TIME_2 = 0L; //xuameng防连击1秒（为动画）
     LockRunnable lockRunnable = new LockRunnable();
     private boolean isLock = false;
+    private boolean previewMode = false;
     private boolean isSEEKBAR = false; //xuameng进入SEEKBAR
     private boolean isPlaying = false; //xuameng判断暂停动画
     private boolean isAnimation = false; //xuameng判断隐藏菜单动画
