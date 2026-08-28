@@ -309,7 +309,7 @@ public class PlayFragment extends BaseLazyFragment {
                         }
                     }
                 }
-                if (!switchingPlayback) updateMusicSession();  //xuameng音乐小窗口完
+             //   if (!switchingPlayback) updateMusicSession();  //xuameng音乐小窗口完
 
             }
         });
