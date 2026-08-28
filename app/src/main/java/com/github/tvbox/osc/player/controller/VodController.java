@@ -2813,11 +2813,11 @@ public class VodController extends BaseController {
         mSubtitleView.destroy();
         mSubtitleView.clearSubtitleCache();
         mSubtitleView.onSubtitleChanged(null);
+        mLyricView.setVisibility(View.GONE);
+        mLyricView.destroy();
+        mLyricView.clearSubtitleCache();
+        mLyricView.onSubtitleChanged(null);
         mSubtitleView.setVisibility(View.VISIBLE);
-        mLrcView.setVisibility(View.GONE);
-        mLrcView.destroy();
-        mLrcView.clearSubtitleCache();
-        mLrcView.onSubtitleChanged(null);
         mExoSubtitleView.setVisibility(View.GONE);    //xuameng EXO内置字幕
         mExoSubtitleView.setCues(null); // xuameng清除EXO字幕数据
         mLrcView.setVisibility(View.GONE);  //xuameng LRC歌词字幕
