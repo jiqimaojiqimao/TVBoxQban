@@ -5,9 +5,9 @@ buildscript {
         gradlePluginPortal()
         google()
         mavenCentral()
-        maven { url = "https://jitpack.io" }
         maven { url = "https://maven.aliyun.com/repository/public" }
         maven { url = "https://maven.aliyun.com/repository/releases" }
+        maven { url = "https://jitpack.io" }
         maven { url = "https://storage.googleapis.com/r8-releases/raw" }
     }
 
@@ -21,9 +21,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url = "https://jitpack.io" }
         maven { url = "https://maven.aliyun.com/repository/public" }
         maven { url = "https://maven.aliyun.com/repository/releases" }
+        maven { url = "https://jitpack.io" }
         gradlePluginPortal()
         maven {
             url = "http://4thline.org/m2"
