@@ -1600,7 +1600,7 @@ public class PlayFragment extends BaseLazyFragment {
         String episode = currentSeries == null || TextUtils.isEmpty(currentSeries.name) ? "" : currentSeries.name;
         MusicPlaybackService.update(getContext(), this,
                 TextUtils.isEmpty(mVodInfo.name) ? "聚汇影视" : mVodInfo.name,
-                episode, mVodInfo.pic, mVideoView.getCurrentPosition(),
+                episode, playArtwork, mVideoView.getCurrentPosition(),
                 mVideoView.getDuration(), mVideoView.isPlaying());
     }
 
