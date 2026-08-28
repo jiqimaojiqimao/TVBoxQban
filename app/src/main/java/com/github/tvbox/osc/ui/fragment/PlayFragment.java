@@ -54,6 +54,7 @@ import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.player.IjkMediaPlayer;
 import com.github.tvbox.osc.player.EXOmPlayer;
 import com.github.tvbox.osc.player.MyVideoView;
+import com.github.tvbox.osc.player.MusicPlaybackService;
 import com.github.tvbox.osc.player.TrackInfo;
 import com.github.tvbox.osc.player.TrackInfoBean;
 import com.github.tvbox.osc.player.controller.VodController;
@@ -138,6 +139,7 @@ public class PlayFragment extends BaseLazyFragment {
     private ProgressBar mPlayLoading;
     private VodController mController;
     private SourceViewModel sourceViewModel;
+    private Observer<JSONObject> playResultObserver;
     private Handler mHandler;
     private boolean isJianpian = false;  //xuameng判断视频是否为荐片
     private boolean selectExoTrack = false;  //xuameng判断exo选择音轨
@@ -149,6 +151,13 @@ public class PlayFragment extends BaseLazyFragment {
     private boolean exitingPreview = false;  //xuameng是否彻底退出页面
     private boolean fullPreview  = false;  //xuameng 非小窗口模式返回后播放BUG
     boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true);  //xuameng true是显示小窗口,false是不显示小窗口
+
+    private boolean audioPlayback;
+    private boolean switchingPlayback;
+    private boolean previewMode;
+    private String playLyric;
+    private String lyricCacheKey;
+    private String playArtwork;
 
     private DanmakuView mDanmuView; //xuameng 弹幕
     private DanmuLoadController danmuLoadController; //xuameng 弹幕
@@ -285,6 +294,22 @@ public class PlayFragment extends BaseLazyFragment {
                 if (reLoadDanmu){
                     setDanmuViewSettings(true);
 				}
+
+                if (switchingPlayback) {
+                    if (playState == VideoView.STATE_ERROR
+                            || playState == VideoView.STATE_PLAYBACK_COMPLETED) {
+                        switchingPlayback = false;
+                        audioPlayback = false;
+                    } else if (isStartedPlayState(playState)) {
+                        Boolean audioOnly = getAudioOnlyPlayback();
+                        if (audioOnly != null) {
+                            switchingPlayback = false;
+                            audioPlayback = audioOnly;
+                        }
+                    }
+                }
+                if (!switchingPlayback) updateMusicSession();
+
             }
         });
         mController.setListener(new VodController.VodControlListener() {
@@ -1531,6 +1556,80 @@ public class PlayFragment extends BaseLazyFragment {
         this.exitingPreview = exitingPreview;
     }
 
+    private boolean hasAudioOnlyPlayback() {
+        return Boolean.TRUE.equals(getAudioOnlyPlayback());
+    }
+
+    private Boolean getAudioOnlyPlayback() {
+        if (mVideoView == null) return null;
+        try {
+            AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
+            TrackInfo trackInfo = null;
+            if (mediaPlayer instanceof IjkMediaPlayer) {
+                trackInfo = ((IjkMediaPlayer) mediaPlayer).getTrackInfo();
+            } else if (mediaPlayer instanceof ExoPlayer) {
+                trackInfo = ((ExoPlayer) mediaPlayer).getTrackInfo();
+            }
+            if (trackInfo == null) return null;
+            return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private void updateMusicSession() {
+        if (!MusicPlaybackService.isSupported(getContext())) return;
+        if (switchingPlayback) return;
+        Boolean audioOnly = getAudioOnlyPlayback();
+        if (audioOnly != null) audioPlayback = audioOnly;
+        if (audioPlayback && TextUtils.isEmpty(playArtwork) && mVodInfo != null && !TextUtils.isEmpty(mVodInfo.pic)) {
+            playArtwork = mVodInfo.pic;
+            mVideoView.setArtwork(playArtwork);
+        }
+        if (mVodInfo == null || mVideoView == null || !audioPlayback
+                || mVideoView.getCurrentPlayState() == VideoView.STATE_ERROR
+                || mVideoView.getCurrentPlayState() == VideoView.STATE_PLAYBACK_COMPLETED) {
+            MusicPlaybackService.stop(getContext(), this);
+            audioPlayback = false;
+            return;
+        }
+        String episode = String.valueOf(Math.max(0, mVodInfo.playIndex) + 1);
+        VodInfo.VodSeries currentSeries = getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
+        if (currentSeries != null && !TextUtils.isEmpty(currentSeries.name)) {
+            episode += " - " + currentSeries.name;
+        }
+        MusicPlaybackService.update(getContext(), this,
+                TextUtils.isEmpty(mVodInfo.name) ? "TVBox" : mVodInfo.name,
+                episode, mVodInfo.pic, mVideoView.getCurrentPosition(),
+                mVideoView.getDuration(), mVideoView.isPlaying());
+    }
+
+    public void resumeFromMediaSession() {
+        if (mVideoView != null) {
+            mVideoView.start();
+            updateMusicSession();
+        }
+    }
+
+    public void pauseFromMediaSession() {
+        if (mVideoView != null) {
+            mVideoView.pause();
+            updateMusicSession();
+        }
+    }
+
+    public void stopFromMediaSession() {
+        if (mVideoView != null) mVideoView.pause();
+        MusicPlaybackService.stop(getContext(), this);
+    }
+
+    public void seekFromMediaSession(long position) {
+        if (mVideoView != null) {
+            mVideoView.seekTo(position);
+            updateMusicSession();
+        }
+    }
+
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event != null) {
             if (mController.onKeyEvent(event)) {
@@ -1561,7 +1660,7 @@ public class PlayFragment extends BaseLazyFragment {
     @Override
     public void onPause() {
         super.onPause();
-        if (mVideoView != null && !exitingPreview) {
+        if (mVideoView != null && !exitingPreview && !hasAudioOnlyPlayback()) {
             mVideoView.pause();
         }
     }
@@ -1591,6 +1690,13 @@ public class PlayFragment extends BaseLazyFragment {
 
     @Override
     public void onDestroyView() {
+        audioPlayback = false;
+        switchingPlayback = false;
+        MusicPlaybackService.stop(getContext(), this);
+        if (sourceViewModel != null && playResultObserver != null) {
+            sourceViewModel.playResult.removeObserver(playResultObserver);
+            playResultObserver = null;
+        }
         super.onDestroyView();
         ApiConfig.get().setCurrentPlaySourceKey("");
         EventBus.getDefault().unregister(this);
@@ -1613,7 +1719,7 @@ public class PlayFragment extends BaseLazyFragment {
     private String sourceKey;
     private SourceBean sourceBean;
 
-    private void playNext(boolean isProgress) {
+    public void playNext(boolean isProgress) {
         boolean hasNext;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasNext = false;
@@ -1634,7 +1740,7 @@ public class PlayFragment extends BaseLazyFragment {
         play(false);
     }
 
-    private void playPrevious() {
+    public void playPrevious() {
         boolean hasPre = true;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasPre = false;
@@ -1865,6 +1971,9 @@ public class PlayFragment extends BaseLazyFragment {
 
     public void play(boolean reset) {
         if(mVodInfo==null)return;
+        switchingPlayback = true;
+        audioPlayback = false;
+        playArtwork = "";
         exitingPreview = false;
         isJianpian = false;
         reLoadDanmu  = false;  //xuameng 如果是解析嗅探地址重新下载弹幕
@@ -1887,6 +1996,7 @@ public class PlayFragment extends BaseLazyFragment {
         webHeaderMap = null;
         initParseLoadFound();
         resetDanmuState(); //xuameng 弹幕
+        mVideoView.clearArtwork();
         mController.stopOther();
         if(mVideoView!= null) mVideoView.release();
         subtitleCacheKey = mVodInfo.sourceKey + "-" + mVodInfo.id + "-" + mVodInfo.playFlag + "-" + mVodInfo.playIndex+ "-" + vs.name + "-subt";
