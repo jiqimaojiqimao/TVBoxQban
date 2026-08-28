@@ -1577,8 +1577,6 @@ public class PlayFragment extends BaseLazyFragment {
         }
     }
 
-        return mController.noHaveVideo;
-
     private void updateMusicSession() {  //xuameng音乐小窗口
         if (!MusicPlaybackService.isSupported(getContext())) return;
         if (switchingPlayback) return;
