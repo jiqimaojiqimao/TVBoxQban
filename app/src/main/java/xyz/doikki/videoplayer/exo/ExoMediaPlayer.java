@@ -116,7 +116,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         int memoryClass = activityManager.getMemoryClass();
         
         // 判断内存大小
-        if (memoryClass <= 2048) { // 2G = 2048MB
             // 内存小于等于2G时使用低内存策略
             mLoadControl = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
@@ -127,10 +126,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 )
                 .setTargetBufferBytes(30 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
                 .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
+            .setBackBuffer(0, false)
                 .build();
-        } else {
-            mLoadControl = new DefaultLoadControl();
-        }
+
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
