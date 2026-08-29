@@ -118,9 +118,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                     DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
             .build();
 
-        mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
-            .setPreferredTextLanguages("zh", "chi", "zh-CN", "zh-TW", "en")      // 设置首选字幕语言为中文
-            .setPreferredAudioLanguages("zh", "chi", "zh-CN", "zh-TW", "en")     // 设置首选音频语言为中文
+		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
+            .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
+            .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")          // 设置首选音频语言为中文
             .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
 
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
