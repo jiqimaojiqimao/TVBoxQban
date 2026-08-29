@@ -1089,13 +1089,6 @@ public class PlayFragment extends BaseLazyFragment {
         if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
             trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
 
-            //xuameng 选中默认音轨、上次记忆音轨
-            final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
-            Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
-            if (selectedIdExo != 99999) { // xuameng99999表示未选中
-               ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
-            }
-
             //xuameng 选择字幕
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
                 mController.mSubtitleView.hasInternal = true;
