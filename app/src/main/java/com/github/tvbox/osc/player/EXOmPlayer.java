@@ -259,91 +259,101 @@ public class EXOmPlayer extends ExoMediaPlayer {
         }
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
-    public void selectExoTrack(@Nullable TrackInfoBean videoTrackBean) {  //xuameng选择字幕、音轨
-        MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
-        if (trackInfo != null) {
-            if (videoTrackBean == null) {
-                for (int renderIndex = 0; renderIndex < trackInfo.getRendererCount(); renderIndex++) {
-                    if (trackInfo.getRendererType(renderIndex) == C.TRACK_TYPE_TEXT) {
-                        DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().getParameters().buildUpon();
-                        parametersBuilder.setRendererDisabled(renderIndex, true);
-                        getTrackSelector().setParameters(parametersBuilder);
-                        break;
-                    }
-                }
-            } else {
-                TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(videoTrackBean.renderId);
-                @SuppressLint("UnsafeOptInUsageError") DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(videoTrackBean.trackGroupId, videoTrackBean.trackId);
-                DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().buildUponParameters();
-                parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
-                parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
-                getTrackSelector().setParameters(parametersBuilder);
-            }
+@SuppressLint("UnsafeOptInUsageError")
+public void selectExoTrack(@Nullable TrackInfoBean trackBean) {
+    // 选择字幕
+    MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
+    if (trackInfo == null) return;
+
+    int textRendererIndex = findRendererIndex(trackInfo, C.TRACK_TYPE_TEXT);
+    if (textRendererIndex == C.INDEX_UNSET) return;
+
+    DefaultTrackSelector.Parameters.Builder builder = getTrackSelector().buildUponParameters();
+
+    if (trackBean == null) {
+        // 关闭字幕
+        builder.clearSelectionOverrides(textRendererIndex);
+        builder.setRendererDisabled(textRendererIndex, true);
+    } else {
+        // 选择指定字幕
+        TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(trackBean.renderId);
+        DefaultTrackSelector.SelectionOverride override =
+                new DefaultTrackSelector.SelectionOverride(trackBean.trackGroupId, trackBean.trackId);
+        builder.clearSelectionOverrides(trackBean.renderId);
+        builder.setRendererDisabled(trackBean.renderId, false);
+        builder.setSelectionOverride(trackBean.renderId, trackGroupArray, override);
+    }
+
+    getTrackSelector().setParameters(builder.build());
+}
+
+@SuppressLint("UnsafeOptInUsageError")
+public void selectExoTrackAudio(@Nullable TrackInfoBean trackBean, String playKey) {
+    // 选择音轨
+    MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
+    if (trackInfo == null) return;
+
+    int audioRendererIndex = findRendererIndex(trackInfo, C.TRACK_TYPE_AUDIO);
+    if (audioRendererIndex == C.INDEX_UNSET) return;
+
+    DefaultTrackSelector.Parameters.Builder builder = getTrackSelector().buildUponParameters();
+
+    if (trackBean == null) {
+        // 关闭音轨
+        builder.clearSelectionOverrides(audioRendererIndex);
+        builder.setRendererDisabled(audioRendererIndex, true);
+    } else {
+        // 选择指定音轨
+        TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(trackBean.renderId);
+        DefaultTrackSelector.SelectionOverride override =
+                new DefaultTrackSelector.SelectionOverride(trackBean.trackGroupId, trackBean.trackId);
+        builder.clearSelectionOverrides(trackBean.renderId);
+        builder.setRendererDisabled(trackBean.renderId, false);
+        builder.setSelectionOverride(trackBean.renderId, trackGroupArray, override);
+
+        // 记忆
+        if (!TextUtils.isEmpty(playKey)) {
+            memory.save(playKey, trackBean.trackGroupId, trackBean.trackId);
         }
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
-    public void selectExoTrackAudio(@Nullable TrackInfoBean videoTrackBean, String playKey) {  //xuameng选择并记忆选择音轨
-        MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
-        if (trackInfo != null) {
-            if (videoTrackBean == null) {
-                for (int renderIndex = 0; renderIndex < trackInfo.getRendererCount(); renderIndex++) {
-                    if (trackInfo.getRendererType(renderIndex) == C.TRACK_TYPE_TEXT) {
-                        DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().getParameters().buildUpon();
-                        parametersBuilder.setRendererDisabled(renderIndex, true);
-                        getTrackSelector().setParameters(parametersBuilder);
-                        break;
-                    }
-                }
-            } else {
-                TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(videoTrackBean.renderId);
-                @SuppressLint("UnsafeOptInUsageError") DefaultTrackSelector.SelectionOverride override = new DefaultTrackSelector.SelectionOverride(videoTrackBean.trackGroupId, videoTrackBean.trackId);
-                DefaultTrackSelector.Parameters.Builder parametersBuilder = getTrackSelector().buildUponParameters();
-                parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
-                parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
-                getTrackSelector().setParameters(parametersBuilder);
-                //xuameng记忆选择音轨
-                if (!playKey.isEmpty()) {
-                    memory.save(playKey, videoTrackBean.trackGroupId, videoTrackBean.trackId);
-                }
-            }
-        }
+    getTrackSelector().setParameters(builder.build());
+}
+
+public void selectExoTrackVideo(@Nullable TrackInfoBean trackBean) {
+    // 选择视轨
+    MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
+    if (trackInfo == null) return;
+
+    int videoRendererIndex = findRendererIndex(trackInfo, C.TRACK_TYPE_VIDEO);
+    if (videoRendererIndex == C.INDEX_UNSET) return;
+
+    DefaultTrackSelector.Parameters.Builder builder = getTrackSelector().buildUponParameters();
+
+    if (trackBean == null) {
+        // 关闭视频（禁用渲染器）
+        builder.clearSelectionOverrides(videoRendererIndex);
+        builder.setRendererDisabled(videoRendererIndex, true);
+    } else {
+        TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(trackBean.renderId);
+        DefaultTrackSelector.SelectionOverride override =
+                new DefaultTrackSelector.SelectionOverride(trackBean.trackGroupId, trackBean.trackId);
+        builder.clearSelectionOverrides(trackBean.renderId);
+        builder.setRendererDisabled(trackBean.renderId, false);
+        builder.setSelectionOverride(trackBean.renderId, trackGroupArray, override);
     }
 
-    public void selectExoTrackVideo(@Nullable TrackInfoBean videoTrackBean) {    //xuameng选择视轨
-        MappingTrackSelector.MappedTrackInfo trackInfo = getTrackSelector().getCurrentMappedTrackInfo();
-        if (trackInfo == null) return;
+    getTrackSelector().setParameters(builder.build());
+}
 
-        if (videoTrackBean == null) {
-            // 禁用视频轨道（一般很少用，但保留逻辑完整性）
-            for (int renderIndex = 0; renderIndex < trackInfo.getRendererCount(); renderIndex++) {
-                if (trackInfo.getRendererType(renderIndex) == C.TRACK_TYPE_VIDEO) {
-                    DefaultTrackSelector.Parameters.Builder parametersBuilder =
-                            getTrackSelector().getParameters().buildUpon();
-                    parametersBuilder.setRendererDisabled(renderIndex, true);
-                    getTrackSelector().setParameters(parametersBuilder);
-                    break;
-                }
-            }
-        } else {
-            // 先确认 renderId 确实是视频类型
-            if (trackInfo.getRendererType(videoTrackBean.renderId) != C.TRACK_TYPE_VIDEO) {
-                LogUtils.e("selectExoTrackVideo: renderId does not point to a video track!");
-                return;
-            }
-
-            TrackGroupArray trackGroupArray = trackInfo.getTrackGroups(videoTrackBean.renderId);
-            DefaultTrackSelector.SelectionOverride override =
-                    new DefaultTrackSelector.SelectionOverride(videoTrackBean.trackGroupId, videoTrackBean.trackId);
-
-            DefaultTrackSelector.Parameters.Builder parametersBuilder =
-                    getTrackSelector().buildUponParameters();
-            parametersBuilder.setRendererDisabled(videoTrackBean.renderId, false);
-            parametersBuilder.setSelectionOverride(videoTrackBean.renderId, trackGroupArray, override);
-            getTrackSelector().setParameters(parametersBuilder);
+private int findRendererIndex(MappingTrackSelector.MappedTrackInfo trackInfo, int trackType) {
+    for (int i = 0; i < trackInfo.getRendererCount(); i++) {
+        if (trackInfo.getRendererType(i) == trackType) {
+            return i;
         }
     }
+    return C.INDEX_UNSET;
+}
 
     //xuameng记忆选择音轨
     public void loadDefaultTrack(String playKey) {
