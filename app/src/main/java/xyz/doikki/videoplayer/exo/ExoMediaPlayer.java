@@ -90,10 +90,14 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         // 构建 RendererFactory
         if (useSoftDecode) {
-            // 软解场景 TvRenderersFactory 是自定义的 NextRenderersFactory
-            mRenderersFactory = new TvRenderersFactory(mAppContext);
+            // 软解场景
+            mRenderersFactory = new NextRenderersFactory(mAppContext)
+                    .setEnableDecoderFallback(true)
+                    .setExtensionRendererMode(
+                            NextRenderersFactory.EXTENSION_RENDERER_MODE_ON
+                    );
         } else {
-            // 硬解场景 DefaultRenderersFactory 加 ffmpeg扩展
+            // 硬解场景
             mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                     .setEnableDecoderFallback(true)
                     .setExtensionRendererMode(
