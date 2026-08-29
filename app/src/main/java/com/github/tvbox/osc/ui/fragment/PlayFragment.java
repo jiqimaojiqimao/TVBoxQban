@@ -54,6 +54,7 @@ import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.player.IjkMediaPlayer;
 import com.github.tvbox.osc.player.EXOmPlayer;
 import com.github.tvbox.osc.player.MyVideoView;
+import com.github.tvbox.osc.player.MusicPlaybackService;  //xuameng音乐小窗口
 import com.github.tvbox.osc.player.TrackInfo;
 import com.github.tvbox.osc.player.TrackInfoBean;
 import com.github.tvbox.osc.player.controller.VodController;
@@ -138,6 +139,7 @@ public class PlayFragment extends BaseLazyFragment {
     private ProgressBar mPlayLoading;
     private VodController mController;
     private SourceViewModel sourceViewModel;
+    private Observer<JSONObject> playResultObserver;
     private Handler mHandler;
     private boolean isJianpian = false;  //xuameng判断视频是否为荐片
     private boolean selectExoTrack = false;  //xuameng判断exo选择音轨
@@ -149,6 +151,11 @@ public class PlayFragment extends BaseLazyFragment {
     private boolean exitingPreview = false;  //xuameng是否彻底退出页面
     private boolean fullPreview  = false;  //xuameng 非小窗口模式返回后播放BUG
     boolean showPreview = Hawk.get(HawkConfig.SHOW_PREVIEW, true);  //xuameng true是显示小窗口,false是不显示小窗口
+
+    private boolean audioPlayback;  //xuameng音乐小窗口
+    private boolean switchingPlayback;  //xuameng音乐小窗口
+    private String playArtwork;  //xuameng音乐小窗口
+    private boolean exoPlayerswitchPlayback;  //xuameng音乐小窗口 EXO进入后台小窗口
 
     private DanmakuView mDanmuView; //xuameng 弹幕
     private DanmuLoadController danmuLoadController; //xuameng 弹幕
@@ -172,7 +179,7 @@ public class PlayFragment extends BaseLazyFragment {
         } else if (event.type == RefreshEvent.TYPE_DANMU_REFRESH) { //xuameng 弹幕
             checkDanmu(event.obj instanceof String ? (String) event.obj : "");
         }else if (event.type == RefreshEvent.TYPE_PLAY_PUSH_ERROR) {  //xuameng远程推送解析数据为空判断
-	        pauseForHidden();
+            pauseForHidden();
             mController.imageHide();  //xuameng隐藏图片
             errorWithRetry("接收到推送数据错误", false);
         } 
@@ -243,6 +250,7 @@ public class PlayFragment extends BaseLazyFragment {
         }
         return Math.max(rec, skip);
     }
+
     private void initView() {
         mHandler = new Handler(new Handler.Callback() {
             @Override
@@ -284,6 +292,21 @@ public class PlayFragment extends BaseLazyFragment {
                 if (reLoadDanmu){
                     setDanmuViewSettings(true);
 				}
+
+                if (switchingPlayback) {   //xuameng音乐小窗口
+                    if (playState == VideoView.STATE_ERROR
+                            || playState == VideoView.STATE_PLAYBACK_COMPLETED) {
+                        switchingPlayback = false;
+                        audioPlayback = false;
+                    } else if (isStartedPlayState(playState)) {
+                        Boolean audioOnly = getAudioOnlyPlayback();
+                        if (audioOnly != null) {
+                            switchingPlayback = false;
+                            audioPlayback = audioOnly;
+                        }
+                    }
+                }
+                if (!switchingPlayback) updateMusicSession();
             }
         });
         mController.setListener(new VodController.VodControlListener() {
@@ -333,7 +356,6 @@ public class PlayFragment extends BaseLazyFragment {
             public void playPre() {
                 PlayFragment.this.playPrevious();
             }
-
 
             @Override
             public void showEpisodeDialog() {
@@ -412,7 +434,7 @@ public class PlayFragment extends BaseLazyFragment {
                 startDanmuIfReady(); //xuameng 弹幕
                 if (reLoadDanmu){
                     setDanmuViewSettings(true);
-				}
+                }
             }
 
             @Override
@@ -456,7 +478,7 @@ public class PlayFragment extends BaseLazyFragment {
         dialog.show();
     }
 
-	    private String getCastTitle() {
+    private String getCastTitle() {
         if (mVodInfo == null) return "聚汇影视";
         try {
             VodInfo.VodSeries series = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
@@ -622,6 +644,7 @@ public class PlayFragment extends BaseLazyFragment {
 
 
     void selectMyAudioTrack() {
+        if (mVideoView == null) return;
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
 
         TrackInfo trackInfo = null;
@@ -664,7 +687,7 @@ public class PlayFragment extends BaseLazyFragment {
                         public void run() {
                             mediaPlayer.seekTo(progress);
                         }
-                    }, 300);
+                    }, 200);
                     dialog.dismiss();
                 } catch (Exception e) {
                     LOG.e("切换音轨出错");
@@ -699,6 +722,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     void selectMyVideoTrack() {    //xuameng切换视轨
+        if (mVideoView == null) return;
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
         TrackInfo trackInfo = null;
         if (mediaPlayer instanceof IjkMediaPlayer) {
@@ -731,7 +755,6 @@ public class PlayFragment extends BaseLazyFragment {
                         @Override
                         public void run() {
                             mediaPlayer.seekTo(progress);
-                            mediaPlayer.start();
                         }
                     }, 200);
                     dialog.dismiss();
@@ -762,6 +785,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     void selectMyInternalSubtitle() {
+        if (mVideoView == null) return;
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
 
         TrackInfo trackInfo = null;
@@ -801,7 +825,7 @@ public class PlayFragment extends BaseLazyFragment {
                             public void run() {
                                 mediaPlayer.seekTo(progress);
                             }
-                        }, 300);
+                        }, 200);
                     }
 
                     // xuameng判断选中的字幕是否为 PGS 格式 或图形字幕
@@ -836,7 +860,7 @@ public class PlayFragment extends BaseLazyFragment {
                             public void run() {
                                 mediaPlayer.seekTo(progress);
                             }
-                        }, 300);
+                        }, 200);
                     }
                     dialog.dismiss();
                 } catch (Exception e) {
@@ -923,12 +947,13 @@ public class PlayFragment extends BaseLazyFragment {
         LOG.i("echo-playM3u8:" + url);
         mController.playM3u8(url,headers);
     }
+
     public void goPlayUrl(String url, HashMap<String, String> headers) {
         LOG.i("echo-goPlayUrl:" + url);
         if (mActivity == null) return;
         if (!isAdded()) return;
         if (TextUtils.isEmpty(url)) {   //xuameng 地址为空
-	        pauseForHidden();
+            pauseForHidden();
             mController.imageHide();  //xuameng隐藏图片
             errorWithRetry("播放地址为空", false);
             return;
@@ -983,8 +1008,8 @@ public class PlayFragment extends BaseLazyFragment {
                                 }
                             } catch (Exception ignored) {}
                         }
-                        //xuameng 修复B站base64视频解析URL为 JSON的情况完
 
+                        //xuameng 修复B站base64视频解析URL为 JSON的情况完
                         if (url.startsWith("data:application/dash+xml;base64,")) {
                             PlayerHelper.updateCfg(mVideoView, mVodPlayerCfg, 2);
                             App.getInstance().setDashData(url.split("base64,")[1]);
@@ -1001,7 +1026,7 @@ public class PlayFragment extends BaseLazyFragment {
                             mVideoView.setUrl(url);
                         }
                         if (!fullPreview && !showPreview){
-							return;  //xuameng 非小窗口模式返回后播放BUG
+                            return;  //xuameng 非小窗口模式返回后播放BUG
                         }
                         mVideoView.start();
                         mController.resetSpeed();
@@ -1040,11 +1065,14 @@ public class PlayFragment extends BaseLazyFragment {
             }else{
                 mController.mSubtitleView.hasInternal = false;   //xuameng修复切换播放器内置字幕不刷新
             }
+
+            //xuameng 选择默认音轨、选中上次记忆音轨
             final int selectedIdIjk = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
             Hawk.put(HawkConfig.IJK_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
             if (selectedIdIjk != 99999) { // xuameng99999表示未选中
                ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).loadDefaultTrack(trackInfo,progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
+            //xuameng 显示字幕
             ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setOnTimedTextListener(new IMediaPlayer.OnTimedTextListener() {
                 @Override
                 public void onTimedText(IMediaPlayer mp, IjkTimedText text) {
@@ -1058,9 +1086,17 @@ public class PlayFragment extends BaseLazyFragment {
             });
         }
 
-     if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
+        if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
             trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
 
+            //xuameng 选中默认音轨、上次记忆音轨
+            final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
+            Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
+            if (selectedIdExo != 99999) { // xuameng99999表示未选中
+               ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
+            }
+
+            //xuameng 选择字幕
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
                 mController.mSubtitleView.hasInternal = true;
 
@@ -1101,11 +1137,6 @@ public class PlayFragment extends BaseLazyFragment {
                 mController.mSubtitleView.hasInternal = false;
             }
 
-            final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
-            Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
-            if (selectedIdExo != 99999) { // xuameng99999表示未选中
-               ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
-            }
             ((EXOmPlayer) (mVideoView.getMediaPlayer())).setOnTimedTextListener(new Player.Listener() {
                 @Override
                 public void onCues(@NonNull List<Cue> cues) {
@@ -1144,21 +1175,61 @@ public class PlayFragment extends BaseLazyFragment {
                             String lowerLang = subtitleTrackInfoBean.name.toLowerCase();
                             if (isChineseSubtitle(subtitleTrackInfoBean)){    //xuameng修复EXO播放器也可以默认选择中文字幕
                                 hasCh=true;                               
-                                    if (mVideoView.getMediaPlayer() instanceof IjkMediaPlayer){
-                                        if (selectedIndex != subtitleTrackInfoBean.trackId) {
+                                if (mVideoView.getMediaPlayer() instanceof IjkMediaPlayer){
+                                    if (selectedIndex != subtitleTrackInfoBean.trackId) {
                                         ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setTrack(subtitleTrackInfoBean.trackId);
-										}
-                                    }else if (mVideoView.getMediaPlayer() instanceof EXOmPlayer){
-                                        ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackInfoBean);
                                     }
-                                    break;
+                                }else if (mVideoView.getMediaPlayer() instanceof EXOmPlayer){
+                                    if (selectedIndex != subtitleTrackInfoBean.trackId) {
+                                        ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackInfoBean);
+                                        // xuameng 补充：自动选中时同步处理EXO字幕视图切换
+                                        boolean isPgsSelected = subtitleTrackInfoBean.name != null 
+                                                && (subtitleTrackInfoBean.name.toLowerCase().contains("pgs")
+                                                || subtitleTrackInfoBean.name.toLowerCase().contains("vobsub")
+                                                || subtitleTrackInfoBean.name.toLowerCase().contains("dvb"));
+                                        if (isPgsSelected) {
+                                            // 当前选中的是 PGS 字幕，使用 ExoPlayer 内置视图
+                                            ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);   //xuameng绑定Exo字幕视图
+                                            mController.mExoSubtitleView.setVisibility(View.VISIBLE);
+                                            mController.mSubtitleView.setVisibility(View.GONE);
+                                            HawkConfig.exoSubtitle = true;  //xuameng 判断当前是否播放EXO内置字幕
+                                        } else {
+                                           // 当前选中的是其他格式字幕，使用外部视图
+                                            mController.mExoSubtitleView.setVisibility(View.GONE);
+                                            mController.mSubtitleView.setVisibility(View.VISIBLE);
+                                            HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
+                                        }
+                                    }
+                                }
+                                break;
                             }
                         }
                         if(!hasCh){
                             if (mVideoView.getMediaPlayer() instanceof IjkMediaPlayer){
-                                ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setTrack(subtitleTrackList.get(0).trackId);
+                                if (selectedIndex != subtitleTrackList.get(0).trackId) {
+                                    ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setTrack(subtitleTrackList.get(0).trackId);
+                                }
                             }else if (mVideoView.getMediaPlayer() instanceof EXOmPlayer){
-                                ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackList.get(0));
+                                if (selectedIndex != subtitleTrackList.get(0).trackId) {
+                                    ((EXOmPlayer)(mVideoView.getMediaPlayer())).selectExoTrack(subtitleTrackList.get(0));
+                                    // xuameng 补充：自动选中时同步处理EXO字幕视图切换
+                                    boolean isPgsSelected = subtitleTrackList.get(0) != null 
+                                            && (subtitleTrackList.get(0).name.toLowerCase().contains("pgs")
+                                            || subtitleTrackList.get(0).name.toLowerCase().contains("vobsub")
+                                            || subtitleTrackList.get(0).name.toLowerCase().contains("dvb"));
+                                    if (isPgsSelected) {
+                                        // 当前选中的是 PGS 字幕，使用 ExoPlayer 内置视图
+                                        ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);   //xuameng绑定Exo字幕视图
+                                        mController.mExoSubtitleView.setVisibility(View.VISIBLE);
+                                        mController.mSubtitleView.setVisibility(View.GONE);
+                                        HawkConfig.exoSubtitle = true;  //xuameng 判断当前是否播放EXO内置字幕
+                                    } else {
+                                        // 当前选中的是其他格式字幕，使用外部视图
+                                        mController.mExoSubtitleView.setVisibility(View.GONE);
+                                        mController.mSubtitleView.setVisibility(View.VISIBLE);
+                                        HawkConfig.exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
+                                    }
+                                }
                             }
                         }
                     }
@@ -1193,7 +1264,7 @@ public class PlayFragment extends BaseLazyFragment {
 
     private void initViewModel() {
         sourceViewModel = new ViewModelProvider(this).get(SourceViewModel.class);
-        sourceViewModel.playResult.observe(this, new Observer<JSONObject>() {
+        playResultObserver = new Observer<JSONObject>() {
             @Override
             public void onChanged(JSONObject info) {
                 if (info != null) {
@@ -1207,13 +1278,6 @@ public class PlayFragment extends BaseLazyFragment {
                         boolean parse = info.optString("parse", "1").equals("1");
                         boolean jx = info.optString("jx", "0").equals("1");
 
-                        // xuameng优先检查 artwork 字段（歌手图片）
-                        if (info.has("artwork")) {
-                            String picUrl = info.optString("artwork", "");
-                            if (!TextUtils.isEmpty(picUrl)) {
-                                mController.setVideoPicUrl(picUrl);  //xuameng 新增给vod显示旋转图片用
-                            }
-                        }
                         // xuameng优先检查 lrc 字段（歌词字符串）
                         if (info.has("lrc")) {
                             String lrcContent = info.optString("lrc", "");
@@ -1236,7 +1300,6 @@ public class PlayFragment extends BaseLazyFragment {
                             playSubtitle = info.optString("subt", "");
                             mController.mLrcView.setVisibility(View.GONE);
                         }
-
                         // 如果 playSubtitle 仍为空，且存在 subs 字段，则按原有逻辑处理字幕数组
                         if(playSubtitle.isEmpty() && info.has("subs")) {
                             try {
@@ -1285,6 +1348,12 @@ public class PlayFragment extends BaseLazyFragment {
                         if(url.startsWith("[")){
                             url=mController.firstUrlByArray(url);
                         }
+                        String artwork = info.optString("artwork", "");
+                        if (TextUtils.isEmpty(artwork) && mVodInfo != null) {
+                            artwork = mVodInfo.pic;
+                        }
+                        playArtwork = artwork;
+                        mController.setVideoPicUrl(playArtwork);  //xuameng 新增给vod显示旋转图片用   artwork 字段（歌手图片）
                         HashMap<String, String> headers = null;
                         webUserAgent = null;
                         webHeaderMap = null;
@@ -1319,7 +1388,8 @@ public class PlayFragment extends BaseLazyFragment {
                     errorWithRetry("获取播放信息错误", true);
                 }
             }
-        });
+        };
+        sourceViewModel.playResult.observeForever(playResultObserver);
     }
 
     private String resolveDataUriSubtitle(String dataUri) {   //xuameng base64字幕转换并缓存
@@ -1407,8 +1477,6 @@ public class PlayFragment extends BaseLazyFragment {
         sourceKey = bundle.getString("sourceKey");
         sourceBean = ApiConfig.get().getSource(sourceKey);
         ApiConfig.get().setCurrentPlaySourceKey(sourceKey);
-        String picUrl = bundle.getString("videoPic");  //xuameng 新增给vod显示旋转图片用
-        mController.setVideoPicUrl(picUrl);  //xuameng 新增给vod显示旋转图片用
         initPlayerCfg();
         play(false);
     }
@@ -1485,6 +1553,82 @@ public class PlayFragment extends BaseLazyFragment {
         this.exitingPreview = exitingPreview;
     }
 
+    boolean isStartedPlayState(int state) {  //xuameng音乐小窗口
+        return state == VideoView.STATE_PLAYING;
+    }
+
+    private boolean hasAudioOnlyPlayback() {  //xuameng音乐小窗口
+        return Boolean.TRUE.equals(getAudioOnlyPlayback());
+    }
+
+    private Boolean getAudioOnlyPlayback() {  //xuameng音乐小窗口
+        if (mVideoView == null) return null;
+        try {
+            AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
+            TrackInfo trackInfo = null;
+            if (mediaPlayer instanceof IjkMediaPlayer) {
+                trackInfo = ((IjkMediaPlayer) mediaPlayer).getTrackInfo();
+                if (trackInfo == null) return null;
+                return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
+            } else if (mediaPlayer instanceof EXOmPlayer) {
+                trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
+                if (trackInfo == null) return null;
+                return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
+            } else {
+                return mController.noHaveVideo;  //xuameng 系统播放器用图像尺寸判断
+            }
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private void updateMusicSession() {  //xuameng音乐小窗口
+        if (!MusicPlaybackService.isSupported(getContext())) return;
+        if (switchingPlayback) return;
+        Boolean audioOnly = getAudioOnlyPlayback();
+        audioPlayback = audioOnly;
+        if (mVodInfo == null || mVideoView == null || !audioPlayback
+                || mVideoView.getCurrentPlayState() == VideoView.STATE_ERROR
+                || mVideoView.getCurrentPlayState() == VideoView.STATE_PLAYBACK_COMPLETED) {
+            MusicPlaybackService.stop(getContext(), this);
+            audioPlayback = false;
+            return;
+        }
+        VodInfo.VodSeries currentSeries = getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
+        String episode = currentSeries == null || TextUtils.isEmpty(currentSeries.name) ? "" : currentSeries.name;
+        MusicPlaybackService.update(getContext(), this,
+                TextUtils.isEmpty(mVodInfo.name) ? "聚汇影视" : mVodInfo.name,
+                episode, playArtwork, mVideoView.getCurrentPosition(),
+                mVideoView.getDuration(), mVideoView.isPlaying());
+                exoPlayerswitchPlayback = true;   //xuameng音乐小窗口 EXO进入后台小窗口
+    }
+
+    public void resumeFromMediaSession() {  //xuameng音乐小窗口
+        if (mVideoView != null) {
+            mVideoView.start();
+            updateMusicSession();
+        }
+    }
+
+    public void pauseFromMediaSession() {  //xuameng音乐小窗口
+        if (mVideoView != null) {
+            mVideoView.pause();
+            updateMusicSession();
+        }
+    }
+
+    public void stopFromMediaSession() {  //xuameng音乐小窗口
+        if (mVideoView != null) mVideoView.pause();
+        MusicPlaybackService.stop(getContext(), this);
+    }
+
+    public void seekFromMediaSession(long position) {  //xuameng音乐小窗口
+        if (mVideoView != null) {
+            mVideoView.seekTo(position);
+            updateMusicSession();
+        }
+    }
+
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event != null) {
             if (mController.onKeyEvent(event)) {
@@ -1515,7 +1659,7 @@ public class PlayFragment extends BaseLazyFragment {
     @Override
     public void onPause() {
         super.onPause();
-        if (mVideoView != null && !exitingPreview) {
+        if (mVideoView != null && !exitingPreview && !hasAudioOnlyPlayback()) {
             mVideoView.pause();
         }
     }
@@ -1524,6 +1668,17 @@ public class PlayFragment extends BaseLazyFragment {
     public void onResume() {
         super.onResume();
         exitingPreview = false;
+        TrackInfo trackInfo = null;
+        if (mVideoView == null) return;
+        AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
+        if (mediaPlayer instanceof EXOmPlayer) {
+            trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
+            if (exoPlayerswitchPlayback && !trackInfo.getVideo().isEmpty()) {  //xuameng 音乐后台返回前台如果是视频的话解决无画面的BUG
+                exoPlayerswitchPlayback = false;
+                play(false);
+                return;
+            }
+        }
         if (mVideoView != null) {
             mVideoView.resume();
         }
@@ -1545,6 +1700,14 @@ public class PlayFragment extends BaseLazyFragment {
 
     @Override
     public void onDestroyView() {
+        audioPlayback = false;  //xuameng音乐小窗口
+        switchingPlayback = false;  //xuameng音乐小窗口
+        exoPlayerswitchPlayback = false;  //xuameng音乐小窗口
+        MusicPlaybackService.stop(getContext(), this);  //xuameng音乐小窗口
+        if (sourceViewModel != null && playResultObserver != null) {
+            sourceViewModel.playResult.removeObserver(playResultObserver);
+            playResultObserver = null;
+        }
         super.onDestroyView();
         ApiConfig.get().setCurrentPlaySourceKey("");
         EventBus.getDefault().unregister(this);
@@ -1567,7 +1730,7 @@ public class PlayFragment extends BaseLazyFragment {
     private String sourceKey;
     private SourceBean sourceBean;
 
-    private void playNext(boolean isProgress) {
+    public void playNext(boolean isProgress) {
         boolean hasNext;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasNext = false;
@@ -1588,7 +1751,7 @@ public class PlayFragment extends BaseLazyFragment {
         play(false);
     }
 
-    private void playPrevious() {
+    public void playPrevious() {
         boolean hasPre = true;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasPre = false;
@@ -1623,10 +1786,10 @@ public class PlayFragment extends BaseLazyFragment {
     private long lastRetryTime = 0; // 记录上次调用时间（毫秒）  //xuameng新增
 
     boolean autoRetry() {
-    if (mVodPlayerCfg == null || mVodInfo == null) {
-		LOG.i("autoRetry skipped: mVodPlayerCfg or mVodInfo is null");
-        return false;
-    }
+        if (mVodPlayerCfg == null || mVodInfo == null) {
+            LOG.i("autoRetry skipped: mVodPlayerCfg or mVodInfo is null");
+            return false;
+        }
         boolean exoCode=Hawk.get(HawkConfig.EXO_PLAYER_DECODE, false); //xuameng EXO默认设置解码
         boolean switchCode=Hawk.get(HawkConfig.VOD_SWITCHDECODE, false); //xuameng 解码切换
         boolean switchPlayer=Hawk.get(HawkConfig.VOD_SWITCHPLAYER, true); //xuameng 播放器切换
@@ -1646,8 +1809,8 @@ public class PlayFragment extends BaseLazyFragment {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        // 如果距离上次重试超过 30 秒（30000 毫秒），重置重试次数
-        if (currentTime - lastRetryTime > 30_000) {
+        // 如果距离上次重试超过 60 秒（60000 毫秒），重置重试次数
+        if (currentTime - lastRetryTime > 60_000) {
             LOG.i("echo-reset-autoRetryCount");
             autoRetryCount = 0;
             mRetryCountExo = 0;  //xuameng播放出错计数器重置
@@ -1819,6 +1982,9 @@ public class PlayFragment extends BaseLazyFragment {
 
     public void play(boolean reset) {
         if(mVodInfo==null)return;
+        switchingPlayback = true;  //xuameng音乐小窗口
+        audioPlayback = false;  //xuameng音乐小窗口
+        playArtwork = "";  //xuameng音乐小窗口
         exitingPreview = false;
         isJianpian = false;
         reLoadDanmu  = false;  //xuameng 如果是解析嗅探地址重新下载弹幕
