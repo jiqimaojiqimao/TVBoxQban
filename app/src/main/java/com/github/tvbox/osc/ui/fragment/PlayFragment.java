@@ -225,7 +225,7 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     boolean isStartedPlayState(int state) {  //xuameng音乐小窗口
-        return state == VideoView.STATE_PREPARED || state == VideoView.STATE_BUFFERED || state == VideoView.STATE_PLAYING;
+        return state == VideoView.STATE_PLAYING;
     }
 
     public long getSavedProgress(String url) {
