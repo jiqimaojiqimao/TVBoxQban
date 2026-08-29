@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion 36
+    compileSdkVersion 37
 
     defaultConfig {
         namespace = 'com.github.tvbox.osc'
