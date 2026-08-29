@@ -6,8 +6,6 @@ import android.net.TrafficStats;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-import android.app.ActivityManager;  //xuameng加载策略控制
-
 import androidx.annotation.NonNull;
 
 import androidx.media3.common.PlaybackException;
@@ -32,7 +30,6 @@ import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
 import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
-import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory; //xuameng  NextRenderers
 
 import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
@@ -93,14 +90,10 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         // 构建 RendererFactory
         if (useSoftDecode) {
-            // 软解场景
-            mRenderersFactory = new NextRenderersFactory(mAppContext)
-                    .setEnableDecoderFallback(true)
-                    .setExtensionRendererMode(
-                            NextRenderersFactory.EXTENSION_RENDERER_MODE_ON
-                    );
+            // 软解场景 TvRenderersFactory 是自定义的 NextRenderersFactory
+            mRenderersFactory = new TvRenderersFactory(mAppContext);
         } else {
-            // 硬解场景
+            // 硬解场景 DefaultRenderersFactory 加 ffmpeg扩展
             mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                     .setEnableDecoderFallback(true)
                     .setExtensionRendererMode(
@@ -111,30 +104,19 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         // xuameng轨道选择器配置
         mTrackSelector = new DefaultTrackSelector(mAppContext);
 
-        //xuameng加载策略控制
-        ActivityManager activityManager = (ActivityManager) mAppContext.getSystemService(Context.ACTIVITY_SERVICE);
-        int memoryClass = activityManager.getMemoryClass();
-        
-        // 判断内存大小
-        if (memoryClass <= 2048) { // 2G = 2048MB
-            // 内存小于等于2G时使用低内存策略
-            mLoadControl = new DefaultLoadControl.Builder()
-                .setBufferDurationsMs(
-                    15000,    // minBufferMs - 减小最小缓冲时间
-                    30000,   // maxBufferMs - 减小最大缓冲时间
-                    1500,    // bufferForPlaybackMs - 减小播放前缓冲时间
-                    3000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
-                )
-                .setTargetBufferBytes(30 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
-                .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
-                .build();
-        } else {
-            mLoadControl = new DefaultLoadControl();
-        }
+        //xuameng加载策略控制  
+        mLoadControl = new DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                    DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
+                    DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
+                    DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
+                    DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
+            .setBackBuffer(0, false)
+            .build();
 
-		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
-            .setPreferredTextLanguages("ch", "chi", "zh", "zho", "en")           // 设置首选字幕语言为中文
-            .setPreferredAudioLanguages("ch", "chi", "zh", "zho", "en")          // 设置首选音频语言为中文
+        mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
+            .setPreferredTextLanguages("zh", "chi", "zh-CN", "zh-TW", "en")      // 设置首选字幕语言为中文
+            .setPreferredAudioLanguages("zh", "chi", "zh-CN", "zh-TW", "en")     // 设置首选音频语言为中文
             .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
 
         mMediaPlayer = new ExoPlayer.Builder(mAppContext)
