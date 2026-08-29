@@ -119,8 +119,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             // 内存小于等于2G时使用低内存策略
 mLoadControl = new DefaultLoadControl.Builder()
     .setBufferDurationsMs(
-        5000,    // 最小缓冲时间从15s下调到10s
-        10000,   // 最大缓冲时间从30s下调到25s
+        2000,    // 最小缓冲时间从15s下调到10s
+        5000,   // 最大缓冲时间从30s下调到25s
         1000,    // 播放前缓冲时间从1.5s下调到1s，减少初始预加载占用的内存
         1000     // 重缓冲后缓冲时间从3s下调到1s
     )
