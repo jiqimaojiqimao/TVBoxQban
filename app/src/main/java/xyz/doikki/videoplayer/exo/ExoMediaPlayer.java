@@ -31,14 +31,14 @@ import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 
-import androidx.media3.exoplayer.ExoPlayer.video.MediaCodecVideoRenderer;
-import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
-
 import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.util.PlayerUtils;
+
+import androidx.media3.exoplayer.video.MediaCodecVideoRenderer;
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
 
 public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
@@ -96,11 +96,14 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             // 软解场景 TvRenderersFactory 是自定义的 NextRenderersFactory
             mRenderersFactory = new TvRenderersFactory(mAppContext);
         } else {
-            // 硬解场景 DefaultRenderersFactory 加 ffmpeg扩展
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-                    .setEnableDecoderFallback(true)
-                    .setExtensionRendererMode(
-                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+    // 硬解场景：禁用异步 MediaCodec 队列 + 关 FFmpeg 扩展
+    mRenderersFactory = new DefaultRenderersFactory(mAppContext) {
+
+        {
+            setEnableDecoderFallback(true);
+            setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
+        }
+
         @Override
         protected MediaCodecVideoRenderer instantiateVideoRenderer(
                 Context context,
@@ -124,7 +127,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 }
             };
         }
-                    );
+    };
         }
 
         // xuameng轨道选择器配置
