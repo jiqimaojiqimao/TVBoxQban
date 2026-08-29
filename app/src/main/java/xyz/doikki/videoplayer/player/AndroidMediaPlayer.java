@@ -263,6 +263,16 @@ public class AndroidMediaPlayer extends AbstractPlayer implements MediaPlayer.On
 
     @Override
     public void onPrepared(MediaPlayer mp) {
+        long startPosition = getStartPosition();
+        if (startPosition > 0) {
+            try {
+                mMediaPlayer.seekTo(PlayerUtils.safeTimeMs(startPosition));
+            } catch (IllegalStateException e) {
+                mPlayerEventListener.onError();
+                return;
+            }
+        }
+        markStartPositionApplied();
         mPlayerEventListener.onPrepared();
         start();
         // 修复播放纯音频时状态出错问题
