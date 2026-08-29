@@ -174,7 +174,8 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             mMediaPlayer.setPlaybackParameters(mSpeedPlaybackParameters);
         }
         mIsPreparing = true;
-        mMediaPlayer.setMediaSource(mMediaSource);
+        mMediaPlayer.setMediaSource(mMediaSource, getStartPosition());
+        markStartPositionApplied();
         mMediaPlayer.prepare();
     }
 
