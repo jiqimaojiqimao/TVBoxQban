@@ -297,22 +297,20 @@ public class PlayFragment extends BaseLazyFragment {
                     setDanmuViewSettings(true);
 				}
 
-                if (switchingPlayback) {  //xuameng音乐小窗口
+                if (switchingPlayback) {   //xuameng音乐小窗口
                     if (playState == VideoView.STATE_ERROR
                             || playState == VideoView.STATE_PLAYBACK_COMPLETED) {
                         switchingPlayback = false;
                         audioPlayback = false;
                     } else if (isStartedPlayState(playState)) {
                         Boolean audioOnly = getAudioOnlyPlayback();
-                        if (audioOnly) {
+                        if (audioOnly != null) {
                             switchingPlayback = false;
                             audioPlayback = audioOnly;
                         }
                     }
                 }
-                if (!switchingPlayback && isStartedPlayState(playState) && audioPlayback) {   //xuameng音乐小窗口完
-                    updateMusicSession();
-                }
+                if (!switchingPlayback) updateMusicSession();
             }
         });
         mController.setListener(new VodController.VodControlListener() {
@@ -1560,27 +1558,27 @@ public class PlayFragment extends BaseLazyFragment {
     }
 
     private boolean hasAudioOnlyPlayback() {  //xuameng音乐小窗口
-        return getAudioOnlyPlayback();
+        return Boolean.TRUE.equals(getAudioOnlyPlayback());
     }
 
     private Boolean getAudioOnlyPlayback() {  //xuameng音乐小窗口
-        if (mVideoView == null) return false;
+        if (mVideoView == null) return null;
         try {
             AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
             TrackInfo trackInfo = null;
             if (mediaPlayer instanceof IjkMediaPlayer) {
                 trackInfo = ((IjkMediaPlayer) mediaPlayer).getTrackInfo();
-                if (trackInfo == null) return false;
+                if (trackInfo == null) return null;
                 return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
             } else if (mediaPlayer instanceof EXOmPlayer) {
                 trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
-                if (trackInfo == null) return false;
+                if (trackInfo == null) return null;
                 return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
             } else {
                 return mController.noHaveVideo;  //xuameng 系统播放器用图像尺寸判断
             }
         } catch (Throwable ignored) {
-            return false;
+            return null;
         }
     }
 
@@ -1675,7 +1673,7 @@ public class PlayFragment extends BaseLazyFragment {
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
         if (mediaPlayer instanceof EXOmPlayer) {
             trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
-            if (exoPlayerswitchingPlayback && !trackInfo.getAudio().isEmpty() && !trackInfo.getVideo().isEmpty()) {  //xuameng 音乐后台返回前台如果是视频的话解决无画面的BUG
+            if (exoPlayerswitchingPlayback && !trackInfo.getAudio().isEmpty()) {  //xuameng 音乐后台返回前台如果是视频的话解决无画面的BUG
                 exoPlayerswitchingPlayback = false;
                 play(false);
                 return;
