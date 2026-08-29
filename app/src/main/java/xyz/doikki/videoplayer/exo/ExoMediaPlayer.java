@@ -31,6 +31,9 @@ import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
 
+import androidx.media3.exoplayer.ExoPlayer.video.MediaCodecVideoRenderer;
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
+
 import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
 
@@ -98,6 +101,29 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                     .setEnableDecoderFallback(true)
                     .setExtensionRendererMode(
                             DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+        @Override
+        protected MediaCodecVideoRenderer instantiateVideoRenderer(
+                Context context,
+                MediaCodecSelector mediaCodecSelector,
+                long allowedJoiningTimeMs,
+                boolean enableDecoderFallback,
+                android.os.Handler eventHandler,
+                MediaCodecVideoRenderer.VideoRendererEventListener eventListener,
+                int maxDroppedFramesToNotify) {
+            return new MediaCodecVideoRenderer(
+                    context,
+                    mediaCodecSelector,
+                    allowedJoiningTimeMs,
+                    enableDecoderFallback,
+                    eventHandler,
+                    eventListener,
+                    maxDroppedFramesToNotify) {
+                @Override
+                protected boolean shouldUseAsynchronousQueueing() {
+                    return false; // ★ 禁用异步队列，防止 DV 文件 prepare 阶段 OOM
+                }
+            };
+        }
                     );
         }
 
