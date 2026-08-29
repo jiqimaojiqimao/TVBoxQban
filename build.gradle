@@ -9,6 +9,7 @@ buildscript {
         maven { url = "https://maven.aliyun.com/repository/releases" }
         maven { url = "https://jitpack.io" }
         maven { url = "https://storage.googleapis.com/r8-releases/raw" }
+        maven { url "https://chaquo.com/maven" }
     }
 
     dependencies {
