@@ -39,6 +39,7 @@ import xyz.doikki.videoplayer.util.PlayerUtils;
 
 import androidx.media3.exoplayer.video.MediaCodecVideoRenderer;
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
+import androidx.media3.exoplayer.video.VideoRendererEventListener;
 
 public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
