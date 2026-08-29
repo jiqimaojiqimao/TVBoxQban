@@ -30,6 +30,7 @@ import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
 import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
 import com.github.tvbox.osc.base.App;  //xuameng 提示消息
+import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory; //xuameng  NextRenderers
 
 import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
