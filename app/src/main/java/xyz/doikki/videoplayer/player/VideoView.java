@@ -595,20 +595,18 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
      */
     @Override
     public void onPrepared() {
-        // Custom players may not implement the common start-position contract.
-        duration = (int) getDuration();   //xuameng获取视频时长  判断进度小于等于总视频时长 防止系统播放器播放直播视频等问题
-        if (mCurrentPosition > 0 && mCurrentPosition <= duration  && !mMediaPlayer.isStartPositionApplied()) {
-            mMediaPlayer.seekTo(mCurrentPosition);
-        }
         setPlayState(STATE_PREPARED);
         if (!isMute() && mAudioFocusHelper != null) {
             mAudioFocusHelper.requestFocus();
         }
-
+        duration = (int) getDuration();   //xuameng获取视频时长
+        if (mCurrentPosition > 0 && duration > 0) {  //xuameng视频时长大于0时载入播放进度，防止系统播放器播放直播视频问题
+            seekTo(mCurrentPosition);
+        }
         if (Progress > 0 && !HawkConfig.intVod && HawkConfig.intSYSplayer){   //xuameng系统播放器直播界面读取播放进度
             seekTo(Progress);
             Progress = 0;
-        }
+		}
         String width = Integer.toString(getVideoSize()[0]);
         String height = Integer.toString(getVideoSize()[1]);
         if (width.length() <= 1 && height.length() <= 1){
@@ -616,7 +614,7 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
                 mPlayerContainer.removeView(mRenderView.getView());      //xuameng重要当视频为空时释放当前VIDEO VIEW
                 mRenderView.release();
                 mRenderView = null;
-           }
+            }
         }
     }
 
