@@ -117,17 +117,17 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         
         // 判断内存大小
             // 内存小于等于2G时使用低内存策略
-            mLoadControl = new DefaultLoadControl.Builder()
-                .setBufferDurationsMs(
-                    15000,    // minBufferMs - 减小最小缓冲时间
-                    30000,   // maxBufferMs - 减小最大缓冲时间
-                    1500,    // bufferForPlaybackMs - 减小播放前缓冲时间
-                    3000     // bufferForPlaybackAfterRebufferMs - 减小重新缓冲后缓冲时间
-                )
-                .setTargetBufferBytes(30 * 1024 * 1024)  // 设置目标缓冲字节数为30MB
-                .setPrioritizeTimeOverSizeThresholds(false)  // 优先考虑字节数阈值
-            .setBackBuffer(0, false)
-                .build();
+mLoadControl = new DefaultLoadControl.Builder()
+    .setBufferDurationsMs(
+        5000,    // 最小缓冲时间从15s下调到10s
+        10000,   // 最大缓冲时间从30s下调到25s
+        1000,    // 播放前缓冲时间从1.5s下调到1s，减少初始预加载占用的内存
+        1000     // 重缓冲后缓冲时间从3s下调到1s
+    )
+    .setTargetBufferBytes(10 * 1024 * 1024)  // 目标缓冲30MB，不会占用超额内存
+    .setPrioritizeTimeOverSizeThresholds(true)
+    .setBackBuffer(0, false) // 完全关闭后台缓冲，不会留存已播放的视频数据在内存
+    .build();
 
 
 		mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
