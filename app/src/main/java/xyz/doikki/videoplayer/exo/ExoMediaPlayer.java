@@ -37,9 +37,7 @@ import java.util.Map;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 
-import androidx.media3.exoplayer.video.MediaCodecVideoRenderer;
-import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
-import androidx.media3.exoplayer.video.VideoRendererEventListener;
+import androidx.media3.exoplayer.mediacodec.DefaultMediaCodecAdapterFactory;
 
 public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
@@ -94,41 +92,25 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         // 构建 RendererFactory
         if (useSoftDecode) {
+    // 硬解场景：禁用异步 MediaCodec + 关 FFmpeg 扩展
+    DefaultMediaCodecAdapterFactory adapterFactory =
+            new DefaultMediaCodecAdapterFactory(mAppContext)
+                    .forceDisableAsynchronous();   // ★ 就是这一行
+
             // 软解场景 TvRenderersFactory 是自定义的 NextRenderersFactory
             mRenderersFactory = new TvRenderersFactory(mAppContext);
         } else {
-    // 硬解场景：禁用异步 MediaCodec 队列 + 关 FFmpeg 扩展
-    mRenderersFactory = new DefaultRenderersFactory(mAppContext) {
+    // 硬解场景：禁用异步 MediaCodec + 关 FFmpeg 扩展
+    DefaultMediaCodecAdapterFactory adapterFactory =
+            new DefaultMediaCodecAdapterFactory(mAppContext)
+                    .forceDisableAsynchronous();   // ★ 就是这一行
 
-        {
-            setEnableDecoderFallback(true);
-            setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER);
-        }
-
-        @Override
-        protected MediaCodecVideoRenderer instantiateVideoRenderer(
-                Context context,
-                MediaCodecSelector mediaCodecSelector,
-                long allowedJoiningTimeMs,
-                boolean enableDecoderFallback,
-                android.os.Handler eventHandler,
-                MediaCodecVideoRenderer.VideoRendererEventListener eventListener,
-                int maxDroppedFramesToNotify) {
-            return new MediaCodecVideoRenderer(
-                    context,
-                    mediaCodecSelector,
-                    allowedJoiningTimeMs,
-                    enableDecoderFallback,
-                    eventHandler,
-                    eventListener,
-                    maxDroppedFramesToNotify) {
-                @Override
-                protected boolean shouldUseAsynchronousQueueing() {
-                    return false; // ★ 禁用异步队列，防止 DV 文件 prepare 阶段 OOM
-                }
-            };
-        }
-    };
+            // 硬解场景 DefaultRenderersFactory 加 ffmpeg扩展
+            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
+                    .setEnableDecoderFallback(true)
+                    .setExtensionRendererMode(
+                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+                    );
         }
 
         // xuameng轨道选择器配置
