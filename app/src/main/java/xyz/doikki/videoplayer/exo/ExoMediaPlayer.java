@@ -37,8 +37,6 @@ import java.util.Map;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 
-import androidx.media3.exoplayer.mediacodec.DefaultMediaCodecAdapterFactory;
-
 public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     protected Context mAppContext;
@@ -92,19 +90,9 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
         // 构建 RendererFactory
         if (useSoftDecode) {
-    // 硬解场景：禁用异步 MediaCodec + 关 FFmpeg 扩展
-    DefaultMediaCodecAdapterFactory adapterFactory =
-            new DefaultMediaCodecAdapterFactory(mAppContext)
-                    .forceDisableAsynchronous();   // ★ 就是这一行
-
             // 软解场景 TvRenderersFactory 是自定义的 NextRenderersFactory
             mRenderersFactory = new TvRenderersFactory(mAppContext);
         } else {
-    // 硬解场景：禁用异步 MediaCodec + 关 FFmpeg 扩展
-    DefaultMediaCodecAdapterFactory adapterFactory =
-            new DefaultMediaCodecAdapterFactory(mAppContext)
-                    .forceDisableAsynchronous();   // ★ 就是这一行
-
             // 硬解场景 DefaultRenderersFactory 加 ffmpeg扩展
             mRenderersFactory = new DefaultRenderersFactory(mAppContext)
                     .setEnableDecoderFallback(true)
