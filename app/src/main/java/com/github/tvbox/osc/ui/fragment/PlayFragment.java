@@ -155,7 +155,7 @@ public class PlayFragment extends BaseLazyFragment {
     private boolean audioPlayback;  //xuameng音乐小窗口
     private boolean switchingPlayback;  //xuameng音乐小窗口
     private String playArtwork;  //xuameng音乐小窗口
-    private boolean exoPlayerswitchingPlayback;  //xuameng音乐小窗口 EXO进入后台小窗口
+    private boolean exoPlayerswitchPlayback;  //xuameng音乐小窗口 EXO进入后台小窗口
 
     private DanmakuView mDanmuView; //xuameng 弹幕
     private DanmuLoadController danmuLoadController; //xuameng 弹幕
@@ -222,10 +222,6 @@ public class PlayFragment extends BaseLazyFragment {
 
     private void resetDanmuState() {  //xuameng 弹幕
         if (danmuLoadController != null) danmuLoadController.reset();
-    }
-
-    boolean isStartedPlayState(int state) {  //xuameng音乐小窗口
-        return state == VideoView.STATE_PLAYING;
     }
 
     public long getSavedProgress(String url) {
@@ -1557,6 +1553,10 @@ public class PlayFragment extends BaseLazyFragment {
         this.exitingPreview = exitingPreview;
     }
 
+    boolean isStartedPlayState(int state) {  //xuameng音乐小窗口
+        return state == VideoView.STATE_PLAYING;
+    }
+
     private boolean hasAudioOnlyPlayback() {  //xuameng音乐小窗口
         return Boolean.TRUE.equals(getAudioOnlyPlayback());
     }
@@ -1600,7 +1600,7 @@ public class PlayFragment extends BaseLazyFragment {
                 TextUtils.isEmpty(mVodInfo.name) ? "聚汇影视" : mVodInfo.name,
                 episode, playArtwork, mVideoView.getCurrentPosition(),
                 mVideoView.getDuration(), mVideoView.isPlaying());
-                exoPlayerswitchingPlayback = true;   //xuameng音乐小窗口 EXO进入后台小窗口
+                exoPlayerswitchPlayback = true;   //xuameng音乐小窗口 EXO进入后台小窗口
     }
 
     public void resumeFromMediaSession() {  //xuameng音乐小窗口
@@ -1673,8 +1673,8 @@ public class PlayFragment extends BaseLazyFragment {
         AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
         if (mediaPlayer instanceof EXOmPlayer) {
             trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
-            if (exoPlayerswitchingPlayback && !trackInfo.getAudio().isEmpty()) {  //xuameng 音乐后台返回前台如果是视频的话解决无画面的BUG
-                exoPlayerswitchingPlayback = false;
+            if (exoPlayerswitchPlayback && !trackInfo.getVideo().isEmpty()) {  //xuameng 音乐后台返回前台如果是视频的话解决无画面的BUG
+                exoPlayerswitchPlayback = false;
                 play(false);
                 return;
             }
@@ -1702,6 +1702,7 @@ public class PlayFragment extends BaseLazyFragment {
     public void onDestroyView() {
         audioPlayback = false;  //xuameng音乐小窗口
         switchingPlayback = false;  //xuameng音乐小窗口
+        exoPlayerswitchPlayback = false;  //xuameng音乐小窗口
         MusicPlaybackService.stop(getContext(), this);  //xuameng音乐小窗口
         if (sourceViewModel != null && playResultObserver != null) {
             sourceViewModel.playResult.removeObserver(playResultObserver);
