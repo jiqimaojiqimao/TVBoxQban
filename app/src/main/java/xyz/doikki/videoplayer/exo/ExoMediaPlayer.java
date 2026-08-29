@@ -105,14 +105,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
         mTrackSelector = new DefaultTrackSelector(mAppContext);
 
         //xuameng加载策略控制  
-        mLoadControl = new DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                    DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
-                    DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
-                    DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-                    DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
-            .setBackBuffer(0, false)
-            .build();
+mLoadControl = new DefaultLoadControl();
 
         mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("zh", "chi", "zh-CN", "zh-TW", "en")      // 设置首选字幕语言为中文
@@ -174,8 +167,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             mMediaPlayer.setPlaybackParameters(mSpeedPlaybackParameters);
         }
         mIsPreparing = true;
-        mMediaPlayer.setMediaSource(mMediaSource, getStartPosition());
-        markStartPositionApplied();
+        mMediaPlayer.setMediaSource(mMediaSource);
         mMediaPlayer.prepare();
     }
 
