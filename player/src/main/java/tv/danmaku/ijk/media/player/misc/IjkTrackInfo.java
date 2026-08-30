@@ -72,26 +72,72 @@ public class IjkTrackInfo implements ITrackInfo {
         LANGUAGE_REPLACE_MAP.put("jpn", "日语");
         LANGUAGE_REPLACE_MAP.put("kor", "韩语");
 
-        // 欧洲语言
+        // 欧洲语言 - 罗曼语族
         LANGUAGE_REPLACE_MAP.put("fra", "法语");
         LANGUAGE_REPLACE_MAP.put("fre", "法语");
-        LANGUAGE_REPLACE_MAP.put("deu", "德语");
-        LANGUAGE_REPLACE_MAP.put("ger", "德语");
         LANGUAGE_REPLACE_MAP.put("spa", "西班牙语");
         LANGUAGE_REPLACE_MAP.put("ita", "意大利语");
-        LANGUAGE_REPLACE_MAP.put("rus", "俄语");
         LANGUAGE_REPLACE_MAP.put("por", "葡萄牙语");
+        LANGUAGE_REPLACE_MAP.put("ron", "罗马尼亚语");
+        LANGUAGE_REPLACE_MAP.put("rum", "罗马尼亚语");
+        LANGUAGE_REPLACE_MAP.put("cat", "加泰罗尼亚语");
+        LANGUAGE_REPLACE_MAP.put("glg", "加利西亚语");
+
+        // 欧洲语言 - 日耳曼语族
+        LANGUAGE_REPLACE_MAP.put("deu", "德语");
+        LANGUAGE_REPLACE_MAP.put("ger", "德语");
+        LANGUAGE_REPLACE_MAP.put("nld", "荷兰语");
+        LANGUAGE_REPLACE_MAP.put("dut", "荷兰语");
         LANGUAGE_REPLACE_MAP.put("swe", "瑞典语");
         LANGUAGE_REPLACE_MAP.put("nor", "挪威语");
+        LANGUAGE_REPLACE_MAP.put("nob", "书面挪威语");
         LANGUAGE_REPLACE_MAP.put("fin", "芬兰语");
         LANGUAGE_REPLACE_MAP.put("dan", "丹麦语");
+        LANGUAGE_REPLACE_MAP.put("eng", "英语");
+
+        // 欧洲语言 - 斯拉夫语族
+        LANGUAGE_REPLACE_MAP.put("rus", "俄语");
         LANGUAGE_REPLACE_MAP.put("pol", "波兰语");
         LANGUAGE_REPLACE_MAP.put("ukr", "乌克兰语");
-        LANGUAGE_REPLACE_MAP.put("ara", "阿拉伯语");
+        LANGUAGE_REPLACE_MAP.put("ces", "捷克语");
+        LANGUAGE_REPLACE_MAP.put("cze", "捷克语");
+        LANGUAGE_REPLACE_MAP.put("slk", "斯洛伐克语");  
+        LANGUAGE_REPLACE_MAP.put("slo", "斯洛伐克语");
+        LANGUAGE_REPLACE_MAP.put("slv", "斯洛文尼亚语");
+        LANGUAGE_REPLACE_MAP.put("hrv", "克罗地亚语");
+        LANGUAGE_REPLACE_MAP.put("bul", "保加利亚语");
+
+        // 欧洲语言 - 波罗的海
+        LANGUAGE_REPLACE_MAP.put("lit", "立陶宛语");
+        LANGUAGE_REPLACE_MAP.put("lav", "拉脱维亚语");
+        LANGUAGE_REPLACE_MAP.put("est", "爱沙尼亚语");
+        LANGUAGE_REPLACE_MAP.put("ell", "希腊语");  
+        LANGUAGE_REPLACE_MAP.put("gre", "希腊语");
+
+        // 其他
+        LANGUAGE_REPLACE_MAP.put("hun", "匈牙利语");
+        LANGUAGE_REPLACE_MAP.put("heb", "希伯来语");
         LANGUAGE_REPLACE_MAP.put("tur", "土耳其语");
+        LANGUAGE_REPLACE_MAP.put("ara", "阿拉伯语");
+        LANGUAGE_REPLACE_MAP.put("per", "波斯语");   
+        LANGUAGE_REPLACE_MAP.put("fas", "波斯语");   
         LANGUAGE_REPLACE_MAP.put("hin", "印地语");
         LANGUAGE_REPLACE_MAP.put("vie", "越南语");
         LANGUAGE_REPLACE_MAP.put("tha", "泰语");
+        LANGUAGE_REPLACE_MAP.put("ind", "印度尼西亚语");
+        LANGUAGE_REPLACE_MAP.put("may", "马来语");
+        LANGUAGE_REPLACE_MAP.put("msa", "马来语");   
+        LANGUAGE_REPLACE_MAP.put("fil", "菲律宾语");
+        LANGUAGE_REPLACE_MAP.put("tam", "泰米尔语");
+        LANGUAGE_REPLACE_MAP.put("tel", "泰卢固语");
+        LANGUAGE_REPLACE_MAP.put("kan", "卡纳达语");
+        LANGUAGE_REPLACE_MAP.put("mal", "马拉雅拉姆语");
+        LANGUAGE_REPLACE_MAP.put("baq", "巴斯克语");
+        LANGUAGE_REPLACE_MAP.put("eus", "巴斯克语"); 
+        LANGUAGE_REPLACE_MAP.put("aze", "阿塞拜疆语");
+        LANGUAGE_REPLACE_MAP.put("mon", "蒙古语");
+        LANGUAGE_REPLACE_MAP.put("aka", "阿坎语");
+        LANGUAGE_REPLACE_MAP.put("aym", "艾马拉语");
 
         // 特殊
         LANGUAGE_REPLACE_MAP.put("mul", "多语言");
