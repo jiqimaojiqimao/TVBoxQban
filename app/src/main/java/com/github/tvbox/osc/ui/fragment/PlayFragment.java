@@ -429,7 +429,7 @@ public class PlayFragment extends BaseLazyFragment {
 
             @Override
             public void prepared() {
-             //   initSubtitleView();
+                initSubtitleView();
                 if (mVideoView != null) mVideoView.prepared();
                 startDanmuIfReady(); //xuameng 弹幕
                 if (reLoadDanmu){
