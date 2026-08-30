@@ -12,7 +12,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
-        versionName '20260828-2222'
+        versionName '20260830-2222'
         multiDexEnabled = true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -59,12 +59,12 @@ android {
 
     flavorDimensions += ["abi"]
     productFlavors {
-    //    armeabi {
-    //        dimension = "abi"
-    //        ndk {
-    //            abiFilters 'armeabi-v7a'
-    //        }
-    //    }
+        armeabi {
+            dimension = "abi"
+            ndk {
+                abiFilters 'armeabi-v7a'
+            }
+        }
         arm64 {
             dimension = "abi"
             ndk {
