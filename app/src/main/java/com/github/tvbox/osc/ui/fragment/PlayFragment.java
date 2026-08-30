@@ -1071,7 +1071,7 @@ public class PlayFragment extends BaseLazyFragment {
             final int selectedIdIjk = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
             Hawk.put(HawkConfig.IJK_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
             if (selectedIdIjk != 99999) { // xuameng99999表示未选中
-               mediaPlayer.loadDefaultTrack(trackInfo,progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
+               ((IjkMediaPlayer)mediaPlayer).loadDefaultTrack(trackInfo,progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
         }
 
@@ -1080,7 +1080,7 @@ public class PlayFragment extends BaseLazyFragment {
             final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
             Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
             if (selectedIdExo != 99999) { // xuameng99999表示未选中
-               mediaPlayer.loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
+               ((EXOmPlayer)mediaPlayer).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
             }
         }
     }
