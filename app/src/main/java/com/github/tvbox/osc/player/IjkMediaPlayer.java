@@ -30,6 +30,12 @@ import tv.danmaku.ijk.media.player.misc.ITrackInfo;
 import tv.danmaku.ijk.media.player.misc.IjkTrackInfo;
 import xyz.doikki.videoplayer.ijk.IjkPlayer;
 
+/**
+ * @author xuameng
+ * @date :2026/08/30
+ * @description:  增加视轨 字符转换重构
+ */
+
 public class IjkMediaPlayer extends IjkPlayer {
 
     private IJKCode codec = null;
@@ -277,7 +283,8 @@ public class IjkMediaPlayer extends IjkPlayer {
         if (parts.length > 0) {
             codec = parts[0].trim();
         }
-
+        // 如果 codec 中包含 "video"（不区分大小写），就去掉
+        codec = codec.replaceAll("(?i)\\bvideo\\b", "").trim();
         // 提取分辨率
         Matcher matcher = Pattern.compile("(\\d+)\\s*[xX×*]\\s*(\\d+)").matcher(rawName);
         if (matcher.find()) {
