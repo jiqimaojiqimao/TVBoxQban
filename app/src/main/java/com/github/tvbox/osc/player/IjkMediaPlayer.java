@@ -284,7 +284,7 @@ public class IjkMediaPlayer extends IjkPlayer {
             codec = parts[0].trim();
         }
         // 如果 codec 中包含 "video"（不区分大小写），就去掉
-        codec = codec.replaceAll("(?i)\\bvideo\\b", "").trim();
+        codec = codec.replaceAll("(?i)video", "").trim();
         // 提取分辨率
         Matcher matcher = Pattern.compile("(\\d+)\\s*[xX×*]\\s*(\\d+)").matcher(rawName);
         if (matcher.find()) {
