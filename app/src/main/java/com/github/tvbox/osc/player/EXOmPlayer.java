@@ -157,7 +157,7 @@ public class EXOmPlayer extends ExoMediaPlayer {
 
     // ---- 字幕轨道解析 ----
     private void parseTextTrack(Format format, int formatIndex, int groupIndex, int renderId, TrackInfo data) {
-        String originalString = format.sampleMimeType;
+        String originalString = format.codecs;   //xuameng显示字幕类型  sampleMimeType改成codecs  media3升级后真正类型在codecs里sampleMimeType显示的是media3-cues
         if (TextUtils.isEmpty(originalString)) {
             originalString = "cea";
         }
