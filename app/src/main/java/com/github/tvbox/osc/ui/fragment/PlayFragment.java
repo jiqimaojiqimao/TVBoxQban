@@ -1593,15 +1593,13 @@ public class PlayFragment extends BaseLazyFragment {
             TrackInfo trackInfo = null;
             if (mediaPlayer instanceof IjkMediaPlayer) {
                 trackInfo = ((IjkMediaPlayer) mediaPlayer).getTrackInfo();
-                if (trackInfo == null) return null;
-                return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
             } else if (mediaPlayer instanceof EXOmPlayer) {
                 trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
-                if (trackInfo == null) return null;
-                return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
             } else {
-                return mController.noHaveVideo;  //xuameng 系统播放器用图像尺寸判断
+                return mController.noHaveVideo;  //xuameng 系统播放器判断视频大小
             }
+            if (trackInfo == null) return null;
+            return !trackInfo.getAudio().isEmpty() && trackInfo.getVideo().isEmpty();
         } catch (Throwable ignored) {
             return null;
         }
