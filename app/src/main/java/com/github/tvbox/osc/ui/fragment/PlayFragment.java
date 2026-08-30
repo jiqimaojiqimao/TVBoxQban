@@ -430,6 +430,7 @@ public class PlayFragment extends BaseLazyFragment {
             @Override
             public void prepared() {
                 initSubtitleView();
+                initAudioView();
                 if (mVideoView != null) mVideoView.prepared();
                 startDanmuIfReady(); //xuameng 弹幕
                 if (reLoadDanmu){
@@ -1047,7 +1048,44 @@ public class PlayFragment extends BaseLazyFragment {
         }
     }
 
-    private void initSubtitleView() {
+    private void initAudioView() {    //xuameng默认音轨
+        AbstractPlayer mediaPlayer = mVideoView.getMediaPlayer();
+
+        TrackInfo trackInfo = null;
+        if (mediaPlayer instanceof IjkMediaPlayer) {
+            trackInfo = ((IjkMediaPlayer) mediaPlayer).getTrackInfo();
+        }
+        if (mediaPlayer instanceof EXOmPlayer) {
+            trackInfo = ((EXOmPlayer) mediaPlayer).getTrackInfo();
+        }
+        if (trackInfo == null) {
+            return;
+        }
+        List<TrackInfoBean> bean = trackInfo.getAudio();
+        if (bean.size() < 1){
+            return;
+        }
+
+        if (mediaPlayer instanceof IjkMediaPlayer) {
+            //xuameng 选择默认音轨、选中上次记忆音轨
+            final int selectedIdIjk = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
+            Hawk.put(HawkConfig.IJK_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
+            if (selectedIdIjk != 99999) { // xuameng99999表示未选中
+               mediaPlayer.loadDefaultTrack(trackInfo,progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
+            }
+        }
+
+        if (mediaPlayer instanceof EXOmPlayer) {
+            //xuameng 选中默认音轨、上次记忆音轨
+            final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
+            Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
+            if (selectedIdExo != 99999) { // xuameng99999表示未选中
+               mediaPlayer.loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
+            }
+        }
+    }
+
+    private void initSubtitleView() {  //xuameng默认字幕
         TrackInfo trackInfo = null;
 
         // xuameng应用保存的字幕颜色
@@ -1066,12 +1104,6 @@ public class PlayFragment extends BaseLazyFragment {
                 mController.mSubtitleView.hasInternal = false;   //xuameng修复切换播放器内置字幕不刷新
             }
 
-            //xuameng 选择默认音轨、选中上次记忆音轨
-            final int selectedIdIjk = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
-            Hawk.put(HawkConfig.IJK_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
-            if (selectedIdIjk != 99999) { // xuameng99999表示未选中
-               ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).loadDefaultTrack(trackInfo,progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
-            }
             //xuameng 显示字幕
             ((IjkMediaPlayer)(mVideoView.getMediaPlayer())).setOnTimedTextListener(new IMediaPlayer.OnTimedTextListener() {
                 @Override
@@ -1088,13 +1120,6 @@ public class PlayFragment extends BaseLazyFragment {
 
         if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
             trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
-
-            //xuameng 选中默认音轨、上次记忆音轨
-            final int selectedIdExo = trackInfo.getAudioSelected(false);  //xuameng判断选中的音轨
-            Hawk.put(HawkConfig.EXO_PROGRESS_KEY, progressKey);  //xuameng存储进程KEY
-            if (selectedIdExo != 99999) { // xuameng99999表示未选中
-               ((EXOmPlayer) (mVideoView.getMediaPlayer())).loadDefaultTrack(progressKey);      //xuameng记忆选择音轨  如果未选中音轨就不选择记忆音轨
-            }
 
             //xuameng 选择字幕
             if (trackInfo != null && trackInfo.getSubtitle().size() > 0) {
@@ -1679,9 +1704,7 @@ public class PlayFragment extends BaseLazyFragment {
                 return;
             }
         }
-        if (mVideoView != null) {
-            mVideoView.resume();
-        }
+        mVideoView.resume();
     }
 
     @Override
