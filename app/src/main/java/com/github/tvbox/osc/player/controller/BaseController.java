@@ -438,7 +438,7 @@ public abstract class BaseController extends BaseVideoController implements Gest
                     break;
                 case MotionEvent.ACTION_CANCEL:
                     stopSlide();
-                    mSeekPosition = 0;
+                    mSeekPosition = -1;
                     break;
             }
         }
