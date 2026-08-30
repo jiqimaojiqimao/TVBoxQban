@@ -24,6 +24,12 @@ import android.util.Pair;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * @author xuameng
+ * @date :2026/08/30
+ * @description:  字符转换重构、代码BUG修复、优化、简化等
+ */
+
 public class EXOmPlayer extends ExoMediaPlayer {
 
     // ==================== 常量 / 复用对象 ====================
