@@ -294,9 +294,11 @@ public class PlayFragment extends BaseLazyFragment {
                     setDanmuViewSettings(true);
 				}
 
-                if (switchingPlayback) {   //xuameng音乐小窗口
-                    if (playState == VideoView.STATE_ERROR
-                            || playState == VideoView.STATE_PLAYBACK_COMPLETED) {
+                if (switchingPlayback) {  //xuameng音乐小窗口
+                    if (playState == VideoView.STATE_PLAYBACK_COMPLETED) {
+                        LOG.i("echo-music keep session while resolving next episode");
+                        return;
+                    } else if (playState == VideoView.STATE_ERROR) {
                         switchingPlayback = false;
                         audioPlayback = false;
                     } else if (isStartedPlayState(playState)) {
@@ -916,6 +918,7 @@ public class PlayFragment extends BaseLazyFragment {
             return;
         }
         if (!autoRetry()) {
+            stopMusicSessionForFailedPlayback();
             if (!isAdded()) return;
             requireActivity().runOnUiThread(new Runnable() {
                 @Override
@@ -929,6 +932,12 @@ public class PlayFragment extends BaseLazyFragment {
                 }
             });
         }
+    }
+
+    private void stopMusicSessionForFailedPlayback() {
+        switchingPlayback = false;
+        audioPlayback = false;
+        MusicPlaybackService.stop(getContext(), this);
     }
 
     void playUrl(String url, HashMap<String, String> headers) {
