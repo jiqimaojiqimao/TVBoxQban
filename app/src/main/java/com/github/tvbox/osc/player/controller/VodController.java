@@ -1546,16 +1546,8 @@ public class VodController extends BaseController {
                 if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
                     hideBottom();
                 }
-                if(mDanmuView.getVisibility() == View.VISIBLE) {
-                    listener.closeDanmu();
-                    EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SET_DANMU_SETTINGS, false));
-                    mDanmuView.setVisibility(View.GONE);  
-                    App.showToastShort(getContext(), "弹幕已隐藏");
-                } else {
-                    EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SET_DANMU_SETTINGS, true));
-                    mDanmuView.setVisibility(View.VISIBLE);  
-                    App.showToastShort(getContext(), "弹幕已重载");
-                }
+                boolean opened = listener.toggleDanmu();
+                App.showToastShort(getContext(), opened ? "弹幕已显示" : "弹幕已隐藏");
                 return true;
             }
         });
@@ -1840,7 +1832,7 @@ public class VodController extends BaseController {
         void selectAudioTrack();
         void selectVideoTrack();
         void showDanmuSetting(); //xuameng弹幕设置
-        void closeDanmu();  //xuameng 临时关闭弹幕
+        boolean toggleDanmu();  //xuameng 弹幕临时开关
         void searchDanmuUi(boolean longClick);  //xuameng弹幕搜索
         void hideTipXu(); //xuameng隐藏错误信息
         void startPlayUrl(String url, HashMap < String, String > headers); //xuameng广告过滤
