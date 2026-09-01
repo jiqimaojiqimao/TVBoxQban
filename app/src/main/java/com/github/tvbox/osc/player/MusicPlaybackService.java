@@ -8,10 +8,12 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.PowerManager;
 import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
@@ -28,6 +30,7 @@ import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.ui.fragment.PlayFragment;
 import com.github.tvbox.osc.util.ImgUtilMusic;
 import com.github.tvbox.osc.util.ScreenUtils;
+import com.github.tvbox.osc.util.LOG;
 
 import java.lang.ref.WeakReference;
 
@@ -63,6 +66,8 @@ public class MusicPlaybackService extends Service {
     private long duration;
     private boolean playing;
     private CustomTarget<Bitmap> artworkTarget;
+    private PowerManager.WakeLock wakeLock;
+    private WifiManager.WifiLock wifiLock;
 
     public static boolean isSupported(Context context) {
         if (context == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false;
@@ -207,6 +212,7 @@ public class MusicPlaybackService extends Service {
             return;
         }
         if (ACTION_UPDATE.equals(action)) {
+            acquirePlaybackLocks();
             title = intent.getStringExtra(EXTRA_TITLE);
             subtitle = intent.getStringExtra(EXTRA_SUBTITLE);
             String newArtworkUrl = intent.getStringExtra(EXTRA_ARTWORK);
@@ -312,12 +318,69 @@ public class MusicPlaybackService extends Service {
         if (manager != null) manager.createNotificationChannel(channel);
     }
 
+    private void acquirePlaybackLocks() {
+        try {
+            if (wakeLock == null) {
+                PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+                if (powerManager != null) {
+                    wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TVBox:MusicPlayback");
+                    wakeLock.setReferenceCounted(false);
+                }
+            }
+            if (wakeLock != null && !wakeLock.isHeld()) {
+                wakeLock.acquire();
+                LOG.i("echo-music wake lock acquired");
+            }
+        } catch (Throwable th) {
+            LOG.i("echo-music wake lock acquire failed: " + th.getMessage());
+        }
+        try {
+            if (wifiLock == null) {
+                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                if (wifiManager != null) {
+                    wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "TVBox:MusicPlayback");
+                    wifiLock.setReferenceCounted(false);
+                }
+            }
+            if (wifiLock != null && !wifiLock.isHeld()) {
+                wifiLock.acquire();
+                LOG.i("echo-music wifi lock acquired");
+            }
+        } catch (Throwable th) {
+            LOG.i("echo-music wifi lock acquire failed: " + th.getMessage());
+        }
+    }
+
+    private void releasePlaybackLocks() {
+        try {
+            if (wifiLock != null && wifiLock.isHeld()) {
+                wifiLock.release();
+                LOG.i("echo-music wifi lock released");
+            }
+        } catch (Throwable th) {
+            LOG.i("echo-music wifi lock release failed: " + th.getMessage());
+        } finally {
+            wifiLock = null;
+        }
+        try {
+            if (wakeLock != null && wakeLock.isHeld()) {
+                wakeLock.release();
+                LOG.i("echo-music wake lock released");
+            }
+        } catch (Throwable th) {
+            LOG.i("echo-music wake lock release failed: " + th.getMessage());
+        } finally {
+            wakeLock = null;
+        }
+    }
+
     private PlayFragment getOwner() {
         return owner == null ? null : owner.get();
     }
 
     private void stopPlaybackService() {
         playing = false;
+        releasePlaybackLocks();
         if (artworkTarget != null) Glide.with(this).clear(artworkTarget);
         if (mediaSession != null) {
             mediaSession.setActive(false);
