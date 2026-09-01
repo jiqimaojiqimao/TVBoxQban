@@ -40,6 +40,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DiffUtil;
 
 import com.github.catvod.crawler.Spider;
+import com.google.gson.JsonObject;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.base.App;
@@ -334,8 +335,8 @@ public class PlayFragment extends BaseLazyFragment {
             }
 
             @Override
-            public void closeDanmu() {
-                if (danmuLoadController != null) danmuLoadController.close();
+            public boolean toggleDanmu() {
+                return danmuLoadController != null && danmuLoadController.toggle();
             }
 
             @Override
@@ -2489,6 +2490,42 @@ public class PlayFragment extends BaseLazyFragment {
     public MyVideoView getPlayer() {
         return mVideoView;
     }
+
+    public JsonObject getMediaInfo() {  //xuameng /media方法
+        JsonObject info = new JsonObject();
+        if (mVideoView == null) return info;
+        try {
+            int playState = mVideoView.getCurrentPlayState();
+            int state;
+            if (mVideoView.isPlaying()) state = 3;
+            else if (playState == VideoView.STATE_BUFFERING) state = 1;
+            else if (playState == VideoView.STATE_PAUSED || playState == VideoView.STATE_PREPARED
+                    || playState == VideoView.STATE_BUFFERED) state = 2;
+            else state = -1;
+            info.addProperty("state", state);
+            info.addProperty("speed", mVideoView.getSpeed());
+            info.addProperty("duration", mVideoView.getDuration());
+            info.addProperty("position", mVideoView.getCurrentPosition());
+            info.addProperty("url", webPlayUrl == null ? "" : webPlayUrl);
+            String title = "";
+            String artist = "";
+            String artwork = "";
+            if (mVodInfo != null) {
+                title = TextUtils.isEmpty(mVodInfo.name) ? "" : mVodInfo.name;
+                VodInfo.VodSeries series = getCurrentSeries(mVodInfo.playFlag, mVodInfo.playIndex);
+                if (series != null && !TextUtils.isEmpty(series.name)) artist = series.name;
+                artwork = TextUtils.isEmpty(mVodInfo.pic) ? "" : mVodInfo.pic;
+            }
+            if (!TextUtils.isEmpty(playArtwork)) artwork = playArtwork;
+            info.addProperty("title", title);
+            info.addProperty("artist", artist);
+            info.addProperty("artwork", artwork);
+        } catch (Throwable th) {
+            LOG.e("echo-media getMediaInfo error: " + th.getMessage());
+        }
+        return info;
+    }
+
     // webview
     private XWalkView mXwalkWebView;
     private WebView mSysWebView;
