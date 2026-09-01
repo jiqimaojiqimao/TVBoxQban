@@ -749,6 +749,7 @@ public class VideoActivity extends BaseActivity {
         }
         previewVodInfo.id = vodInfo.id;
         previewVodInfo.name = vodInfo.name;
+        previewVodInfo.pic = vodInfo.pic;
         previewVodInfo.sourceKey = vodInfo.sourceKey;
         previewVodInfo.playNote = vodInfo.playNote;
         previewVodInfo.seriesFlags = vodInfo.seriesFlags;
@@ -1726,6 +1727,10 @@ public class VideoActivity extends BaseActivity {
             EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_PAUSE_VOD, ""));   //xuameng 全屏时如果是暂停状态就显示暂停图标
         }
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SUBTITLE_SIZE_CHANGE, subtitleTextSize));
+    }
+
+    public PlayFragment getPlayFragment() {  //xuameng /media方法
+        return playFragment;
     }
 
     private void setTvPlayUrl(String url){
