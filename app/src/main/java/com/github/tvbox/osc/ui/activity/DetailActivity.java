@@ -1729,6 +1729,10 @@ public class DetailActivity extends BaseActivity {
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SUBTITLE_SIZE_CHANGE, subtitleTextSize));
     }
 
+    public PlayFragment getPlayFragment() {  //xuameng /media方法
+        return playFragment;
+    }
+
     private void setTvPlayUrl(String url){
       if (TextUtils.isEmpty(url)) {
           url = "聚汇影视提示您：播放地址为空！";
