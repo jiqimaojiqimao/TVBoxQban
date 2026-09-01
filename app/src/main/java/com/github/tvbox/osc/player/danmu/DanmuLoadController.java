@@ -62,8 +62,7 @@ public class DanmuLoadController {
             releaseView();
             if (controller != null) controller.setHasDanmu(!TextUtils.isEmpty(danmuText));
             return;
-        }
-        temporarilyClosed = false;  //xuameng 必须加 重置 临时弹幕状态判断
+        }    
         HashMap<Integer, Integer> maxLines = new HashMap<>();
         int maxLine = DanmuHelper.getMaxLine();
         maxLines.put(BaseDanmaku.TYPE_FIX_TOP, maxLine);
@@ -77,6 +76,7 @@ public class DanmuLoadController {
         danmakuContext.setDanmakuStyle(IDisplayer.DANMAKU_STYLE_STROKEN, 3)
                 .setDanmakuMargin(8);
         if (reload && !TextUtils.isEmpty(danmuText) && DanmuHelper.isOpen()) {
+            temporarilyClosed = false;  //xuameng 必须加 重置 临时弹幕状态判断 
             prepare(danmuText);
         }
     }
