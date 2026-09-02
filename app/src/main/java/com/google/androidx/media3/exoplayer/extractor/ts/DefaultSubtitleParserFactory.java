@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-com.google.androidx.media3.exoplayer.extractor.ts;
+package com.google.androidx.media3.exoplayer.extractor.ts;
 
 import androidx.annotation.Nullable;
 import androidx.media3.common.Format;
