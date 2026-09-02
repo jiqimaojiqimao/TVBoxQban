@@ -153,6 +153,5 @@ dependencies {
     implementation 'com.blankj:utilcodex:1.31.0'   
     //xuameng exo
     def exoplayerVersion = "1.11.0"
-    implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'    //xuameng ffmpeg扩展
 
 }
