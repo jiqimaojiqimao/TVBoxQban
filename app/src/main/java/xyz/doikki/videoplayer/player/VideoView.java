@@ -608,12 +608,13 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
         if (Progress > 0 && !HawkConfig.intVod && HawkConfig.intSYSplayer){   //xuameng系统播放器直播界面读取播放进度
             seekTo(Progress);
             Progress = 0;
-		}
+        }
         String width = Integer.toString(getVideoSize()[0]);
         String height = Integer.toString(getVideoSize()[1]);
-        if (width.length() <= 1 && height.length() <= 1){
+        Boolean isLive = (Boolean) Hawk.get(HawkConfig.PLAYER_IS_LIVE, false);
+        if (width.length() <= 1 && height.length() <= 1 && isLive){   //xuameng 直播时无视频
             if (mRenderView != null) {
-                mPlayerContainer.removeView(mRenderView.getView());      //xuameng重要当视频为空时释放当前VIDEO VIEW
+                mPlayerContainer.removeView(mRenderView.getView());      //xuameng重要当视频不为空且无视频时释放当前VIDEO VIEW
                 mRenderView.release();
                 mRenderView = null;
             }
