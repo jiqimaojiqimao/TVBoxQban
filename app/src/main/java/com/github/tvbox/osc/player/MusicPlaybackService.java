@@ -177,6 +177,7 @@ public class MusicPlaybackService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (mediaSession == null) return START_NOT_STICKY;
         if (intent != null) handleIntent(intent);
         return START_NOT_STICKY;
     }
@@ -297,6 +298,7 @@ public class MusicPlaybackService extends Service {
     }
 
     private Notification buildNotification() {
+        if (mediaSession == null) return new NotificationCompat.Builder(this, CHANNEL_ID).build();
         NotificationCompat.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 ? new NotificationCompat.Builder(this, CHANNEL_ID)
                 : new NotificationCompat.Builder(this);
