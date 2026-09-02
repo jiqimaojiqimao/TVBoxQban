@@ -6,104 +6,222 @@
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.google.androidx.media3.exoplayer.extractor.ts;
 
-import androidx.media3.common.util.Assertions;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.extractor.Extractor;
 import androidx.media3.extractor.ExtractorInput;
-
+import androidx.media3.extractor.PositionHolder;
+import java.io.EOFException;
 import java.io.IOException;
 
 /**
- * Bridge that turns an underlying M2TS (192-byte packets) {@link ExtractorInput} into a source of
- * plain TS (188-byte packets) consumed by {@link MyTsExtractor}.
+ * 把底层"192 字节/包 M2TS 流"桥接成"188 字节/包纯 TS 流"的 {@link ExtractorInput}。
  *
- * <p>Usage: each call to {@link #fillAndConsume(ExtractorInput)} reads a block of M2TS data from
- * the delegate, strips the 4-byte header from each packet, and returns a {@link ExtractorInput}
- * over the resulting TS bytes. The caller ( {@link M2tsExtractor}) drives {@link MyTsExtractor#read}
- * against that returned input until it is exhausted, then requests the next block.
+ * 每次 fillAndConsume() 从 delegate 读一块数据，剥掉每包的 4 字节 header，
+ * 再包装成 {@link ByteArrayExtractorInput} 交给 {@link MyTsExtractor}。
  *
- * <p>This avoids modifying any of the TS parsing logic in {@link MyTsExtractor}.
+ * 对齐新版 media3 (1.4+/1.5+) ExtractorInput 接口。
  */
-final class M2tsExtractorInput {
+@UnstableApi
+final class M2tsExtractorInput implements ExtractorInput {
 
-  private static final int BLOCK_M2TS_PACKETS = 256;
-  /** Capacity of the M2TS-side read buffer (a multiple of the M2TS packet size). */
-  static final int M2TS_BLOCK_SIZE = BLOCK_M2TS_PACKETS * M2tsUtil.M2TS_PACKET_SIZE; // 49152
-  /** Capacity of the TS-side buffer after header stripping. */
-  static final int TS_BLOCK_SIZE = BLOCK_M2TS_PACKETS * M2tsUtil.TS_PACKET_SIZE; // 48128
+  private final ExtractorInput delegate;
+  private ByteArrayExtractorInput strippedInput;
+  private byte[] bridgeBuffer;
+  private int bridgeBufferSize;
 
-  private final byte[] m2tsBuffer = new byte[M2TS_BLOCK_SIZE];
-  private final byte[] tsBuffer = new byte[TS_BLOCK_SIZE];
-
-  /** Number of valid bytes sitting at the start of {@link #m2tsBuffer} (a leftover partial packet). */
+  /** 跨块残留的、不构成完整 M2TS 包的部分（最多 M2TS_PACKET_SIZE-1 字节）。 */
+  private byte[] prefix;
   private int prefixLength;
-  private long m2tsBytesConsumed;
 
-  /** Resets all buffered state. Call after a seek. */
-  void reset() {
-    prefixLength = 0;
-    m2tsBytesConsumed = 0;
+  M2tsExtractorInput(ExtractorInput delegate) {
+    this.delegate = delegate;
+    this.bridgeBuffer = new byte[M2tsUtil.M2TS_PACKET_SIZE * 8];
+    this.prefix = new byte[M2tsUtil.M2TS_PACKET_SIZE];
+    this.prefixLength = 0;
   }
 
   /**
-   * Reads up to one block of M2TS data from {@code input}, strips headers, and returns an
-   * {@link ExtractorInput} over the converted TS bytes. Returns {@code null} when the underlying
-   * input is exhausted (and no buffered data remains).
+   * 从底层填充一块数据，剥离 M2TS header，输出可供 TS 解析的纯字节流。
+   * 返回 false 表示已经到达输入末尾。
    */
-  ExtractorInput fillAndConsume(ExtractorInput input) throws IOException {
-    // Move any leftover partial packet from a previous block to the front.
-    int totalM2tsRead = prefixLength;
-    prefixLength = 0;
+  boolean fillAndConsume() throws IOException {
+    // 1) 先把上次残留的前缀搬进 buffer 开头
+    int offset = prefixLength;
+    if (offset > 0) {
+      System.arraycopy(prefix, 0, bridgeBuffer, 0, prefixLength);
+    }
 
-    while (totalM2tsRead < M2TS_BLOCK_SIZE) {
-      int read = input.read(m2tsBuffer, totalM2tsRead, M2TS_BLOCK_SIZE - totalM2tsRead);
-      if (read == ExtractorInput.RESULT_END_OF_INPUT) {
-        break;
+    // 2) 从 delegate 读更多数据
+    int read = delegate.read(bridgeBuffer, offset, bridgeBuffer.length - offset);
+    if (read == Extractor.RESULT_END_OF_INPUT) {
+      if (offset == 0) {
+        strippedInput = null;
+        return false;
       }
-      totalM2tsRead += read;
+      // 还有残留前缀数据，当作最后一块处理
+      read = 0;
     }
-    if (totalM2tsRead == 0) {
-      return null;
+    int total = offset + read;
+
+    // 3) 剥离 header：每 M2TS_PACKET_SIZE 跳过前 M2TS_HEADER_SIZE 字节
+    //    stripHeaders(data, offset, length) 处理 [offset, offset+length) 内的完整包
+    int packets = total / M2tsUtil.M2TS_PACKET_SIZE;
+    int consumed = packets * M2tsUtil.M2TS_PACKET_SIZE;
+
+    int strippedLen = 0;
+    if (packets > 0) {
+      strippedLen = M2tsUtil.stripHeaders(bridgeBuffer, 0, consumed);
     }
 
-    // Only convert complete M2TS packets; carry any partial trailing packet forward as the next
-    // block's prefix.
-    int fullPackets = totalM2tsRead / M2TS_PACKET_SIZE();
-    int tsLength = fullPackets * TS_PACKET_SIZE();
-    for (int i = 0; i < fullPackets; i++) {
-      int src = i * M2TS_PACKET_SIZE() + M2TS_HEADER_SIZE();
-      System.arraycopy(m2tsBuffer, src, tsBuffer, i * TS_PACKET_SIZE(), TS_PACKET_SIZE());
+    // 4) 处理剩余不足一个包的部分，暂存为前缀留给下一次
+    int remainder = total - consumed;
+    if (remainder > 0) {
+      System.arraycopy(bridgeBuffer, consumed, prefix, 0, remainder);
+    }
+    prefixLength = remainder;
+
+    if (strippedLen == 0 && remainder == 0 && read == 0) {
+      strippedInput = null;
+      return false;
     }
 
-    int consumedM2ts = fullPackets * M2TS_PACKET_SIZE();
-    int leftover = totalM2tsRead - consumedM2ts;
-    if (leftover > 0) {
-      System.arraycopy(m2tsBuffer, consumedM2ts, m2tsBuffer, 0, leftover);
-      prefixLength = leftover;
-    }
-    long absoluteTsStart = (m2tsBytesConsumed / M2TS_PACKET_SIZE()) * TS_PACKET_SIZE();
-    m2tsBytesConsumed += consumedM2ts;
-
-    return new ByteArrayExtractorInput(tsBuffer, tsLength, absoluteTsStart);
+    // 5) 包装成纯 TS 的 ExtractorInput
+    strippedInput = new ByteArrayExtractorInput(bridgeBuffer, 0, strippedLen);
+    return true;
   }
 
-  /** @return the TS packet size (188). Exists for clarity alongside the M2TS size. */
-  private static int TS_PACKET_SIZE() {
-    return M2tsUtil.TS_PACKET_SIZE;
+  /** 供 read() 循环消费当前已剥离的纯 TS 数据。 */
+  ByteArrayExtractorInput getStrippedInput() {
+    return strippedInput;
   }
 
-  private static int M2TS_PACKET_SIZE() {
-    return M2tsUtil.M2TS_PACKET_SIZE;
+  // ---------- ExtractorInput 委托 / 透传 ----------
+
+  @Override
+  public int read(byte[] buffer, int offset, int length) throws IOException {
+    if (strippedInput != null) {
+      int result = strippedInput.read(buffer, offset, length);
+      if (result != Extractor.RESULT_END_OF_INPUT) {
+        return result;
+      }
+    }
+    return Extractor.RESULT_END_OF_INPUT;
   }
 
-  private static int M2TS_HEADER_SIZE() {
-    return M2tsUtil.M2TS_HEADER_SIZE;
+  @Override
+  public boolean readFully(byte[] buffer, int offset, int length, boolean allowEndOfInput)
+      throws IOException {
+    if (strippedInput == null) {
+      if (allowEndOfInput) {
+        return false;
+      }
+      throw new EOFException();
+    }
+    return strippedInput.readFully(buffer, offset, length, allowEndOfInput);
+  }
+
+  @Override
+  public void readFully(byte[] buffer, int offset, int length) throws IOException {
+    readFully(buffer, offset, length, false);
+  }
+
+  @Override
+  public int skip(int length) throws IOException {
+    if (strippedInput == null) {
+      return Extractor.RESULT_END_OF_INPUT;
+    }
+    return strippedInput.skip(length);
+  }
+
+  @Override
+  public boolean skipFully(int length, boolean allowEndOfInput) throws IOException {
+    if (strippedInput == null) {
+      if (allowEndOfInput) {
+        return false;
+      }
+      throw new EOFException();
+    }
+    return strippedInput.skipFully(length, allowEndOfInput);
+  }
+
+  @Override
+  public void skipFully(int length) throws IOException {
+    skipFully(length, false);
+  }
+
+  @Override
+  public int peek(byte[] buffer, int offset, int length) throws IOException {
+    if (strippedInput == null) {
+      return Extractor.RESULT_END_OF_INPUT;
+    }
+    return strippedInput.peek(buffer, offset, length);
+  }
+
+  @Override
+  public boolean peekFully(byte[] buffer, int offset, int length, boolean allowEndOfInput)
+      throws IOException {
+    if (strippedInput == null) {
+      if (allowEndOfInput) {
+        return false;
+      }
+      throw new EOFException();
+    }
+    return strippedInput.peekFully(buffer, offset, length, allowEndOfInput);
+  }
+
+  @Override
+  public void peekFully(byte[] buffer, int offset, int length) throws IOException {
+    peekFully(buffer, offset, length, false);
+  }
+
+  @Override
+  public long getLength() {
+    return delegate.getLength();
+  }
+
+  @Override
+  public long getPosition() {
+    return delegate.getPosition() - prefixLength;
+  }
+
+  @Override
+  public long getPeekPosition() {
+    return strippedInput != null ? strippedInput.getPeekPosition() : getPosition();
+  }
+
+  @Override
+  public void resetPeekPosition() {
+    if (strippedInput != null) {
+      strippedInput.resetPeekPosition();
+    }
+  }
+
+  @Override
+  public boolean isPeekConsumed() {
+    return strippedInput == null || strippedInput.isPeekConsumed();
+  }
+
+  @Override
+  public void advancePeekPosition(int amount) throws IOException {
+    advancePeekPosition(amount, false);
+  }
+
+  @Override
+  public boolean advancePeekPosition(int amount, boolean allowEndOfInput) throws IOException {
+    if (strippedInput == null) {
+      if (allowEndOfInput) {
+        return false;
+      }
+      throw new EOFException();
+    }
+    return strippedInput.advancePeekPosition(amount, allowEndOfInput);
+  }
+
+  @Override
+  public <E extends Throwable> void setRetryPosition(long position, E e) throws E {
+    delegate.setRetryPosition(position, e);
   }
 }
