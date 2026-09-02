@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package androidx.media3.extractor.text;
+package com.google.androidx.media3.exoplayer.extractor.ts;
 
 import androidx.media3.common.C;
 import androidx.media3.common.Format;
