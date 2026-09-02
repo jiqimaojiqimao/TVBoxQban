@@ -21,6 +21,7 @@ import androidx.media3.extractor.ExtractorInput;
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory;
 import androidx.media3.extractor.ExtractorOutput;
 import androidx.media3.extractor.PositionHolder;
+import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.extractor.text.SubtitleParser;
 import java.io.IOException;
 
