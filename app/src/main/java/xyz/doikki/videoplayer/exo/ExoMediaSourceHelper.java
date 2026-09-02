@@ -28,6 +28,10 @@ import androidx.media3.extractor.ExtractorsFactory;
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory;
 import androidx.media3.extractor.ts.TsExtractor;
 
+import com.google.androidx.media3.exoplayer.extractor.ts.MyTsExtractor;
+import com.google.androidx.media3.exoplayer.extractor.ts.M2tsExtractor;
+import androidx.media3.extractor.Extractor;
+
 import com.github.tvbox.osc.util.FileUtils;
 
 import java.io.File;
@@ -102,19 +106,18 @@ public final class ExoMediaSourceHelper {
             setHeaders(headers);
         }
 
-        if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {      // xuameng当错误码为3003时，强制使用 HLS 源进行播放
-            return new HlsMediaSource.Factory(factory)
-                    .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
-                    .setAllowChunklessPreparation(true)
-                    .setExtractorFactory(new MyHlsExtractorFactory())
-                    .createMediaSource(MediaItem.fromUri(contentUri));
-        }
 
-        if (errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED) {
-            MediaItem.Builder builder = new MediaItem.Builder().setUri(uri);
-            builder.setMimeType(MimeTypes.APPLICATION_M3U8);
-            return new DefaultMediaSourceFactory(getDataSourceFactory(), getExtractorsFactory()).createMediaSource(getMediaItem(uri, errorCode));
-        }
+// ✅ 优先判断 m2ts / ts
+
+if (isTsUri(contentUri)) {
+    return new ProgressiveMediaSource.Factory(
+            factory,                       // ✅ 用前面算好的（cache/http 一致）
+            getExtractorsFactory()         // ✅ MyTsExtractor
+    ).createMediaSource(MediaItem.fromUri(contentUri));
+}
+
+
+
         switch (contentType) {
             case C.TYPE_DASH:
                 return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
@@ -137,10 +140,44 @@ public final class ExoMediaSourceHelper {
         return builder.build();
     }
 
-    private static synchronized ExtractorsFactory getExtractorsFactory() {
-        return new DefaultExtractorsFactory().setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS).setTsExtractorTimestampSearchBytes(TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 3);
+private static ExtractorsFactory getExtractorsFactory() {
+    return () -> new Extractor[]{
+        new M2tsExtractor(
+            M2tsExtractor.MODE_SINGLE_PMT,
+            new DefaultTsPayloadReaderFactory(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS),
+            1024 * 1024
+        )
+    };
+}
 
+
+private boolean isTsUri(Uri uri) {
+    // 1) path 本身
+    String path = uri.getPath();
+    if (path != null) {
+        String p = path.toLowerCase();
+        if (p.endsWith(".m2ts") || p.endsWith(".ts") || p.endsWith(".mts")
+                || p.endsWith(".tp") || p.endsWith(".trp")) {
+            return true;
+        }
     }
+    // 2) 整个 uri 明文包含（兼容不 encode 的情况）
+    String raw = uri.toString().toLowerCase();
+    if (raw.contains(".m2ts") || raw.contains(".ts") || raw.contains(".mts")
+            || raw.contains(".tp") || raw.contains(".trp")) {
+        return true;
+    }
+    // 3) query 里 filename= 参数（decode 后再判）
+    String filename = uri.getQueryParameter("filename");
+    if (filename != null) {
+        String f = Uri.decode(filename).toLowerCase();
+        if (f.endsWith(".m2ts") || f.endsWith(".ts") || f.endsWith(".mts")
+                || f.endsWith(".tp") || f.endsWith(".trp")) {
+            return true;
+        }
+    }
+    return false;
+}
 
     private int inferContentType(String fileName) {
         fileName = fileName.toLowerCase();
