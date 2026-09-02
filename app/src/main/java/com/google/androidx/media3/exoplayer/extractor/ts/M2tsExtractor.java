@@ -46,7 +46,7 @@ public final class M2tsExtractor implements Extractor {
   /**
    * Factory for {@link M2tsExtractor} instances.
    */
-  public static final ExtractorsFactory FACTORY = () new Extractor[] {new M2tsExtractor()};
+  public static final ExtractorsFactory FACTORY = () -> new Extractor[] {new M2tsExtractor()};
 
   /**
    * Behave as defined in ISO/IEC 13818-1 (one PAT/PMT pass, then media).
