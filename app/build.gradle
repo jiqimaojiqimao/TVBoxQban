@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion 37
+    compileSdkVersion 36
 
     defaultConfig {
         namespace = 'com.github.tvbox.osc'
@@ -12,7 +12,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
-        versionName '20260830-2222'
+        versionName '20260901-2222'
         multiDexEnabled = true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -109,7 +109,6 @@ dependencies {
     compileOnly 'javax.servlet:javax.servlet-api:3.1.0'  //xuameng 投屏
     compileOnly 'com.google.j2objc:j2objc-annotations:2.8'  //xuameng exo okhttpdatasource用
     compileOnly "com.google.errorprone:error_prone_annotations:2.23.0"  //xuameng exo okhttpdatasource用
-    compileOnly "com.google.guava:guava:31.1-android" 
     implementation 'com.google.zxing:core:3.5.1'            //xuameng 二维码
     implementation 'androidx.appcompat:appcompat:1.7.0'     //xuameng UI 组件
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'   //xuameng响应布局
@@ -154,5 +153,20 @@ dependencies {
     implementation 'com.blankj:utilcodex:1.31.0'   
     //xuameng exo
     def exoplayerVersion = "1.11.0"
-
+    implementation "androidx.media3:media3-common:$exoplayerVersion"
+    implementation "androidx.media3:media3-container:$exoplayerVersion"
+    implementation "androidx.media3:media3-database:$exoplayerVersion"
+    implementation "androidx.media3:media3-datasource:$exoplayerVersion"
+    implementation "androidx.media3:media3-datasource-rtmp:$exoplayerVersion"
+    implementation "androidx.media3:media3-decoder:$exoplayerVersion"
+    implementation "androidx.media3:media3-effect:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer-dash:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer-hls:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer-rtsp:$exoplayerVersion"
+    implementation "androidx.media3:media3-exoplayer-smoothstreaming:$exoplayerVersion"
+    implementation "androidx.media3:media3-extractor:$exoplayerVersion"
+    implementation "androidx.media3:media3-ui:$exoplayerVersion"
+    implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'    //xuameng ffmpeg扩展
+    implementation "io.github.anilbeesetti:nextlib-media3ext:1.10.1-0.13.0"  //xuameng nextlib扩展
 }
