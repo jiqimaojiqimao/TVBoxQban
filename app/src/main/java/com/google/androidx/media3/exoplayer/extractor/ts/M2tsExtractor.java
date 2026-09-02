@@ -20,6 +20,7 @@ import androidx.media3.extractor.Extractor;
 import androidx.media3.extractor.ExtractorInput;
 import androidx.media3.extractor.ExtractorOutput;
 import androidx.media3.extractor.PositionHolder;
+import androidx.media3.extractor.ts.TsExtractor;
 import java.io.IOException;
 
 public final class M2tsExtractor implements Extractor {
