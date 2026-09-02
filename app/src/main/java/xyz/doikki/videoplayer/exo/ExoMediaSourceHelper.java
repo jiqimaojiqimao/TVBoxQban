@@ -107,7 +107,6 @@ public final class ExoMediaSourceHelper {
 // ✅ 优先判断 m2ts / ts
 
 if (isTsUri(contentUri)) {
-    Log.e("ExoMediaSource_xuameng", "✅ TS branch hit: " + contentUri);
     return new ProgressiveMediaSource.Factory(
             factory,                       // ✅ 用前面算好的（cache/http 一致）
             getExtractorsFactory()         // ✅ MyTsExtractor
@@ -139,7 +138,7 @@ if (isTsUri(contentUri)) {
     private ExtractorsFactory getExtractorsFactory() {
         if (extractorsFactory == null) {
             ExtractorsFactory defaults = new DefaultExtractorsFactory()
-                    .setTsExtractorFlags(FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
+                    .setTsExtractorFlags(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS)
                     .setTsExtractorTimestampSearchBytes(
                             TsExtractor.DEFAULT_TIMESTAMP_SEARCH_BYTES * 10);
         }
