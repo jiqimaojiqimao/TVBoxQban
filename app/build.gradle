@@ -165,7 +165,6 @@ dependencies {
     implementation "androidx.media3:media3-exoplayer-hls:$exoplayerVersion"
     implementation "androidx.media3:media3-exoplayer-rtsp:$exoplayerVersion"
     implementation "androidx.media3:media3-exoplayer-smoothstreaming:$exoplayerVersion"
-    implementation "androidx.media3:media3-extractor:$exoplayerVersion"
     implementation "androidx.media3:media3-ui:$exoplayerVersion"
     implementation 'org.jellyfin.media3:media3-ffmpeg-decoder:1.9.0+1'    //xuameng ffmpeg扩展
     implementation "io.github.anilbeesetti:nextlib-media3ext:1.10.1-0.13.0"  //xuameng nextlib扩展
