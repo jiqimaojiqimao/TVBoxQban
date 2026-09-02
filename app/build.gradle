@@ -153,9 +153,5 @@ dependencies {
     implementation 'com.blankj:utilcodex:1.31.0'   
     //xuameng exo
     def exoplayerVersion = "1.11.0"
-    implementation "androidx.media3:media3-datasource-rtmp:$exoplayerVersion"
-    implementation "androidx.media3:media3-exoplayer-dash:$exoplayerVersion"
-    implementation "androidx.media3:media3-exoplayer-hls:$exoplayerVersion"
-    implementation "androidx.media3:media3-exoplayer-rtsp:$exoplayerVersion"
 
 }
