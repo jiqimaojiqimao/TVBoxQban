@@ -2,13 +2,21 @@
  * Copyright (C) 2024 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * ...
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.google.androidx.media3.exoplayer.extractor.ts;
 
-import androidx.annotation.Nullable;
 import androidx.media3.common.util.UnstableApi;
-import androidx.media3.extractor.Extractor;          // ← 关键：RESULT_END_OF_INPUT 在这里
+import androidx.media3.extractor.Extractor;
 import androidx.media3.extractor.ExtractorInput;
 
 import java.io.IOException;
@@ -20,7 +28,6 @@ import java.io.InterruptedIOException;
 @UnstableApi
 final class ByteArrayExtractorInput implements ExtractorInput {
 
-    // ✅ 直接引用 Extractor.RESULT_END_OF_INPUT（= -1），不再假设 ExtractorInput 自带
     private static final int RESULT_END_OF_INPUT = Extractor.RESULT_END_OF_INPUT;
 
     private final byte[] data;
@@ -33,7 +40,7 @@ final class ByteArrayExtractorInput implements ExtractorInput {
         this.peekPosition = 0;
     }
 
-    // ---------- 1. peek（缺的就是这两个，错误1的根源） ----------
+    // ---------- peek ----------
 
     @Override
     public int peek(byte[] buffer, int offset, int length) throws IOException {
@@ -47,7 +54,7 @@ final class ByteArrayExtractorInput implements ExtractorInput {
 
     @Override
     public void peekFully(byte[] buffer, int offset, int length) throws IOException {
-        peekFully(buffer,{array:0x02C}[offset], length, false);
+        peekFully(buffer, offset, length, false);
     }
 
     @Override
@@ -65,7 +72,7 @@ final class ByteArrayExtractorInput implements ExtractorInput {
         return true;
     }
 
-    // ---------- 2. read ----------
+    // ---------- read ----------
 
     @Override
     public int read(byte[] buffer, int offset, int length) throws IOException {
@@ -99,7 +106,7 @@ final class ByteArrayExtractorInput implements ExtractorInput {
         return true;
     }
 
-    // ---------- 3. skip ----------
+    // ---------- skip ----------
 
     @Override
     public int skip(int length) throws IOException {
@@ -125,7 +132,7 @@ final class ByteArrayExtractorInput implements ExtractorInput {
         return true;
     }
 
-    // ---------- 4. advancePeekPosition ----------
+    // ---------- advancePeekPosition ----------
 
     @Override
     public void advancePeekPosition(int length) throws IOException {
