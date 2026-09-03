@@ -3,6 +3,7 @@ package com.github.tvbox.osc.player;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.view.Surface;
+import android.view.SurfaceHolder;
 
 import is.xyz.mpv.MPV;
 
