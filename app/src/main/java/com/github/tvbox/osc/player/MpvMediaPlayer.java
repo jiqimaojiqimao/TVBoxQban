@@ -3,36 +3,30 @@ package com.github.tvbox.osc.player;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 
 import is.xyz.mpv.MPV;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 
-/**
- * MPV 播放器实现，基于 mpv-android-lib (io.github.abdallahmehiz:mpv-android-lib)
- *
- * 注意：MPV.kt 中的属性访问方式：
- *   - Kotlin 中：mpv.prop["key"] = value / val x = mpv.prop["key"]
- *   - Java 中等价于：mpv.getProp().set("key", value) / mpv.getProp().get("key")
- *
- * 由于 mpv-android-lib 0.1.12 的 MPV.kt 中 prop 是 internal visibility，
- * 从 Java 无法直接访问，因此全部改用 command() 和 getProperty() 方式。
- */
 public class MpvMediaPlayer extends AbstractPlayer {
 
     private MPV mpv;
     private Context context;
-    private float currentSpeed = 1.0f;
+
+    // 用本地变量缓存状态，避免需要 getProperty
+    private boolean mPaused = false;
+    private long mDuration = 0;
+    private long mPosition = 0;
+    private int mBufferedPercent = 0;
+    private float mSpeed = 1.0f;
 
     public MpvMediaPlayer(Context context) {
         this.context = context;
-        this.mpv = new MPV();
+        mpv = new MPV();
     }
-
-    // ======================== AbstractPlayer 必须实现的方法 ========================
 
     @Override
     public void initPlayer() {
@@ -44,7 +38,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public void setDataSource(String path, Map<String, String> headers) {
-        // 先设置请求头（必须在 loadfile 之前）
         if (headers != null && !headers.isEmpty()) {
             StringBuilder sb = new StringBuilder();
             for (Map.Entry<String, String> e : headers.entrySet()) {
@@ -52,26 +45,23 @@ public class MpvMediaPlayer extends AbstractPlayer {
             }
             mpv.setOptionString("http-header-fields", sb.toString());
         }
-        // 使用 mpv command 加载文件
         mpv.command("loadfile", path);
     }
 
     @Override
     public void setDataSource(AssetFileDescriptor fd) {
-        // TVBox 一般不用 asset 播放，简单用 file descriptor 路径
-        // mpv 不支持直接传 AssetFileDescriptor，这里转为路径（实际场景很少用到）
-        throw new UnsupportedOperationException("AssetFileDescriptor not supported in MpvMediaPlayer");
+        throw new UnsupportedOperationException("mpv does not support AssetFileDescriptor");
     }
 
     @Override
     public void start() {
-        // mpv command: set pause no
+        mPaused = false;
         mpv.command("set", "pause", "no");
     }
 
     @Override
     public void pause() {
-        // mpv command: set pause yes
+        mPaused = true;
         mpv.command("set", "pause", "yes");
     }
 
@@ -82,78 +72,32 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public void prepareAsync() {
-        // mpv 是自动 prepare 的，loadfile 后自动开始缓冲
-        // do nothing
+        // mpv 自动 prepare
     }
 
     @Override
     public void reset() {
         mpv.command("stop");
+        mPaused = false;
+        mDuration = 0;
+        mPosition = 0;
+        mBufferedPercent = 0;
     }
 
     @Override
     public boolean isPlaying() {
-        // 通过 command 获取属性值
-        // mpv command: get pause → 返回 "yes" 或 "no"
-        // 注意：mpv-android-lib 的 command 返回 String
-        String val = mpv.command("get", "pause");
-        // "no" 表示正在播放，"yes" 表示暂停
-        return val != null && val.equals("no");
+        return !mPaused;
     }
 
     @Override
     public void seekTo(long time) {
-        // time 是毫秒，mpv seek 用秒
         mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
     }
 
     @Override
     public void release() {
-        try {
-            mpv.detachSurface();
-        } catch (Exception ignored) {}
-        try {
-            mpv.destroy();
-        } catch (Exception ignored) {}
-    }
-
-    @Override
-    public long getCurrentPosition() {
-        String val = mpv.command("get", "time-pos");
-        if (val != null) {
-            try {
-                return (long)(Double.parseDouble(val) * 1000);
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }
-        return 0;
-    }
-
-    @Override
-    public long getDuration() {
-        String val = mpv.command("get", "duration");
-        if (val != null) {
-            try {
-                return (long)(Double.parseDouble(val) * 1000);
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }
-        return 0;
-    }
-
-    @Override
-    public int getBufferedPercentage() {
-        String val = mpv.command("get", "cache-buffering-state");
-        if (val != null) {
-            try {
-                return (int)Double.parseDouble(val);
-            } catch (NumberFormatException e) {
-                return 0;
-            }
-        }
-        return 0;
+        mpv.detachSurface();
+        mpv.destroy();
     }
 
     @Override
@@ -165,46 +109,61 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void setDisplay(SurfaceHolder holder) {
         if (holder != null) {
             mpv.attachSurface(holder.getSurface());
+        } else {
+            mpv.detachSurface();
         }
     }
 
     @Override
     public void setVolume(float v1, float v2) {
-        // mpv 音量范围 0-100
-        int vol = (int)(v1 * 100);
-        mpv.command("set", "volume", String.valueOf(vol));
+        // mpv 音量用 ao-volume，范围 0-100
+        int vol = (int)((v1 + v2) / 2 * 100);
+        mpv.command("set", "ao-volume", String.valueOf(vol));
     }
 
     @Override
     public void setLooping(boolean isLooping) {
-        mpv.command("set", "loop", isLooping ? "yes" : "no");
+        mpv.setOptionString("loop", isLooping ? "inf" : "no");
     }
 
     @Override
     public void setOptions() {
-        // 可以在这里设置额外选项
+        // 留给外部设置额外选项
     }
 
     @Override
     public void setSpeed(float speed) {
-        this.currentSpeed = speed;
+        mSpeed = speed;
         mpv.command("set", "speed", String.valueOf(speed));
     }
 
     @Override
     public float getSpeed() {
-        return currentSpeed;
+        return mSpeed;
     }
 
     @Override
     public long getTcpSpeed() {
-        // mpv 没有直接的 TCP 速度 API，返回 0
         return 0;
     }
 
     @Override
     public int getAudioSessionId() {
-        // libmpv 自己管理 AudioTrack，返回 0（Android 兼容默认值）
         return 0;
+    }
+
+    @Override
+    public long getDuration() {
+        return mDuration;
+    }
+
+    @Override
+    public long getCurrentPosition() {
+        return mPosition;
+    }
+
+    @Override
+    public int getBufferedPercentage() {
+        return mBufferedPercent;
     }
 }
