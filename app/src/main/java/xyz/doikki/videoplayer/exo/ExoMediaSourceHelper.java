@@ -141,13 +141,7 @@ if (isTsUri(contentUri)) {
     }
 
 private static ExtractorsFactory getExtractorsFactory() {
-    return () -> new Extractor[]{
-        new M2tsExtractor(
-            M2tsExtractor.MODE_SINGLE_PMT,
-            new DefaultTsPayloadReaderFactory(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS),
-            1024 * 1024
-        )
-    };
+    return () -> new Extractor[]{new M2tsExtractor(MyTsExtractor.MODE_SINGLE_PMT)};
 }
 
 
