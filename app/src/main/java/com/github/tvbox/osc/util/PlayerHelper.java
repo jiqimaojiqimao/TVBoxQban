@@ -137,7 +137,7 @@ public class PlayerHelper {
                     return new EXOmPlayer(context);
                 }
             };
-        } else if (playerType == 3) {
+        } else if (playType == 3) {
             playerFactory = new PlayerFactory<MpvMediaPlayer>() {
                 @Override
                 public MpvMediaPlayer createPlayer(Context context) {
