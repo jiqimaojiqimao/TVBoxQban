@@ -29,7 +29,6 @@ import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory;
 import androidx.media3.extractor.ts.TsExtractor;
 
 import com.google.androidx.media3.exoplayer.extractor.ts.MyTsExtractor;
-import com.google.androidx.media3.exoplayer.extractor.ts.M2tsExtractor;
 import androidx.media3.extractor.Extractor;
 
 import com.github.tvbox.osc.util.FileUtils;
