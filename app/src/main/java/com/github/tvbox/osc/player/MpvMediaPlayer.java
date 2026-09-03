@@ -27,6 +27,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public MpvMediaPlayer(Context context) {
         this.context = context;
         mpv = new MPV();
+    System.loadLibrary("avutil");
+    System.loadLibrary("swresample");  
+    System.loadLibrary("swscale");
+    System.loadLibrary("avcodec");
+    System.loadLibrary("avformat");
     }
 
     @Override
