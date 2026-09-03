@@ -78,7 +78,14 @@ public class PlayerHelper {
                     return new EXOmPlayer(context);
                 }
             };
-        } else {
+        } else if (playerType == 3) {
+    playerFactory = new PlayerFactory<MpvMediaPlayer>() {
+        @Override
+        public MpvMediaPlayer createPlayer(Context context) {
+            return new MpvMediaPlayer(context);
+        }
+    };
+} else {
             playerFactory = AndroidMediaPlayerFactory.create();
         }
         RenderViewFactory renderViewFactory = null;
@@ -189,6 +196,7 @@ public class PlayerHelper {
             playersInfo.put(0, "系统播放器");
             playersInfo.put(1, "IJK播放器");
             playersInfo.put(2, "EXO播放器");
+			playersInfo.put(3, "MPV播放器");
             playersInfo.put(10, "MX播放器");
             playersInfo.put(11, "Reex播放器");
             playersInfo.put(12, "Kodi播放器");
@@ -206,6 +214,7 @@ public class PlayerHelper {
             playersExist.put(0, true);
             playersExist.put(1, true);
             playersExist.put(2, true);
+			playersExist.put(3, true);
             playersExist.put(10, MXPlayer.getPackageInfo() != null);
             playersExist.put(11, ReexPlayer.getPackageInfo() != null);
             playersExist.put(12, Kodi.getPackageInfo() != null);
