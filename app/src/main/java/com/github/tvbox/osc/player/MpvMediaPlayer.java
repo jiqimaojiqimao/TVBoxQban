@@ -3,7 +3,9 @@ package com.github.tvbox.osc.player;
 import android.content.Context;
 import android.view.Surface;
 
-import org.mpvk.MPV;
+import com.abdallahmehiz.mpv.MPV;
+
+import java.util.Map;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 
@@ -53,7 +55,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public void prepareAsync() {
-        // mpv ×Ô¶¯ prepare
+        // mpv è‡ªåŠ¨ prepare
     }
 
     @Override
@@ -83,6 +85,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public long getCurrentPosition() {
         Double p = (Double) mpv.prop.get("time-pos");
         return p == null ? 0 : (long)(p * 1000);
+    }
+
+    @Override
+    public int getAudioSessionId() {
+        return 0;
     }
 
     @Override
