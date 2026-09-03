@@ -1,7 +1,3 @@
-/*
- * M2TS Extractor - 参考官方 TsExtractor 实现
- * 通过装饰器模式将 192 字节 M2TS 实时剥头为 188 字节纯 TS
- */
 package com.google.androidx.media3.exoplayer.extractor.ts;
 
 import androidx.media3.common.util.UnstableApi;
@@ -18,7 +14,6 @@ public final class M2tsExtractor implements Extractor {
 
     private static final int M2TS_PACKET_SIZE = 192;
     private static final int M2TS_HEADER_SIZE = 4;
-    private static final int TS_PACKET_SIZE = 188;
     private static final int SNIFF_PACKET_COUNT = 5;
 
     private final MyTsExtractor tsExtractor;
@@ -34,29 +29,31 @@ public final class M2tsExtractor implements Extractor {
 
     @Override
     public boolean sniff(ExtractorInput input) throws IOException {
-        // 参考官方：在原始 M2TS 流上按 192 字节对齐寻找 sync byte (0x47)
+        // 参考官方：按 192 字节间隔找 0x47
         int peekLength = M2TS_PACKET_SIZE * (SNIFF_PACKET_COUNT + 3);
         byte[] buffer = new byte[peekLength];
-
         try {
             input.peekFully(buffer, 0, peekLength);
         } catch (IOException e) {
             return false;
         }
 
-        // 寻找同步模式：每 192 字节的偏移 4 处应该是 0x47
-        for (int startPos = 0; startPos < M2TS_PACKET_SIZE; startPos++) {
+        // 寻找第一个 0x47，且后续每隔 192 字节也是 0x47
+        for (int i = 0; i < peekLength - M2TS_PACKET_SIZE * SNIFF_PACKET_COUNT + 1; i++) {
             boolean sync = true;
-            for (int i = 0; i < SNIFF_PACKET_COUNT; i++) {
-                int offset = startPos + i * M2TS_PACKET_SIZE + M2TS_HEADER_SIZE;
-                if (offset >= peekLength || buffer[offset] != 0x47) {
+            for (int j = 0; j < SNIFF_PACKET_COUNT; j++) {
+                if (buffer[i + j * M2TS_PACKET_SIZE] != 0x47) {
                     sync = false;
                     break;
                 }
             }
             if (sync) {
-                // 对齐到第一个 TS 包的起始位置（跳过 M2TS header）
-                input.skipFully(startPos + M2TS_HEADER_SIZE);
+                // i 是第一个 0x47 的位置，M2TS 包起始 = i - 4
+                int skipBytes = i - M2TS_HEADER_SIZE;
+                if (skipBytes > 0) {
+                    input.skipFully(skipBytes);
+                }
+                // 现在底层位置刚好对齐到 M2TS 包边界（192字节对齐）
                 return true;
             }
         }
@@ -70,7 +67,6 @@ public final class M2tsExtractor implements Extractor {
 
     @Override
     public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
-        // 创建装饰器，实时剥头，流式传给 MyTsExtractor
         if (adaptedInput == null) {
             adaptedInput = new M2tsExtractorInput(input);
         }
