@@ -23,7 +23,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void init() {
         mpv.create(context);
         mpv.setOptionString("hwdec", "auto");
+        mpv.setOptionString("ao", "audiotrack");
         mpv.init();
+    }
+
+    @Override
+    public void setDataSource(String path) {
+        mpv.command("loadfile", path);
     }
 
     @Override
@@ -40,12 +46,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public void start() {
-        mpv.prop.set("pause", false);
+        mpv.command("set", "pause", "no");
     }
 
     @Override
     public void pause() {
-        mpv.prop.set("pause", true);
+        mpv.command("set", "pause", "yes");
     }
 
     @Override
@@ -55,7 +61,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public void prepareAsync() {
-        // mpv 自动 prepare
+        // mpv 自动 prepare，无需操作
     }
 
     @Override
@@ -71,20 +77,34 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public boolean isPlaying() {
-        Boolean p = (Boolean) mpv.prop.get("pause");
-        return p != null && !p;
+        String val = mpv.getProperty("pause");
+        return val == null || val.equals("false");
     }
 
     @Override
     public long getDuration() {
-        Double d = (Double) mpv.prop.get("duration");
-        return d == null ? 0 : (long)(d * 1000);
+        String val = mpv.getProperty("duration");
+        if (val != null) {
+            try {
+                return (long)(Double.parseDouble(val) * 1000);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     @Override
     public long getCurrentPosition() {
-        Double p = (Double) mpv.prop.get("time-pos");
-        return p == null ? 0 : (long)(p * 1000);
+        String val = mpv.getProperty("time-pos");
+        if (val != null) {
+            try {
+                return (long)(Double.parseDouble(val) * 1000);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     @Override
@@ -99,7 +119,21 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public int getBufferedPercentage() {
-        Double cache = (Double) mpv.prop.get("cache-buffering-state");
-        return cache == null ? 0 : cache.intValue();
+        String val = mpv.getProperty("cache-buffering-state");
+        if (val != null) {
+            try {
+                return (int)Double.parseDouble(val);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
+
+    // doikki AbstractPlayer 要求的方法
+    @Override
+    public long getTcpSpeed() {
+        // mpv 没有直接暴露 TCP 速度，返回 0
+        return 0;
     }
 }
