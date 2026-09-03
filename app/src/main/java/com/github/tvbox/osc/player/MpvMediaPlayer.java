@@ -3,7 +3,7 @@ package com.github.tvbox.osc.player;
 import android.content.Context;
 import android.view.Surface;
 
-import com.abdallahmehiz.mpv.MPV;
+import is.xyz.mpv.MPV;
 
 import java.util.Map;
 
