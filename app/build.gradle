@@ -37,10 +37,10 @@ android {
     packagingOptions {
         jniLibs {
             useLegacyPackaging = true
-            excludes += [
-                // 排除 mpv-android-lib 里的 FFmpeg so（让 Media3 的生效）
+            pickFirsts += [
+                // 让 mpv 的 FFmpeg 优先
                 "**/libavcodec.so",
-                "**/libavformat.so", 
+                "**/libavformat.so",
                 "**/libavutil.so",
                 "**/libswresample.so",
                 "**/libswscale.so"
