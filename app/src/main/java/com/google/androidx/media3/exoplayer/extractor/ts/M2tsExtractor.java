@@ -13,22 +13,21 @@ import java.io.IOException;
 public final class M2tsExtractor implements Extractor {
 
     private static final int M2TS_PACKET_SIZE = 192;
-    
     private final MyTsExtractor tsExtractor;
 
     public M2tsExtractor(int mode) {
-        // 直接告诉 MyTsExtractor 包大小是 192
         this.tsExtractor = new MyTsExtractor(
                 mode,
-                DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS,
+                new TimestampAdjuster(0),
+                new DefaultTsPayloadReaderFactory(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS),
                 1024 * 1024,
-                M2TS_PACKET_SIZE  // ← 关键！
+                M2TS_PACKET_SIZE  // 告诉底层包大小是 192
         );
     }
 
     @Override
     public boolean sniff(ExtractorInput input) throws IOException {
-        return tsExtractor.sniff(input); // 直接委托
+        return tsExtractor.sniff(input);
     }
 
     @Override
@@ -38,8 +37,7 @@ public final class M2tsExtractor implements Extractor {
 
     @Override
     public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
-        // 直接传原始 input，不需要任何包装！
-        return tsExtractor.read(input, seekPosition);
+        return tsExtractor.read(input, seekPosition); // 直接传，不包装
     }
 
     @Override
