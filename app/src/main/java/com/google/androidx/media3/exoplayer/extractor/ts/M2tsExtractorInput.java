@@ -1,7 +1,3 @@
-/*
- * M2TS 流式剥头装饰器
- * 每次从底层读取 192 字节，剥离 4 字节 header，向上提供 188 字节纯 TS
- */
 package com.google.androidx.media3.exoplayer.extractor.ts;
 
 import androidx.media3.common.util.UnstableApi;
@@ -18,7 +14,6 @@ final class M2tsExtractorInput implements ExtractorInput {
     private int tsBufferPos = 0;
     private int tsBufferLimit = 0;
     private long position = 0;
-    private long peekPosition = 0;
 
     M2tsExtractorInput(ExtractorInput input) {
         this.input = input;
@@ -29,6 +24,7 @@ final class M2tsExtractorInput implements ExtractorInput {
         tsBufferLimit = 0;
     }
 
+    /** 确保内部有至少一个剥头后的 TS 包（188字节） */
     private void ensurePacket() throws IOException {
         if (tsBufferPos < tsBufferLimit) return;
 
@@ -37,7 +33,6 @@ final class M2tsExtractorInput implements ExtractorInput {
         while (totalRead < 192) {
             int read = input.read(m2tsBuffer, totalRead, 192 - totalRead);
             if (read == -1) {
-                // EOF
                 tsBufferLimit = 0;
                 return;
             }
@@ -65,7 +60,7 @@ final class M2tsExtractorInput implements ExtractorInput {
 
     @Override
     public int peek(byte[] buffer, int offset, int length) throws IOException {
-        // MyTsExtractor.read() 内部不调用 peek，这里简化实现
+        // 简化：不支持单字节 peek，TsDurationReader 用的是 peekFully
         return -1;
     }
 
@@ -95,7 +90,21 @@ final class M2tsExtractorInput implements ExtractorInput {
 
     @Override
     public boolean peekFully(byte[] buffer, int offset, int length, boolean allowEndOfInput) throws IOException {
-        throw new UnsupportedOperationException("peekFully not supported");
+        // 从底层 peek 192 字节块，剥头后填入 buffer
+        int filled = 0;
+        while (filled < length) {
+            try {
+                input.peekFully(m2tsBuffer, 0, 192);
+            } catch (IOException e) {
+                if (allowEndOfInput && filled == 0) return false;
+                throw e;
+            }
+            int toCopy = Math.min(length - filled, 188);
+            System.arraycopy(m2tsBuffer, 4, buffer, offset + filled, toCopy);
+            filled += toCopy;
+            input.advancePeekPosition(192);
+        }
+        return true;
     }
 
     @Override
@@ -128,23 +137,25 @@ final class M2tsExtractorInput implements ExtractorInput {
 
     @Override
     public void advancePeekPosition(int length) throws IOException {
-        peekPosition += length;
+        // 按 192/188 比例推进底层 peek 位置
+        int m2tsBytes = (int) Math.ceil(length * 192.0 / 188.0);
+        input.advancePeekPosition(m2tsBytes);
     }
 
     @Override
     public boolean advancePeekPosition(int length, boolean allowEndOfInput) throws IOException {
-        peekPosition += length;
+        advancePeekPosition(length);
         return true;
     }
 
     @Override
     public void resetPeekPosition() {
-        peekPosition = position;
+        input.resetPeekPosition();
     }
 
     @Override
     public long getPeekPosition() {
-        return peekPosition;
+        return input.getPeekPosition() * 188 / 192; // 近似
     }
 
     @Override
@@ -154,7 +165,8 @@ final class M2tsExtractorInput implements ExtractorInput {
 
     @Override
     public long getLength() {
-        return input.getLength();
+        long len = input.getLength();
+        return len == -1 ? -1 : len * 188 / 192;
     }
 
     @Override
