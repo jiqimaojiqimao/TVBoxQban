@@ -76,8 +76,9 @@ public final class MyTsExtractor implements Extractor {
      * continuity counters.
      */
     public static final int MODE_HLS = 2;
-    public static final int TS_PACKET_SIZE = 188;
-    public static final int DEFAULT_TIMESTAMP_SEARCH_BYTES = 600 * TS_PACKET_SIZE;
+private final int packetSize;  // 包大小（188 或 192）
+private final int headerSize;  // M2TS header 大小（0 或 4）
+    public static final int DEFAULT_TIMESTAMP_SEARCH_BYTES = 600 * packetSize;
     public static final int TS_STREAM_TYPE_MPA = 0x03;
     public static final int TS_STREAM_TYPE_MPA_LSF = 0x04;
     public static final int TS_STREAM_TYPE_AAC_ADTS = 0x0F;
@@ -104,7 +105,7 @@ public final class MyTsExtractor implements Extractor {
     private static final long E_AC3_FORMAT_IDENTIFIER = 0x45414333;
     private static final long AC4_FORMAT_IDENTIFIER = 0x41432d34;
     private static final long HEVC_FORMAT_IDENTIFIER = 0x48455643;
-    private static final int BUFFER_SIZE = TS_PACKET_SIZE * 50;
+    private static final int BUFFER_SIZE = packetSize * 50;
     private static final int SNIFF_TS_PACKET_COUNT = 5;
     @Mode
     private final int mode;
@@ -216,35 +217,36 @@ public final class MyTsExtractor implements Extractor {
         resetPayloadReaders();
     }
 
-    @Override
-    public boolean sniff(ExtractorInput input) throws IOException {
-        byte[] buffer = tsPacketBuffer.getData();
-
-        input.peekFully(buffer, 0, TS_PACKET_SIZE * 2);
-        for (int i = 0; i < TS_PACKET_SIZE * 2; i++) {
-            if (buffer[i] == TS_SYNC_BYTE && buffer[i + 1] == 0x40) {
-                if (i > 0) input.skipFully(i);
+@Override
+public boolean sniff(ExtractorInput input) throws IOException {
+    byte[] buffer = tsPacketBuffer.getData();
+    int peekLength = packetSize * (SNIFF_TS_PACKET_COUNT + 3);
+    
+    // 确保 buffer 够大
+    if (buffer.length < peekLength) {
+        buffer = new byte[peekLength];
+    }
+    
+    input.peekFully(buffer, 0, peekLength);
+    
+    // 按 packetSize 间隔找 0x47 sync byte
+    for (int startPos = 0; startPos < packetSize; startPos++) {
+        boolean sync = true;
+        for (int i = 0; i < SNIFF_TS_PACKET_COUNT; i++) {
+            int offset = startPos + i * packetSize + headerSize;
+            if (offset >= peekLength || buffer[offset] != TS_SYNC_BYTE) {
+                sync = false;
                 break;
             }
         }
-        input.peekFully(buffer, 0, TS_PACKET_SIZE * SNIFF_TS_PACKET_COUNT);
-        for (int startPosCandidate = 0; startPosCandidate < TS_PACKET_SIZE; startPosCandidate++) {
-            // Try to identify at least SNIFF_TS_PACKET_COUNT packets starting with TS_SYNC_BYTE.
-            boolean isSyncBytePatternCorrect = true;
-            for (int i = 0; i < SNIFF_TS_PACKET_COUNT; i++) {
-                int ii = startPosCandidate + i * TS_PACKET_SIZE;
-                if (buffer[ii] != TS_SYNC_BYTE) {
-                    isSyncBytePatternCorrect = false;
-                    break;
-                }
-            }
-            if (isSyncBytePatternCorrect) {
-                input.skipFully(startPosCandidate);
-                return true;
-            }
+        if (sync) {
+            // 对齐到包边界
+            input.skipFully(startPos + headerSize);
+            return true;
         }
-        return false;
     }
+    return false;
+}
 
     // Extractor implementation.
 
@@ -420,7 +422,7 @@ public final class MyTsExtractor implements Extractor {
     private boolean fillBufferWithAtLeastOnePacket(ExtractorInput input) throws IOException {
         byte[] data = tsPacketBuffer.getData();
         // Shift bytes to the start of the buffer if there isn't enough space left at the end.
-        if (BUFFER_SIZE - tsPacketBuffer.getPosition() < TS_PACKET_SIZE) {
+        if (BUFFER_SIZE - tsPacketBuffer.getPosition() < packetSize) {
             int bytesLeft = tsPacketBuffer.bytesLeft();
             if (bytesLeft > 0) {
                 System.arraycopy(data, tsPacketBuffer.getPosition(), data, 0, bytesLeft);
@@ -428,7 +430,7 @@ public final class MyTsExtractor implements Extractor {
             tsPacketBuffer.reset(data, bytesLeft);
         }
         // Read more bytes until we have at least one packet.
-        while (tsPacketBuffer.bytesLeft() < TS_PACKET_SIZE) {
+        while (tsPacketBuffer.bytesLeft() < packetSize) {
             int limit = tsPacketBuffer.limit();
             int read = input.read(data, limit, BUFFER_SIZE - limit);
             if (read == C.RESULT_END_OF_INPUT) {
@@ -453,10 +455,10 @@ public final class MyTsExtractor implements Extractor {
         // Discard all bytes before the sync byte.
         // If sync byte is not found, this means discard the whole buffer.
         tsPacketBuffer.setPosition(syncBytePosition);
-        int endOfPacket = syncBytePosition + TS_PACKET_SIZE;
+        int endOfPacket = syncBytePosition + packetSize;
         if (endOfPacket > limit) {
             bytesSinceLastSync += syncBytePosition - searchStart;
-            if (mode == MODE_HLS && bytesSinceLastSync > TS_PACKET_SIZE * 2) {
+            if (mode == MODE_HLS && bytesSinceLastSync > packetSize * 2) {
                 throw ParserException.createForMalformedContainer(
                         "Cannot find sync byte. Most likely not a Transport Stream.", /* cause= */ null);
             }
@@ -791,5 +793,36 @@ public final class MyTsExtractor implements Extractor {
         }
 
     }
+
+/**
+ * 支持 M2TS 的构造器
+ * @param mode 提取模式
+ * @param defaultTsPayloadReaderFlags payload reader flags
+ * @param timestampSearchBytes 时间戳搜索字节数
+ * @param packetSize 包大小，188（纯 TS）或 192（M2TS）
+ */
+public MyTsExtractor(@Mode int mode, @TsPayloadReader.Flags int defaultTsPayloadReaderFlags, int timestampSearchBytes, int packetSize) {
+    this.mode = mode;
+    this.payloadReaderFactory = new DefaultTsPayloadReaderFactory(defaultTsPayloadReaderFlags);
+    this.timestampSearchBytes = timestampSearchBytes;
+    this.packetSize = packetSize;
+    this.headerSize = packetSize - 188; // M2TS 多出的 header 大小
+    
+    if (mode == MODE_SINGLE_PMT || mode == MODE_HLS) {
+        timestampAdjusters = Collections.singletonList(new TimestampAdjuster(0));
+    } else {
+        timestampAdjusters = new ArrayList<>();
+        timestampAdjusters.add(new TimestampAdjuster(0));
+    }
+    tsPacketBuffer = new ParsableByteArray(new byte[packetSize * 50], 0);
+    trackIds = new SparseBooleanArray();
+    trackPids = new SparseBooleanArray();
+    tsPayloadReaders = new SparseArray<>();
+    continuityCounters = new SparseIntArray();
+    durationReader = new TsDurationReader(timestampSearchBytes);
+    output = ExtractorOutput.PLACEHOLDER;
+    pcrPid = -1;
+    resetPayloadReaders();
+}
 
 }
