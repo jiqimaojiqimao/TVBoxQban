@@ -1,5 +1,6 @@
 package com.google.androidx.media3.exoplayer.extractor.ts;
 
+import androidx.media3.common.util.TimestampAdjuster;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.extractor.Extractor;
 import androidx.media3.extractor.ExtractorInput;
@@ -21,7 +22,7 @@ public final class M2tsExtractor implements Extractor {
                 new TimestampAdjuster(0),
                 new DefaultTsPayloadReaderFactory(DefaultTsPayloadReaderFactory.FLAG_ENABLE_HDMV_DTS_AUDIO_STREAMS),
                 1024 * 1024,
-                M2TS_PACKET_SIZE  // 告诉底层包大小是 192
+                M2TS_PACKET_SIZE
         );
     }
 
@@ -37,7 +38,7 @@ public final class M2tsExtractor implements Extractor {
 
     @Override
     public int read(ExtractorInput input, PositionHolder seekPosition) throws IOException {
-        return tsExtractor.read(input, seekPosition); // 直接传，不包装
+        return tsExtractor.read(input, seekPosition);
     }
 
     @Override
