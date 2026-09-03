@@ -7,6 +7,7 @@ import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.bean.IJKCode;
 import com.github.tvbox.osc.player.IjkMediaPlayer;
 import com.github.tvbox.osc.player.EXOmPlayer;
+import com.github.tvbox.osc.player.MpvMediaPlayer;
 import com.github.tvbox.osc.player.render.SurfaceRenderViewFactory;
 import com.github.tvbox.osc.player.thirdparty.Kodi;
 import com.github.tvbox.osc.player.thirdparty.MXPlayer;
@@ -79,13 +80,13 @@ public class PlayerHelper {
                 }
             };
         } else if (playerType == 3) {
-    playerFactory = new PlayerFactory<MpvMediaPlayer>() {
-        @Override
-        public MpvMediaPlayer createPlayer(Context context) {
-            return new MpvMediaPlayer(context);
-        }
-    };
-} else {
+            playerFactory = new PlayerFactory<MpvMediaPlayer>() {
+                @Override
+                public MpvMediaPlayer createPlayer(Context context) {
+                    return new MpvMediaPlayer(context);
+                }
+            };
+        } else {
             playerFactory = AndroidMediaPlayerFactory.create();
         }
         RenderViewFactory renderViewFactory = null;
@@ -134,6 +135,13 @@ public class PlayerHelper {
                 @Override
                 public EXOmPlayer createPlayer(Context context) {
                     return new EXOmPlayer(context);
+                }
+            };
+        } else if (playerType == 3) {
+            playerFactory = new PlayerFactory<MpvMediaPlayer>() {
+                @Override
+                public MpvMediaPlayer createPlayer(Context context) {
+                    return new MpvMediaPlayer(context);
                 }
             };
         } else {
@@ -196,7 +204,7 @@ public class PlayerHelper {
             playersInfo.put(0, "系统播放器");
             playersInfo.put(1, "IJK播放器");
             playersInfo.put(2, "EXO播放器");
-			playersInfo.put(3, "MPV播放器");
+            playersInfo.put(3, "MPV播放器");
             playersInfo.put(10, "MX播放器");
             playersInfo.put(11, "Reex播放器");
             playersInfo.put(12, "Kodi播放器");
@@ -214,7 +222,7 @@ public class PlayerHelper {
             playersExist.put(0, true);
             playersExist.put(1, true);
             playersExist.put(2, true);
-			playersExist.put(3, true);
+            playersExist.put(3, true);
             playersExist.put(10, MXPlayer.getPackageInfo() != null);
             playersExist.put(11, ReexPlayer.getPackageInfo() != null);
             playersExist.put(12, Kodi.getPackageInfo() != null);
