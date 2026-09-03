@@ -37,6 +37,14 @@ android {
     packagingOptions {
         jniLibs {
             useLegacyPackaging = true
+            excludes += [
+                // 排除 mpv-android-lib 里的 FFmpeg so（让 Media3 的生效）
+                "**/libavcodec.so",
+                "**/libavformat.so", 
+                "**/libavutil.so",
+                "**/libswresample.so",
+                "**/libswscale.so"
+            ]
         }
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/beans.xml'
@@ -59,12 +67,12 @@ android {
 
     flavorDimensions += ["abi"]
     productFlavors {
-  //      armeabi {
-  //          dimension = "abi"
-  //          ndk {
-  //              abiFilters 'armeabi-v7a'
-  //          }
-  //      }
+        armeabi {
+            dimension = "abi"
+            ndk {
+                abiFilters 'armeabi-v7a'
+            }
+        }
         arm64 {
             dimension = "abi"
             ndk {
