@@ -14,6 +14,7 @@ import is.xyz.mpv.MPVNode;
 import java.util.Map;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
+import xyz.doikki.videoplayer.util.PlayerUtils;
 
 public class MpvMediaPlayer extends AbstractPlayer {
 
@@ -41,13 +42,14 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private boolean mPrepared = false;
     private boolean mVideoSizeNotified = false;
-    private boolean mPausedByUser = false;  // 用户是否主动暂停
+    private boolean mPausedByUser = false;
     private long mDuration = 0;
     private long mPosition = 0;
     private long mCacheEnd = 0;
     private boolean mPausedForCache = false;
     private int mVideoWidth = 0;
     private int mVideoHeight = 0;
+    private volatile boolean mReleasing = false;
 
     private final MPV.EventObserver observer = new MPV.EventObserver() {
         public void eventProperty(String property) {}
@@ -59,7 +61,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             } else if ("time-pos".equals(property)) {
                 mPosition = value * 1000;
             } else if ("demuxer-cache-time".equals(property)) {
-                mCacheEnd = value;
+                mCacheEnd = value; // 只记录，用于 getBufferedPercentage()
             } else if ("dwidth".equals(property)) {
                 mVideoWidth = (int) value;
                 notifyVideoSizeIfReady();
@@ -79,16 +81,23 @@ public class MpvMediaPlayer extends AbstractPlayer {
         public void eventProperty(String property, boolean value) {
             if ("paused-for-cache".equals(property)) {
                 mPausedForCache = value;
-                // 切主线程通知框架缓冲状态
-                mainHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        if (value) {
-                            mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
-                        } else {
-                            mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
-                        }
+                Log.d(TAG, "paused-for-cache=" + value);
+                // 直接映射为缓冲图标，框架只显示图标不调 pause
+                if (mPlayerEventListener != null) {
+                    if (value) {
+                        mainHandler.post(() -> {
+                            if (mPlayerEventListener != null) {
+                                mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
+                            }
+                        });
+                    } else {
+                        mainHandler.post(() -> {
+                            if (mPlayerEventListener != null) {
+                                mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
+                            }
+                        });
                     }
-                });
+                }
             }
         }
         public void eventProperty(String property, String value) {
@@ -136,9 +145,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             } else if (eventId == MPV_EVENT_END_FILE) {
                 Log.d(TAG, "END_FILE");
-                mainHandler.post(() -> {
+                mainHandler.postDelayed(() -> {
                     if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
-                });
+                }, 100);
             }
         }
 
@@ -171,8 +180,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public void initPlayer() {
+        if (mReleasing) {
+            Log.d(TAG, "initPlayer: release in progress, delaying...");
+            return;
+        }
         if (mpv != null) {
-            try { release(); } catch (Exception ignored) {}
+            Log.d(TAG, "initPlayer: releasing old instance first");
+            release();
         }
         mpv = new MPV();
         mpv.create(context);
@@ -246,7 +260,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public boolean isPlaying() {
-        // 关键修复：只返回用户是否想要播放，不关心缓冲状态
+        // 只反映用户意图，缓冲(paused-for-cache)不影响播放状态
         return mPrepared && !mPausedByUser;
     }
 
@@ -256,6 +270,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public void release() {
+        if (mReleasing) return;
+        mReleasing = true;
         Log.d(TAG, "release");
         if (mpv != null) {
             try { mpv.command("stop"); } catch (Exception ignored) {}
@@ -273,6 +289,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mVideoSizeNotified = false;
         mVideoWidth = 0;
         mVideoHeight = 0;
+        mReleasing = false;
     }
 
     public void setSurface(Surface surface) {
@@ -298,7 +315,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public float getSpeed() { return 1.0f; }
-    public long getTcpSpeed() { return 0; }
+
+    public long getTcpSpeed() {
+        return PlayerUtils.getNetSpeed(context);
+    }
+
     public int getAudioSessionId() { return 0; }
 
     public long getDuration() { return mDuration; }
