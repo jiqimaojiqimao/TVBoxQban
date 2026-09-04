@@ -21,9 +21,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private static final int MPV_EVENT_SEEK = 28;
     private static final int MPV_EVENT_PLAYBACK_RESTART = 29;
 
-    private static final int MPV_FORMAT_STRING = 1;
-    private static final int MPV_FORMAT_FLAG = 3;
     private static final int MPV_FORMAT_INT64 = 4;
+    private static final int MPV_FORMAT_FLAG = 3;
 
     static {
         System.loadLibrary("avutil");
@@ -42,32 +41,23 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private boolean mSeeking = false;
     private long mDuration = 0;
     private long mPosition = 0;
-    private boolean mBuffering = false;
-    private int mInternalState = STATE_IDLE;
+    private int mState = STATE_IDLE;
 
-    /* ========================= 状态管理 ========================= */
+    /* ========================= 状态 ========================= */
 
     private void setState(int state) {
-        mInternalState = state;
+        mState = state;
     }
 
-    private boolean isPlayingState() {
-        return mInternalState == STATE_PLAYING;
-    }
-
-    /* ========================= 缓冲通知 ========================= */
+    /* ========================= 缓冲 ========================= */
 
     private void notifyBufferingStart() {
-        if (mBuffering) return;
-        mBuffering = true;
         if (mPlayerEventListener != null) {
             mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
         }
     }
 
     private void notifyBufferingEnd() {
-        if (!mBuffering) return;
-        mBuffering = false;
         if (mPlayerEventListener != null) {
             mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, 0);
         }
@@ -114,11 +104,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
         public void eventProperty(String property, boolean value) {
             if (mpv == null || mReleased) return;
             if ("paused-for-cache".equals(property)) {
-                if (value) {
-                    notifyBufferingStart();
-                } else {
-                    notifyBufferingEnd();
-                }
+                if (value) notifyBufferingStart();
+                else notifyBufferingEnd();
             }
         }
         public void eventProperty(String property, String value) {}
@@ -134,7 +121,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 case MPV_EVENT_START_FILE:
                     mPrepared = false;
                     mSeeking = false;
-                    mBuffering = false;
                     setState(STATE_PREPARING);
                     break;
 
@@ -171,7 +157,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     mPrepared = false;
                     mPausedByUser = false;
                     mSeeking = false;
-                    mBuffering = false;
                     setState(STATE_PLAYBACK_COMPLETED);
                     break;
 
@@ -203,9 +188,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public MpvMediaPlayer() {}
 
     public void initPlayer() {
-        if (mReleased) {
-            mReleased = false;
-        }
+        if (mReleased) mReleased = false;
 
         if (mpv != null) {
             try { doDetachSurface(); } catch (Exception ignored) {}
@@ -227,9 +210,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPausedByUser = false;
         mSeeking = false;
         mSurfaceAttached = false;
-        mBuffering = false;
         mDuration = 0;
-        // ★ mPosition 不清零
         setState(STATE_IDLE);
     }
 
@@ -240,7 +221,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
         mPrepared = false;
         mSeeking = false;
-        mBuffering = false;
         setState(STATE_PREPARING);
 
         long startPos = getStartPosition();
@@ -257,26 +237,25 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void start() {
         if (mpv == null || mReleased || !mPrepared) return;
-        mpv.setPause(false);
+        mpv.command("set", "pause", "no");
         mPausedByUser = false;
         setState(STATE_PLAYING);
     }
 
     public void pause() {
         if (mpv == null || mReleased || !mPrepared) return;
-        mpv.setPause(true);
+        mpv.command("set", "pause", "yes");
         mPausedByUser = true;
         setState(STATE_PAUSED);
     }
 
     public void stop() {
         if (mpv == null || mReleased) return;
-        mpv.setPause(true);
+        mpv.command("set", "pause", "yes");
         try { mpv.command("stop"); } catch (Exception ignored) {}
         mPrepared = false;
         mPausedByUser = false;
         mSeeking = false;
-        mBuffering = false;
         setState(STATE_IDLE);
     }
 
@@ -290,12 +269,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPrepared = false;
         mPausedByUser = false;
         mSeeking = false;
-        mBuffering = false;
         setState(STATE_IDLE);
     }
 
     public boolean isPlaying() {
-        return isPlayingState();
+        return mState == STATE_PLAYING;
     }
 
     public void seekTo(long time) {
@@ -317,7 +295,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPausedByUser = false;
         mSeeking = false;
         mSurfaceAttached = false;
-        mBuffering = false;
         mLastSurface = null;
         setState(STATE_IDLE);
     }
@@ -340,20 +317,14 @@ public class MpvMediaPlayer extends AbstractPlayer {
             return;
         }
         if (surface == null) {
-            // ★ Surface 销毁：vo=null 释放 Surface 引用，不崩
-            try {
-                mpv.setOptionString("vo", "null");
-            } catch (Exception ignored) {}
+            try { mpv.setOptionString("vo", "null"); } catch (Exception ignored) {}
             mSurfaceAttached = false;
             mLastSurface = null;
             return;
         }
         if (mSurfaceAttached && surface == mLastSurface) return;
 
-        // 恢复：vo=gpu-next + attach
-        try {
-            mpv.setOptionString("vo", "gpu-next");
-        } catch (Exception ignored) {}
+        try { mpv.setOptionString("vo", "gpu-next"); } catch (Exception ignored) {}
         doAttachSurface(surface);
     }
 
@@ -368,7 +339,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void setLooping(boolean isLooping) {
         if (mpv == null || mReleased) return;
-        mpv.setOptionString("loop", isLooping ? "yes" : "no");
+        mpv.setOptionString("loop", isLooping ? "inf" : "no");
     }
 
     public void setOptions() {}
@@ -379,8 +350,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public float getSpeed() { return 1.0f; }
-
     public long getTcpSpeed() { return 0; }
-
     public int getAudioSessionId() { return 0; }
 }
