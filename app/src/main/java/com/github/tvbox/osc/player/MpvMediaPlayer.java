@@ -14,7 +14,7 @@ import xyz.doikki.videoplayer.player.AbstractPlayer;
 
 public class MpvMediaPlayer extends AbstractPlayer {
 
-    // ★ 自己定义状态常量
+    // ★ 自己定义状态常量（父类 AbstractPlayer 未提供 STATE_*）
     private static final int STATE_IDLE = 0;
     private static final int STATE_PREPARING = 1;
     private static final int STATE_PREPARED = 2;
@@ -25,12 +25,14 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private static final String TAG = "MpvMediaPlayer";
 
+    // mpv event ids
     private static final int MPV_EVENT_START_FILE = 6;
     private static final int MPV_EVENT_END_FILE = 7;
     private static final int MPV_EVENT_FILE_LOADED = 8;
     private static final int MPV_EVENT_SEEK = 28;
     private static final int MPV_EVENT_PLAYBACK_RESTART = 29;
 
+    // mpv property formats
     private static final int MPV_FORMAT_INT64 = 4;
     private static final int MPV_FORMAT_FLAG = 3;
 
@@ -52,6 +54,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private long mDuration = 0;
     private long mPosition = 0;
     private int mState = STATE_IDLE;
+    private Context mContext;
 
     /* ========================= 构造 ========================= */
 
@@ -59,6 +62,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public MpvMediaPlayer(Context context) {
         this();
+        mContext = context;
     }
 
     /* ========================= 状态 ========================= */
@@ -204,8 +208,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
     /* ========================= 生命周期 ========================= */
 
     public void initPlayer() {
-        if (mReleased) mReleased = false;
+        if (mReleased) {
+            mReleased = false;
+        }
 
+        // 如果已有实例，先彻底销毁
         if (mpv != null) {
             try { doDetachSurface(); } catch (Exception ignored) {}
             try { mpv.destroy(); } catch (Exception ignored) {}
@@ -213,7 +220,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
 
         mpv = new MPV();
-        mpv.create(null);
+        // ★ 关键修复：传 Context，不能传 null（MPV.create 要求 appctx 非空）
+        mpv.create(mContext);
         mpv.setOptionString("hwdec", "auto");
         mpv.setOptionString("mediacodec-surface-callbacks", "no");
         mpv.setOptionString("ao", "audiotrack");
@@ -233,6 +241,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void setDataSource(String path, Map<String, String> headers) {
         if (mpv == null || mReleased) return;
 
+        // ★ loadfile 前 detach 旧 Surface，避免 mediacodec 绑到已销毁的 Surface
         doDetachSurface();
 
         mPrepared = false;
@@ -253,6 +262,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void start() {
         if (mpv == null || mReleased || !mPrepared) return;
+        // ★ 用 command 设 pause，不是 setPause() 方法
         mpv.command("set", "pause", "no");
         mPausedByUser = false;
         setState(STATE_PLAYING);
@@ -333,6 +343,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             return;
         }
         if (surface == null) {
+            // ★ Surface 销毁（后台/刷新）：vo=null 释放 Surface 引用，避免崩溃
             try { mpv.setOptionString("vo", "null"); } catch (Exception ignored) {}
             mSurfaceAttached = false;
             mLastSurface = null;
@@ -340,6 +351,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
         if (mSurfaceAttached && surface == mLastSurface) return;
 
+        // 恢复：vo=gpu-next + attachSurface
         try { mpv.setOptionString("vo", "gpu-next"); } catch (Exception ignored) {}
         doAttachSurface(surface);
     }
