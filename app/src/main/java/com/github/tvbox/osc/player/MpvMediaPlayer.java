@@ -20,8 +20,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     // mpv C 事件 ID（mpv_event_id 枚举）
     private static final int EVENT_NONE           = 0;
     private static final int EVENT_START_FILE      = 6;
-    private static final int EVENT_FILE_LOADED     = 7;
-    private static final int EVENT_END_FILE        = 8;
 
     private static final int FMT_STRING = 1;
     private static final int FMT_FLAG   = 3;
@@ -83,7 +81,21 @@ public class MpvMediaPlayer extends AbstractPlayer {
         public void eventProperty(String property, MPVNode node) {}
 
         // 两个 event 入口都转发到 handleEvent
-        public void event(int eventId) { handleEvent(eventId); }
+public void event(int eventId) {
+    Log.d(TAG, "event: " + eventId);
+    if (mpv == null) return;
+    if (eventId == MPV.mpvEventId.MPV_EVENT_FILE_LOADED) {
+        Log.d(TAG, "FILE_LOADED -> observe");
+        mpv.observeProperty("time-pos", MPV.mpvFormat.MPV_FORMAT_INT64);
+        mpv.observeProperty("duration", MPV.mpvFormat.MPV_FORMAT_INT64);
+        mpv.observeProperty("demuxer-cache-time", MPV.mpvFormat.MPV_FORMAT_INT64);
+        mpv.observeProperty("paused-for-cache", MPV.mpvFormat.MPV_FORMAT_FLAG);
+        mpv.observeProperty("end-file-reason", MPV.mpvFormat.MPV_FORMAT_STRING);
+    } else if (eventId == MPV.mpvEventId.MPV_EVENT_END_FILE) {
+        if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
+    }
+}
+
         public void event(int eventId, MPVNode node) { handleEvent(eventId); }
 
         private void handleEvent(int eventId) {
