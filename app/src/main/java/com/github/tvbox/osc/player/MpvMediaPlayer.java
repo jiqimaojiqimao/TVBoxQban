@@ -499,13 +499,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
      * ★ 进度：mpv 存活时实时读，已释放则返回最后一次缓存的真实位置。
      * 上层（VideoView）在 release 前或 onPause 时读此值保存进度，永远不为 0。
      */
-    public long getCurrentPosition() {
-        if (mpv != null && mPrepared && !mReleased) {
-            // 主动拉一次，保证精度（observer 的 time-pos 在 END_FILE 后不再更新）
-            try {
-                mPosition = (long)(mpv.getDouble("time-pos") * 1000);
-            } catch (Exception ignored) {}
-        }
+public long getCurrentPosition() {
         return mPosition;
     }
 
