@@ -17,10 +17,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private static final String TAG = "MPV";
 
-    // mpv 原生事件 ID（C 常量：mpv_event_id）
-    private static final int EVENT_START_FILE  = 6;
-    private static final int EVENT_FILE_LOADED = 7;
-    private static final int EVENT_END_FILE    = 8;
+    // mpv C 事件 ID（mpv_event_id 枚举）
+    private static final int EVENT_NONE           = 0;
+    private static final int EVENT_START_FILE      = 6;
+    private static final int EVENT_FILE_LOADED     = 7;
+    private static final int EVENT_END_FILE        = 8;
 
     private static final int FMT_STRING = 1;
     private static final int FMT_FLAG   = 3;
@@ -80,8 +81,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
             }
         }
         public void eventProperty(String property, MPVNode node) {}
-        public void event(int eventId, MPVNode node) {}
-        public void event(int eventId) {
+
+        // 两个 event 入口都转发到 handleEvent
+        public void event(int eventId) { handleEvent(eventId); }
+        public void event(int eventId, MPVNode node) { handleEvent(eventId); }
+
+        private void handleEvent(int eventId) {
             Log.d(TAG, "event: " + eventId);
             if (mpv == null) return;
             if (eventId == EVENT_FILE_LOADED) {
@@ -91,7 +96,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("demuxer-cache-time", FMT_INT64);
                 mpv.observeProperty("paused-for-cache", FMT_FLAG);
                 mpv.observeProperty("end-file-reason", FMT_STRING);
-                mpv.observeProperty("track-list", FMT_STRING);
             } else if (eventId == EVENT_END_FILE) {
                 Log.d(TAG, "END_FILE");
                 if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
@@ -198,7 +202,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         return 0;
     }
 
-    // ---- 音轨/字幕/视轨（预留）----
     public void selectAudioTrack(int aid) { if (mpv != null) mpv.command("set", "aid", String.valueOf(aid)); }
     public void selectSubtitleTrack(int sid) { if (mpv != null) mpv.command("set", "sid", String.valueOf(sid)); }
     public void disableSubtitle() { if (mpv != null) mpv.command("set", "sid", "no"); }
