@@ -226,62 +226,72 @@ public class MpvMediaPlayer extends AbstractPlayer {
         this.context = context.getApplicationContext();
     }
 
-    public void initPlayer() {
-        if (mReleasing) {
-            Log.d(TAG, "initPlayer: release in progress, skip");
-            return;
+public void initPlayer() {
+    if (mReleasing) {
+        Log.d(TAG, "initPlayer: release in progress, skip");
+        return;
+    }
+    Surface savedSurface = mLastSurface; // 暂存
+    if (mpv != null) {
+        Log.d(TAG, "initPlayer: reusing existing instance");
+        try { mpv.command("stop"); } catch (Exception ignored) {}
+    } else {
+        Log.d(TAG, "initPlayer: creating new instance");
+        mpv = new MPV();
+        mpv.create(context);
+        mpv.setOptionString("hwdec", "mediacodec");  
+        mpv.setOptionString("ao", "audiotrack");
+        mpv.setOptionString("keep-open", "yes");
+        mpv.init();
+        mpv.addObserver(observer);
+    }
+    mReleased = false;
+    mPrepared = false;
+    mVideoSizeNotified = false;
+    mPausedByUser = false;
+    mSeeking = false;
+    mBufferingShown = false;
+    mSurfaceAttached = true;
+    mLastSurface = savedSurface; // 恢复
+    mBufferingStartTime = 0;
+    mDuration = 0;
+    mPosition = 0;
+    mCacheEnd = 0;
+    mVideoWidth = 0;
+    mVideoHeight = 0;
+    Log.d(TAG, "mpv initialized");
+}
+
+public void setDataSource(String path, Map<String, String> headers) {
+    Log.d(TAG, "setDataSource: " + path);
+    mPrepared = false;
+    mVideoSizeNotified = false;
+    mPausedByUser = false;
+    mSeeking = false;
+    mBufferingShown = false;
+    mDuration = 0;
+    mPosition = 0;
+
+    notifyBufferingStart();
+
+    if (headers != null && !headers.isEmpty()) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> e : headers.entrySet()) {
+            sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
         }
-        if (mpv != null) {
-            Log.d(TAG, "initPlayer: reusing existing instance");
-            try { mpv.command("stop"); } catch (Exception ignored) {}
-        } else {
-            Log.d(TAG, "initPlayer: creating new instance");
-            mpv = new MPV();
-            mpv.create(context);
-            mpv.setOptionString("hwdec", "mediacodec-copy");
-            mpv.setOptionString("ao", "audiotrack");
-            mpv.setOptionString("keep-open", "yes");
-            mpv.init();
-            mpv.addObserver(observer);
-        }
-        mReleased = false;
-        mPrepared = false;
-        mVideoSizeNotified = false;
-        mPausedByUser = false;
-        mSeeking = false;
-        mBufferingShown = false;
-        mSurfaceAttached = true;
-        mLastSurface = null;
-        mBufferingStartTime = 0;
-        mDuration = 0;
-        mPosition = 0;
-        mCacheEnd = 0;
-        mVideoWidth = 0;
-        mVideoHeight = 0;
-        Log.d(TAG, "mpv initialized");
+        mpv.setOptionString("http-header-fields", sb.toString());
     }
 
-    public void setDataSource(String path, Map<String, String> headers) {
-        Log.d(TAG, "setDataSource: " + path);
-        mPrepared = false;
-        mVideoSizeNotified = false;
-        mPausedByUser = false;
-        mSeeking = false;
-        mBufferingShown = false;
-        mDuration = 0;
-        mPosition = 0;
-
-        notifyBufferingStart();
-
-        if (headers != null && !headers.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            for (Map.Entry<String, String> e : headers.entrySet()) {
-                sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
-            }
-            mpv.setOptionString("http-header-fields", sb.toString());
-        }
-        mpv.command("loadfile", path);
+    // 关键：确保 surface 已 attach 再 loadfile
+    if (mLastSurface != null && mSurfaceAttached) {
+        mpv.attachSurface(mLastSurface);
     }
+// setDataSource 里，loadfile 前加：
+if (mLastSurface != null && mSurfaceAttached && mpv != null) {
+    mpv.attachSurface(mLastSurface);
+}
+    mpv.command("loadfile", path);
+}
 
     public void setDataSource(AssetFileDescriptor fd) {
         throw new UnsupportedOperationException("mpv: no AssetFileDescriptor");
