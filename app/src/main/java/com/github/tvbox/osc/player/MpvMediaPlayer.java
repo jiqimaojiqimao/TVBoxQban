@@ -54,9 +54,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private int mVideoHeight = 0;
     private volatile boolean mReleasing = false;
     private volatile boolean mReleased = false;
+    private boolean mSurfaceAttached = true;
+    private Surface mLastSurface = null;
+    private long mBufferingStartTime = 0;
 
     private void notifyBufferingStart() {
         if (!mBufferingShown && mPlayerEventListener != null && !mReleased) {
+            mBufferingStartTime = System.currentTimeMillis();
             mBufferingShown = true;
             mainHandler.post(() -> {
                 if (mPlayerEventListener != null && !mReleased) {
@@ -68,7 +72,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private void notifyBufferingEnd() {
         if (mBufferingShown && mPlayerEventListener != null && !mReleased) {
+            long bufferingDuration = System.currentTimeMillis() - mBufferingStartTime;
             mBufferingShown = false;
+            if (bufferingDuration < 200) {
+                Log.d(TAG, "buffering too short (" + bufferingDuration + "ms), ignoring");
+                return;
+            }
             mainHandler.post(() -> {
                 if (mPlayerEventListener != null && !mReleased) {
                     mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
@@ -155,7 +164,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     });
                 }
 
-                // 首次加载完成，关闭缓冲图标
                 notifyBufferingEnd();
 
                 if (!mPausedByUser) {
@@ -163,13 +171,16 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 }
 
             } else if (eventId == MPV_EVENT_END_FILE) {
-                Log.d(TAG, "END_FILE");
+                Log.d(TAG, "END_FILE, surfaceAttached=" + mSurfaceAttached);
                 mPrepared = false;
                 mSeeking = false;
-    if (mSurfaceAttached && mPlayerEventListener != null && !mReleased) {
-        mPlayerEventListener.onCompletion();
-    }
-
+                if (mSurfaceAttached && mPlayerEventListener != null && !mReleased) {
+                    mainHandler.post(() -> {
+                        if (mPlayerEventListener != null && !mReleased) {
+                            mPlayerEventListener.onCompletion();
+                        }
+                    });
+                }
             } else if (eventId == MPV_EVENT_SEEK) {
                 Log.d(TAG, "SEEK -> BUFFERING_START");
                 mSeeking = true;
@@ -178,12 +189,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             } else if (eventId == MPV_EVENT_PLAYBACK_RESTART) {
                 Log.d(TAG, "PLAYBACK_RESTART, mSeeking=" + mSeeking);
                 if (mSeeking) {
-                    // seek 结束，关闭缓冲图标
                     mSeeking = false;
                     notifyBufferingEnd();
                 }
-                // 非 seek 的 PLAYBACK_RESTART（切比例/前后台）不碰缓冲状态
-
             }
         }
 
@@ -224,22 +232,27 @@ public class MpvMediaPlayer extends AbstractPlayer {
             return;
         }
         if (mpv != null) {
-            Log.d(TAG, "initPlayer: releasing old instance");
-            releaseInternal();
+            Log.d(TAG, "initPlayer: reusing existing instance");
+            try { mpv.command("stop"); } catch (Exception ignored) {}
+        } else {
+            Log.d(TAG, "initPlayer: creating new instance");
+            mpv = new MPV();
+            mpv.create(context);
+            mpv.setOptionString("hwdec", "mediacodec-copy");
+            mpv.setOptionString("ao", "audiotrack");
+            mpv.setOptionString("keep-open", "yes");
+            mpv.init();
+            mpv.addObserver(observer);
         }
-        mpv = new MPV();
-        mpv.create(context);
-        mpv.setOptionString("hwdec", "mediacodec-copy");
-        mpv.setOptionString("ao", "audiotrack");
-        mpv.setOptionString("keep-open", "yes");
-        mpv.init();
-        mpv.addObserver(observer);
         mReleased = false;
         mPrepared = false;
         mVideoSizeNotified = false;
         mPausedByUser = false;
         mSeeking = false;
         mBufferingShown = false;
+        mSurfaceAttached = true;
+        mLastSurface = null;
+        mBufferingStartTime = 0;
         mDuration = 0;
         mPosition = 0;
         mCacheEnd = 0;
@@ -258,7 +271,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mDuration = 0;
         mPosition = 0;
 
-        // 首次加载显示缓冲图标
         notifyBufferingStart();
 
         if (headers != null && !headers.isEmpty()) {
@@ -322,12 +334,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (mReleasing) return;
         mReleasing = true;
         Log.d(TAG, "release");
-        releaseInternal();
-        mReleasing = false;
-    }
-
-    private void releaseInternal() {
-        mReleased = true;
         if (mpv != null) {
             try { mpv.command("stop"); } catch (Exception ignored) {}
             try { mpv.removeObserver(observer); } catch (Exception ignored) {}
@@ -335,29 +341,24 @@ public class MpvMediaPlayer extends AbstractPlayer {
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
-        mPrepared = false;
-        mPausedByUser = false;
-        mSeeking = false;
-        mBufferingShown = false;
-        mDuration = 0;
-        mPosition = 0;
-        mCacheEnd = 0;
-        mVideoSizeNotified = false;
-        mVideoWidth = 0;
-        mVideoHeight = 0;
+        mReleased = true;
+        mReleasing = false;
     }
 
-private boolean mSurfaceAttached = true;
-public void setSurface(Surface surface) {
-    if (mpv == null || mReleased) return;
-    if (surface != null) {
-        mpv.attachSurface(surface);
-        mSurfaceAttached = true;
-    } else {
-        mSurfaceAttached = false;
-        // 不调 attachSurface(null)
+    public void setSurface(Surface surface) {
+        if (mpv == null || mReleased) return;
+        if (surface != null) {
+            if (surface != mLastSurface) {
+                mpv.attachSurface(surface);
+                mLastSurface = surface;
+            }
+            mSurfaceAttached = true;
+        } else {
+            mSurfaceAttached = false;
+            mLastSurface = null;
+        }
     }
-}
+
     public void setDisplay(SurfaceHolder holder) {
         setSurface(holder != null ? holder.getSurface() : null);
     }
