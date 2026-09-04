@@ -17,6 +17,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private static final String TAG = "MPV";
 
+    // mpv 原生事件 ID（C 常量：mpv_event_id）
+    private static final int EVENT_START_FILE  = 6;
+    private static final int EVENT_FILE_LOADED = 7;
+    private static final int EVENT_END_FILE    = 8;
+
+    private static final int FMT_STRING = 1;
+    private static final int FMT_FLAG   = 3;
+    private static final int FMT_INT64  = 4;
+
     static {
         System.loadLibrary("avutil");
         System.loadLibrary("swresample");
@@ -24,10 +33,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         System.loadLibrary("avcodec");
         System.loadLibrary("avformat");
     }
-
-    private static final int FMT_STRING = 1;
-    private static final int FMT_FLAG   = 3;
-    private static final int FMT_INT64  = 4;
 
     private MPV mpv;
     private Context context;
@@ -79,14 +84,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
         public void event(int eventId) {
             Log.d(TAG, "event: " + eventId);
             if (mpv == null) return;
-            if (eventId == MPV.mpvEvent.MPV_EVENT_FILE_LOADED) {
+            if (eventId == EVENT_FILE_LOADED) {
                 Log.d(TAG, "FILE_LOADED -> observe");
                 mpv.observeProperty("time-pos", FMT_INT64);
                 mpv.observeProperty("duration", FMT_INT64);
                 mpv.observeProperty("demuxer-cache-time", FMT_INT64);
                 mpv.observeProperty("paused-for-cache", FMT_FLAG);
                 mpv.observeProperty("end-file-reason", FMT_STRING);
-            } else if (eventId == MPV.mpvEvent.MPV_EVENT_END_FILE) {
+                mpv.observeProperty("track-list", FMT_STRING);
+            } else if (eventId == EVENT_END_FILE) {
                 Log.d(TAG, "END_FILE");
                 if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
             }
@@ -118,79 +124,69 @@ public class MpvMediaPlayer extends AbstractPlayer {
         Log.d(TAG, "mpv initialized");
     }
 
-public void setDataSource(String path, Map<String, String> headers) {
-    Log.d(TAG, "setDataSource: " + path);
-    mPrepared = false;
-    mDuration = 0;
-    mPosition = 0;
-    if (headers != null && !headers.isEmpty()) {
-        StringBuilder sb = new StringBuilder();
-        for (Map.Entry<String, String> e : headers.entrySet()) {
-            sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
+    public void setDataSource(String path, Map<String, String> headers) {
+        Log.d(TAG, "setDataSource: " + path);
+        mPrepared = false;
+        mDuration = 0;
+        mPosition = 0;
+        if (headers != null && !headers.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> e : headers.entrySet()) {
+                sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
+            }
+            mpv.setOptionString("http-header-fields", sb.toString());
         }
-        mpv.setOptionString("http-header-fields", sb.toString());
+        mpv.command("loadfile", path);
     }
-    // 关键改动：不用 new String[]{}，直接传可变参数
-    mpv.command("loadfile", path);
-}
-
-
 
     public void setDataSource(AssetFileDescriptor fd) {
         throw new UnsupportedOperationException("mpv: no AssetFileDescriptor");
     }
 
-public void start() {
-    Log.d(TAG, "start");
-    mpv.command("set", "pause", "no");
-}
-public void pause() {
-    Log.d(TAG, "pause");
-    mpv.command("set", "pause", "yes");
-}
-public void stop() {
-    Log.d(TAG, "stop");
-    mpv.command("stop");
-    mPrepared = false;
-}
-public void seekTo(long time) {
-    Log.d(TAG, "seekTo: " + time);
-    mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
-}
+    public void start() { Log.d(TAG, "start"); mpv.command("set", "pause", "no"); }
+    public void pause() { Log.d(TAG, "pause"); mpv.command("set", "pause", "yes"); }
+    public void stop() { Log.d(TAG, "stop"); mpv.command("stop"); mPrepared = false; }
     public void prepareAsync() {}
+
     public void reset() {
-        mpv.command(new String[]{"stop"});
+        if (mpv != null) mpv.command("stop");
         mPrepared = false; mDuration = 0; mPosition = 0; mCacheEnd = 0;
     }
+
     public boolean isPlaying() { return mPrepared && !mPausedForCache; }
 
-public void release() {
-    Log.d(TAG, "release");
-    if (mpv != null) {
-        mpv.command("stop");
-        mpv.removeObserver(observer);
-        mpv.detachSurface();
-        mpv.destroy();
-        mpv = null;
+    public void seekTo(long time) {
+        Log.d(TAG, "seekTo: " + time);
+        mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
     }
-    mPrepared = false;
-    mDuration = 0;
-    mPosition = 0;
-    mCacheEnd = 0;
-}
+
+    public void release() {
+        Log.d(TAG, "release");
+        if (mpv != null) {
+            try { mpv.command("stop"); } catch (Exception ignored) {}
+            mpv.removeObserver(observer);
+            mpv.detachSurface();
+            mpv.destroy();
+            mpv = null;
+        }
+        mPrepared = false;
+        mDuration = 0;
+        mPosition = 0;
+        mCacheEnd = 0;
+    }
 
     public void setSurface(Surface surface) {
-        Log.d(TAG, "setSurface");
         if (mpv != null) mpv.attachSurface(surface);
     }
     public void setDisplay(SurfaceHolder holder) { setSurface(holder != null ? holder.getSurface() : null); }
 
     public void setVolume(float l, float r) {
-        mpv.command(new String[]{"set", "ao-volume", String.valueOf((int)((l+r)/2 * 100))});
+        mpv.command("set", "ao-volume", String.valueOf((int)((l+r)/2 * 100)));
     }
     public void setLooping(boolean loop) { mpv.setOptionString("loop", loop ? "inf" : "no"); }
     public void setOptions() {}
-    public void setSpeed(float speed) { mpv.command(new String[]{"set", "speed", String.valueOf(speed)}); }
+
+    public void setSpeed(float speed) { mpv.command("set", "speed", String.valueOf(speed)); }
     public float getSpeed() { return 1.0f; }
     public long getTcpSpeed() { return 0; }
     public int getAudioSessionId() { return 0; }
@@ -202,9 +198,10 @@ public void release() {
         return 0;
     }
 
-    public void selectAudioTrack(int aid) { if (mpv != null) mpv.command(new String[]{"set", "aid", String.valueOf(aid)}); }
-    public void selectSubtitleTrack(int sid) { if (mpv != null) mpv.command(new String[]{"set", "sid", String.valueOf(sid)}); }
-    public void disableSubtitle() { if (mpv != null) mpv.command(new String[]{"set", "sid", "no"}); }
-    public void addSubtitleFile(String p) { if (mpv != null) mpv.command(new String[]{"sub-add", p}); }
-    public void selectVideoTrack(int vid) { if (mpv != null) mpv.command(new String[]{"set", "vid", String.valueOf(vid)}); }
+    // ---- 音轨/字幕/视轨（预留）----
+    public void selectAudioTrack(int aid) { if (mpv != null) mpv.command("set", "aid", String.valueOf(aid)); }
+    public void selectSubtitleTrack(int sid) { if (mpv != null) mpv.command("set", "sid", String.valueOf(sid)); }
+    public void disableSubtitle() { if (mpv != null) mpv.command("set", "sid", "no"); }
+    public void addSubtitleFile(String p) { if (mpv != null) mpv.command("sub-add", p); }
+    public void selectVideoTrack(int vid) { if (mpv != null) mpv.command("set", "vid", String.valueOf(vid)); }
 }
