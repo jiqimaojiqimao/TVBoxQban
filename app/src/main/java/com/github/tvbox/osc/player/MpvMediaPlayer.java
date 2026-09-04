@@ -1,6 +1,6 @@
 package com.github.tvbox.osc.player;
 
-import android.content.AssetFileDescriptor;
+import android.content.res.AssetFileDescriptor;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
