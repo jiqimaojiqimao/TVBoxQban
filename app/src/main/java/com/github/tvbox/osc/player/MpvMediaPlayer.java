@@ -41,7 +41,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private final MPV.EventObserver observer = new MPV.EventObserver() {
         public void eventProperty(String property) {}
         public void eventProperty(String property, long value) {
-            Log.d(TAG, "property " + property + " = " + value);
+            Log.d(TAG, "prop " + property + " = " + value);
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
                 checkPrepared();
@@ -69,7 +69,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             }
         }
         public void eventProperty(String property, String value) {
-            Log.d(TAG, "property " + property + " = " + value);
+            Log.d(TAG, "prop " + property + " = " + value);
             if ("end-file-reason".equals(property) && "error".equals(value)) {
                 if (mPlayerEventListener != null) mPlayerEventListener.onError();
             }
@@ -80,7 +80,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             Log.d(TAG, "event: " + eventId);
             if (mpv == null) return;
             if (eventId == MPV.mpvEvent.MPV_EVENT_FILE_LOADED) {
-                Log.d(TAG, "FILE_LOADED");
+                Log.d(TAG, "FILE_LOADED -> observe");
                 mpv.observeProperty("time-pos", FMT_INT64);
                 mpv.observeProperty("duration", FMT_INT64);
                 mpv.observeProperty("demuxer-cache-time", FMT_INT64);
@@ -130,8 +130,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             }
             mpv.setOptionString("http-header-fields", sb.toString());
         }
-        int ret = mpv.command(new String[]{"loadfile", path});
-        Log.d(TAG, "loadfile ret=" + ret);
+        mpv.command(new String[]{"loadfile", path});
     }
 
     public void setDataSource(AssetFileDescriptor fd) {
@@ -156,9 +155,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.command(new String[]{"stop"});
         mPrepared = false; mDuration = 0; mPosition = 0; mCacheEnd = 0;
     }
-    public boolean isPlaying() {
-        return mPrepared && !mPausedForCache;
-    }
+    public boolean isPlaying() { return mPrepared && !mPausedForCache; }
+
     public void seekTo(long time) {
         Log.d(TAG, "seekTo: " + time);
         mpv.command(new String[]{"seek", String.valueOf(time / 1000.0), "absolute"});
@@ -184,6 +182,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (mpv != null) mpv.attachSurface(surface);
     }
     public void setDisplay(SurfaceHolder holder) { setSurface(holder != null ? holder.getSurface() : null); }
+
     public void setVolume(float l, float r) {
         mpv.command(new String[]{"set", "ao-volume", String.valueOf((int)((l+r)/2 * 100))});
     }
@@ -200,4 +199,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (mDuration > 0 && mCacheEnd > 0) return (int)Math.min(100, mCacheEnd * 1000 / mDuration);
         return 0;
     }
+
+    public void selectAudioTrack(int aid) { if (mpv != null) mpv.command(new String[]{"set", "aid", String.valueOf(aid)}); }
+    public void selectSubtitleTrack(int sid) { if (mpv != null) mpv.command(new String[]{"set", "sid", String.valueOf(sid)}); }
+    public void disableSubtitle() { if (mpv != null) mpv.command(new String[]{"set", "sid", "no"}); }
+    public void addSubtitleFile(String p) { if (mpv != null) mpv.command(new String[]{"sub-add", p}); }
+    public void selectVideoTrack(int vid) { if (mpv != null) mpv.command(new String[]{"set", "vid", String.valueOf(vid)}); }
 }
