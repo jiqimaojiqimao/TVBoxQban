@@ -1,5 +1,6 @@
 package com.github.tvbox.osc.player;
 
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -12,6 +13,15 @@ import is.xyz.mpv.MPVNode;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 
 public class MpvMediaPlayer extends AbstractPlayer {
+
+    // ★ 自己定义状态常量
+    private static final int STATE_IDLE = 0;
+    private static final int STATE_PREPARING = 1;
+    private static final int STATE_PREPARED = 2;
+    private static final int STATE_PLAYING = 3;
+    private static final int STATE_PAUSED = 4;
+    private static final int STATE_PLAYBACK_COMPLETED = 5;
+    private static final int STATE_ERROR = -1;
 
     private static final String TAG = "MpvMediaPlayer";
 
@@ -42,6 +52,14 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private long mDuration = 0;
     private long mPosition = 0;
     private int mState = STATE_IDLE;
+
+    /* ========================= 构造 ========================= */
+
+    public MpvMediaPlayer() {}
+
+    public MpvMediaPlayer(Context context) {
+        this();
+    }
 
     /* ========================= 状态 ========================= */
 
@@ -184,8 +202,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     };
 
     /* ========================= 生命周期 ========================= */
-
-    public MpvMediaPlayer() {}
 
     public void initPlayer() {
         if (mReleased) mReleased = false;
