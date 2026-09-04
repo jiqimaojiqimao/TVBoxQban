@@ -53,7 +53,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private int mVideoHeight = 0;
     private volatile boolean mReleasing = false;
     private volatile boolean mReleased = false;
-    private boolean mSurfaceAttached = true;
+    private boolean mSurfaceAttached = false;   // ★ 默认 false，只有确认 attach 成功才 true
     private Surface mLastSurface = null;
     private long mBufferingStartTime = 0;
     private boolean mIsLive = false;
@@ -103,7 +103,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-                // ★ END_FILE 后 mpv 内部 time-pos 变 0，不再覆盖真实进度
                 if (!mPrepared) return;
                 mPosition = value * 1000;
             } else if ("demuxer-cache-time".equals(property)) {
@@ -187,7 +186,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 Log.d(TAG, "END_FILE, isLive=" + mIsLive + ", surfaceAttached=" + mSurfaceAttached);
                 mPrepared = false;
                 mSeeking = false;
-                // ★ mPosition 保留，不被清 0
                 if (mIsLive) {
                     Log.d(TAG, "live stream END_FILE ignored");
                 } else if (mSurfaceAttached && mPlayerEventListener != null && !mReleased) {
@@ -225,6 +223,56 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
     }
 
+    /* ========================= Surface 管理（核心改动） ========================= */
+
+    /**
+     * ★ 彻底解绑当前 Surface，让 mediacodec 解码器释放对旧 Surface 的引用。
+     * 必须在 loadfile 新流之前调用，否则旧解码器 surface 和新 surface 冲突 → 崩溃。
+     */
+    private void detachSurfaceInternal() {
+        if (mpv != null) {
+            try {
+                Log.d(TAG, "detachSurfaceInternal");
+                mpv.detachSurface();
+            } catch (Exception e) {
+                Log.w(TAG, "detachSurface failed", e);
+            }
+        }
+        mLastSurface = null;
+        mSurfaceAttached = false;
+    }
+
+    public void setSurface(Surface surface) {
+        if (mpv == null || mReleased) {
+            // ★ mpv 还没创建或已释放，先缓存 surface，等 initPlayer/setDataSource 时用
+            mLastSurface = surface;
+            mSurfaceAttached = (surface != null);
+            return;
+        }
+        if (surface != null) {
+            // ★ 同一个 surface 且已 attach，跳过（避免重复 attach 导致解码器重建）
+            if (mSurfaceAttached && surface == mLastSurface) {
+                return;
+            }
+            try {
+                Log.d(TAG, "attachSurface: " + surface);
+                mpv.attachSurface(surface);
+                mLastSurface = surface;
+                mSurfaceAttached = true;
+            } catch (Exception e) {
+                Log.e(TAG, "attachSurface failed", e);
+                mSurfaceAttached = false;
+            }
+        } else {
+            // ★ surface 为 null（如切换、重建），彻底解绑
+            detachSurfaceInternal();
+        }
+    }
+
+    public void setDisplay(SurfaceHolder holder) {
+        setSurface(holder != null ? holder.getSurface() : null);
+    }
+
     /* ========================= 生命周期 ========================= */
 
     public MpvMediaPlayer(Context context) {
@@ -238,10 +286,14 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
 
         if (mpv != null) {
+            // ★ 复用实例：必须先解绑旧 Surface，再 stop，避免解码器残留 surface 引用
             Log.d(TAG, "initPlayer: reusing existing instance");
+            detachSurfaceInternal();   // ← 关键：先解绑
             try { mpv.command("stop"); } catch (Exception ignored) {}
-            if (mLastSurface != null && mSurfaceAttached) {
+            // stop 之后再重新 attach 新 Surface（如果已经有了）
+            if (mLastSurface != null) {
                 try { mpv.attachSurface(mLastSurface); } catch (Exception ignored) {}
+                mSurfaceAttached = true;
             }
         } else {
             Log.d(TAG, "initPlayer: creating new instance");
@@ -253,6 +305,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv.setOptionString("loop-file", "no");
             mpv.init();
             mpv.addObserver(observer);
+
+            // ★ 新建时也尝试 attach 已缓存的 Surface
+            if (mLastSurface != null) {
+                try { mpv.attachSurface(mLastSurface); } catch (Exception ignored) {}
+                mSurfaceAttached = true;
+            }
         }
 
         mReleased = false;
@@ -261,10 +319,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPausedByUser = false;
         mSeeking = false;
         mBufferingShown = false;
-        mSurfaceAttached = true;
         mBufferingStartTime = 0;
-        // ★ 不重置 mPosition / mDuration
-        Log.d(TAG, "mpv initialized");
+        Log.d(TAG, "mpv initialized, surfaceAttached=" + mSurfaceAttached);
     }
 
     public void setDataSource(String path, Map<String, String> headers) {
@@ -275,7 +331,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mSeeking = false;
         mBufferingShown = false;
         mDuration = 0;
-        // ★ mPosition 不清零
 
         mIsLive = (path != null) && (path.contains("proxyM3u8") || path.contains("live") || path.contains(".m3u8"));
 
@@ -289,11 +344,26 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv.setOptionString("http-header-fields", sb.toString());
         }
 
-        if (mLastSurface != null && mSurfaceAttached && mpv != null) {
-            try { mpv.attachSurface(mLastSurface); } catch (Exception ignored) {}
+        // ★★★ 核心：loadfile 之前，如果已有 Surface attach，先解绑让解码器释放
+        // 这样 loadfile 重新打开流时，会在 Surface attach 后再初始化 mediacodec
+        // → 不会拿到 NULL 或冲突的 surface → 不崩溃
+        if (mSurfaceAttached && mpv != null) {
+            Log.d(TAG, "setDataSource: detaching surface before loadfile");
+            detachSurfaceInternal();
         }
 
         mpv.command("loadfile", path);
+
+        // ★ loadfile 后重新 attach Surface（确保解码器用新 surface 初始化）
+        if (mLastSurface != null && mpv != null) {
+            try {
+                Log.d(TAG, "setDataSource: re-attaching surface after loadfile");
+                mpv.attachSurface(mLastSurface);
+                mSurfaceAttached = true;
+            } catch (Exception e) {
+                Log.e(TAG, "re-attachSurface failed", e);
+            }
+        }
     }
 
     public void setDataSource(AssetFileDescriptor fd) {
@@ -331,7 +401,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mDuration = 0;
         mCacheEnd = 0;
         mVideoSizeNotified = false;
-        // ★ 不清 mPosition
     }
 
     public boolean isPlaying() {
@@ -350,8 +419,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (mReleasing) return;
         mReleasing = true;
         Log.d(TAG, "release (full destroy), lastPosition=" + mPosition);
-        // ★ mPosition 已经在 observer 里实时更新着，release 时直接用缓存值
-        // ★ 不需要再读 mpv.getInt()，直接保留 mPosition 即可
         if (mpv != null) {
             try { mpv.command("stop"); } catch (Exception ignored) {}
             try { mpv.removeObserver(observer); } catch (Exception ignored) {}
@@ -361,24 +428,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
         mReleased = true;
         mLastSurface = null;
+        mSurfaceAttached = false;
         mReleasing = false;
-    }
-
-    public void setSurface(Surface surface) {
-        if (mpv == null || mReleased) return;
-        if (surface != null) {
-            if (surface != mLastSurface) {
-                mpv.attachSurface(surface);
-                mLastSurface = surface;
-            }
-            mSurfaceAttached = true;
-        } else {
-            mSurfaceAttached = false;
-        }
-    }
-
-    public void setDisplay(SurfaceHolder holder) {
-        setSurface(holder != null ? holder.getSurface() : null);
     }
 
     public void setVolume(float l, float r) {
