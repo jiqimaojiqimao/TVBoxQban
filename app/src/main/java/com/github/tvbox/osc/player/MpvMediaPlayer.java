@@ -2,6 +2,8 @@ package com.github.tvbox.osc.player;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -17,12 +19,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private static final String TAG = "MPV";
 
-    // mpv C 事件 ID（来自 mpv/client.h，十年未变）
     private static final int MPV_EVENT_START_FILE  = 6;
     private static final int MPV_EVENT_END_FILE    = 7;
     private static final int MPV_EVENT_FILE_LOADED = 8;
 
-    // mpv C format 常量（mpv/client.h）
     private static final int MPV_FORMAT_STRING = 1;
     private static final int MPV_FORMAT_FLAG   = 3;
     private static final int MPV_FORMAT_INT64  = 4;
@@ -37,6 +37,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private MPV mpv;
     private Context context;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private boolean mPrepared = false;
     private long mDuration = 0;
@@ -68,16 +69,20 @@ public class MpvMediaPlayer extends AbstractPlayer {
         public void eventProperty(String property, boolean value) {
             if ("paused-for-cache".equals(property)) {
                 mPausedForCache = value;
-                if (mPlayerEventListener != null) {
-                    if (value) mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
-                    else mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
-                }
+                mainHandler.post(() -> {
+                    if (mPlayerEventListener != null) {
+                        if (value) mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
+                        else mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
+                    }
+                });
             }
         }
         public void eventProperty(String property, String value) {
             Log.d(TAG, "prop " + property + " = " + value);
             if ("end-file-reason".equals(property) && "error".equals(value)) {
-                if (mPlayerEventListener != null) mPlayerEventListener.onError();
+                mainHandler.post(() -> {
+                    if (mPlayerEventListener != null) mPlayerEventListener.onError();
+                });
             }
         }
         public void eventProperty(String property, MPVNode node) {}
@@ -97,7 +102,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
             } else if (eventId == MPV_EVENT_END_FILE) {
                 Log.d(TAG, "END_FILE");
-                if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
+                mainHandler.post(() -> {
+                    if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
+                });
             }
         }
 
@@ -105,10 +112,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if (!mPrepared && mDuration > 0) {
                 mPrepared = true;
                 Log.d(TAG, "prepared, duration=" + mDuration);
-                if (mPlayerEventListener != null) {
-                    mPlayerEventListener.onPrepared();
-                    mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                }
+                mainHandler.post(() -> {
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onPrepared();
+                        mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
+                    }
+                });
             }
         }
     };
