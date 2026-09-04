@@ -50,17 +50,32 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private final MPV.EventObserver observer = new MPV.EventObserver() {
         public void eventProperty(String property) {}
-        public void eventProperty(String property, long value) {
-            Log.d(TAG, "prop " + property + " = " + value);
-            if ("duration".equals(property)) {
-                mDuration = value * 1000;
-                checkPrepared();
-            } else if ("time-pos".equals(property)) {
-                mPosition = value * 1000;
-            } else if ("demuxer-cache-time".equals(property)) {
-                mCacheEnd = value;
-            }
-        }
+public void eventProperty(String property, long value) {
+    Log.d(TAG, "prop " + property + " = " + value);
+    if ("duration".equals(property)) {
+        mDuration = value * 1000;
+        checkPrepared();
+    } else if ("time-pos".equals(property)) {
+        mPosition = value * 1000;
+    } else if ("demuxer-cache-time".equals(property)) {
+        mCacheEnd = value;
+    } else if ("dwidth".equals(property)) {
+        mVideoWidth = (int) value;
+        notifyVideoSizeIfReady();
+    } else if ("dheight".equals(property)) {
+        mVideoHeight = (int) value;
+        notifyVideoSizeIfReady();
+    }
+}
+private void notifyVideoSizeIfReady() {
+    if (!mVideoSizeNotified && mVideoWidth > 0 && mVideoHeight > 0 && mPlayerEventListener != null) {
+        mVideoSizeNotified = true;
+        Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
+        mainHandler.post(() -> {
+            mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
+        });
+    }
+}
         public void eventProperty(String property, double value) {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
@@ -96,49 +111,30 @@ public class MpvMediaPlayer extends AbstractPlayer {
         private void handleEvent(int eventId) {
             Log.d(TAG, "event: " + eventId);
             if (mpv == null) return;
-            if (eventId == MPV_EVENT_FILE_LOADED) {
-                Log.d(TAG, "FILE_LOADED -> observe");
-                mpv.observeProperty("time-pos", MPV_FORMAT_INT64);
-                mpv.observeProperty("duration", MPV_FORMAT_INT64);
-                mpv.observeProperty("demuxer-cache-time", MPV_FORMAT_INT64);
-                mpv.observeProperty("paused-for-cache", MPV_FORMAT_FLAG);
-                mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
+ if (eventId == MPV_EVENT_FILE_LOADED) {
+    Log.d(TAG, "FILE_LOADED -> observe");
+    mpv.observeProperty("time-pos", MPV_FORMAT_INT64);
+    mpv.observeProperty("duration", MPV_FORMAT_INT64);
+    mpv.observeProperty("demuxer-cache-time", MPV_FORMAT_INT64);
+    mpv.observeProperty("paused-for-cache", MPV_FORMAT_FLAG);
+    mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
+    mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
+    mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
-                // 尝试获取视频尺寸
-                try {
-                    Object w = mpv.getProperty("dwidth");
-                    Object h = mpv.getProperty("dheight");
-                    if (w instanceof Long && h instanceof Long) {
-                        mVideoWidth = ((Long) w).intValue();
-                        mVideoHeight = ((Long) h).intValue();
-                        Log.d(TAG, "video size from property: " + mVideoWidth + "x" + mVideoHeight);
-                    }
-                } catch (Exception e) {
-                    Log.d(TAG, "get video size failed: " + e.getMessage());
-                }
+    if (!mPrepared) {
+        if (mDuration <= 0) mDuration = 0;
+        mPrepared = true;
+        Log.d(TAG, "prepared by FILE_LOADED, duration=" + mDuration);
+        mainHandler.post(() -> {
+            if (mPlayerEventListener != null) {
+                mPlayerEventListener.onPrepared();
+                mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
+            }
+        });
+    }
 
-                // HLS 可能 duration=0，直接 prepared
-                if (!mPrepared) {
-                    if (mDuration <= 0) mDuration = 0;
-                    mPrepared = true;
-                    Log.d(TAG, "prepared by FILE_LOADED, duration=" + mDuration);
-                    mainHandler.post(() -> {
-                        if (mPlayerEventListener != null) {
-                            mPlayerEventListener.onPrepared();
-                            mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                            // 通知视频尺寸
-                            if (!mVideoSizeNotified && mVideoWidth > 0 && mVideoHeight > 0) {
-                                mVideoSizeNotified = true;
-                                mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
-                            }
-                        }
-                    });
-                }
-
-                // 确保开始播放（FILE_LOADED 后 mpv 可能内部 paused）
-                mpv.command("set", "pause", "no");
-
-            } else if (eventId == MPV_EVENT_END_FILE) {
+    mpv.command("set", "pause", "no");
+} else if (eventId == MPV_EVENT_END_FILE) {
                 Log.d(TAG, "END_FILE");
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
