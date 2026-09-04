@@ -118,38 +118,45 @@ public class MpvMediaPlayer extends AbstractPlayer {
         Log.d(TAG, "mpv initialized");
     }
 
-    public void setDataSource(String path, Map<String, String> headers) {
-        Log.d(TAG, "setDataSource: " + path);
-        mPrepared = false;
-        mDuration = 0;
-        mPosition = 0;
-        if (headers != null && !headers.isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            for (Map.Entry<String, String> e : headers.entrySet()) {
-                sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
-            }
-            mpv.setOptionString("http-header-fields", sb.toString());
+public void setDataSource(String path, Map<String, String> headers) {
+    Log.d(TAG, "setDataSource: " + path);
+    mPrepared = false;
+    mDuration = 0;
+    mPosition = 0;
+    if (headers != null && !headers.isEmpty()) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> e : headers.entrySet()) {
+            sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
         }
-        mpv.command(new String[]{"loadfile", path});
+        mpv.setOptionString("http-header-fields", sb.toString());
     }
+    // 关键改动：不用 new String[]{}，直接传可变参数
+    mpv.command("loadfile", path);
+}
+
+
 
     public void setDataSource(AssetFileDescriptor fd) {
         throw new UnsupportedOperationException("mpv: no AssetFileDescriptor");
     }
 
-    public void start() {
-        Log.d(TAG, "start");
-        mpv.command(new String[]{"set", "pause", "no"});
-    }
-    public void pause() {
-        Log.d(TAG, "pause");
-        mpv.command(new String[]{"set", "pause", "yes"});
-    }
-    public void stop() {
-        Log.d(TAG, "stop");
-        mpv.command(new String[]{"stop"});
-        mPrepared = false;
-    }
+public void start() {
+    Log.d(TAG, "start");
+    mpv.command("set", "pause", "no");
+}
+public void pause() {
+    Log.d(TAG, "pause");
+    mpv.command("set", "pause", "yes");
+}
+public void stop() {
+    Log.d(TAG, "stop");
+    mpv.command("stop");
+    mPrepared = false;
+}
+public void seekTo(long time) {
+    Log.d(TAG, "seekTo: " + time);
+    mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
+}
     public void prepareAsync() {}
     public void reset() {
         mpv.command(new String[]{"stop"});
@@ -157,25 +164,20 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
     public boolean isPlaying() { return mPrepared && !mPausedForCache; }
 
-    public void seekTo(long time) {
-        Log.d(TAG, "seekTo: " + time);
-        mpv.command(new String[]{"seek", String.valueOf(time / 1000.0), "absolute"});
+public void release() {
+    Log.d(TAG, "release");
+    if (mpv != null) {
+        mpv.command("stop");
+        mpv.removeObserver(observer);
+        mpv.detachSurface();
+        mpv.destroy();
+        mpv = null;
     }
-
-    public void release() {
-        Log.d(TAG, "release");
-        if (mpv != null) {
-            mpv.command(new String[]{"stop"});
-            mpv.removeObserver(observer);
-            mpv.detachSurface();
-            mpv.destroy();
-            mpv = null;
-        }
-        mPrepared = false;
-        mDuration = 0;
-        mPosition = 0;
-        mCacheEnd = 0;
-    }
+    mPrepared = false;
+    mDuration = 0;
+    mPosition = 0;
+    mCacheEnd = 0;
+}
 
     public void setSurface(Surface surface) {
         Log.d(TAG, "setSurface");
