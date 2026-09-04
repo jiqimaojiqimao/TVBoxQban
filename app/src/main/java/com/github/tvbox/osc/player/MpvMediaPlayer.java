@@ -1,485 +1,518 @@
 package com.github.tvbox.osc.player;
 
+import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import androidx.annotation.NonNull;
+import is.xyz.mpv.MPV;
+import is.xyz.mpv.MPVNode;
 
 import java.util.Map;
 
-import is.xyz.mpv.MPV;
-import is.xyz.mpv.MPVLib;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
+import xyz.doikki.videoplayer.util.PlayerUtils;
 
-/**
- * MPV Media Player for TVBox
- * 包名: is.xyz.mpv.MPV
- * 库: io.github.abdallahmehiz:mpv-android-lib:0.1.12
- */
-public class MpvMediaPlayer extends AbstractPlayer implements MPVLib.EventObserver {
+public class MpvMediaPlayer extends AbstractPlayer {
 
-    private static final String TAG = "MpvMediaPlayer";
+    private static final String TAG = "MPV";
 
-    // mpv event ids
-    private static final int MPV_EVENT_START_FILE = 6;
-    private static final int MPV_EVENT_END_FILE = 7;
-    private static final int MPV_EVENT_FILE_LOADED = 8;
-    private static final int MPV_EVENT_SEEK = 28;
-    private static final int MPV_EVENT_PLAYBACK_RESTART = 29;
+    private static final int MPV_EVENT_START_FILE        = 6;
+    private static final int MPV_EVENT_END_FILE          = 7;
+    private static final int MPV_EVENT_FILE_LOADED       = 8;
+    private static final int MPV_EVENT_SEEK              = 20;
+    private static final int MPV_EVENT_PLAYBACK_RESTART  = 21;
+
+    private static final int MPV_FORMAT_STRING = 1;
+    private static final int MPV_FORMAT_FLAG   = 3;
+    private static final int MPV_FORMAT_INT64  = 4;
+
+    static {
+        System.loadLibrary("avutil");
+        System.loadLibrary("swresample");
+        System.loadLibrary("swscale");
+        System.loadLibrary("avcodec");
+        System.loadLibrary("avformat");
+    }
 
     private MPV mpv;
-    private Surface mLastSurface;
-    private boolean mSurfaceAttached = false;
-    private boolean mPrepared = false;
-    private boolean mPausedByUser = false;
-    private boolean mReleased = false;
-    private boolean mSeeking = false;
-    private long mDuration = 0;
+    private Context context;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    // ★ 进度：全程保留，不被任何重置/END_FILE 清零，保证上层随时能读到真实进度
     private long mPosition = 0;
-    private boolean mBuffering = false;
 
-    // 内部状态，映射上层 STATE_*
-    private int mInternalState = STATE_IDLE;
+    private long mDuration = 0;
+    private long mCacheEnd = 0;
+    private int mVideoWidth = 0;
+    private int mVideoHeight = 0;
 
-    public MpvMediaPlayer() {
-    }
+    private boolean mPrepared = false;
+    private boolean mVideoSizeNotified = false;
+    private boolean mPausedByUser = false;
+    private boolean mSeeking = false;
+    private boolean mBufferingShown = false;
+    private long mBufferingStartTime = 0;
 
-    // ===================== 状态管理 =====================
+    private volatile boolean mReleasing = false;
+    private volatile boolean mReleased = true; // ★ 初始即 true，未创建时视为已释放
 
-    private void setState(int state) {
-        mInternalState = state;
-    }
+    // ★ Surface 管理：用一个显式的状态机，杜绝 aimagereader 拿已销毁 Surface
+    private enum SurfaceState { DETACHED, ATTACHED }
+    private SurfaceState mSurfaceState = SurfaceState.DETACHED;
+    private Surface mPendingSurface = null; // mpv 未就绪时缓存的 Surface
 
-    private boolean isInState(int... states) {
-        for (int s : states) {
-            if (mInternalState == s) return true;
-        }
-        return false;
-    }
+    private boolean mIsLive = false;
 
-    // ===================== 生命周期 =====================
-
-    @Override
-    public void initPlayer() {
-        if (mReleased) {
-            mReleased = false;
-        }
-
-        // 如果已有实例，先彻底销毁
-        if (mpv != null) {
-            try {
-                mpv.detachSurface();
-            } catch (Exception ignored) {}
-            try {
-                mpv.destroy();
-            } catch (Exception ignored) {}
-            mpv = null;
-        }
-
-        mpv = new MPV();
-        mpv.create(null); // 传 null 用默认 config
-        mpv.init();
-        mpv.addObserver(this);
-
-        // 基础选项
-        mpv.setOptionString("vo", "gpu-next");
-        mpv.setOptionString("gpu-context", "android");
-        mpv.setOptionString("hwdec", "mediacodec");
-        // ★ 关键：禁用 mediacodec surface callbacks，避免 Surface 重建时 assert 崩溃
-        mpv.setOptionString("mediacodec-surface-callbacks", "no");
-        mpv.setOptionString("ao", "audiotrack");
-        mpv.setOptionString("pause", "yes");
-
-        mPrepared = false;
-        mPausedByUser = false;
-        mSeeking = false;
-        mSurfaceAttached = false;
-        mBuffering = false;
-        mDuration = 0;
-        // ★ mPosition 不清零，保留给进度恢复
-        setState(STATE_IDLE);
-    }
-
-    @Override
-    public void setDataSource(String path, Map<String, String> headers) {
-        if (mpv == null || mReleased) return;
-
-        // 如果已有 Surface，先 detach，避免 loadfile 时 mediacodec 绑到旧 Surface
-        doDetachSurface();
-
-        mPrepared = false;
-        mSeeking = false;
-        mBuffering = false;
-        // ★ 不清 mPosition，保留上次进度
-        setState(STATE_PREPARING);
-
-        // 设置 start position（如果有）
-        long startPos = getStartPosition();
-        if (startPos > 0) {
-            mpv.setOptionString("start", String.valueOf(startPos / 1000.0));
-        }
-
-        mpv.command("loadfile", path);
-    }
-
-    @Override
-    public void setDataSource(AssetFileDescriptor fd) {
-        // 不支持，忽略
-    }
-
-    @Override
-    public void start() {
-        if (mpv == null || mReleased) return;
-        if (!mPrepared) return;
-
-        mpv.setPause(false);
-        mPausedByUser = false;
-        setState(STATE_PLAYING);
-    }
-
-    @Override
-    public void pause() {
-        if (mpv == null || mReleased) return;
-        if (!mPrepared) return;
-
-        mpv.setPause(true);
-        mPausedByUser = true;
-        setState(STATE_PAUSED);
-    }
-
-    @Override
-    public void stop() {
-        if (mpv == null || mReleased) return;
-
-        mpv.setPause(true);
-        mpv.command("stop");
-        mPrepared = false;
-        mPausedByUser = false;
-        mSeeking = false;
-        mBuffering = false;
-        // ★ 不清 mPosition
-        setState(STATE_IDLE);
-    }
-
-    @Override
-    public void prepareAsync() {
-        // loadfile 已经在 setDataSource 里做了，这里不需要额外操作
-    }
-
-    @Override
-    public void reset() {
-        if (mpv != null && !mReleased) {
-            doDetachSurface();
-            mpv.command("stop");
-        }
-        mPrepared = false;
-        mPausedByUser = false;
-        mSeeking = false;
-        mBuffering = false;
-        // ★ 不清 mPosition
-        setState(STATE_IDLE);
-    }
-
-    @Override
-    public boolean isPlaying() {
-        // 只有真正在播放状态才算 playing
-        return mInternalState == STATE_PLAYING;
-    }
-
-    @Override
-    public void seekTo(long time) {
-        if (mpv == null || mReleased) return;
-        if (!mPrepared) return;
-
-        mSeeking = true;
-        notifyBufferingStart();
-        mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
-    }
-
-    @Override
-    public void release() {
-        mReleased = true;
-        if (mpv != null) {
-            try {
-                doDetachSurface();
-            } catch (Exception ignored) {}
-            try {
-                mpv.removeObserver(this);
-            } catch (Exception ignored) {}
-            try {
-                mpv.destroy();
-            } catch (Exception ignored) {}
-            mpv = null;
-        }
-        mPrepared = false;
-        mPausedByUser = false;
-        mSeeking = false;
-        mSurfaceAttached = false;
-        mBuffering = false;
-        mLastSurface = null;
-        // ★ 不清 mPosition，让上层 saveProgress() 能读到
-        setState(STATE_IDLE);
-    }
-
-    @Override
-    public long getCurrentPosition() {
-        // 返回缓存的位置，observer 在播放期间实时更新
-        return mPosition;
-    }
-
-    @Override
-    public long getDuration() {
-        return mDuration;
-    }
-
-    @Override
-    public int getBufferedPercentage() {
-        return 0; // mpv 不提供简单的 buffered percentage
-    }
-
-    @Override
-    public void setSurface(Surface surface) {
-        if (mpv == null || mReleased) {
-            mLastSurface = surface;
-            return;
-        }
-
-        if (surface == null) {
-            // ★ Surface 被销毁（后台/刷新），主动 detach + stop
-            doDetachSurface();
-            // 不 stop 播放，只 detach Surface，让 mpv 的 vo 释放引用
-            // 前台回来后重新 setSurface 会重新 attach
-            return;
-        }
-
-        // 同一个 Surface 且已 attach，不需要重复操作
-        if (mSurfaceAttached && surface == mLastSurface) {
-            return;
-        }
-
-        // 先 detach 旧的
-        if (mSurfaceAttached) {
-            doDetachSurface();
-        }
-
-        // attach 新的
-        doAttachSurface(surface);
-    }
-
-    @Override
-    public void setDisplay(SurfaceHolder holder) {
-        if (holder != null) {
-            setSurface(holder.getSurface());
-        } else {
-            setSurface(null);
-        }
-    }
-
-    @Override
-    public void setVolume(float v1, float v2) {
-        if (mpv == null || mReleased) return;
-        int vol = (int) (v1 * 100);
-        mpv.setOptionString("ao-volume", String.valueOf(vol));
-    }
-
-    @Override
-    public void setLooping(boolean isLooping) {
-        if (mpv == null || mReleased) return;
-        mpv.setOptionString("loop-file", isLooping ? "yes" : "no");
-    }
-
-    @Override
-    public void setOptions() {
-        // 由 initPlayer 统一设置
-    }
-
-    @Override
-    public void setSpeed(float speed) {
-        if (mpv == null || mReleased) return;
-        mpv.setOptionString("speed", String.valueOf(speed));
-    }
-
-    @Override
-    public float getSpeed() {
-        return 1.0f;
-    }
-
-    @Override
-    public long getTcpSpeed() {
-        return 0;
-    }
-
-    @Override
-    public int getAudioSessionId() {
-        return 0;
-    }
-
-    // ===================== Surface 操作 =====================
-
-    private void doAttachSurface(Surface surface) {
-        if (mpv == null || mReleased || surface == null) return;
-        try {
-            mpv.attachSurface(surface);
-            mLastSurface = surface;
-            mSurfaceAttached = true;
-        } catch (Exception e) {
-            // ignore
-        }
-    }
-
-    private void doDetachSurface() {
-        if (mpv == null || mReleased) return;
-        if (!mSurfaceAttached) return;
-        try {
-            mpv.detachSurface();
-        } catch (Exception ignored) {}
-        mSurfaceAttached = false;
-        mLastSurface = null;
-    }
-
-    // ===================== Buffering 通知 =====================
+    /* ========================= 缓冲节流 ========================= */
 
     private void notifyBufferingStart() {
-        if (mBuffering) return;
-        mBuffering = true;
-        if (mPlayerEventListener != null) {
-            mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
+        if (!mBufferingShown && mPlayerEventListener != null && !mReleased) {
+            mBufferingStartTime = System.currentTimeMillis();
+            mBufferingShown = true;
+            mainHandler.post(() -> {
+                if (mPlayerEventListener != null && !mReleased) {
+                    mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
+                }
+            });
         }
     }
 
     private void notifyBufferingEnd() {
-        if (!mBuffering) return;
-        mBuffering = false;
-        if (mPlayerEventListener != null) {
-            mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, 0);
+        if (mBufferingShown && mPlayerEventListener != null && !mReleased) {
+            long dur = System.currentTimeMillis() - mBufferingStartTime;
+            if (dur < 300) {
+                // 极短抖动（切比例/重建）不显示
+                mBufferingShown = false;
+                return;
+            }
+            mBufferingShown = false;
+            mainHandler.post(() -> {
+                if (mPlayerEventListener != null && !mReleased) {
+                    mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
+                }
+            });
         }
     }
 
-    // ===================== mpv 事件回调 =====================
+    /* ========================= Observer ========================= */
 
-    @Override
-    public void event(int eventId) {
-        if (mReleased) return;
-
-        switch (eventId) {
-            case MPV_EVENT_START_FILE:
-                mPrepared = false;
-                mSeeking = false;
-                mBuffering = false;
-                setState(STATE_PREPARING);
-                break;
-
-            case MPV_EVENT_FILE_LOADED:
-                // observe 属性
-                try {
-                    mpv.observeProperty("time-pos", MPVLib.FORMAT_INT64);
-                    mpv.observeProperty("duration", MPVLib.FORMAT_INT64);
-                    mpv.observeProperty("pause", MPVLib.FORMAT_FLAG);
-                } catch (Exception ignored) {}
-
-                if (!mPrepared) {
-                    mPrepared = true;
-                    setState(STATE_PREPARED);
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onPrepared();
-                    }
+    private final MPV.EventObserver observer = new MPV.EventObserver() {
+        public void eventProperty(String property) {}
+        public void eventProperty(String property, long value) {
+            if (mpv == null || mReleased) return;
+            if ("duration".equals(property)) {
+                mDuration = value * 1000;
+            } else if ("time-pos".equals(property)) {
+                // ★ END_FILE 后 mPrepared=false，此处不再更新，保留最后一次真实进度
+                if (mPrepared) {
+                    mPosition = value * 1000;
                 }
-                // FILE_LOADED 后如果 Surface 已准备好，确保 attach
-                if (mLastSurface != null && !mSurfaceAttached) {
-                    doAttachSurface(mLastSurface);
-                }
-                // 应用 start position
-                long startPos = getStartPosition();
-                if (startPos > 0 && !isStartPositionApplied()) {
-                    mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
-                    markStartPositionApplied();
-                }
-                break;
-
-            case MPV_EVENT_END_FILE:
-                // ★ 不清 mPosition，保留给进度恢复
-                if (mPlayerEventListener != null) {
-                    mPlayerEventListener.onCompletion();
-                }
-                mPrepared = false;
-                mPausedByUser = false;
-                mSeeking = false;
-                mBuffering = false;
-                setState(STATE_PLAYBACK_COMPLETED);
-                break;
-
-            case MPV_EVENT_SEEK:
-                mSeeking = true;
-                notifyBufferingStart();
-                break;
-
-            case MPV_EVENT_PLAYBACK_RESTART:
-                // ★ 第一帧真正渲染出来
-                if (!mSeeking) {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                    }
-                }
-                if (mSeeking) {
-                    mSeeking = false;
-                    notifyBufferingEnd();
-                }
-                if (mPrepared && !mPausedByUser) {
-                    setState(STATE_PLAYING);
-                }
-                break;
+            } else if ("demuxer-cache-time".equals(property)) {
+                mCacheEnd = value;
+            } else if ("dwidth".equals(property)) {
+                mVideoWidth = (int) value;
+                notifyVideoSizeIfReady();
+            } else if ("dheight".equals(property)) {
+                mVideoHeight = (int) value;
+                notifyVideoSizeIfReady();
+            }
         }
-    }
-
-    @Override
-    public void eventProperty(String property, long value) {
-        if (mReleased) return;
-
-        switch (property) {
-            case "time-pos":
-                mPosition = value * 1000;
-                break;
-            case "duration":
-                if (value > 0) {
-                    mDuration = value * 1000;
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onVideoSizeChanged(1920, 818); // mpv 不直接给尺寸，用 observer 的
-                    }
-                }
-                break;
-        }
-    }
-
-    @Override
-    public void eventProperty(String property, boolean value) {
-        if (mReleased) return;
-
-        if ("pause".equals(property)) {
-            if (value) {
-                // mpv 内部暂停了
-                if (!mSeeking && mPrepared) {
-                    setState(STATE_PAUSED);
-                }
-            } else {
-                // mpv 内部恢复了
-                if (!mSeeking && mPrepared) {
-                    setState(STATE_PLAYING);
+        public void eventProperty(String property, double value) {
+            if (mpv == null || mReleased) return;
+            if ("duration".equals(property)) {
+                mDuration = (long)(value * 1000);
+            } else if ("time-pos".equals(property)) {
+                if (mPrepared) {
+                    mPosition = (long)(value * 1000);
                 }
             }
         }
-    }
+        public void eventProperty(String property, boolean value) {
+            if (mpv == null || mReleased) return;
+            if ("paused-for-cache".equals(property)) {
+                Log.d(TAG, "paused-for-cache=" + value);
+                if (value) {
+                    notifyBufferingStart();
+                } else {
+                    notifyBufferingEnd();
+                }
+            }
+        }
+        public void eventProperty(String property, String value) {
+            if (mpv == null || mReleased) return;
+            if ("end-file-reason".equals(property) && "error".equals(value)) {
+                Log.e(TAG, "end-file-reason=error");
+                mainHandler.post(() -> {
+                    if (mPlayerEventListener != null && !mReleased) {
+                        mPlayerEventListener.onError();
+                    }
+                });
+            }
+        }
+        public void eventProperty(String property, MPVNode node) {}
 
-    @Override
-    public void eventProperty(String property, String value) {
-        // 不需要处理
-    }
+        public void event(int eventId) { handleEvent(eventId); }
+        public void event(int eventId, MPVNode node) { handleEvent(eventId); }
 
-    @Override
-    public void eventProperty(String property, double value) {
-        if (mReleased) return;
+        private void handleEvent(int eventId) {
+            Log.d(TAG, "event: " + eventId);
+            if (mpv == null || mReleased) return;
 
-        if ("duration".equals(property)) {
-            mDuration = (long)(value * 1000);
+            if (eventId == MPV_EVENT_FILE_LOADED) {
+                Log.d(TAG, "FILE_LOADED");
+                mpv.observeProperty("time-pos", MPV_FORMAT_INT64);
+                mpv.observeProperty("duration", MPV_FORMAT_INT64);
+                mpv.observeProperty("demuxer-cache-time", MPV_FORMAT_INT64);
+                mpv.observeProperty("paused-for-cache", MPV_FORMAT_FLAG);
+                mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
+                mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
+                mpv.observeProperty("dheight", MPV_FORMAT_INT64);
+
+                // ★ 只在 FILE_LOADED 发 onPrepared（唯一入口，不提前发）
+                if (!mPrepared) {
+                    mPrepared = true;
+                    Log.d(TAG, "prepared, duration=" + mDuration);
+                    mainHandler.post(() -> {
+                        if (mPlayerEventListener != null && !mReleased) {
+                            mPlayerEventListener.onPrepared();
+                        }
+                    });
+                }
+
+                // ★ startPosition 在这里应用（onPrepared 之前 seek，避免多余缓冲状态）
+                final long startPos = getStartPosition();
+                if (startPos > 0 && !isStartPositionApplied()) {
+                    Log.d(TAG, "apply startPosition: " + startPos);
+                    mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
+                    markStartPositionApplied();
+                }
+
+                notifyBufferingEnd();
+
+                if (!mPausedByUser) {
+                    mpv.command("set", "pause", "no");
+                }
+
+            } else if (eventId == MPV_EVENT_PLAYBACK_RESTART) {
+                Log.d(TAG, "PLAYBACK_RESTART, mSeeking=" + mSeeking);
+                // ★★★ 真正的"第一帧渲染出来"信号，在此才发 RENDERING_START
+                // ★★★ 这样上层收到时 isPlaying() 必然为 true，不会误显示暂停图标
+                if (!mSeeking) {
+                    mainHandler.post(() -> {
+                        if (mPlayerEventListener != null && !mReleased) {
+                            mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
+                        }
+                    });
+                } else {
+                    mSeeking = false;
+                    notifyBufferingEnd();
+                }
+            } else if (eventId == MPV_EVENT_SEEK) {
+                Log.d(TAG, "SEEK -> BUFFERING_START");
+                mSeeking = true;
+                notifyBufferingStart();
+            } else if (eventId == MPV_EVENT_END_FILE) {
+                Log.d(TAG, "END_FILE, isLive=" + mIsLive);
+                mPrepared = false;
+                mSeeking = false;
+                // ★ mPosition 保留不清零；直播流不回调 completion
+                if (!mIsLive && mPlayerEventListener != null && !mReleased) {
+                    mainHandler.post(() -> {
+                        if (mPlayerEventListener != null && !mReleased) {
+                            mPlayerEventListener.onCompletion();
+                        }
+                    });
+                }
+            }
+        }
+    };
+
+    private void notifyVideoSizeIfReady() {
+        if (!mVideoSizeNotified && mVideoWidth > 0 && mVideoHeight > 0
+                && mPlayerEventListener != null && !mReleased) {
+            mVideoSizeNotified = true;
+            Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
+            mainHandler.post(() -> {
+                if (mPlayerEventListener != null && !mReleased) {
+                    mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
+                }
+            });
         }
     }
+
+    /* ========================= Surface 生命周期 ========================= */
+
+    /**
+     * ★★★ 核心：所有 Surface 操作都走这一个 attach 入口，保证 mpv 存在 + 状态正确
+     * 后台→前台 / 刷新 时 Surface 重建，必须在这里和 mpv 的解码器正确同步。
+     */
+    private void doAttachSurface(Surface surface) {
+        if (surface == null) return;
+        if (mpv == null || mReleased) {
+            // mpv 还没创建（initPlayer 之前 setDisplay 就来了），先缓存
+            mPendingSurface = surface;
+            Log.d(TAG, "doAttachSurface: mpv not ready, pending");
+            return;
+        }
+        if (mSurfaceState == SurfaceState.ATTACHED) {
+            // 已经 attach 的是同一个 Surface，跳过（重复 attach 会导致 aimagereader 异常）
+            if (surface.equals(mPendingSurface)) {
+                return;
+            }
+            // 换了新的 Surface，先 detach 旧的再 attach 新的
+            try { mpv.detachSurface(); } catch (Exception ignored) {}
+        }
+        try {
+            Log.d(TAG, "doAttachSurface: attachSurface");
+            mpv.attachSurface(surface);
+            mSurfaceState = SurfaceState.ATTACHED;
+            mPendingSurface = surface;
+        } catch (Exception e) {
+            Log.e(TAG, "attachSurface failed", e);
+            mSurfaceState = SurfaceState.DETACHED;
+        }
+    }
+
+    /**
+     * ★ 后台/销毁时调：彻底解绑，让 mediacodec / aimagereader 释放 Surface 引用。
+     * 关键：不在 stop/loadfile 前后反复 attach/detach（那正是造成崩溃的原因）。
+     */
+    private void doDetachSurface() {
+        if (mpv != null && !mReleased && mSurfaceState == SurfaceState.ATTACHED) {
+            try {
+                Log.d(TAG, "doDetachSurface");
+                mpv.detachSurface();
+            } catch (Exception ignored) {}
+        }
+        mSurfaceState = SurfaceState.DETACHED;
+        // ★ 注意：保留 mPendingSurface，重建时可直接复用
+    }
+
+    public void setSurface(Surface surface) {
+        // surface 为 null 表示宿主要求解绑（如进入后台、View 销毁）
+        if (surface == null) {
+            doDetachSurface();
+            return;
+        }
+        doAttachSurface(surface);
+    }
+
+    public void setDisplay(SurfaceHolder holder) {
+        setSurface(holder != null ? holder.getSurface() : null);
+    }
+
+    /* ========================= 生命周期 ========================= */
+
+    public MpvMediaPlayer(Context context) {
+        this.context = context.getApplicationContext();
+    }
+
+    public void initPlayer() {
+        if (mReleasing) {
+            Log.d(TAG, "initPlayer: release in progress, skip");
+            return;
+        }
+        // ★ 不复用旧实例：旧的 mediacodec/aimagereader 一旦绑定过 Surface，
+        // ★ 在 Surface 重建时极易出现 aimagereader acquireLatestImage 崩溃。
+        // ★ 统一 destroy 旧的，创建全新实例，最稳。
+        if (mpv != null) {
+            Log.d(TAG, "initPlayer: destroy old instance before create new");
+            try { mpv.command("stop"); } catch (Exception ignored) {}
+            try { mpv.removeObserver(observer); } catch (Exception ignored) {}
+            try { mpv.detachSurface(); } catch (Exception ignored) {}
+            try { mpv.destroy(); } catch (Exception ignored) {}
+            mpv = null;
+        }
+
+        Log.d(TAG, "initPlayer: creating new instance");
+        mpv = new MPV();
+        mpv.create(context);
+        mpv.setOptionString("hwdec", "mediacodec");
+        mpv.setOptionString("ao", "audiotrack");
+        mpv.setOptionString("keep-open", "yes");
+        mpv.setOptionString("loop-file", "no");
+        // ★ 防止 mediacodec 占用 Surface 过久导致重建失败
+        mpv.setOptionString("mediacodec-surface-callbacks", "no");
+        mpv.init();
+        mpv.addObserver(observer);
+
+        mReleased = false;
+        mPrepared = false;
+        mVideoSizeNotified = false;
+        mPausedByUser = false;
+        mSeeking = false;
+        mBufferingShown = false;
+        mSurfaceState = SurfaceState.DETACHED;
+        mBufferingStartTime = 0;
+
+        // ★ 如果有缓存的 Surface（setDisplay 先于 initPlayer 到来），立即 attach
+        if (mPendingSurface != null) {
+            doAttachSurface(mPendingSurface);
+        }
+        Log.d(TAG, "mpv initialized, surfaceState=" + mSurfaceState);
+    }
+
+    public void setDataSource(String path, Map<String, String> headers) {
+        Log.d(TAG, "setDataSource: " + path);
+        mPrepared = false;
+        mVideoSizeNotified = false;
+        mPausedByUser = false;
+        mSeeking = false;
+        mBufferingShown = false;
+        mDuration = 0;
+        mCacheEnd = 0;
+        // ★ mPosition 不清零 —— 保留上次播放进度供上层读取/恢复
+
+        mIsLive = (path != null) && (path.contains("proxyM3u8") || path.contains("live") || path.contains(".m3u8"));
+
+        notifyBufferingStart();
+
+        if (headers != null && !headers.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> e : headers.entrySet()) {
+                sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
+            }
+            mpv.setOptionString("http-header-fields", sb.toString());
+        }
+
+        // ★★★ 关键：loadfile 之前如果已有 Surface attach，先 detach
+        // ★★★ 让 mediacodec/aimagereader 在打开新流前彻底释放旧 Surface 引用
+        // ★★★ 这是修复"刷新/重播应用重启"的根本：aimagereader 不再对已销毁 Surface acquireLatestImage
+        if (mSurfaceState == SurfaceState.ATTACHED) {
+            Log.d(TAG, "setDataSource: detach surface before loadfile");
+            doDetachSurface();
+        }
+
+        mpv.command("loadfile", path);
+
+        // ★ loadfile 后重新 attach（用缓存的 Surface）
+        // ★ 必须在主线程外也要保证 mpv 已 init；此处已在 initPlayer 之后，安全
+        if (mPendingSurface != null) {
+            doAttachSurface(mPendingSurface);
+        }
+    }
+
+    public void setDataSource(AssetFileDescriptor fd) {
+        throw new UnsupportedOperationException("mpv: no AssetFileDescriptor");
+    }
+
+    public void start() {
+        Log.d(TAG, "start");
+        mPausedByUser = false;
+        if (mpv != null && !mReleased) mpv.command("set", "pause", "no");
+    }
+
+    public void pause() {
+        Log.d(TAG, "pause");
+        mPausedByUser = true;
+        if (mpv != null && !mReleased) mpv.command("set", "pause", "yes");
+    }
+
+    public void stop() {
+        Log.d(TAG, "stop");
+        if (mpv != null && !mReleased) mpv.command("stop");
+        mPrepared = false;
+        mPausedByUser = false;
+        mSeeking = false;
+        // ★ 不清 mPosition
+    }
+
+    public void prepareAsync() {}
+
+    public void reset() {
+        if (mpv != null && !mReleased) mpv.command("stop");
+        mPrepared = false;
+        mPausedByUser = false;
+        mSeeking = false;
+        mBufferingShown = false;
+        mDuration = 0;
+        mCacheEnd = 0;
+        mVideoSizeNotified = false;
+        // ★ 不清 mPosition / mPendingSurface
+    }
+
+    public boolean isPlaying() {
+        return mPrepared && !mPausedByUser && !mReleased;
+    }
+
+    public void seekTo(long time) {
+        Log.d(TAG, "seekTo: " + time);
+        if (mpv != null && !mReleased) {
+            notifyBufferingStart();
+            mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
+        }
+    }
+
+    public void release() {
+        if (mReleasing) return;
+        mReleasing = true;
+        Log.d(TAG, "release (full destroy), lastPosition=" + mPosition);
+        // ★ 解绑 Surface，让 mediacodec/aimagereader 先释放，再 destroy mpv
+        doDetachSurface();
+        if (mpv != null) {
+            try { mpv.command("stop"); } catch (Exception ignored) {}
+            try { mpv.removeObserver(observer); } catch (Exception ignored) {}
+            try { mpv.destroy(); } catch (Exception ignored) {}
+            mpv = null;
+        }
+        mReleased = true;
+        mPendingSurface = null;
+        mSurfaceState = SurfaceState.DETACHED;
+        mReleasing = false;
+    }
+
+    public void setVolume(float l, float r) {
+        if (mpv != null && !mReleased) {
+            mpv.command("set", "ao-volume", String.valueOf((int)((l + r) / 2 * 100)));
+        }
+    }
+
+    public void setLooping(boolean loop) {
+        if (mpv != null && !mReleased) {
+            mpv.setOptionString("loop", loop ? "inf" : "no");
+        }
+    }
+
+    public void setOptions() {}
+
+    public void setSpeed(float speed) {
+        if (mpv != null && !mReleased) {
+            mpv.command("set", "speed", String.valueOf(speed));
+        }
+    }
+
+    public float getSpeed() { return 1.0f; }
+
+    public long getTcpSpeed() {
+        return PlayerUtils.getNetSpeed(context);
+    }
+
+    public int getAudioSessionId() { return 0; }
+
+    public long getDuration() { return mDuration; }
+
+    /**
+     * ★ 进度：mpv 存活时实时读，已释放则返回最后一次缓存的真实位置。
+     * 上层（VideoView）在 release 前或 onPause 时读此值保存进度，永远不为 0。
+     */
+public long getCurrentPosition() {
+        return mPosition;
+    }
+
+    public int getBufferedPercentage() {
+        if (mDuration > 0 && mCacheEnd > 0) {
+            return (int)Math.min(100, mCacheEnd * 1000 / mDuration);
+        }
+        return 0;
+    }
+
+    public void selectAudioTrack(int aid) { if (mpv != null && !mReleased) mpv.command("set", "aid", String.valueOf(aid)); }
+    public void selectSubtitleTrack(int sid) { if (mpv != null && !mReleased) mpv.command("set", "sid", String.valueOf(sid)); }
+    public void disableSubtitle() { if (mpv != null && !mReleased) mpv.command("set", "sid", "no"); }
+    public void addSubtitleFile(String p) { if (mpv != null && !mReleased) mpv.command("sub-add", p); }
+    public void selectVideoTrack(int vid) { if (mpv != null && !mReleased) mpv.command("set", "vid", String.valueOf(vid)); }
 }
