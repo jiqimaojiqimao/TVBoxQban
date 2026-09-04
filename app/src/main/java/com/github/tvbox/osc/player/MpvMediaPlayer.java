@@ -75,12 +75,17 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private void notifyBufferingEnd() {
         if (mBufferingShown && mPlayerEventListener != null && !mReleased) {
             long bufferingDuration = System.currentTimeMillis() - mBufferingStartTime;
-            mBufferingShown = false;
-            // 短于 300ms 的抖动（切比例/大小窗/重建）不显示
             if (bufferingDuration < 300) {
                 Log.d(TAG, "buffering too short (" + bufferingDuration + "ms), ignoring");
+                mBufferingShown = false;
                 return;
             }
+            if (bufferingDuration < 1500 && mPosition < 500) {
+                Log.d(TAG, "buffering false alarm, ignoring");
+                mBufferingShown = false;
+                return;
+            }
+            mBufferingShown = false;
             mainHandler.post(() -> {
                 if (mPlayerEventListener != null && !mReleased) {
                     mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
@@ -97,8 +102,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if (mpv == null || mReleased) return;
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
-                // ★ 不再调 checkPrepared()，等 FILE_LOADED 统一发 onPrepared
             } else if ("time-pos".equals(property)) {
+                // ★ END_FILE 后 mpv 内部 time-pos 变 0，不再覆盖真实进度
+                if (!mPrepared) return;
                 mPosition = value * 1000;
             } else if ("demuxer-cache-time".equals(property)) {
                 mCacheEnd = value;
@@ -115,6 +121,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
+                if (!mPrepared) return;
                 mPosition = (long)(value * 1000);
             }
         }
@@ -159,7 +166,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
-                // ★ 只在 FILE_LOADED 时发 onPrepared 和 RENDERING_START，且只发一次
                 if (!mPrepared) {
                     mPrepared = true;
                     Log.d(TAG, "prepared by FILE_LOADED, duration=" + mDuration);
@@ -181,6 +187,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 Log.d(TAG, "END_FILE, isLive=" + mIsLive + ", surfaceAttached=" + mSurfaceAttached);
                 mPrepared = false;
                 mSeeking = false;
+                // ★ mPosition 不再被清 0，observer 里 time-pos 也不再更新（因为 mPrepared=false）
                 if (mIsLive) {
                     Log.d(TAG, "live stream END_FILE ignored");
                 } else if (mSurfaceAttached && mPlayerEventListener != null && !mReleased) {
@@ -256,11 +263,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mBufferingShown = false;
         mSurfaceAttached = true;
         mBufferingStartTime = 0;
-        mDuration = 0;
-        mPosition = 0;
-        mCacheEnd = 0;
-        mVideoWidth = 0;
-        mVideoHeight = 0;
+        // ★ 不重置 mPosition / mDuration
         Log.d(TAG, "mpv initialized");
     }
 
@@ -272,7 +275,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mSeeking = false;
         mBufferingShown = false;
         mDuration = 0;
-        mPosition = 0;
+        // ★ mPosition 不清零
 
         mIsLive = (path != null) && (path.contains("proxyM3u8") || path.contains("live") || path.contains(".m3u8"));
 
@@ -315,6 +318,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPrepared = false;
         mPausedByUser = false;
         mSeeking = false;
+        // ★ 不清 mPosition
     }
 
     public void prepareAsync() {}
@@ -326,9 +330,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mSeeking = false;
         mBufferingShown = false;
         mDuration = 0;
-        mPosition = 0;
         mCacheEnd = 0;
         mVideoSizeNotified = false;
+        // ★ 不清 mPosition
     }
 
     public boolean isPlaying() {
@@ -347,6 +351,14 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (mReleasing) return;
         mReleasing = true;
         Log.d(TAG, "release (full destroy)");
+        // ★ 释放前读一次真实位置缓存（此时 mpv 还活着）
+        if (mpv != null) {
+            try {
+                mPosition = (long)(mpv.getInt("time-pos") * 1000);
+            } catch (Exception e) {
+                Log.d(TAG, "release: get time-pos failed, keeping cached mPosition=" + mPosition);
+            }
+        }
         if (mpv != null) {
             try { mpv.command("stop"); } catch (Exception ignored) {}
             try { mpv.removeObserver(observer); } catch (Exception ignored) {}
@@ -377,7 +389,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public void setVolume(float l, float r) {
-        if (mpv != null && !mReleased) mpv.command("set", "ao-volume", String.valueOf((int)((l+r)/2 * 100));
+        if (mpv != null && !mReleased) mpv.command("set", "ao-volume", String.valueOf((int)((l + r) / 2 * 100)));
     }
 
     public void setLooping(boolean loop) {
@@ -399,7 +411,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public int getAudioSessionId() { return 0; }
 
     public long getDuration() { return mDuration; }
-    public long getCurrentPosition() { return mPosition; }
+
+    public long getCurrentPosition() {
+        return mPosition;
+    }
 
     public int getBufferedPercentage() {
         if (mDuration > 0 && mCacheEnd > 0) return (int)Math.min(100, mCacheEnd * 1000 / mDuration);
