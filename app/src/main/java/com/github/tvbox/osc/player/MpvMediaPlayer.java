@@ -187,7 +187,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 Log.d(TAG, "END_FILE, isLive=" + mIsLive + ", surfaceAttached=" + mSurfaceAttached);
                 mPrepared = false;
                 mSeeking = false;
-                // ★ mPosition 不再被清 0，observer 里 time-pos 也不再更新（因为 mPrepared=false）
+                // ★ mPosition 保留，不被清 0
                 if (mIsLive) {
                     Log.d(TAG, "live stream END_FILE ignored");
                 } else if (mSurfaceAttached && mPlayerEventListener != null && !mReleased) {
@@ -318,7 +318,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPrepared = false;
         mPausedByUser = false;
         mSeeking = false;
-        // ★ 不清 mPosition
     }
 
     public void prepareAsync() {}
@@ -350,15 +349,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void release() {
         if (mReleasing) return;
         mReleasing = true;
-        Log.d(TAG, "release (full destroy)");
-        // ★ 释放前读一次真实位置缓存（此时 mpv 还活着）
-        if (mpv != null) {
-            try {
-                mPosition = (long)(mpv.getInt("time-pos") * 1000);
-            } catch (Exception e) {
-                Log.d(TAG, "release: get time-pos failed, keeping cached mPosition=" + mPosition);
-            }
-        }
+        Log.d(TAG, "release (full destroy), lastPosition=" + mPosition);
+        // ★ mPosition 已经在 observer 里实时更新着，release 时直接用缓存值
+        // ★ 不需要再读 mpv.getInt()，直接保留 mPosition 即可
         if (mpv != null) {
             try { mpv.command("stop"); } catch (Exception ignored) {}
             try { mpv.removeObserver(observer); } catch (Exception ignored) {}
