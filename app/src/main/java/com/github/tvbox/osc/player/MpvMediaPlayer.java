@@ -54,6 +54,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
     // ★ UA 常量
     private static final String UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
+    // ★ seek 锁定
+    private boolean mSeekLock = false;
+    private long mSeekTarget = 0;
+
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
         if (mPlayerEventListener != null) {
@@ -102,7 +106,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
-                if (mPrepared) {
+                if (mPrepared && !mSeekLock) {
                     mPosition = (long)(value * 1000);
                 }
             }
@@ -163,6 +167,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
+                // ★ seek 完成，解锁
+                mSeekLock = false;
                 notifyBufferingEnd();
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
@@ -178,6 +184,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 Log.d(TAG, "END_FILE");
                 mPrepared = false;
                 mPaused = false;
+                mSeekLock = false;
+                mSeekTarget = 0;
                 mVideoSizeNotified = false;
                 if (mPlayerEventListener != null) {
                     mainHandler.post(() -> {
@@ -323,6 +331,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mStartPosition = 0;
         mDuration = 0;
         mCacheEnd = 0;
+        mSeekLock = false;
+        mSeekTarget = 0;
         mVideoSizeNotified = false;
     }
 
@@ -333,6 +343,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void seekTo(long time) {
         Log.d(TAG, "seekTo: " + time);
         if (mpv != null) {
+            // ★ 先锁定位置，防止 time-pos 回退
+            mSeekLock = true;
+            mSeekTarget = time;
+            mPosition = time;
+
             notifyBufferingStart();
             mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
         }
@@ -349,6 +364,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPrepared = false;
         mPaused = false;
         mStartPosition = 0;
+        mSeekLock = false;
+        mSeekTarget = 0;
     }
 
     public void setVolume(float l, float r) {
