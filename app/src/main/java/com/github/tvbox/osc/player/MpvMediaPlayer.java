@@ -46,7 +46,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     // ★ 状态标志
     private volatile boolean mPrepared = false;
     private volatile boolean mPaused = false;
-    private volatile boolean mIdle = true; // ★ idle 状态
 
     // ★ UA 常量
     private static final String UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
@@ -55,31 +54,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private volatile boolean mSeekLock = false;
     private long mSeekTarget = 0;
 
-    // ★ 延迟发 RENDERING_START
+    // ★ 延迟发 RENDERING_START，等 time-pos 真正动起来再发
     private volatile boolean mShouldNotifyPlaying = false;
     private boolean mPlayingNotified = false;
-
-    /* ========================= 进入 idle ========================= */
-
-    /**
-     * 进入 idle 状态
-     * - 清除所有播放状态
-     * - 防止 UI 卡在 buffering / seek
-     */
-    private void enterIdle() {
-        Log.d(TAG, "enterIdle");
-        mIdle = true;
-        mPrepared = false;
-        mPaused = false;
-        mSeekLock = false;
-        mSeekTarget = 0;
-        mShouldNotifyPlaying = false;
-        mPlayingNotified = false;
-        mPosition = 0;
-        mDuration = 0;
-        mCacheEnd = 0;
-        notifyBufferingEnd();
-    }
 
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
@@ -107,11 +84,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-                mPrepared = true;
-                mShouldNotifyPlaying = true;
-                mPlayingNotified = false;     
                 if (!mSeekLock) {
-                    mPosition = value * 1000;
+                    long newPos = value * 1000;
+                    mPosition = newPos;
                 }
                 checkAndNotifyPlaying(value);
             } else if ("demuxer-cache-time".equals(property)) {
@@ -129,11 +104,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
-                mPrepared = true;
-                 mShouldNotifyPlaying = true;
-                mPlayingNotified = false;    
                 if (!mSeekLock) {
-                    mPosition = (long)(value * 1000);
+                    long newPos = (long)(value * 1000);
+                    mPosition = newPos;
                 }
                 checkAndNotifyPlaying(value);
             }
@@ -152,8 +125,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         public void eventProperty(String property, String value) {
             if (mpv == null) return;
             if ("end-file-reason".equals(property) && "error".equals(value)) {
-                Log.e(TAG, "end-file-reason=error -> enterIdle");
-                enterIdle();
+                Log.e(TAG, "end-file-reason=error");
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onError();
@@ -171,19 +143,26 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if (mpv == null) return;
 
             if (eventId == 8 /* MPV_EVENT_FILE_LOADED */) {
-                Log.d(TAG, "FILE_LOADED -> exit idle");
-                mIdle = false;
-               
-           
-
+                Log.d(TAG, "FILE_LOADED");
+                mPrepared = true;
+                mShouldNotifyPlaying = true;
+                mPlayingNotified = false;  // 重置，准备新一轮通知
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onPrepared();
+                        // ★ 不再在这里发 RENDERING_START
                     }
                 });
 
-                notifyVideoSizeIfReady();
-              //  notifyBufferingEnd();
+                // ★ startPosition
+                final long startPos = getStartPosition();
+                if (startPos > 0 && !isStartPositionApplied()) {
+                    Log.d(TAG, "apply startPosition: " + startPos);
+                    mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
+                    markStartPositionApplied();
+                }
+
+                notifyBufferingEnd();
 
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
@@ -195,8 +174,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 notifyBufferingStart();
 
             } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
-                Log.d(TAG, "END_FILE -> enterIdle");
-                enterIdle();
+                Log.d(TAG, "END_FILE");
+                mPrepared = false;
+                mPaused = false;
+                mSeekLock = false;
+                mSeekTarget = 0;
+                mShouldNotifyPlaying = false;
+                mPlayingNotified = false;
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onCompletion();
@@ -206,24 +190,23 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
     };
 
-    /* ========================= 延迟 RENDERING_START ========================= */
-
+    // ★ 延迟发 RENDERING_START 的 Runnable
     private Runnable mNotifyPlayingRunnable = new Runnable() {
         @Override
         public void run() {
             if (mPlayerEventListener != null) {
                 mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
             }
-            Log.d(TAG, "RENDERING_START fired (delayed)");
+            Log.d(TAG, "RENDERING_START fired (delayed 200ms)");
         }
     };
 
     private void checkAndNotifyPlaying(double timePosValue) {
         if (!mShouldNotifyPlaying || mPlayingNotified) return;
         if (timePosValue > 0) {
-            mPlayingNotified = true;
-            Log.d(TAG, "time-pos > 0, scheduling RENDERING_START");
-            mainHandler.postDelayed(mNotifyPlayingRunnable, 50);
+            mPlayingNotified = true;  // 标记已触发，防止重复调度
+            Log.d(TAG, "time-pos > 0, scheduling RENDERING_START with 200ms delay");
+            mainHandler.postDelayed(mNotifyPlayingRunnable, 200);
         }
     }
 
@@ -272,7 +255,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
         mpv = new MPV();
         mpv.create(context);
-        mpv.setOptionString("hwdec", "auto");
+        mpv.setOptionString("hwdec", "auto");  // no为软解
         mpv.setOptionString("ao", "audiotrack");
         mpv.setOptionString("keep-open", "yes");
         mpv.setOptionString("loop-file", "no");
@@ -282,6 +265,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.init();
         mpv.addObserver(observer);
 
+        // ★ 提前注册，确保 FILE_LOADED 前就 observe 了
         mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
         mpv.observeProperty("dheight", MPV_FORMAT_INT64);
         mpv.observeProperty("time-pos", MPV_FORMAT_INT64);
@@ -290,14 +274,20 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.observeProperty("paused-for-cache", MPV_FORMAT_FLAG);
         mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
 
-        enterIdle(); // ★ 初始化即 idle
+        mPrepared = false;
+        mPaused = false;
+        mShouldNotifyPlaying = false;
+        mPlayingNotified = false;
     }
 
     public void setDataSource(String path, Map<String, String> headers) {
         Log.d(TAG, "setDataSource: " + path);
-        enterIdle(); // ★ 切源先回 idle
+        mPrepared = false;
+        mPaused = false;
         mDuration = 0;
         mCacheEnd = 0;
+        mShouldNotifyPlaying = false;
+        mPlayingNotified = false;
 
         notifyBufferingStart();
 
@@ -333,7 +323,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void stop() {
         Log.d(TAG, "stop");
         if (mpv != null) mpv.command("stop");
-        enterIdle();
+        mPrepared = false;
+        mPaused = false;
+        mSeekLock = false;
+        mSeekTarget = 0;
+        mShouldNotifyPlaying = false;
+        mPlayingNotified = false;
     }
 
     public void prepareAsync() {
@@ -345,7 +340,14 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv.command("stop");
             mpv.detachSurface();
         }
-        enterIdle();
+        mPrepared = false;
+        mPaused = false;
+        mDuration = 0;
+        mCacheEnd = 0;
+        mSeekLock = false;
+        mSeekTarget = 0;
+        mShouldNotifyPlaying = false;
+        mPlayingNotified = false;
     }
 
     public boolean isPlaying() {
@@ -364,19 +366,19 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public void release() {
-        Log.d(TAG, "release -> enterIdle + destroy, lastPosition=" + mPosition);
-         mainHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onCompletion();
-                    }
-                });       
-        enterIdle();
+        Log.d(TAG, "release (full destroy), lastPosition=" + mPosition);
         if (mpv != null) {
             try { mpv.command("stop"); } catch (Exception ignored) {}
             try { mpv.removeObserver(observer); } catch (Exception ignored) {}
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
+        mPrepared = false;
+        mPaused = false;
+        mSeekLock = false;
+        mSeekTarget = 0;
+        mShouldNotifyPlaying = false;
+        mPlayingNotified = false;
     }
 
     public void setVolume(float l, float r) {
@@ -428,4 +430,4 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void disableSubtitle() { if (mpv != null) mpv.command("set", "sid", "no"); }
     public void addSubtitleFile(String p) { if (mpv != null) mpv.command("sub-add", p); }
     public void selectVideoTrack(int vid) { if (mpv != null) mpv.command("set", "vid", String.valueOf(vid)); }
-}
+} 
