@@ -1,3 +1,4 @@
+
 package com.github.tvbox.osc.player;
 
 import android.content.Context;
@@ -23,6 +24,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private static final int MPV_FORMAT_STRING = 1;
     private static final int MPV_FORMAT_FLAG   = 3;
     private static final int MPV_FORMAT_INT64  = 4;
+
+    // MPV Event IDs
+    private static final int MPV_EVENT_FILE_LOADED = 8;
+    private static final int MPV_EVENT_END_FILE = 7;
+    private static final int MPV_EVENT_SEEK = 20;
+    private static final int MPV_EVENT_PLAYBACK_RESTART = 21;
+    private static final int MPV_EVENT_VIDEO_RECONFIG = 23;
 
     static {
         System.loadLibrary("avutil");
@@ -138,7 +146,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             Log.d(TAG, "event: " + eventId);
             if (mpv == null) return;
 
-            if (eventId == 8 /* MPV_EVENT_FILE_LOADED */) {
+            if (eventId == MPV_EVENT_FILE_LOADED) {
                 Log.d(TAG, "FILE_LOADED");
                 mpv.observeProperty("time-pos", MPV_FORMAT_INT64);
                 mpv.observeProperty("duration", MPV_FORMAT_INT64);
@@ -148,8 +156,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
-                // ★★★ FILE_LOADED 里只发 onPrepared，不发 RENDERING_START ★★★
-                // ★ RENDERING_START 推迟到 PLAYBACK_RESTART（真正开始播放）时发
                 mPrepared = true;
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
@@ -167,14 +173,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
                 notifyBufferingEnd();
 
-            } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
+            } else if (eventId == MPV_EVENT_PLAYBACK_RESTART) {
                 Log.d(TAG, "PLAYBACK_RESTART");
                 mSeekLock = false;
                 notifyBufferingEnd();
 
-                // ★★★ 真正开始播放时才发 RENDERING_START ★★★
-                // ★ 此时 mpv 已经开始输出画面，不会提前显示暂停图标/背景图
-                // ★ PLAYBACK_RESTART 必定触发，VideoView 立即进入 STATE_PLAYING，进度正常
                 if (!mPlayingNotified) {
                     mPlayingNotified = true;
                     mainHandler.post(() -> {
@@ -185,11 +188,22 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     Log.d(TAG, "RENDERING_START fired from PLAYBACK_RESTART");
                 }
 
-            } else if (eventId == 20 /* MPV_EVENT_SEEK */) {
+            } else if (eventId == MPV_EVENT_SEEK) {
                 Log.d(TAG, "SEEK -> BUFFERING_START");
                 notifyBufferingStart();
 
-            } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
+            } else if (eventId == MPV_EVENT_VIDEO_RECONFIG) {
+                Log.d(TAG, "VIDEO_RECONFIG, w=" + mVideoWidth + " h=" + mVideoHeight);
+                // 强制触发视频尺寸回调，通知上层 View 调整渲染区域
+                notifyVideoSizeIfReady();
+                // 主动触发一次画面重绘，防止黑屏
+                try {
+                     mpv.command("frame-step");
+                } catch (Exception e) {
+                    // Ignore
+                }
+
+            } else if (eventId == MPV_EVENT_END_FILE) {
                 Log.d(TAG, "END_FILE");
                 mPrepared = false;
                 mPaused = false;
@@ -221,20 +235,22 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     /* ========================= Surface ========================= */
 
-@Override
-public void setSurface(Surface surface) {
-    mSurface = surface;
-    if (mpv != null) {
+    @Override
+    public void setSurface(Surface surface) {
+        if (mpv == null) return;
         if (surface != null) {
             mpv.attachSurface(surface);
-            // ★★★ surface 绑定后，强制 mpv 重新输出 ★★★
-            // 如果已经在播放，需要让 VO 重新初始化
-            mpv.setOption("force-window", "yes");
+            // 强制通知 mpv 重新刷新渲染面，解决部分设备黑屏问题
+            try {
+                mpv.command("vo-config");
+            } catch (Exception e) {
+                Log.e(TAG, "vo-config error", e);
+            }
         } else {
-            mpv.attachSurface(null);
+            mpv.detachSurface();
         }
     }
-}
+
     @Override
     public void setDisplay(SurfaceHolder holder) {
         if (holder == null) {
@@ -262,13 +278,28 @@ public void setSurface(Surface surface) {
         Log.d(TAG, "initPlayer: creating new instance");
         mpv = new MPV();
         mpv.create(context);
-        mpv.setOptionString("hwdec", "auto");
-        mpv.setOptionString("ao", "audiotrack");
+        
+        // ★ 修复1: 使用更稳定的 gpu 渲染后端，避免 gpu-next/libplacebo 在部分 Adreno GPU 上的兼容性问题
+        mpv.setOptionString("vo", "gpu");
+        mpv.setOptionString("gpu-context", "android");
+        mpv.setOptionString("gpu-api", "opengl");
+        
+        // ★ 修复2: 优化音频输出配置，防止音频初始化阻塞导致视频不渲染
+        mpv.setOptionString("ao", "audiotrack,opensles,null");
+        mpv.setOptionString("audio-exclusive", "yes");
+        mpv.setOptionString("audio-buffer", "0.2");
+        
+        // ★ 修复3: 硬解 fallback 策略
+        mpv.setOptionString("hwdec", "auto-safe");
+        mpv.setOptionString("hwdec-codecs", "h264,hevc,vp9,av1");
+        
         mpv.setOptionString("keep-open", "yes");
         mpv.setOptionString("loop-file", "no");
         mpv.setOptionString("ytdl", "no");
         mpv.setOptionString("user-agent", UA);
+        mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
         mpv.setOptionString("mediacodec-surface-callbacks", "yes");
+        
         mpv.init();
         mpv.addObserver(observer);
 
@@ -290,6 +321,7 @@ public void setSurface(Surface surface) {
 
         notifyBufferingStart();
 
+        mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
         StringBuilder sb = new StringBuilder();
         sb.append("User-Agent: ").append(UA).append("\r\n");
         if (headers != null && !headers.isEmpty()) {
