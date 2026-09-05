@@ -42,7 +42,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private Context context;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    // ★ 进度：全程保留，不被任何重置/END_FILE 清零
     private long mPosition = 0;
     private long mDuration = 0;
     private long mCacheEnd = 0;
@@ -59,9 +58,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private volatile boolean mReleasing = false;
     private volatile boolean mReleased = true;
 
-    private boolean mIsLive = false;
-
-    /* ========================= 缓冲节流 ========================= */
+    /* ========================= 缓冲 ========================= */
 
     private void notifyBufferingStart() {
         if (!mBufferingShown && mPlayerEventListener != null && !mReleased) {
@@ -182,25 +179,25 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             } else if (eventId == MPV_EVENT_PLAYBACK_RESTART) {
                 Log.d(TAG, "PLAYBACK_RESTART, mSeeking=" + mSeeking);
-                if (!mSeeking) {
-                    mainHandler.post(() -> {
-                        if (mPlayerEventListener != null && !mReleased) {
-                            mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                        }
-                    });
-                } else {
-                    mSeeking = false;
-                    notifyBufferingEnd();
-                }
+                // ★ 无论 seek 还是 paused-for-cache 恢复，都到这里统一关缓冲
+                mSeeking = false;
+                notifyBufferingEnd();
+                mainHandler.post(() -> {
+                    if (mPlayerEventListener != null && !mReleased) {
+                        mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
+                    }
+                });
+
             } else if (eventId == MPV_EVENT_SEEK) {
                 Log.d(TAG, "SEEK -> BUFFERING_START");
                 mSeeking = true;
                 notifyBufferingStart();
+
             } else if (eventId == MPV_EVENT_END_FILE) {
-                Log.d(TAG, "END_FILE, isLive=" + mIsLive);
+                Log.d(TAG, "END_FILE");
                 mPrepared = false;
                 mSeeking = false;
-                if (!mIsLive && mPlayerEventListener != null && !mReleased) {
+                if (mPlayerEventListener != null && !mReleased) {
                     mainHandler.post(() -> {
                         if (mPlayerEventListener != null && !mReleased) {
                             mPlayerEventListener.onCompletion();
@@ -224,14 +221,14 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
     }
 
-    /* ========================= Surface（Ijk 极简模式） ========================= */
+    /* ========================= Surface ========================= */
 
     @Override
     public void setSurface(Surface surface) {
         if (mpv != null) {
             if (surface != null) {
                 mpv.attachSurface(surface);
-            } 
+            }
         }
     }
 
@@ -255,7 +252,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
             Log.d(TAG, "initPlayer: release in progress, skip");
             return;
         }
-        // 销毁旧实例
         if (mpv != null) {
             Log.d(TAG, "initPlayer: destroy old instance");
             try { mpv.command("stop"); } catch (Exception ignored) {}
@@ -294,8 +290,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mBufferingShown = false;
         mDuration = 0;
         mCacheEnd = 0;
-
-        mIsLive = (path != null) && (path.contains("proxyM3u8") || path.contains("live") || path.contains(".m3u8"));
 
         notifyBufferingStart();
 
@@ -339,7 +333,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void reset() {
         if (mpv != null && !mReleased) {
             mpv.command("stop");
-            mpv.detachSurface(); // ★ 唯一解绑 Surface 的地方
+            mpv.detachSurface();
         }
         mPrepared = false;
         mPausedByUser = false;
@@ -357,6 +351,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void seekTo(long time) {
         Log.d(TAG, "seekTo: " + time);
         if (mpv != null && !mReleased) {
+            mSeeking = true;
             notifyBufferingStart();
             mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
         }
