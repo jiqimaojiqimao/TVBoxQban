@@ -85,9 +85,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-             //   if (!mSeekLock) {
+                if (!mSeekLock) {
                     mPosition = value * 1000;
-              //  }
+                }
             } else if ("demuxer-cache-time".equals(property)) {
                 mCacheEnd = value;
             } else if ("dwidth".equals(property)) {
@@ -103,9 +103,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
-             //   if (!mSeekLock) {
+                if (!mSeekLock) {
                     mPosition = (long)(value * 1000);
-           //     }
+                }
             }
         }
         public void eventProperty(String property, boolean value) {
@@ -148,15 +148,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
-                notifyBufferingEnd();
-                mpv.command("set", "pause", "no");
 
-            } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
-                Log.d(TAG, "PLAYBACK_RESTART");
-
-                // ★★★ 在这里才标记 prepared ★★★
                 if (!mPrepared) {
                     mPrepared = true;
+                    Log.d(TAG, "prepared, duration=" + mDuration);
                     mainHandler.post(() -> {
                         if (mPlayerEventListener != null) {
                             mPlayerEventListener.onPrepared();
@@ -164,6 +159,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     });
                 }
 
+                notifyBufferingEnd();
+                mpv.command("set", "pause", "no");
+
+            } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
+                Log.d(TAG, "PLAYBACK_RESTART");
+                // ★ seek 完成，解锁
                 mSeekLock = false;
                 notifyBufferingEnd();
                 mainHandler.post(() -> {
@@ -171,6 +172,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
                         mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                     }
                 });
+
             } else if (eventId == 20 /* MPV_EVENT_SEEK */) {
                 Log.d(TAG, "SEEK -> BUFFERING_START");
                 notifyBufferingStart();
