@@ -85,9 +85,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-             //   if (!mSeekLock) {
+                // ★ 无条件更新：FILE_LOADED 后即可读取进度，不依赖 PLAYBACK_RESTART
+                // ★ 只有 seek 进行中才拦截（mSeekLock），防止拖动后回弹
+                if (!mSeekLock) {
                     mPosition = value * 1000;
-              //  }
+                }
             } else if ("demuxer-cache-time".equals(property)) {
                 mCacheEnd = value;
             } else if ("dwidth".equals(property)) {
@@ -103,9 +105,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
-             //   if (!mSeekLock) {
+                if (!mSeekLock) {
                     mPosition = (long)(value * 1000);
-           //     }
+                }
             }
         }
         public void eventProperty(String property, boolean value) {
@@ -148,29 +150,44 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
-                notifyBufferingEnd();
-                mpv.command("set", "pause", "no");
 
-            } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
-                Log.d(TAG, "PLAYBACK_RESTART");
-
-                // ★★★ 在这里才标记 prepared ★★★
+                // ★★★【改法 1】onPrepared + RENDERING_START 在这里一起发 ★★★
+                // ★ 对齐 IJK / EXO 语义：FILE_LOADED 即视为"可开始输出"
+                // ★ 这样音频流 FILE_LOADED 一到就能读到进度，不需要等 PLAYBACK_RESTART
                 if (!mPrepared) {
                     mPrepared = true;
                     mainHandler.post(() -> {
                         if (mPlayerEventListener != null) {
                             mPlayerEventListener.onPrepared();
+                            // ★ 与 IJK / EXO 一致：prepared 即代表可以开始渲染
+                            mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                         }
                     });
                 }
 
+                // ★ startPosition 在这里应用（onPrepared 之前 seek，避免多余缓冲状态）
+                final long startPos = getStartPosition();
+                if (startPos > 0 && !isStartPositionApplied()) {
+                    Log.d(TAG, "apply startPosition: " + startPos);
+                    mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
+                    markStartPositionApplied();
+                }
+
+                notifyBufferingEnd();
+
+                // ★ 不再无条件解暂停，交给 start()/pause() 控制
+                // ★ 避免刚加载完就解暂停导致缓冲抖动
+                // if (!mPausedByUser) { mpv.command("set", "pause", "no"); }
+
+            } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
+                Log.d(TAG, "PLAYBACK_RESTART");
+
+                // ★★★【改法 2】RENDERING_START 不再放这里 ★★★
+                // ★ 音频流可能不触发 PLAYBACK_RESTART，放了就永远发不出来
+                // ★ 只做 seek 解锁 + buffering 收尾
                 mSeekLock = false;
                 notifyBufferingEnd();
-                mainHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                    }
-                });
+
             } else if (eventId == 20 /* MPV_EVENT_SEEK */) {
                 Log.d(TAG, "SEEK -> BUFFERING_START");
                 notifyBufferingStart();
