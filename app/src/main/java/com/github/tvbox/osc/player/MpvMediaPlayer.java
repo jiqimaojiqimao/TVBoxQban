@@ -57,23 +57,19 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
-        if (mPlayerEventListener != null) {
-            mainHandler.post(() -> {
-                if (mPlayerEventListener != null) {
-                    mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
-                }
-            });
-        }
+        mainHandler.post(() -> {
+            if (mPlayerEventListener != null) {
+                mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
+            }
+        });
     }
 
     private void notifyBufferingEnd() {
-        if (mPlayerEventListener != null) {
-            mainHandler.post(() -> {
-                if (mPlayerEventListener != null) {
-                    mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
-                }
-            });
-        }
+        mainHandler.post(() -> {
+            if (mPlayerEventListener != null) {
+                mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
+            }
+        });
     }
 
     /* ========================= Observer ========================= */
@@ -149,21 +145,19 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
-                // ★★★【改法 1】onPrepared + RENDERING_START 在这里一起发 ★★★
-                // ★ 对齐 IJK / EXO 语义：FILE_LOADED 即视为"可开始输出"
-                // ★ 这样音频流 FILE_LOADED 一到就能读到进度，不需要等 PLAYBACK_RESTART
-                if (!mPrepared) {
-                    mPrepared = true;
-                    mainHandler.post(() -> {
+                // ★★★ 状态 + 回调同 Runnable ★★★
+                // ★ 子线程不改 mPrepared，全部交给主线程
+                mainHandler.post(() -> {
+                    if (!mPrepared) {
+                        mPrepared = true;
                         if (mPlayerEventListener != null) {
                             mPlayerEventListener.onPrepared();
-                            // ★ 与 IJK / EXO 一致：prepared 即代表可以开始渲染
                             mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                         }
-                    });
-                }
+                    }
+                });
 
-                // ★ startPosition 在这里应用（onPrepared 之前 seek，避免多余缓冲状态）
+                // ★ startPosition 在子线程 apply（这是 mpv command，不是状态回调）
                 final long startPos = getStartPosition();
                 if (startPos > 0 && !isStartPositionApplied()) {
                     Log.d(TAG, "apply startPosition: " + startPos);
@@ -173,16 +167,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
                 notifyBufferingEnd();
 
-                // ★ 不再无条件解暂停，交给 start()/pause() 控制
-                // ★ 避免刚加载完就解暂停导致缓冲抖动
-                // if (!mPausedByUser) { mpv.command("set", "pause", "no"); }
-
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
-
-                // ★★★【改法 2】RENDERING_START 不再放这里 ★★★
-                // ★ 音频流可能不触发 PLAYBACK_RESTART，放了就永远发不出来
-                // ★ 只做 seek 解锁 + buffering 收尾
                 mSeekLock = false;
                 notifyBufferingEnd();
 
@@ -192,32 +178,33 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
                 Log.d(TAG, "END_FILE");
-                mPrepared = false;
-                mPaused = false;
-                mSeekLock = false;
-                mSeekTarget = 0;
-                mVideoSizeNotified = false;
-                if (mPlayerEventListener != null) {
-                    mainHandler.post(() -> {
-                        if (mPlayerEventListener != null) {
-                            mPlayerEventListener.onCompletion();
-                        }
-                    });
-                }
+                // ★★★ 状态重置 + 回调同 Runnable ★★★
+                mainHandler.post(() -> {
+                    mPrepared = false;
+                    mPaused = false;
+                    mSeekLock = false;
+                    mSeekTarget = 0;
+                    mVideoSizeNotified = false;
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onCompletion();
+                    }
+                });
             }
         }
     };
 
     private void notifyVideoSizeIfReady() {
-        if (!mVideoSizeNotified && mVideoWidth > 0 && mVideoHeight > 0
-                && mPlayerEventListener != null) {
-            mVideoSizeNotified = true;
-            Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
-            mainHandler.post(() -> {
-                if (mPlayerEventListener != null) {
-                    mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
-                }
-            });
+        if (mVideoWidth > 0 && mVideoHeight > 0) {
+            // ★ 防止重复通知
+            if (!mVideoSizeNotified) {
+                mVideoSizeNotified = true;
+                Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
+                mainHandler.post(() -> {
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
+                    }
+                });
+            }
         }
     }
 
@@ -263,33 +250,31 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.setOptionString("loop-file", "no");
         mpv.setOptionString("ytdl", "no");
         mpv.setOptionString("user-agent", UA);
-        // ★★★ 关键：把 UA 通过 stream-lavf-o 塞给 FFmpeg 的 http 协议层 ★★★
         mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
         mpv.setOptionString("mediacodec-surface-callbacks", "yes");
         mpv.init();
         mpv.addObserver(observer);
 
-        // ★ 重置所有状态
         mPrepared = false;
         mVideoSizeNotified = false;
         mPaused = false;
-        Log.d(TAG, "mpv initialized, stream-lavf-o user_agent set");
+        Log.d(TAG, "mpv initialized");
     }
 
     public void setDataSource(String path, Map<String, String> headers) {
         Log.d(TAG, "setDataSource: " + path);
-        mPrepared = false;
-        mVideoSizeNotified = false;
-        mPaused = false;
-        mDuration = 0;
-        mCacheEnd = 0;
+        // ★ 状态重置在主线程做，保持一致性
+        mainHandler.post(() -> {
+            mPrepared = false;
+            mVideoSizeNotified = false;
+            mPaused = false;
+            mDuration = 0;
+            mCacheEnd = 0;
+        });
 
         notifyBufferingStart();
 
-        // ★★★ 每次 setDataSource 时重新设置 stream-lavf-o，确保 UA 生效 ★★★
         mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
-
-        // 同时也设 http-header-fields（双重保险，对某些 mpv 版本有效）
         StringBuilder sb = new StringBuilder();
         sb.append("User-Agent: ").append(UA).append("\r\n");
         if (headers != null && !headers.isEmpty()) {
@@ -322,10 +307,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void stop() {
         Log.d(TAG, "stop");
         if (mpv != null) mpv.command("stop");
-        mPrepared = false;
-        mPaused = false;
-        mSeekLock = false;
-        mSeekTarget = 0;
+        mainHandler.post(() -> {
+            mPrepared = false;
+            mPaused = false;
+            mSeekLock = false;
+            mSeekTarget = 0;
+        });
     }
 
     public void prepareAsync() {
@@ -337,13 +324,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv.command("stop");
             mpv.detachSurface();
         }
-        mPrepared = false;
-        mPaused = false;
-        mDuration = 0;
-        mCacheEnd = 0;
-        mSeekLock = false;
-        mSeekTarget = 0;
-        mVideoSizeNotified = false;
+        mainHandler.post(() -> {
+            mPrepared = false;
+            mPaused = false;
+            mDuration = 0;
+            mCacheEnd = 0;
+            mSeekLock = false;
+            mSeekTarget = 0;
+            mVideoSizeNotified = false;
+        });
     }
 
     public boolean isPlaying() {
@@ -353,11 +342,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void seekTo(long time) {
         Log.d(TAG, "seekTo: " + time);
         if (mpv != null) {
-            // ★ 先锁定位置，防止 time-pos 回退
             mSeekLock = true;
             mSeekTarget = time;
             mPosition = time;
-
             notifyBufferingStart();
             mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
         }
@@ -371,10 +358,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
-        mPrepared = false;
-        mPaused = false;
-        mSeekLock = false;
-        mSeekTarget = 0;
+        mainHandler.post(() -> {
+            mPrepared = false;
+            mPaused = false;
+            mSeekLock = false;
+            mSeekTarget = 0;
+        });
     }
 
     public void setVolume(float l, float r) {
@@ -407,7 +396,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public long getDuration() { return mDuration; }
 
-    // ★ getCurrentPosition() seek 期间返回 seek target（防御性）
     public long getCurrentPosition() {
         if (mSeekLock) {
             return mSeekTarget;
