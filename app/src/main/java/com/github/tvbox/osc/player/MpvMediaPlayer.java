@@ -107,14 +107,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-               mShouldNotifyPlaying = true;
-                mPlayingNotified = false;     
                 mPrepared = true;
-                 mainHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onPrepared();
-                    }
-                });       
+                mShouldNotifyPlaying = true;
+                mPlayingNotified = false;     
                 if (!mSeekLock) {
                     mPosition = value * 1000;
                 }
@@ -134,14 +129,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
-               mShouldNotifyPlaying = true;
-                mPlayingNotified = false;     
                 mPrepared = true;
-                mainHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onPrepared();
-                    }
-                });        
+                 mShouldNotifyPlaying = true;
+                mPlayingNotified = false;    
                 if (!mSeekLock) {
                     mPosition = (long)(value * 1000);
                 }
@@ -184,12 +174,16 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 Log.d(TAG, "FILE_LOADED -> exit idle");
                 mIdle = false;
                
-        
+           
 
-        
+                mainHandler.post(() -> {
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onPrepared();
+                    }
+                });
 
                 notifyVideoSizeIfReady();
-            //    notifyBufferingEnd();
+              //  notifyBufferingEnd();
 
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
@@ -371,6 +365,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void release() {
         Log.d(TAG, "release -> enterIdle + destroy, lastPosition=" + mPosition);
+         mainHandler.post(() -> {
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onCompletion();
+                    }
+                });       
         enterIdle();
         if (mpv != null) {
             try { mpv.command("stop"); } catch (Exception ignored) {}
