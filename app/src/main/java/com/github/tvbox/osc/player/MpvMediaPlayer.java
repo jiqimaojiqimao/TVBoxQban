@@ -28,7 +28,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         System.loadLibrary("avutil");
         System.loadLibrary("swresample");
         System.loadLibrary("swscale");
-        SystemLibrary("avcodec");
+        System.loadLibrary("avcodec");
         System.loadLibrary("avformat");
     }
 
@@ -247,7 +247,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.setOptionString("user-agent", UA);
         // ★★★ 关键：把 UA 通过 stream-lavf-o 塞给 FFmpeg 的 http 协议层 ★★★
         mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
-        mpv.setOptionString("mediacodec-surface-callbacks", "no");
+        mpv.setOptionString("mediacodec-surface-callbacks", "yes");
         mpv.init();
         mpv.addObserver(observer);
 
