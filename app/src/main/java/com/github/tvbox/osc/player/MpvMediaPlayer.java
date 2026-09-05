@@ -52,18 +52,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private boolean mVideoSizeNotified = false;
     private boolean mPausedByUser = false;
     private boolean mSeeking = false;
-    private boolean mBufferingShown = false;
-    private long mBufferingStartTime = 0;
 
     private volatile boolean mReleasing = false;
     private volatile boolean mReleased = true;
 
     /* ========================= 缓冲 ========================= */
-
     private void notifyBufferingStart() {
-        if (!mBufferingShown && mPlayerEventListener != null && !mReleased) {
-            mBufferingStartTime = System.currentTimeMillis();
-            mBufferingShown = true;
+        if (mPlayerEventListener != null && !mReleased) {
             mainHandler.post(() -> {
                 if (mPlayerEventListener != null && !mReleased) {
                     mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
@@ -71,15 +66,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
             });
         }
     }
-
     private void notifyBufferingEnd() {
-        if (mBufferingShown && mPlayerEventListener != null && !mReleased) {
-            long dur = System.currentTimeMillis() - mBufferingStartTime;
-            if (dur < 300) {
-                mBufferingShown = false;
-                return;
-            }
-            mBufferingShown = false;
+        if (mPlayerEventListener != null && !mReleased) {
             mainHandler.post(() -> {
                 if (mPlayerEventListener != null && !mReleased) {
                     mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
@@ -263,10 +251,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
         Log.d(TAG, "initPlayer: creating new instance");
         mpv = new MPV();
         mpv.create(context);
-        mpv.setOptionString("hwdec", "mediacodec");
+        mpv.setOptionString("hwdec", "auto");
         mpv.setOptionString("ao", "audiotrack");
         mpv.setOptionString("keep-open", "yes");
         mpv.setOptionString("loop-file", "no");
+        mpv.setOptionString("ytdl", "no");
+        mpv.setOptionString("user-agent", "Mozilla/5.0 (Linux; Android)");
         mpv.setOptionString("mediacodec-surface-callbacks", "no");
         mpv.init();
         mpv.addObserver(observer);
@@ -276,8 +266,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mVideoSizeNotified = false;
         mPausedByUser = false;
         mSeeking = false;
-        mBufferingShown = false;
-        mBufferingStartTime = 0;
         Log.d(TAG, "mpv initialized");
     }
 
@@ -287,7 +275,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mVideoSizeNotified = false;
         mPausedByUser = false;
         mSeeking = false;
-        mBufferingShown = false;
         mDuration = 0;
         mCacheEnd = 0;
 
@@ -338,7 +325,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPrepared = false;
         mPausedByUser = false;
         mSeeking = false;
-        mBufferingShown = false;
         mDuration = 0;
         mCacheEnd = 0;
         mVideoSizeNotified = false;
