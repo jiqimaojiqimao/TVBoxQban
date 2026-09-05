@@ -1,4 +1,3 @@
-
 package com.github.tvbox.osc.player;
 
 import android.content.Context;
@@ -21,6 +20,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private static final String TAG = "MPV";
 
+    // MPV Format Constants
     private static final int MPV_FORMAT_STRING = 1;
     private static final int MPV_FORMAT_FLAG   = 3;
     private static final int MPV_FORMAT_INT64  = 4;
@@ -44,18 +44,20 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private Context context;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    // ★ 进度
+    // ★ 进度与状态
     private long mPosition = 0;
     private long mDuration = 0;
     private long mCacheEnd = 0;
     private int mVideoWidth = 0;
     private int mVideoHeight = 0;
 
-    // ★ 状态标志
-    private volatile boolean mPrepared = false;
-    private boolean mVideoSizeNotified = false;
-    private volatile boolean mPaused = false;
-
+    // ★ 内部状态标志
+    private volatile boolean mPrepared = false;       // MPV是否加载完成
+    private volatile boolean mStarted = false;        // 用户是否调用了start
+    private volatile boolean mPaused = false;         // 当前是否暂停
+    private volatile boolean mFirstFrameRendered = false; // 首帧是否已渲染
+    private boolean mVideoSizeNotified = false;       // 尺寸是否已通知上层
+    
     // ★ UA 常量
     private static final String UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
@@ -63,10 +65,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private volatile boolean mSeekLock = false;
     private long mSeekTarget = 0;
 
-    // ★ RENDERING_START 只在首次播放时发一次
-    private boolean mPlayingNotified = false;
-
-    /* ========================= 缓冲 ========================= */
+    /* ========================= 缓冲通知辅助 ========================= */
     private void notifyBufferingStart() {
         mainHandler.post(() -> {
             if (mPlayerEventListener != null) {
@@ -83,10 +82,19 @@ public class MpvMediaPlayer extends AbstractPlayer {
         });
     }
 
+    private void notifyRenderingStart() {
+        mainHandler.post(() -> {
+            if (mPlayerEventListener != null) {
+                mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
+            }
+        });
+    }
+
     /* ========================= Observer ========================= */
 
     private final MPV.EventObserver observer = new MPV.EventObserver() {
         public void eventProperty(String property) {}
+        
         public void eventProperty(String property, long value) {
             if (mpv == null) return;
             if ("duration".equals(property)) {
@@ -98,13 +106,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
             } else if ("demuxer-cache-time".equals(property)) {
                 mCacheEnd = value;
             } else if ("dwidth".equals(property)) {
+                // 仅更新变量，不直接通知，等待 VIDEO_RECONFIG 统一处理
                 mVideoWidth = (int) value;
-                notifyVideoSizeIfReady();
             } else if ("dheight".equals(property)) {
                 mVideoHeight = (int) value;
-                notifyVideoSizeIfReady();
             }
         }
+
         public void eventProperty(String property, double value) {
             if (mpv == null) return;
             if ("duration".equals(property)) {
@@ -115,17 +123,21 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 }
             }
         }
+
         public void eventProperty(String property, boolean value) {
             if (mpv == null) return;
             if ("paused-for-cache".equals(property)) {
-                Log.d(TAG, "paused-for-cache=" + value);
                 if (value) {
                     notifyBufferingStart();
                 } else {
-                    notifyBufferingEnd();
+                    // 只有当首帧已经渲染过，或者已经明确开始播放，才结束缓冲
+                    if (mFirstFrameRendered || mStarted) {
+                         notifyBufferingEnd();
+                    }
                 }
             }
         }
+
         public void eventProperty(String property, String value) {
             if (mpv == null) return;
             if ("end-file-reason".equals(property) && "error".equals(value)) {
@@ -137,17 +149,19 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 });
             }
         }
+
         public void eventProperty(String property, MPVNode node) {}
 
         public void event(int eventId) { handleEvent(eventId); }
         public void event(int eventId, MPVNode node) { handleEvent(eventId); }
 
         private void handleEvent(int eventId) {
-            Log.d(TAG, "event: " + eventId);
             if (mpv == null) return;
+            Log.d(TAG, "MPV Event: " + eventId);
 
             if (eventId == MPV_EVENT_FILE_LOADED) {
                 Log.d(TAG, "FILE_LOADED");
+                // 注册关键属性监听
                 mpv.observeProperty("time-pos", MPV_FORMAT_INT64);
                 mpv.observeProperty("duration", MPV_FORMAT_INT64);
                 mpv.observeProperty("demuxer-cache-time", MPV_FORMAT_INT64);
@@ -157,60 +171,89 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
                 mPrepared = true;
+                
+                // ★ 修复点3：此时不立即通知 onPrepared，等待 VIDEO_RECONFIG 确保尺寸就绪
+                // 但为了兼容上层逻辑，如果某些流没有 VIDEO_RECONFIG，我们需要一个保底机制
+                // 这里先标记 prepared，实际 onPrepared 回调由 VIDEO_RECONFIG 或超时触发会更稳
+                // 但鉴于 AbstractPlayer 强依赖 onPrepared，我们在这里调用，但配合下方的尺寸逻辑
+                
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onPrepared();
                     }
                 });
 
-                // ★ startPosition
+                // 应用起始位置
                 final long startPos = getStartPosition();
                 if (startPos > 0 && !isStartPositionApplied()) {
                     Log.d(TAG, "apply startPosition: " + startPos);
                     mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
                     markStartPositionApplied();
                 }
+                
+                // ★ 修复点1：FILE_LOADED 时不要立即发送 BUFFERING_END，保持缓冲状态直到画面出来
 
-                notifyBufferingEnd();
+            } else if (eventId == MPV_EVENT_VIDEO_RECONFIG) {
+                // ★ 修复点3：视频尺寸确定事件，通常发生在第一帧解码前或同时
+                Log.d(TAG, "VIDEO_RECONFIG w=" + mVideoWidth + " h=" + mVideoHeight);
+                
+                if (mVideoWidth > 0 && mVideoHeight > 0 && !mVideoSizeNotified) {
+                    mVideoSizeNotified = true;
+                    mainHandler.post(() -> {
+                        if (mPlayerEventListener != null) {
+                            mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
+                        }
+                    });
+                }
+                
+                // 如果此时还没有通知渲染开始，且用户已经调用了 start，则认为是首帧就绪
+                if (!mFirstFrameRendered && mStarted) {
+                    mFirstFrameRendered = true;
+                    notifyRenderingStart();
+                    // ★ 修复点1：首帧就绪，正式结束缓冲
+                    notifyBufferingEnd();
+                }
 
             } else if (eventId == MPV_EVENT_PLAYBACK_RESTART) {
                 Log.d(TAG, "PLAYBACK_RESTART");
                 mSeekLock = false;
-                notifyBufferingEnd();
-
-                if (!mPlayingNotified) {
-                    mPlayingNotified = true;
-                    mainHandler.post(() -> {
-                        if (mPlayerEventListener != null) {
-                            mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                        }
-                    });
-                    Log.d(TAG, "RENDERING_START fired from PLAYBACK_RESTART");
+                
+                // 如果是 seek 后的重启，可能需要重新触发缓冲结束
+                if (mFirstFrameRendered) {
+                     notifyBufferingEnd();
+                }
+                
+                // 兜底：如果 VIDEO_RECONFIG 没触发，这里作为第二道防线
+                if (!mFirstFrameRendered && mStarted) {
+                     // 稍微延迟一点，确保 vo 真的输出了
+                     mainHandler.postDelayed(() -> {
+                         if (!mFirstFrameRendered) {
+                             mFirstFrameRendered = true;
+                             notifyRenderingStart();
+                             notifyBufferingEnd();
+                         }
+                     }, 100);
                 }
 
             } else if (eventId == MPV_EVENT_SEEK) {
-                Log.d(TAG, "SEEK -> BUFFERING_START");
+                Log.d(TAG, "SEEK");
+                mSeekLock = true;
+                // Seek 时重新进入缓冲状态
                 notifyBufferingStart();
-
-            } else if (eventId == MPV_EVENT_VIDEO_RECONFIG) {
-                Log.d(TAG, "VIDEO_RECONFIG, w=" + mVideoWidth + " h=" + mVideoHeight);
-                // 强制触发视频尺寸回调，通知上层 View 调整渲染区域
-                notifyVideoSizeIfReady();
-                // 主动触发一次画面重绘，防止黑屏
-                try {
-                     mpv.command("frame-step");
-                } catch (Exception e) {
-                    // Ignore
-                }
+                // Seek 后首帧标记重置，以便再次触发 RENDERING_START (如果需要)
+                // 但通常 RENDERING_START 只在第一次播放时重要，这里主要控制缓冲图标
+                mFirstFrameRendered = false; 
 
             } else if (eventId == MPV_EVENT_END_FILE) {
                 Log.d(TAG, "END_FILE");
                 mPrepared = false;
+                mStarted = false;
                 mPaused = false;
                 mSeekLock = false;
                 mSeekTarget = 0;
                 mVideoSizeNotified = false;
-                mPlayingNotified = false;
+                mFirstFrameRendered = false;
+                
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onCompletion();
@@ -220,19 +263,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
     };
 
-    private void notifyVideoSizeIfReady() {
-        if (!mVideoSizeNotified && mVideoWidth > 0 && mVideoHeight > 0
-                && mPlayerEventListener != null) {
-            mVideoSizeNotified = true;
-            Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
-            mainHandler.post(() -> {
-                if (mPlayerEventListener != null) {
-                    mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
-                }
-            });
-        }
-    }
-
     /* ========================= Surface ========================= */
 
     @Override
@@ -240,7 +270,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (mpv == null) return;
         if (surface != null) {
             mpv.attachSurface(surface);
-            // 强制通知 mpv 重新刷新渲染面，解决部分设备黑屏问题
             try {
                 mpv.command("vo-config");
             } catch (Exception e) {
@@ -279,45 +308,44 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv = new MPV();
         mpv.create(context);
         
-        // ★ 修复1: 使用更稳定的 gpu 渲染后端，避免 gpu-next/libplacebo 在部分 Adreno GPU 上的兼容性问题
+        // ★ 优化配置
         mpv.setOptionString("vo", "gpu");
         mpv.setOptionString("gpu-context", "android");
         mpv.setOptionString("gpu-api", "opengl");
-        
-        // ★ 修复2: 优化音频输出配置，防止音频初始化阻塞导致视频不渲染
         mpv.setOptionString("ao", "audiotrack,opensles,null");
         mpv.setOptionString("audio-exclusive", "yes");
-        mpv.setOptionString("audio-buffer", "0.2");
-        
-        // ★ 修复3: 硬解 fallback 策略
         mpv.setOptionString("hwdec", "auto-safe");
-        mpv.setOptionString("hwdec-codecs", "h264,hevc,vp9,av1");
-        
         mpv.setOptionString("keep-open", "yes");
         mpv.setOptionString("loop-file", "no");
         mpv.setOptionString("ytdl", "no");
         mpv.setOptionString("user-agent", UA);
         mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
-        mpv.setOptionString("mediacodec-surface-callbacks", "yes");
         
         mpv.init();
         mpv.addObserver(observer);
 
+        // 重置所有状态
         mPrepared = false;
-        mVideoSizeNotified = false;
+        mStarted = false;
         mPaused = false;
-        mPlayingNotified = false;
-        Log.d(TAG, "mpv initialized");
+        mFirstFrameRendered = false;
+        mVideoSizeNotified = false;
+        mVideoWidth = 0;
+        mVideoHeight = 0;
+        mDuration = 0;
+        mPosition = 0;
     }
 
     public void setDataSource(String path, Map<String, String> headers) {
         Log.d(TAG, "setDataSource: " + path);
+        // 重置播放相关状态，但保留 init 状态
         mPrepared = false;
-        mVideoSizeNotified = false;
+        mStarted = false;
         mPaused = false;
+        mFirstFrameRendered = false;
+        mVideoSizeNotified = false;
         mDuration = 0;
         mCacheEnd = 0;
-        mPlayingNotified = false;
 
         notifyBufferingStart();
 
@@ -340,29 +368,45 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public void start() {
-        Log.d(TAG, "start");
+        Log.d(TAG, "start called");
+        mStarted = true;
         mPaused = false;
-        if (mpv != null) mpv.command("set", "pause", "no");
+        if (mpv != null) {
+            mpv.command("set", "pause", "no");
+        }
+        
+        // ★ 修复点2：如果此时已经 Prepared 但还没渲染，强制检查是否需要触发渲染开始
+        // 这有助于解决某些情况下 PLAYBACK_RESTART 晚于 start 调用的问题
+        if (mPrepared && !mFirstFrameRendered) {
+             // 尝试强制刷新一帧，加速 VIDEO_RECONFIG 或 RENDERING 的到来
+             try {
+                 mpv.command("frame-step");
+             } catch (Exception e) {
+                 // ignore
+             }
+        }
     }
 
     public void pause() {
-        Log.d(TAG, "pause");
+        Log.d(TAG, "pause called");
         mPaused = true;
         if (mpv != null) mpv.command("set", "pause", "yes");
     }
 
     public void stop() {
-        Log.d(TAG, "stop");
+        Log.d(TAG, "stop called");
         if (mpv != null) mpv.command("stop");
         mPrepared = false;
+        mStarted = false;
         mPaused = false;
         mSeekLock = false;
         mSeekTarget = 0;
-        mPlayingNotified = false;
+        mFirstFrameRendered = false;
     }
 
     public void prepareAsync() {
-        Log.d(TAG, "prepareAsync (mpv: loadfile already started)");
+        // MPV loadfile 是异步的，这里不需要做额外操作
+        Log.d(TAG, "prepareAsync");
     }
 
     public void reset() {
@@ -371,17 +415,23 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv.detachSurface();
         }
         mPrepared = false;
+        mStarted = false;
         mPaused = false;
         mDuration = 0;
         mCacheEnd = 0;
         mSeekLock = false;
         mSeekTarget = 0;
         mVideoSizeNotified = false;
-        mPlayingNotified = false;
+        mFirstFrameRendered = false;
     }
 
+    /**
+     * ★ 修复点2：严格控制 isPlaying 的状态
+     * 只有当 mStarted 为真，且 mPaused 为假，且 mPrepared 为真时才认为在播放
+     * 这样可以防止在 prepare 阶段就显示暂停图标
+     */
     public boolean isPlaying() {
-        return mPrepared && !mPaused && mpv != null;
+        return mStarted && !mPaused && mPrepared;
     }
 
     public void seekTo(long time) {
@@ -396,7 +446,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public void release() {
-        Log.d(TAG, "release (full destroy), lastPosition=" + mPosition);
+        Log.d(TAG, "release");
         if (mpv != null) {
             try { mpv.command("stop"); } catch (Exception ignored) {}
             try { mpv.removeObserver(observer); } catch (Exception ignored) {}
@@ -404,10 +454,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv = null;
         }
         mPrepared = false;
+        mStarted = false;
         mPaused = false;
         mSeekLock = false;
         mSeekTarget = 0;
-        mPlayingNotified = false;
+        mFirstFrameRendered = false;
     }
 
     public void setVolume(float l, float r) {
