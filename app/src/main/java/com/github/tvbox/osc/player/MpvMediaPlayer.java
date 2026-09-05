@@ -228,12 +228,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public void setSurface(Surface surface) {
-        if (mpv != null && !mReleased) {
+        if (mpv != null) {
             if (surface != null) {
                 mpv.attachSurface(surface);
-            } else {
-                mpv.detachSurface();
-            }
+            } 
         }
     }
 
