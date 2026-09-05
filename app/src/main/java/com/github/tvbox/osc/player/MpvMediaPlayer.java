@@ -85,8 +85,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-                // ★ 无条件更新：FILE_LOADED 后即可读取进度，不依赖 PLAYBACK_RESTART
-                // ★ 只有 seek 进行中才拦截（mSeekLock），防止拖动后回弹
                 if (!mSeekLock) {
                     mPosition = value * 1000;
                 }
