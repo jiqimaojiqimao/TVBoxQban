@@ -36,7 +36,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private Context context;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    // ★ 进度
+    // ★ 进度（内部进度追踪，不依赖 mPrepared）
     private long mPosition = 0;
     private long mDuration = 0;
     private long mCacheEnd = 0;
@@ -44,16 +44,17 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private int mVideoHeight = 0;
 
     // ★ 状态标志
-    private boolean mPrepared = false;
+    private boolean mPrepared = false;        // FILE_LOADED 后置 true：可以接受播放命令
+    private boolean mRendered = false;        // PLAYBACK_RESTART 后置 true：第一帧已出
     private boolean mVideoSizeNotified = false;
     private boolean mPaused = false;
-
-    // ★ UA 常量
-    private static final String UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
     // ★ seek 锁定
     private boolean mSeekLock = false;
     private long mSeekTarget = 0;
+
+    // ★ UA 常量
+    private static final String UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
@@ -85,7 +86,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-                if (mPrepared && !mSeekLock) {
+                // ★★★ 只防 seek 回退，不判断 mPrepared，保证进度实时更新 ★★★
+                if (!mSeekLock) {
                     mPosition = value * 1000;
                 }
             } else if ("demuxer-cache-time".equals(property)) {
@@ -103,7 +105,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
-                if (mPrepared && !mSeekLock) {
+                if (!mSeekLock) {       // ★★★ 只判 seek 锁 ★★★
                     mPosition = (long)(value * 1000);
                 }
             }
@@ -148,29 +150,37 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
+
+                // ★★★ mPrepared 在这里置 true：mpv 已经可以接受播放命令 ★★★
+                if (!mPrepared) {
+                    mPrepared = true;
+                    Log.d(TAG, "prepared, duration=" + mDuration);
+                    // ★★★ onPrepared 在 PLAYBACK_RESTART 后才回调（见下）★★★
+                }
+
+                // ★★★ 不再在 FILE_LOADED 里 post onPrepared ★★★
+
                 notifyBufferingEnd();
                 mpv.command("set", "pause", "no");
 
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
 
-                // ★★★ 在这里才标记 prepared ★★★
-                if (!mPrepared) {
-                    mPrepared = true;
+                // ★★★ 第一帧出画面，通知外层 prepared + rendering ★★★
+                if (!mRendered) {
+                    mRendered = true;
                     mainHandler.post(() -> {
                         if (mPlayerEventListener != null) {
                             mPlayerEventListener.onPrepared();
+                            mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                         }
                     });
                 }
 
+                // seek 完成，解锁
                 mSeekLock = false;
                 notifyBufferingEnd();
-                mainHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                    }
-                });
+
             } else if (eventId == 20 /* MPV_EVENT_SEEK */) {
                 Log.d(TAG, "SEEK -> BUFFERING_START");
                 notifyBufferingStart();
@@ -178,6 +188,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
                 Log.d(TAG, "END_FILE");
                 mPrepared = false;
+                mRendered = false;
                 mPaused = false;
                 mSeekLock = false;
                 mSeekTarget = 0;
@@ -256,6 +267,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
         // ★ 重置所有状态
         mPrepared = false;
+        mRendered = false;
         mVideoSizeNotified = false;
         mPaused = false;
         Log.d(TAG, "mpv initialized, stream-lavf-o user_agent set");
@@ -263,7 +275,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void setDataSource(String path, Map<String, String> headers) {
         Log.d(TAG, "setDataSource: " + path);
-        mPrepared = false;
+        // ★★★ 不重置 mPrepared！因为 mpv 还没 FILE_LOADED，重置也没意义，而且避免跨文件污染 ★★★
+        mRendered = false;
         mVideoSizeNotified = false;
         mPaused = false;
         mDuration = 0;
@@ -308,6 +321,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         Log.d(TAG, "stop");
         if (mpv != null) mpv.command("stop");
         mPrepared = false;
+        mRendered = false;
         mPaused = false;
         mSeekLock = false;
         mSeekTarget = 0;
@@ -323,6 +337,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv.detachSurface();
         }
         mPrepared = false;
+        mRendered = false;
         mPaused = false;
         mDuration = 0;
         mCacheEnd = 0;
@@ -332,17 +347,17 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public boolean isPlaying() {
+        // ★★★ isPlaying 只依赖 mPrepared（FILE_LOADED 后就 true），不依赖 mRendered ★★★
+        // 这样进度能实时更新，暂停图标不会乱闪
         return mPrepared && !mPaused && mpv != null;
     }
 
     public void seekTo(long time) {
         Log.d(TAG, "seekTo: " + time);
         if (mpv != null) {
-            // ★ 先锁定位置，防止 time-pos 回退
             mSeekLock = true;
             mSeekTarget = time;
             mPosition = time;
-
             notifyBufferingStart();
             mpv.command("seek", String.valueOf(time / 1000.0), "absolute");
         }
@@ -357,6 +372,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv = null;
         }
         mPrepared = false;
+        mRendered = false;
         mPaused = false;
         mSeekLock = false;
         mSeekTarget = 0;
@@ -392,7 +408,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public long getDuration() { return mDuration; }
 
-    // ★ getCurrentPosition() seek 期间返回 seek target（防御性）
     public long getCurrentPosition() {
         if (mSeekLock) {
             return mSeekTarget;
