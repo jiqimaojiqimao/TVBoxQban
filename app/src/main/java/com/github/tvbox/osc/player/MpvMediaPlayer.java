@@ -28,7 +28,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         System.loadLibrary("avutil");
         System.loadLibrary("swresample");
         System.loadLibrary("swscale");
-        System.loadLibrary("avcodec");
+        SystemLibrary("avcodec");
         System.loadLibrary("avformat");
     }
 
@@ -36,7 +36,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private Context context;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    // ★ 进度：全程保留，不被 reset / 错误 / 结束清零
+    // ★ 进度
     private long mPosition = 0;
     private long mDuration = 0;
     private long mCacheEnd = 0;
@@ -44,13 +44,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private int mVideoHeight = 0;
 
     // ★ 状态标志
-    private boolean mPrepared = false;          // FILE_LOADED 后 true
-    private boolean mVideoSizeNotified = false; // 避免重复回调 onVideoSizeChanged
-    private boolean mPaused = false;            // 跟踪暂停状态，让 isPlaying() 与 VideoView 同步
+    private boolean mPrepared = false;
+    private boolean mVideoSizeNotified = false;
+    private boolean mPaused = false;
 
-    // ★ 记忆播放位置（VideoView 通过 setStartPosition 传入）
+    // ★ 记忆播放位置
     private long mStartPosition = 0;
-    private boolean mStartPositionApplied = false;
+
+    // ★ UA 常量
+    private static final String UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
@@ -156,12 +158,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     });
                 }
 
-                // ★ 记忆播放位置：FILE_LOADED 后自动 seek（VideoView 的 onPrepared 也会再 seek 一次，幂等）
-                if (mStartPosition > 0 && !mStartPositionApplied) {
-                    mpv.command("seek", String.valueOf(mStartPosition / 1000.0), "absolute");
-                    mStartPositionApplied = true;
-                }
-
                 notifyBufferingEnd();
                 mpv.command("set", "pause", "no");
 
@@ -181,7 +177,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
                 Log.d(TAG, "END_FILE");
                 mPrepared = false;
-                mPaused = false;          // ★ 结束播放时重置暂停态，错误/完成后再点播放可正常恢复
+                mPaused = false;
                 mVideoSizeNotified = false;
                 if (mPlayerEventListener != null) {
                     mainHandler.post(() -> {
@@ -248,7 +244,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.setOptionString("keep-open", "yes");
         mpv.setOptionString("loop-file", "no");
         mpv.setOptionString("ytdl", "no");
-        mpv.setOptionString("user-agent", "Mozilla/5.0 (Linux; Android)");
+        mpv.setOptionString("user-agent", UA);
+        // ★★★ 关键：把 UA 通过 stream-lavf-o 塞给 FFmpeg 的 http 协议层 ★★★
+        mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
         mpv.setOptionString("mediacodec-surface-callbacks", "no");
         mpv.init();
         mpv.addObserver(observer);
@@ -258,8 +256,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mVideoSizeNotified = false;
         mPaused = false;
         mStartPosition = 0;
-        mStartPositionApplied = false;
-        Log.d(TAG, "mpv initialized");
+        Log.d(TAG, "mpv initialized, stream-lavf-o user_agent set");
     }
 
     public void setDataSource(String path, Map<String, String> headers) {
@@ -272,19 +269,20 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
         notifyBufferingStart();
 
-        // ★ 强制注入 UA header，格式严格每行 \r\n 结尾，最后补一个空行
+        // ★★★ 每次 setDataSource 时重新设置 stream-lavf-o，确保 UA 生效 ★★★
+        mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
+
+        // 同时也设 http-header-fields（双重保险，对某些 mpv 版本有效）
         StringBuilder sb = new StringBuilder();
-        sb.append("User-Agent: Mozilla/5.0 (Linux; Android)\r\n");
+        sb.append("User-Agent: ").append(UA).append("\r\n");
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> e : headers.entrySet()) {
                 sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
             }
         }
         sb.append("\r\n");
-
-        // ★ 每次 setDataSource 前先清一次，避免上一次残留
-        mpv.setOptionString("http-header-fields", "");
         mpv.setOptionString("http-header-fields", sb.toString());
+
         mpv.command("loadfile", path);
     }
 
@@ -294,13 +292,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void start() {
         Log.d(TAG, "start");
-        mPaused = false;   // ★ 与 VideoView.resume() 同步
+        mPaused = false;
         if (mpv != null) mpv.command("set", "pause", "no");
     }
 
     public void pause() {
         Log.d(TAG, "pause");
-        mPaused = true;    // ★ 与 VideoView.pause() 同步
+        mPaused = true;
         if (mpv != null) mpv.command("set", "pause", "yes");
     }
 
@@ -312,8 +310,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public void prepareAsync() {
-        // mpv 的 loadfile 已在 setDataSource 中触发异步准备
-        // VideoView 的状态流转由 onPrepared() 回调驱动，此处无需额外操作
         Log.d(TAG, "prepareAsync (mpv: loadfile already started)");
     }
 
@@ -325,17 +321,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPrepared = false;
         mPaused = false;
         mStartPosition = 0;
-        mStartPositionApplied = false;
         mDuration = 0;
         mCacheEnd = 0;
         mVideoSizeNotified = false;
     }
 
-    /**
-     * ★ 关键修复：跟踪暂停状态，让 VideoView 的
-     *   resume() -> isInPlaybackState() && !isPlaying()
-     * 判断链正确工作，不再出现“点播放永远暂停”。
-     */
     public boolean isPlaying() {
         return mPrepared && !mPaused && mpv != null;
     }
@@ -356,11 +346,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
-        // ★ 重置全部状态，错误恢复后可正常重建
         mPrepared = false;
         mPaused = false;
         mStartPosition = 0;
-        mStartPositionApplied = false;
     }
 
     public void setVolume(float l, float r) {
@@ -402,25 +390,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
         return 0;
     }
 
-    /* ========================= AbstractPlayer 扩展方法 ========================= */
-
-    /**
-     * 对齐 IjkPlayer/VideoView：设置起始播放位置，prepareAsync 前由 VideoView 调用。
-     * 返回 false 表示不支持，VideoView 会跳过记忆 seek。
-     */
     public void setStartPosition(long position) {
         mStartPosition = position;
-        mStartPositionApplied = false;
     }
-
-    /**
-     * 对齐 VideoView.onPrepared 里的判断：记忆 seek 是否已应用。
-     */
-    public final boolean isStartPositionApplied() {
-        return mStartPositionApplied;
-    }
-
-    /* ========================= 轨道选择 ========================= */
 
     public void selectAudioTrack(int aid) { if (mpv != null) mpv.command("set", "aid", String.valueOf(aid)); }
     public void selectSubtitleTrack(int sid) { if (mpv != null) mpv.command("set", "sid", String.valueOf(sid)); }
