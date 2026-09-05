@@ -2,34 +2,30 @@ package xyz.doikki.videoplayer.exo;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
-import android.util.Log;  //xuameng 错误日志
+import android.net.TrafficStats;
+import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-import androidx.annotation.NonNull;  //xuameng用于显示字幕等
+import androidx.annotation.NonNull;
 
-import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.analytics.DefaultAnalyticsCollector;
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.Tracks;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.MappingTrackSelector;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer2.util.Clock;
-import com.google.android.exoplayer2.util.EventLogger;
-import com.google.android.exoplayer2.video.VideoSize;
-import com.google.android.exoplayer2.ui.SubtitleView;  //xuameng用于显示字幕
-import com.google.android.exoplayer2.text.Cue;  //xuameng用于显示字幕
-import com.google.android.exoplayer2.ui.CaptionStyleCompat;  //xuameng用于显示字幕
-import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
-
-import android.graphics.Color;     //xuameng用于显示字幕
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.PlaybackParameters;
+import androidx.media3.common.Player;
+import androidx.media3.common.Tracks;
+import androidx.media3.common.VideoSize;
+import androidx.media3.exoplayer.DefaultLoadControl;
+import androidx.media3.exoplayer.RenderersFactory;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.LoadControl;
+import androidx.media3.exoplayer.source.MediaSource;
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
+import androidx.media3.ui.PlayerView;
+import androidx.media3.ui.SubtitleView;   //xuameng用于显示字幕
+import androidx.media3.common.text.Cue;   //xuameng用于显示字幕
+import androidx.media3.ui.CaptionStyleCompat;
+import android.graphics.Color;
 import com.github.tvbox.osc.util.HawkConfig;  //xuameng EXO解码
 import com.orhanobut.hawk.Hawk; //xuameng EXO解码
 import com.github.tvbox.osc.util.AudioTrackMemory;  //xuameng记忆选择音轨
@@ -39,25 +35,26 @@ import java.util.List;   //xuameng用于显示字幕
 import java.util.Map;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
-import xyz.doikki.videoplayer.player.VideoViewManager;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 
 public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     protected Context mAppContext;
-    protected SimpleExoPlayer mMediaPlayer;
+    protected ExoPlayer mMediaPlayer;
     protected MediaSource mMediaSource;
     protected ExoMediaSourceHelper mMediaSourceHelper;
+    protected ExoTrackNameProvider trackNameProvider;
+    protected TrackSelectionArray mTrackSelections;
     private PlaybackParameters mSpeedPlaybackParameters;
     private boolean mIsPreparing;
-    private DefaultLoadControl mLoadControl;
-    private DefaultRenderersFactory mRenderersFactory;
-    private DefaultTrackSelector mTrackSelector;
-    protected ExoTrackNameProvider trackNameProvider;
-    private static AudioTrackMemory memory;    //xuameng记忆选择音轨
-    private SubtitleView mExoSubtitleView; // 用于显示ExoPlayer内置字幕
 
-    private int errorCode = -100;   //xuameng错误日志
+    private LoadControl mLoadControl;
+    private RenderersFactory mRenderersFactory;
+    private DefaultTrackSelector mTrackSelector;
+    private static AudioTrackMemory memory;    //xuameng记忆选择音轨
+	private SubtitleView mExoSubtitleView; // 用于显示ExoPlayer内置字幕
+
+    private int errorCode = -100;
     private String mLastUri;   //xuameng 上次播放地址
     private Map<String, String> mLastHeaders;  //xuameng 上次头部
     private int mRetryCount = 0; // xuameng当前重试次数
@@ -91,23 +88,16 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             useSoftDecode = exoDecode;
         }
 
-        // 用自定义 MediaCodecSelector 主要用于 DV → HEVC转换 尽量可以显示出图像
-        MediaCodecSelector mediaCodecSelector =
-                new DvFallbackMediaCodecSelector(useSoftDecode);
-
         // 构建 RendererFactory
         if (useSoftDecode) {
+            // 软解场景 TvRenderersFactory 是自定义的 NextRenderersFactory
+            mRenderersFactory = new TvRenderersFactory(mAppContext);
+        } else {
+            // 硬解场景 DefaultRenderersFactory 加 ffmpeg扩展
             mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-                    .setMediaCodecSelector(mediaCodecSelector)  // MediaCodecSelector
                     .setEnableDecoderFallback(true)
                     .setExtensionRendererMode(
                             DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
-                    );
-        } else {
-            mRenderersFactory = new DefaultRenderersFactory(mAppContext)
-                    .setEnableDecoderFallback(true)
-                    .setExtensionRendererMode(
-                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF
                     );
         }
 
@@ -124,38 +114,22 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             .setBackBuffer(0, false)
             .build();
 
-        mTrackSelector.setParameters(
-        mTrackSelector.getParameters().buildUpon()
+        mTrackSelector.setParameters(mTrackSelector.getParameters().buildUpon()
             .setPreferredTextLanguages("zh", "chi", "zh-CN", "zh-TW", "en")      // 设置首选字幕语言为中文
             .setPreferredAudioLanguages("zh", "chi", "zh-CN", "zh-TW", "en")     // 设置首选音频语言为中文
-        .build());                         // 必须调用build()完成构建
+            .setTunnelingEnabled(false));   //xuameng解决TCL等电视无图像
 
-        mMediaPlayer = new SimpleExoPlayer.Builder(
-                mAppContext,
-                mRenderersFactory,  // xuameng使用已配置的实例
-                mTrackSelector,
-                new DefaultMediaSourceFactory(mAppContext),
-                mLoadControl,
-                DefaultBandwidthMeter.getSingletonInstance(mAppContext),
-                new DefaultAnalyticsCollector(Clock.DEFAULT))
-                .build();
+        mMediaPlayer = new ExoPlayer.Builder(mAppContext)
+                .setLoadControl(mLoadControl)
+                .setRenderersFactory(mRenderersFactory)
+                .setTrackSelector(mTrackSelector).build();
+
         setOptions();
-
-        //播放器日志
-        if (VideoViewManager.getConfig().mIsEnableLog && mTrackSelector instanceof MappingTrackSelector) {
-            mMediaPlayer.addAnalyticsListener(new EventLogger((MappingTrackSelector) mTrackSelector, "ExoPlayer"));
-        }
-
         mMediaPlayer.addListener(this);
     }
+
     public DefaultTrackSelector getTrackSelector() {
         return mTrackSelector;
-    }
-
-    @Override
-    public void onTracksChanged(@NonNull Tracks tracks) {
-        Player.Listener.super.onTracksChanged(tracks);
-        trackNameProvider = new ExoTrackNameProvider(mAppContext.getResources());
     }
 
     @Override
@@ -265,13 +239,13 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     }
 
     @Override
-    public int getBufferedPercentage() {
-        return mMediaPlayer == null ? 0 : mMediaPlayer.getBufferedPercentage();
+    public int getAudioSessionId() {       //XUAMENG 获取音频ID
+        return mMediaPlayer.getAudioSessionId();
     }
 
     @Override
-    public int getAudioSessionId() {       //XUAMENG 获取音频ID
-        return mMediaPlayer.getAudioSessionId();
+    public int getBufferedPercentage() {
+        return mMediaPlayer == null ? 0 : mMediaPlayer.getBufferedPercentage();
     }
 
     @Override
@@ -297,7 +271,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
 
     @Override
     public void setLooping(boolean isLooping) {
-       if (mMediaPlayer != null)
+        if (mMediaPlayer != null)
             mMediaPlayer.setRepeatMode(isLooping ? Player.REPEAT_MODE_ALL : Player.REPEAT_MODE_OFF);
     }
 
@@ -330,6 +304,12 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     }
 
     @Override
+    public void onTracksChanged(Tracks tracks) {
+        if (trackNameProvider == null)
+            trackNameProvider = new ExoTrackNameProvider(mAppContext.getResources());
+    }
+
+    @Override
     public void onPlaybackStateChanged(int playbackState) {
         if (mPlayerEventListener == null) return;
         if (mIsPreparing) {
@@ -356,7 +336,7 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
     }
 
     @Override
-    public void onPlayerError(PlaybackException error) {
+    public void onPlayerError(@NonNull PlaybackException error) {
         String progressKey = Hawk.get(HawkConfig.EXO_PROGRESS_KEY, "");
         errorCode = error.errorCode;
         Log.e("EXOPLAYER", "" + error.errorCode);      //xuameng音频出错后尝试重播
@@ -399,13 +379,14 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
                 mRetryCount = 0;    // 重置重试次数，避免影响下一次播放
             }
         }
+
         if (mPlayerEventListener != null) {
             mPlayerEventListener.onError();
         }
     }
 
     @Override
-    public void onVideoSizeChanged(VideoSize videoSize) {
+    public void onVideoSizeChanged(@NonNull VideoSize videoSize) {
         if (mPlayerEventListener != null) {
             mPlayerEventListener.onVideoSizeChanged(videoSize.width, videoSize.height);
             if (videoSize.unappliedRotationDegrees > 0) {
