@@ -45,7 +45,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     // ★ 状态标志
     private volatile boolean mPrepared = false;
-    private boolean mVideoSizeNotified = false;
     private volatile boolean mPaused = false;
 
     // ★ UA 常量
@@ -193,7 +192,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mPaused = false;
                 mSeekLock = false;
                 mSeekTarget = 0;
-                mVideoSizeNotified = false;
                 mShouldNotifyPlaying = false;
                 mPlayingNotified = false;
                 mainHandler.post(() -> {
@@ -221,9 +219,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     private void notifyVideoSizeIfReady() {
-        if (!mVideoSizeNotified && mVideoWidth > 0 && mVideoHeight > 0
-                && mPlayerEventListener != null) {
-            mVideoSizeNotified = true;
+        if (mVideoWidth > 0 && mVideoHeight > 0 && mPlayerEventListener != null) {
             Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
             mainHandler.post(() -> {
                 if (mPlayerEventListener != null) {
@@ -244,14 +240,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     mVideoWidth = width;
                     mVideoHeight = height;
                     // ★ 立即发，不等属性回调
-                    if (!mVideoSizeNotified) {
-                        mVideoSizeNotified = true;
-                        mainHandler.post(() -> {
-                            if (mPlayerEventListener != null) {
+                    mainHandler.post(() -> {
+                        if (mPlayerEventListener != null) {
                                 mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
-                            }
-                        });
-                    }
+                        }
+                    });
                     Log.d(TAG, "sync video size: " + mVideoWidth + "x" + mVideoHeight);
                 }
             }
@@ -308,7 +301,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.addObserver(observer);
 
         mPrepared = false;
-        mVideoSizeNotified = false;
         mPaused = false;
         mShouldNotifyPlaying = false;
         mPlayingNotified = false;
@@ -318,7 +310,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void setDataSource(String path, Map<String, String> headers) {
         Log.d(TAG, "setDataSource: " + path);
         mPrepared = false;
-        mVideoSizeNotified = false;
         mPaused = false;
         mDuration = 0;
         mCacheEnd = 0;
@@ -383,7 +374,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mCacheEnd = 0;
         mSeekLock = false;
         mSeekTarget = 0;
-        mVideoSizeNotified = false;
         mShouldNotifyPlaying = false;
         mPlayingNotified = false;
     }
