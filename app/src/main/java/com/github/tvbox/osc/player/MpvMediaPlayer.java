@@ -43,16 +43,16 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private int mVideoWidth = 0;
     private int mVideoHeight = 0;
 
-    // ★ 状态标志
-    private boolean mPrepared = false;
+    // ★ 状态标志（volatile 保证跨线程可见性）
+    private volatile boolean mPrepared = false;
     private boolean mVideoSizeNotified = false;
-    private boolean mPaused = false;
+    private volatile boolean mPaused = false;
 
     // ★ UA 常量
     private static final String UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
     // ★ seek 锁定
-    private boolean mSeekLock = false;
+    private volatile boolean mSeekLock = false;
     private long mSeekTarget = 0;
 
     /* ========================= 缓冲 ========================= */
@@ -145,19 +145,18 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
-                // ★★★ 状态 + 回调同 Runnable ★★★
-                // ★ 子线程不改 mPrepared，全部交给主线程
+                // ★★★ 子线程立即写状态，主线程发回调 ★★★
+                // ★ mPrepared 立即置 true → isPlaying() 立即可读
+                // ★ 回调 post 到主线程 → UI 安全
+                mPrepared = true;
                 mainHandler.post(() -> {
-                    if (!mPrepared) {
-                        mPrepared = true;
-                        if (mPlayerEventListener != null) {
-                            mPlayerEventListener.onPrepared();
-                            mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                        }
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onPrepared();
+                        mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                     }
                 });
 
-                // ★ startPosition 在子线程 apply（这是 mpv command，不是状态回调）
+                // ★ startPosition
                 final long startPos = getStartPosition();
                 if (startPos > 0 && !isStartPositionApplied()) {
                     Log.d(TAG, "apply startPosition: " + startPos);
@@ -178,13 +177,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
                 Log.d(TAG, "END_FILE");
-                // ★★★ 状态重置 + 回调同 Runnable ★★★
+                // ★ 子线程立即重置状态 → isPlaying() 立即返回 false
+                mPrepared = false;
+                mPaused = false;
+                mSeekLock = false;
+                mSeekTarget = 0;
+                mVideoSizeNotified = false;
                 mainHandler.post(() -> {
-                    mPrepared = false;
-                    mPaused = false;
-                    mSeekLock = false;
-                    mSeekTarget = 0;
-                    mVideoSizeNotified = false;
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onCompletion();
                     }
@@ -194,17 +193,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
     };
 
     private void notifyVideoSizeIfReady() {
-        if (mVideoWidth > 0 && mVideoHeight > 0) {
-            // ★ 防止重复通知
-            if (!mVideoSizeNotified) {
-                mVideoSizeNotified = true;
-                Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
-                mainHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
-                    }
-                });
-            }
+        if (!mVideoSizeNotified && mVideoWidth > 0 && mVideoHeight > 0
+                && mPlayerEventListener != null) {
+            mVideoSizeNotified = true;
+            Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
+            mainHandler.post(() -> {
+                if (mPlayerEventListener != null) {
+                    mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
+                }
+            });
         }
     }
 
@@ -263,14 +260,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void setDataSource(String path, Map<String, String> headers) {
         Log.d(TAG, "setDataSource: " + path);
-        // ★ 状态重置在主线程做，保持一致性
-        mainHandler.post(() -> {
-            mPrepared = false;
-            mVideoSizeNotified = false;
-            mPaused = false;
-            mDuration = 0;
-            mCacheEnd = 0;
-        });
+        // ★ 子线程立即重置 → isPlaying() 立即返回 false
+        mPrepared = false;
+        mVideoSizeNotified = false;
+        mPaused = false;
+        mDuration = 0;
+        mCacheEnd = 0;
 
         notifyBufferingStart();
 
@@ -307,12 +302,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void stop() {
         Log.d(TAG, "stop");
         if (mpv != null) mpv.command("stop");
-        mainHandler.post(() -> {
-            mPrepared = false;
-            mPaused = false;
-            mSeekLock = false;
-            mSeekTarget = 0;
-        });
+        mPrepared = false;
+        mPaused = false;
+        mSeekLock = false;
+        mSeekTarget = 0;
     }
 
     public void prepareAsync() {
@@ -324,15 +317,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv.command("stop");
             mpv.detachSurface();
         }
-        mainHandler.post(() -> {
-            mPrepared = false;
-            mPaused = false;
-            mDuration = 0;
-            mCacheEnd = 0;
-            mSeekLock = false;
-            mSeekTarget = 0;
-            mVideoSizeNotified = false;
-        });
+        mPrepared = false;
+        mPaused = false;
+        mDuration = 0;
+        mCacheEnd = 0;
+        mSeekLock = false;
+        mSeekTarget = 0;
+        mVideoSizeNotified = false;
     }
 
     public boolean isPlaying() {
@@ -358,12 +349,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
-        mainHandler.post(() -> {
-            mPrepared = false;
-            mPaused = false;
-            mSeekLock = false;
-            mSeekTarget = 0;
-        });
+        mPrepared = false;
+        mPaused = false;
+        mSeekLock = false;
+        mSeekTarget = 0;
     }
 
     public void setVolume(float l, float r) {
