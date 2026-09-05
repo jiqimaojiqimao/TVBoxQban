@@ -174,9 +174,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
     };
 
-.d(TAG, "RENDERING_START fired (delayed 200ms)");
-        }
-    };
+
 
     private void checkAndNotifyPlaying(double timePosValue) {
         if (!mShouldNotifyPlaying || mPlayingNotified) return;
