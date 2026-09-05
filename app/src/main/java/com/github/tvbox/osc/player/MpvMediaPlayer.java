@@ -84,6 +84,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
+            mPrepared = true;
                 if (!mSeekLock) {
                     long newPos = value * 1000;
                     mPosition = newPos;
@@ -104,6 +105,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
+         mPrepared = true;   
                 if (!mSeekLock) {
                     long newPos = (long)(value * 1000);
                     mPosition = newPos;
@@ -144,7 +146,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             if (eventId == 8 /* MPV_EVENT_FILE_LOADED */) {
                 Log.d(TAG, "FILE_LOADED");
-                mPrepared = true;
+                
                 mShouldNotifyPlaying = true;
                 mPlayingNotified = false;  // 重置，准备新一轮通知
                 mainHandler.post(() -> {
@@ -154,13 +156,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     }
                 });
 
-                // ★ startPosition
-                final long startPos = getStartPosition();
-                if (startPos > 0 && !isStartPositionApplied()) {
-                    Log.d(TAG, "apply startPosition: " + startPos);
-                    mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
-                    markStartPositionApplied();
-                }
+notifyVideoSizeIfReady();
 
                 notifyBufferingEnd();
 
@@ -206,7 +202,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (timePosValue > 0) {
             mPlayingNotified = true;  // 标记已触发，防止重复调度
             Log.d(TAG, "time-pos > 0, scheduling RENDERING_START with 200ms delay");
-            mainHandler.postDelayed(mNotifyPlayingRunnable, 200);
+            mainHandler.postDelayed(mNotifyPlayingRunnable, 50);
         }
     }
 
