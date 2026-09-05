@@ -156,7 +156,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 Log.d(TAG, "FILE_LOADED");
 
 
-           //     notifyBufferingEnd();
+            //    notifyBufferingEnd();
 
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
@@ -215,9 +215,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     Log.d(TAG, "apply startPosition: " + startPos);
                     mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
                     markStartPositionApplied();
+                  notifyBufferingStart();  
                 }      
             Log.d(TAG, "time-pos > 0, scheduling RENDERING_START with 200ms delay");
-            mainHandler.postDelayed(mNotifyPlayingRunnable, 200);
+            mainHandler.postDelayed(mNotifyPlayingRunnable, 20);
         }
     }
 
