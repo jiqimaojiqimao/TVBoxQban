@@ -45,6 +45,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     // ★ 状态标志
     private volatile boolean mPrepared = false;
+    private boolean mVideoSizeNotified = false;
     private volatile boolean mPaused = false;
 
     // ★ UA 常量
@@ -54,19 +55,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private volatile boolean mSeekLock = false;
     private long mSeekTarget = 0;
 
-    // ★ RENDERING_START 延迟发送控制
-    private volatile boolean mShouldNotifyPlaying = false;
+    // ★ RENDERING_START 只在首次播放时发一次
     private boolean mPlayingNotified = false;
-
-    private Runnable mNotifyPlayingRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (mPlayerEventListener != null) {
-                mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-            }
-            Log.d(TAG, "RENDERING_START fired (delayed 200ms)");
-        }
-    };
 
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
@@ -97,7 +87,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 if (!mSeekLock) {
                     mPosition = value * 1000;
                 }
-                checkAndNotifyPlaying(value);
             } else if ("demuxer-cache-time".equals(property)) {
                 mCacheEnd = value;
             } else if ("dwidth".equals(property)) {
@@ -116,7 +105,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 if (!mSeekLock) {
                     mPosition = (long)(value * 1000);
                 }
-                checkAndNotifyPlaying(value);
             }
         }
         public void eventProperty(String property, boolean value) {
@@ -160,15 +148,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
+                // ★★★ FILE_LOADED 里只发 onPrepared，不发 RENDERING_START ★★★
+                // ★ RENDERING_START 推迟到 PLAYBACK_RESTART（真正开始播放）时发
                 mPrepared = true;
-                mShouldNotifyPlaying = true;
-                mPlayingNotified = false;
-
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onPrepared();
-                        // ★ onPrepared 里也尝试发一次尺寸（dwidth/dheight 可能已经到了）
-                        notifyVideoSizeIfReady();
                     }
                 });
 
@@ -185,7 +170,20 @@ public class MpvMediaPlayer extends AbstractPlayer {
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
                 mSeekLock = false;
-                // ★ 不再这里发 notifyBufferingEnd()，让缓冲图标持续到 RENDERING_START
+                notifyBufferingEnd();
+
+                // ★★★ 真正开始播放时才发 RENDERING_START ★★★
+                // ★ 此时 mpv 已经开始输出画面，不会提前显示暂停图标/背景图
+                // ★ PLAYBACK_RESTART 必定触发，VideoView 立即进入 STATE_PLAYING，进度正常
+                if (!mPlayingNotified) {
+                    mPlayingNotified = true;
+                    mainHandler.post(() -> {
+                        if (mPlayerEventListener != null) {
+                            mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
+                        }
+                    });
+                    Log.d(TAG, "RENDERING_START fired from PLAYBACK_RESTART");
+                }
 
             } else if (eventId == 20 /* MPV_EVENT_SEEK */) {
                 Log.d(TAG, "SEEK -> BUFFERING_START");
@@ -197,9 +195,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mPaused = false;
                 mSeekLock = false;
                 mSeekTarget = 0;
-                mShouldNotifyPlaying = false;
+                mVideoSizeNotified = false;
                 mPlayingNotified = false;
-                mainHandler.removeCallbacks(mNotifyPlayingRunnable);
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onCompletion();
@@ -209,17 +206,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
     };
 
-    private void checkAndNotifyPlaying(double timePosValue) {
-        if (!mShouldNotifyPlaying || mPlayingNotified) return;
-        if (timePosValue > 0) {
-            mPlayingNotified = true;
-            Log.d(TAG, "time-pos > 0, scheduling RENDERING_START with 200ms delay");
-            mainHandler.postDelayed(mNotifyPlayingRunnable, 200);
-        }
-    }
-
     private void notifyVideoSizeIfReady() {
-        if (mVideoWidth > 0 && mVideoHeight > 0 && mPlayerEventListener != null) {
+        if (!mVideoSizeNotified && mVideoWidth > 0 && mVideoHeight > 0
+                && mPlayerEventListener != null) {
+            mVideoSizeNotified = true;
             Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
             mainHandler.post(() -> {
                 if (mPlayerEventListener != null) {
@@ -231,13 +221,20 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     /* ========================= Surface ========================= */
 
-    @Override
-    public void setSurface(Surface surface) {
-        if (mpv != null && surface != null) {
+@Override
+public void setSurface(Surface surface) {
+    mSurface = surface;
+    if (mpv != null) {
+        if (surface != null) {
             mpv.attachSurface(surface);
+            // ★★★ surface 绑定后，强制 mpv 重新输出 ★★★
+            // 如果已经在播放，需要让 VO 重新初始化
+            mpv.setOption("force-window", "yes");
+        } else {
+            mpv.attachSurface(null);
         }
     }
-
+}
     @Override
     public void setDisplay(SurfaceHolder holder) {
         if (holder == null) {
@@ -271,34 +268,28 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.setOptionString("loop-file", "no");
         mpv.setOptionString("ytdl", "no");
         mpv.setOptionString("user-agent", UA);
-        mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
         mpv.setOptionString("mediacodec-surface-callbacks", "yes");
         mpv.init();
         mpv.addObserver(observer);
 
         mPrepared = false;
+        mVideoSizeNotified = false;
         mPaused = false;
-        mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-        mainHandler.removeCallbacks(mNotifyPlayingRunnable);
         Log.d(TAG, "mpv initialized");
     }
 
     public void setDataSource(String path, Map<String, String> headers) {
         Log.d(TAG, "setDataSource: " + path);
         mPrepared = false;
+        mVideoSizeNotified = false;
         mPaused = false;
         mDuration = 0;
         mCacheEnd = 0;
-        mVideoWidth = 0;
-        mVideoHeight = 0;
-        mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-        mainHandler.removeCallbacks(mNotifyPlayingRunnable);
 
         notifyBufferingStart();
 
-        mpv.setOptionString("stream-lavf-o", "user_agent=" + UA);
         StringBuilder sb = new StringBuilder();
         sb.append("User-Agent: ").append(UA).append("\r\n");
         if (headers != null && !headers.isEmpty()) {
@@ -335,9 +326,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPaused = false;
         mSeekLock = false;
         mSeekTarget = 0;
-        mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-        mainHandler.removeCallbacks(mNotifyPlayingRunnable);
     }
 
     public void prepareAsync() {
@@ -355,11 +344,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mCacheEnd = 0;
         mSeekLock = false;
         mSeekTarget = 0;
-        mVideoWidth = 0;
-        mVideoHeight = 0;
-        mShouldNotifyPlaying = false;
+        mVideoSizeNotified = false;
         mPlayingNotified = false;
-        mainHandler.removeCallbacks(mNotifyPlayingRunnable);
     }
 
     public boolean isPlaying() {
@@ -389,9 +375,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPaused = false;
         mSeekLock = false;
         mSeekTarget = 0;
-        mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-        mainHandler.removeCallbacks(mNotifyPlayingRunnable);
     }
 
     public void setVolume(float l, float r) {
