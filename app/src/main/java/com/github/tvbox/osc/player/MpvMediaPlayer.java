@@ -292,18 +292,24 @@ public class MpvMediaPlayer extends AbstractPlayer {
         // ★ 注意：保留 mPendingSurface，重建时可直接复用
     }
 
+    @Override
     public void setSurface(Surface surface) {
-        // surface 为 null 表示宿主要求解绑（如进入后台、View 销毁）
-        if (surface == null) {
-            doDetachSurface();
-            return;
+        if (mpv != null) {
+            mpv.setVideoSurface(surface);
+            mLastSurface = surface;
+            mSurfaceAttached = (surface != null);
         }
-        doAttachSurface(surface);
     }
 
+    @Override
     public void setDisplay(SurfaceHolder holder) {
-        setSurface(holder != null ? holder.getSurface() : null);
+        if (holder == null) {
+            setSurface(null);
+        } else {
+            setSurface(holder.getSurface());
+        }
     }
+
 
     /* ========================= 生命周期 ========================= */
 
