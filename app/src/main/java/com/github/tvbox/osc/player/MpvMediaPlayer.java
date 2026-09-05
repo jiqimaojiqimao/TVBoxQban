@@ -36,15 +36,21 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private Context context;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    // ★ 进度：全程保留，不被 reset / 错误 / 结束清零
     private long mPosition = 0;
     private long mDuration = 0;
     private long mCacheEnd = 0;
     private int mVideoWidth = 0;
     private int mVideoHeight = 0;
 
-    private boolean mPrepared = false;
-    private boolean mVideoSizeNotified = false;
-    private boolean mPaused = false;  // ★ 跟踪暂停状态，让 isPlaying() 正确
+    // ★ 状态标志
+    private boolean mPrepared = false;          // FILE_LOADED 后 true
+    private boolean mVideoSizeNotified = false; // 避免重复回调 onVideoSizeChanged
+    private boolean mPaused = false;            // 跟踪暂停状态，让 isPlaying() 与 VideoView 同步
+
+    // ★ 记忆播放位置（VideoView 通过 setStartPosition 传入）
+    private long mStartPosition = 0;
+    private boolean mStartPositionApplied = false;
 
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
@@ -150,6 +156,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     });
                 }
 
+                // ★ 记忆播放位置：FILE_LOADED 后自动 seek（VideoView 的 onPrepared 也会再 seek 一次，幂等）
+                if (mStartPosition > 0 && !mStartPositionApplied) {
+                    mpv.command("seek", String.valueOf(mStartPosition / 1000.0), "absolute");
+                    mStartPositionApplied = true;
+                }
+
                 notifyBufferingEnd();
                 mpv.command("set", "pause", "no");
 
@@ -169,7 +181,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
             } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
                 Log.d(TAG, "END_FILE");
                 mPrepared = false;
-                mPaused = false;  // ★ 结束播放时重置
+                mPaused = false;          // ★ 结束播放时重置暂停态，错误/完成后再点播放可正常恢复
+                mVideoSizeNotified = false;
                 if (mPlayerEventListener != null) {
                     mainHandler.post(() -> {
                         if (mPlayerEventListener != null) {
@@ -240,9 +253,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.init();
         mpv.addObserver(observer);
 
+        // ★ 重置所有状态
         mPrepared = false;
         mVideoSizeNotified = false;
         mPaused = false;
+        mStartPosition = 0;
+        mStartPositionApplied = false;
         Log.d(TAG, "mpv initialized");
     }
 
@@ -256,7 +272,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
         notifyBufferingStart();
 
-        // ★ 强制注入 UA，确保格式正确（每行 \r\n，包括最后一行）
+        // ★ 强制注入 UA header，格式严格每行 \r\n 结尾，最后补一个空行
         StringBuilder sb = new StringBuilder();
         sb.append("User-Agent: Mozilla/5.0 (Linux; Android)\r\n");
         if (headers != null && !headers.isEmpty()) {
@@ -264,8 +280,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
             }
         }
-        sb.append("\r\n");  // ★ 确保末尾有空行
+        sb.append("\r\n");
 
+        // ★ 每次 setDataSource 前先清一次，避免上一次残留
+        mpv.setOptionString("http-header-fields", "");
         mpv.setOptionString("http-header-fields", sb.toString());
         mpv.command("loadfile", path);
     }
@@ -276,13 +294,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void start() {
         Log.d(TAG, "start");
-        mPaused = false;  // ★ 同步状态
+        mPaused = false;   // ★ 与 VideoView.resume() 同步
         if (mpv != null) mpv.command("set", "pause", "no");
     }
 
     public void pause() {
         Log.d(TAG, "pause");
-        mPaused = true;  // ★ 同步状态
+        mPaused = true;    // ★ 与 VideoView.pause() 同步
         if (mpv != null) mpv.command("set", "pause", "yes");
     }
 
@@ -293,7 +311,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPaused = false;
     }
 
-    public void prepareAsync() {}
+    public void prepareAsync() {
+        // mpv 的 loadfile 已在 setDataSource 中触发异步准备
+        // VideoView 的状态流转由 onPrepared() 回调驱动，此处无需额外操作
+        Log.d(TAG, "prepareAsync (mpv: loadfile already started)");
+    }
 
     public void reset() {
         if (mpv != null) {
@@ -302,13 +324,19 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
         mPrepared = false;
         mPaused = false;
+        mStartPosition = 0;
+        mStartPositionApplied = false;
         mDuration = 0;
         mCacheEnd = 0;
         mVideoSizeNotified = false;
     }
 
+    /**
+     * ★ 关键修复：跟踪暂停状态，让 VideoView 的
+     *   resume() -> isInPlaybackState() && !isPlaying()
+     * 判断链正确工作，不再出现“点播放永远暂停”。
+     */
     public boolean isPlaying() {
-        // ★ 关键：mPaused 跟踪状态，让 VideoView 的 pause/resume 逻辑正确
         return mPrepared && !mPaused && mpv != null;
     }
 
@@ -328,8 +356,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
+        // ★ 重置全部状态，错误恢复后可正常重建
         mPrepared = false;
         mPaused = false;
+        mStartPosition = 0;
+        mStartPositionApplied = false;
     }
 
     public void setVolume(float l, float r) {
@@ -370,6 +401,26 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
         return 0;
     }
+
+    /* ========================= AbstractPlayer 扩展方法 ========================= */
+
+    /**
+     * 对齐 IjkPlayer/VideoView：设置起始播放位置，prepareAsync 前由 VideoView 调用。
+     * 返回 false 表示不支持，VideoView 会跳过记忆 seek。
+     */
+    public void setStartPosition(long position) {
+        mStartPosition = position;
+        mStartPositionApplied = false;
+    }
+
+    /**
+     * 对齐 VideoView.onPrepared 里的判断：记忆 seek 是否已应用。
+     */
+    public boolean isStartPositionApplied() {
+        return mStartPositionApplied;
+    }
+
+    /* ========================= 轨道选择 ========================= */
 
     public void selectAudioTrack(int aid) { if (mpv != null) mpv.command("set", "aid", String.valueOf(aid)); }
     public void selectSubtitleTrack(int sid) { if (mpv != null) mpv.command("set", "sid", String.valueOf(sid)); }
