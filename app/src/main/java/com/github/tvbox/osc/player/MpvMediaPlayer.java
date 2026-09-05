@@ -85,9 +85,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-                if (!mSeekLock) {
+             //   if (!mSeekLock) {
                     mPosition = value * 1000;
-                }
+              //  }
             } else if ("demuxer-cache-time".equals(property)) {
                 mCacheEnd = value;
             } else if ("dwidth".equals(property)) {
@@ -103,9 +103,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
-                if (!mSeekLock) {
+             //   if (!mSeekLock) {
                     mPosition = (long)(value * 1000);
-                }
+           //     }
             }
         }
         public void eventProperty(String property, boolean value) {
