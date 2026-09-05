@@ -44,6 +44,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     private boolean mPrepared = false;
     private boolean mVideoSizeNotified = false;
+    private boolean mPaused = false;  // ★ 跟踪暂停状态，让 isPlaying() 正确
 
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
@@ -168,6 +169,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
                 Log.d(TAG, "END_FILE");
                 mPrepared = false;
+                mPaused = false;  // ★ 结束播放时重置
                 if (mPlayerEventListener != null) {
                     mainHandler.post(() -> {
                         if (mPlayerEventListener != null) {
@@ -240,6 +242,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
         mPrepared = false;
         mVideoSizeNotified = false;
+        mPaused = false;
         Log.d(TAG, "mpv initialized");
     }
 
@@ -247,19 +250,21 @@ public class MpvMediaPlayer extends AbstractPlayer {
         Log.d(TAG, "setDataSource: " + path);
         mPrepared = false;
         mVideoSizeNotified = false;
+        mPaused = false;
         mDuration = 0;
         mCacheEnd = 0;
 
         notifyBufferingStart();
 
+        // ★ 强制注入 UA，确保格式正确（每行 \r\n，包括最后一行）
         StringBuilder sb = new StringBuilder();
         sb.append("User-Agent: Mozilla/5.0 (Linux; Android)\r\n");
-
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> e : headers.entrySet()) {
                 sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
             }
         }
+        sb.append("\r\n");  // ★ 确保末尾有空行
 
         mpv.setOptionString("http-header-fields", sb.toString());
         mpv.command("loadfile", path);
@@ -271,11 +276,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void start() {
         Log.d(TAG, "start");
+        mPaused = false;  // ★ 同步状态
         if (mpv != null) mpv.command("set", "pause", "no");
     }
 
     public void pause() {
         Log.d(TAG, "pause");
+        mPaused = true;  // ★ 同步状态
         if (mpv != null) mpv.command("set", "pause", "yes");
     }
 
@@ -283,6 +290,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         Log.d(TAG, "stop");
         if (mpv != null) mpv.command("stop");
         mPrepared = false;
+        mPaused = false;
     }
 
     public void prepareAsync() {}
@@ -293,13 +301,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
             mpv.detachSurface();
         }
         mPrepared = false;
+        mPaused = false;
         mDuration = 0;
         mCacheEnd = 0;
         mVideoSizeNotified = false;
     }
 
     public boolean isPlaying() {
-        return mPrepared && mpv != null;
+        // ★ 关键：mPaused 跟踪状态，让 VideoView 的 pause/resume 逻辑正确
+        return mPrepared && !mPaused && mpv != null;
     }
 
     public void seekTo(long time) {
@@ -318,6 +328,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
+        mPrepared = false;
+        mPaused = false;
     }
 
     public void setVolume(float l, float r) {
