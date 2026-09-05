@@ -43,8 +43,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private int mVideoWidth = 0;
     private int mVideoHeight = 0;
 
-    // ★ 状态标志
+    // ★ 状态标志（volatile 保证跨线程可见性）
     private volatile boolean mPrepared = false;
+    private boolean mVideoSizeNotified = false;
     private volatile boolean mPaused = false;
 
     // ★ UA 常量
@@ -53,10 +54,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     // ★ seek 锁定
     private volatile boolean mSeekLock = false;
     private long mSeekTarget = 0;
-
-    // ★★★ 新思路：延迟发 RENDERING_START，等 time-pos 真正动起来再发 ★★★
-    private volatile boolean mShouldNotifyPlaying = false;
-    private boolean mPlayingNotified = false;
 
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
@@ -85,11 +82,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
                 if (!mSeekLock) {
-                    long newPos = value * 1000;
-                    mPosition = newPos;
+                    mPosition = value * 1000;
                 }
-                // ★★★ 新思路：time-pos 更新时检查是否该发 RENDERING_START ★★★
-                checkAndNotifyPlaying(value);
             } else if ("demuxer-cache-time".equals(property)) {
                 mCacheEnd = value;
             } else if ("dwidth".equals(property)) {
@@ -106,11 +100,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
                 if (!mSeekLock) {
-                    long newPos = (long)(value * 1000);
-                    mPosition = newPos;
+                    mPosition = (long)(value * 1000);
                 }
-                // ★★★ 新思路：double 版的 time-pos 也检查 ★★★
-                checkAndNotifyPlaying(value);
             }
         }
         public void eventProperty(String property, boolean value) {
@@ -154,15 +145,14 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
-                // ★★★ 新思路：只发 onPrepared，不发 RENDERING_START ★★★
-                // ★★★ RENDERING_START 延迟到 time-pos 真正变化时再发 ★★★
+                // ★★★ 子线程立即写状态，主线程发回调 ★★★
+                // ★ mPrepared 立即置 true → isPlaying() 立即可读
+                // ★ 回调 post 到主线程 → UI 安全
                 mPrepared = true;
-                mShouldNotifyPlaying = true;
-                mPlayingNotified = false;  // 重置，准备新一轮通知
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onPrepared();
-                        // ★ 不再在这里发 RENDERING_START
+                        mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                     }
                 });
 
@@ -187,12 +177,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
                 Log.d(TAG, "END_FILE");
+                // ★ 子线程立即重置状态 → isPlaying() 立即返回 false
                 mPrepared = false;
                 mPaused = false;
                 mSeekLock = false;
                 mSeekTarget = 0;
-                mShouldNotifyPlaying = false;
-                mPlayingNotified = false;
+                mVideoSizeNotified = false;
                 mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onCompletion();
@@ -202,23 +192,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
     };
 
-    // ★★★ 新思路：检查并发送 RENDERING_START 的核心方法 ★★★
-    private void checkAndNotifyPlaying(double timePosValue) {
-        if (!mShouldNotifyPlaying || mPlayingNotified) return;
-        // time-pos > 0 说明 mpv 真正在输出画面/声音了
-        if (timePosValue > 0) {
-            mPlayingNotified = true;
-            mainHandler.post(() -> {
-                if (mPlayerEventListener != null) {
-                    mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                }
-            });
-            Log.d(TAG, "RENDERING_START fired (time-pos=" + timePosValue + ")");
-        }
-    }
-
     private void notifyVideoSizeIfReady() {
-        if (mVideoWidth > 0 && mVideoHeight > 0 && mPlayerEventListener != null) {
+        if (!mVideoSizeNotified && mVideoWidth > 0 && mVideoHeight > 0
+                && mPlayerEventListener != null) {
+            mVideoSizeNotified = true;
             Log.d(TAG, "video size: " + mVideoWidth + "x" + mVideoHeight);
             mainHandler.post(() -> {
                 if (mPlayerEventListener != null) {
@@ -276,20 +253,19 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.addObserver(observer);
 
         mPrepared = false;
+        mVideoSizeNotified = false;
         mPaused = false;
-        mShouldNotifyPlaying = false;
-        mPlayingNotified = false;
         Log.d(TAG, "mpv initialized");
     }
 
     public void setDataSource(String path, Map<String, String> headers) {
         Log.d(TAG, "setDataSource: " + path);
+        // ★ 子线程立即重置 → isPlaying() 立即返回 false
         mPrepared = false;
+        mVideoSizeNotified = false;
         mPaused = false;
         mDuration = 0;
         mCacheEnd = 0;
-        mShouldNotifyPlaying = false;
-        mPlayingNotified = false;
 
         notifyBufferingStart();
 
@@ -330,8 +306,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPaused = false;
         mSeekLock = false;
         mSeekTarget = 0;
-        mShouldNotifyPlaying = false;
-        mPlayingNotified = false;
     }
 
     public void prepareAsync() {
@@ -349,8 +323,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mCacheEnd = 0;
         mSeekLock = false;
         mSeekTarget = 0;
-        mShouldNotifyPlaying = false;
-        mPlayingNotified = false;
+        mVideoSizeNotified = false;
     }
 
     public boolean isPlaying() {
@@ -380,8 +353,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPaused = false;
         mSeekLock = false;
         mSeekTarget = 0;
-        mShouldNotifyPlaying = false;
-        mPlayingNotified = false;
     }
 
     public void setVolume(float l, float r) {
