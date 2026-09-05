@@ -57,7 +57,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private long mBufferingStartTime = 0;
 
     private volatile boolean mReleasing = false;
-    private volatile boolean mReleased = true; // 初始即 true，未创建时视为已释放
+    private volatile boolean mReleased = true;
 
     private boolean mIsLive = false;
 
@@ -257,12 +257,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
             Log.d(TAG, "initPlayer: release in progress, skip");
             return;
         }
-        // 不复用，每次创建全新实例
+        // 销毁旧实例
         if (mpv != null) {
             Log.d(TAG, "initPlayer: destroy old instance");
             try { mpv.command("stop"); } catch (Exception ignored) {}
             try { mpv.removeObserver(observer); } catch (Exception ignored) {}
-            try { mpv.detachSurface(); } catch (Exception ignored) {}
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
@@ -340,7 +339,10 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public void prepareAsync() {}
 
     public void reset() {
-        if (mpv != null && !mReleased) mpv.command("stop");
+        if (mpv != null && !mReleased) {
+            mpv.command("stop");
+            mpv.detachSurface(); // ★ 唯一解绑 Surface 的地方
+        }
         mPrepared = false;
         mPausedByUser = false;
         mSeeking = false;
@@ -369,7 +371,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (mpv != null) {
             try { mpv.command("stop"); } catch (Exception ignored) {}
             try { mpv.removeObserver(observer); } catch (Exception ignored) {}
-            try { mpv.detachSurface(); } catch (Exception ignored) {}
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
