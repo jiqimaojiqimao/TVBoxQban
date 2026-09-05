@@ -146,6 +146,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             if (eventId == 8 /* MPV_EVENT_FILE_LOADED */) {
                 Log.d(TAG, "FILE_LOADED");
+                mpv.observeProperty("time-pos", MPV_FORMAT_INT64);
+                mpv.observeProperty("duration", MPV_FORMAT_INT64);
+                mpv.observeProperty("demuxer-cache-time", MPV_FORMAT_INT64);
+                mpv.observeProperty("paused-for-cache", MPV_FORMAT_FLAG);
+                mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
+                mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
+                mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
                 // ★★★ 新思路：只发 onPrepared，不发 RENDERING_START ★★★
                 // ★★★ RENDERING_START 延迟到 time-pos 真正变化时再发 ★★★
@@ -253,6 +260,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
+
+        Log.d(TAG, "initPlayer: creating new instance");
         mpv = new MPV();
         mpv.create(context);
         mpv.setOptionString("hwdec", "auto");
@@ -266,19 +275,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.init();
         mpv.addObserver(observer);
 
-        // ★ 提前注册，确保 FILE_LOADED 前就 observe 了
-        mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
-        mpv.observeProperty("dheight", MPV_FORMAT_INT64);
-        mpv.observeProperty("time-pos", MPV_FORMAT_INT64);
-        mpv.observeProperty("duration", MPV_FORMAT_INT64);
-        mpv.observeProperty("demuxer-cache-time", MPV_FORMAT_INT64);
-        mpv.observeProperty("paused-for-cache", MPV_FORMAT_FLAG);
-        mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
-
         mPrepared = false;
         mPaused = false;
         mShouldNotifyPlaying = false;
         mPlayingNotified = false;
+        Log.d(TAG, "mpv initialized");
     }
 
     public void setDataSource(String path, Map<String, String> headers) {
