@@ -48,9 +48,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private boolean mVideoSizeNotified = false;
     private boolean mPaused = false;
 
-    // ★ 记忆播放位置
-    private long mStartPosition = 0;
-
     // ★ UA 常量
     private static final String UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
@@ -88,7 +85,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-                if (mPrepared) {
+                if (mPrepared && !mSeekLock) {
                     mPosition = value * 1000;
                 }
             } else if ("demuxer-cache-time".equals(property)) {
@@ -151,10 +148,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
+                notifyBufferingEnd();
+                mpv.command("set", "pause", "no");
 
+            } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
+                Log.d(TAG, "PLAYBACK_RESTART");
+
+                // ★★★ 在这里才标记 prepared ★★★
                 if (!mPrepared) {
                     mPrepared = true;
-                    Log.d(TAG, "prepared, duration=" + mDuration);
                     mainHandler.post(() -> {
                         if (mPlayerEventListener != null) {
                             mPlayerEventListener.onPrepared();
@@ -162,12 +164,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     });
                 }
 
-                notifyBufferingEnd();
-                mpv.command("set", "pause", "no");
-
-            } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
-                Log.d(TAG, "PLAYBACK_RESTART");
-                // ★ seek 完成，解锁
                 mSeekLock = false;
                 notifyBufferingEnd();
                 mainHandler.post(() -> {
@@ -175,7 +171,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                         mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                     }
                 });
-
             } else if (eventId == 20 /* MPV_EVENT_SEEK */) {
                 Log.d(TAG, "SEEK -> BUFFERING_START");
                 notifyBufferingStart();
@@ -263,7 +258,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPrepared = false;
         mVideoSizeNotified = false;
         mPaused = false;
-        mStartPosition = 0;
         Log.d(TAG, "mpv initialized, stream-lavf-o user_agent set");
     }
 
@@ -315,6 +309,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (mpv != null) mpv.command("stop");
         mPrepared = false;
         mPaused = false;
+        mSeekLock = false;
+        mSeekTarget = 0;
     }
 
     public void prepareAsync() {
@@ -328,7 +324,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
         mPrepared = false;
         mPaused = false;
-        mStartPosition = 0;
         mDuration = 0;
         mCacheEnd = 0;
         mSeekLock = false;
@@ -363,7 +358,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
         mPrepared = false;
         mPaused = false;
-        mStartPosition = 0;
         mSeekLock = false;
         mSeekTarget = 0;
     }
@@ -398,17 +392,19 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public long getDuration() { return mDuration; }
 
-    public long getCurrentPosition() { return mPosition; }
+    // ★ getCurrentPosition() seek 期间返回 seek target（防御性）
+    public long getCurrentPosition() {
+        if (mSeekLock) {
+            return mSeekTarget;
+        }
+        return mPosition;
+    }
 
     public int getBufferedPercentage() {
         if (mDuration > 0 && mCacheEnd > 0) {
             return (int)Math.min(100, mCacheEnd * 1000 / mDuration);
         }
         return 0;
-    }
-
-    public void setStartPosition(long position) {
-        mStartPosition = position;
     }
 
     public void selectAudioTrack(int aid) { if (mpv != null) mpv.command("set", "aid", String.valueOf(aid)); }
