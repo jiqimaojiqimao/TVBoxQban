@@ -460,12 +460,14 @@ public class VodController extends BaseController {
                     }
                 } else {
                     noHaveVideo = true;   //xuameng 判断是否有视频
+                    int position = safeTimeMs(mControlWrapper.getCurrentPosition());
                     if(MxuamengMusic.getVisibility() == View.GONE) { //xuameng播放音乐背景
-                        MxuamengMusic.setVisibility(VISIBLE);
+                        if (position > 0){
+                            MxuamengMusic.setVisibility(VISIBLE);
+                        }
                     }
                     FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) iv_circle_bg.getLayoutParams(); //xuameng 新增给vod显示旋转图片用
                     if(mLrcView.getVisibility() == View.VISIBLE) {   //xuameng LRC歌词字幕
-                        int position = safeTimeMs(mControlWrapper.getCurrentPosition());
                         if (mLrcView != null) {
                             mLrcView.updateTime(position);  //xuameng 刷新LRC歌词字幕
                         }
@@ -477,7 +479,9 @@ public class VodController extends BaseController {
                         params.leftMargin = margin;
 
                         loadVideoPic();    //xuameng 加载网络PIC图片
-                        iv_circle_bg.setVisibility(VISIBLE);
+                        if (position > 0){
+                            iv_circle_bg.setVisibility(VISIBLE);
+                        }
                     }else {
                         // xuameng如果 mLrcView 不显示，则将 iv_circle_bg 置于屏幕中心
                         params.gravity = Gravity.CENTER;
@@ -495,8 +499,10 @@ public class VodController extends BaseController {
                                 iv_circle_bg.setVisibility(GONE);
                             }
                         } else {
-                            loadVideoPic();  //xuameng 加载网络PIC图片
-                            iv_circle_bg.setVisibility(VISIBLE);
+                            if (position > 0){
+                                loadVideoPic();  //xuameng 加载网络PIC图片
+                                iv_circle_bg.setVisibility(VISIBLE);
+                            }
                         }
                     }
                     iv_circle_bg.setLayoutParams(params);
