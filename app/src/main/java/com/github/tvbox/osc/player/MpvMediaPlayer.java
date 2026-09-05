@@ -155,6 +155,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
                 mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
                 mpv.observeProperty("dheight", MPV_FORMAT_INT64);
 
+                tryReadVideoSizeSync();
                 // ★★★ 新思路：只发 onPrepared，不发 RENDERING_START ★★★
                 // ★★★ RENDERING_START 延迟到 time-pos 真正变化时再发 ★★★
                 mPrepared = true;
@@ -232,6 +233,33 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
     }
 
+    private void tryReadVideoSizeSync() {
+        try {
+            Object w = mpv.getProperty("dwidth");
+            Object h = mpv.getProperty("dheight");
+            if (w instanceof Long && h instanceof Long) {
+                int width = ((Long) w).intValue();
+                int height = ((Long) h).intValue();
+                if (width > 0 && height > 0) {
+                    mVideoWidth = width;
+                    mVideoHeight = height;
+                    // ★ 立即发，不等属性回调
+                    if (!mVideoSizeNotified) {
+                        mVideoSizeNotified = true;
+                        mainHandler.post(() -> {
+                            if (mPlayerEventListener != null) {
+                                mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
+                            }
+                        });
+                    }
+                    Log.d(TAG, "sync video size: " + mVideoWidth + "x" + mVideoHeight);
+                }
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "sync video size failed");
+        }
+    }
+
     /* ========================= Surface ========================= */
 
     @Override
@@ -268,7 +296,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         Log.d(TAG, "initPlayer: creating new instance");
         mpv = new MPV();
         mpv.create(context);
-        mpv.setOptionString("hwdec", "no");
+        mpv.setOptionString("hwdec", "auto");
         mpv.setOptionString("ao", "audiotrack");
         mpv.setOptionString("keep-open", "yes");
         mpv.setOptionString("loop-file", "no");
