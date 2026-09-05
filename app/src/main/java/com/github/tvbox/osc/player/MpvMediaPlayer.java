@@ -416,7 +416,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     /**
      * 对齐 VideoView.onPrepared 里的判断：记忆 seek 是否已应用。
      */
-    public boolean isStartPositionApplied() {
+    public final boolean isStartPositionApplied() {
         return mStartPositionApplied;
     }
 
