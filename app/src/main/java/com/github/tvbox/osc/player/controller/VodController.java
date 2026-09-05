@@ -460,9 +460,9 @@ public class VodController extends BaseController {
                     }
                 } else {
                     noHaveVideo = true;   //xuameng 判断是否有视频
+                    int duration = safeTimeMs(mControlWrapper.getDuration());
+                    int position = safeTimeMs(mControlWrapper.getCurrentPosition());
                     if(MxuamengMusic.getVisibility() == View.GONE) { //xuameng播放音乐背景
-                        int duration = safeTimeMs(mControlWrapper.getDuration());
-                        int position = safeTimeMs(mControlWrapper.getCurrentPosition());
                         if (duration > 0 && position > 0){
                             MxuamengMusic.setVisibility(VISIBLE);
                         }
@@ -481,8 +481,6 @@ public class VodController extends BaseController {
                         params.leftMargin = margin;
 
                         loadVideoPic();    //xuameng 加载网络PIC图片
-                        int duration = safeTimeMs(mControlWrapper.getDuration());
-                        int position = safeTimeMs(mControlWrapper.getCurrentPosition());
                         if (duration > 0 && position > 0){
                             iv_circle_bg.setVisibility(VISIBLE);
                         }
@@ -503,8 +501,6 @@ public class VodController extends BaseController {
                                 iv_circle_bg.setVisibility(GONE);
                             }
                         } else {
-                            int duration = safeTimeMs(mControlWrapper.getDuration());
-                            int position = safeTimeMs(mControlWrapper.getCurrentPosition());
                             if (duration > 0 && position > 0){
                                 loadVideoPic();  //xuameng 加载网络PIC图片
                                 iv_circle_bg.setVisibility(VISIBLE);
