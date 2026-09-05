@@ -144,25 +144,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             if (eventId == 8 /* MPV_EVENT_FILE_LOADED */) {
                 Log.d(TAG, "FILE_LOADED");
-                mPrepared = true;
-                mShouldNotifyPlaying = true;
-                mPlayingNotified = false;  // 重置，准备新一轮通知
-                mainHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onPrepared();
-                        // ★ 不再在这里发 RENDERING_START
-                    }
-                });
 
-                // ★ startPosition
-                final long startPos = getStartPosition();
-                if (startPos > 0 && !isStartPositionApplied()) {
-                    Log.d(TAG, "apply startPosition: " + startPos);
-                    mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
-                    markStartPositionApplied();
-                }
 
-                notifyBufferingEnd();
+          //     notifyBufferingEnd();
 
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
@@ -190,14 +174,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
     };
 
-    // ★ 延迟发 RENDERING_START 的 Runnable
-    private Runnable mNotifyPlayingRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (mPlayerEventListener != null) {
-                mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-            }
-            Log.d(TAG, "RENDERING_START fired (delayed 200ms)");
+.d(TAG, "RENDERING_START fired (delayed 200ms)");
         }
     };
 
@@ -206,7 +183,31 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (timePosValue > 0) {
             mPlayingNotified = true;  // 标记已触发，防止重复调度
             Log.d(TAG, "time-pos > 0, scheduling RENDERING_START with 200ms delay");
-            mainHandler.postDelayed(mNotifyPlayingRunnable, 200);
+                 
+                mShouldNotifyPlaying = true;
+                mPlayingNotified = false;  // 重置，准备新一轮通知
+        notifyVideoSizeIfReady();        
+                mainHandler.post(() -> {
+                 
+                    if (mPlayerEventListener != null) {
+                   mPrepared = true;        
+                        mPlayerEventListener.onPrepared();
+                        
+                
+                
+                mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
+                        
+                        // ★ 不再在这里发 RENDERING_START
+                    }
+                });
+
+                // ★ startPosition
+                final long startPos = getStartPosition();
+                if (startPos > 0 && !isStartPositionApplied()) {
+                    Log.d(TAG, "apply startPosition: " + startPos);
+                    mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
+                    markStartPositionApplied();
+                }      
         }
     }
 
