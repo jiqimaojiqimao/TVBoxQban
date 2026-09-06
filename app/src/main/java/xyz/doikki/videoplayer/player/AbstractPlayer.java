@@ -197,6 +197,9 @@ public abstract class AbstractPlayer {
 
         void onVideoSizeChanged(int width, int height);
 
+		    // 新增闲置状态回调
+    void onPlayerIdle();
+
     }
 
 }
