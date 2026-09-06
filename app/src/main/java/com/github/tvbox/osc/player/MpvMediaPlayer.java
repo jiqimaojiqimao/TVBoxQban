@@ -268,6 +268,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.setOptionString("keep-open", "yes");
         mpv.setOptionString("loop-file", "no");
         mpv.setOptionString("ytdl", "no");
+
+        // ========== ★ 缓冲优化（重点） ==========
+        mpv.setOptionString("cache-pause", "yes");
+        mpv.setOptionString("cache-pause-wait", "5");   // 等 3 秒再暂停
+        mpv.setOptionString("cache-secs", "30");         // 缓存 30 秒
+        mpv.setOptionString("demuxer-max-bytes", "50M"); // 底层缓冲
         mpv.init();
         mpv.addObserver(observer);
 
