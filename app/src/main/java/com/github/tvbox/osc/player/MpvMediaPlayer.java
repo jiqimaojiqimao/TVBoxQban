@@ -12,6 +12,7 @@ import android.view.SurfaceHolder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.Map;
@@ -36,13 +37,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private static final String UA =
             "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
-    static {
-        System.loadLibrary("avutil");
-        System.loadLibrary("swresample");
-        System.loadLibrary("swscale");
-        System.loadLibrary("avcodec");
-        System.loadLibrary("avformat");
-    }
+    // ★ 静态块已删除，不再 System.loadLibrary
+    // so 加载改到 MpvNativeLoader，在构造函数里触发
 
     private static final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -66,6 +62,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private boolean mPlayingNotified = false;
 
     private File mLocalM3u8File;
+
+    /* ========================= startPosition 占位 ========================= */
+    // 如果你已有这些方法的实现，保留你自己的；没有的话用这组占位
+    private long mStartPosition = 0;
+    private boolean mStartPositionApplied = false;
 
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
@@ -183,13 +184,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     mPlayerEventListener.onPrepared();
                 }
             });
+
             // ★ startPosition
             final long startPos = getStartPosition();
             if (startPos > 0 && !isStartPositionApplied()) {
                 Log.d(TAG, "apply startPosition: " + startPos);
                 mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
                 markStartPositionApplied();
-            }    
+            }
+
             mainHandler.postDelayed(() -> {
                 if (mPlayerEventListener != null) {
                     mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
@@ -217,17 +220,17 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public void setDisplay(SurfaceHolder holder) {
-        if (holder == null){ 
+        if (holder == null){
             setSurface(null);
         } else {
             setSurface(holder.getSurface());
         }
     }
 
-
     /* ========================= 生命周期 ========================= */
     public MpvMediaPlayer(Context context) {
         this.context = context.getApplicationContext();
+        MpvNativeLoader.load(this.context); // ★ 从 assets 拷 so 并 load
     }
 
     public void initPlayer() {
@@ -246,11 +249,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.setOptionString("loop-file", "no");
         mpv.setOptionString("ytdl", "no");
         mpv.setOptionString("tls-verify", "no");
-		// 缓冲优化
+        // 缓冲优化
         mpv.setOptionString("cache-pause", "yes");
-        mpv.setOptionString("cache-pause-wait", "3");   // 等 3 秒再暂停
-        mpv.setOptionString("cache-secs", "30");         // 缓存 30 秒
-        mpv.setOptionString("demuxer-max-bytes", "50M"); // 底层缓冲
+        mpv.setOptionString("cache-pause-wait", "3");
+        mpv.setOptionString("cache-secs", "30");
+        mpv.setOptionString("demuxer-max-bytes", "50M");
         mpv.setOptionString("allowed_extensions", "ALL");
         mpv.setOptionString("protocol_whitelist", "file,http,https,tls,crypto,data,tcp,udp");
         mpv.init();
@@ -267,6 +270,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mPrepared = false;
         mPaused = false;
         mPlayingNotified = false;
+        mStartPositionApplied = false;
     }
 
     /* ========================= 核心 ========================= */
@@ -279,9 +283,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mDuration = 0;
         mCacheEnd = 0;
         mPlayingNotified = false;
+        mStartPositionApplied = false;
 
         if (isLikelyHls(path)) {
-            // ★ 同步执行，不开后台线程
             String localPath = downloadAndRewriteM3u8(path, headers);
             if (localPath != null) {
                 Log.d(TAG, "loadfile: " + localPath);
@@ -571,5 +575,70 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     public void selectVideoTrack(int vid) {
         if (mpv != null) mpv.command("set", "vid", String.valueOf(vid));
+    }
+
+    /* ========================= Native Loader ========================= */
+    /**
+     * 从 assets/mpv/{abi}/ 拷贝 so 到 files 目录并 dlopen。
+     * 这样完全绕开 jniLibs 和其他播放器的同名 so 冲突。
+     */
+    private static class MpvNativeLoader {
+        private static final String[] LIBS = {
+            "libavcodec.so"
+            "libavdevice.so"
+            "libavfilter.so"
+            "libavformat.so"
+            "libavutil.so"
+            "libc++_shared.so"
+            "libmpv.so"
+            "libxml2.so"
+            "libplayer.so"
+        };
+
+        private static boolean sLoaded = false;
+
+        static synchronized void load(Context context) {
+            if (sLoaded) return;
+
+            // 取第一个支持的 ABI
+            String abi = android.os.Build.SUPPORTED_ABIS[0];
+            // ABI 名映射：armeabi-v7a → arm64-v8a 等，按你实际 assets 里放的目录名来
+            // 如果你 assets 里只放了 arm64-v8a，直接写死：
+            // abi = "arm64-v8a";
+
+            File dir = new File(context.getFilesDir(), "mpv_native_libs");
+            dir.mkdirs();
+
+            try {
+                for (String lib : LIBS) {
+                    File out = new File(dir, lib);
+                    if (!out.exists() || out.length() == 0) {
+                        copyFromAssets(context, "mpv/" + abi + "/" + lib, out);
+                    }
+                }
+
+                // 按依赖顺序 load
+                for (String lib : LIBS) {
+                    System.load(new File(dir, lib).getAbsolutePath());
+                }
+
+                sLoaded = true;
+                Log.d(TAG, "mpv native libs loaded from: " + dir.getAbsolutePath());
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to load mpv native libs", e);
+                throw new RuntimeException("Cannot load mpv native libraries", e);
+            }
+        }
+
+        private static void copyFromAssets(Context context, String assetPath, File out) throws Exception {
+            try (InputStream in = context.getAssets().open(assetPath);
+                 FileOutputStream fos = new FileOutputStream(out)) {
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    fos.write(buf, 0, len);
+                }
+            }
+        }
     }
 }
