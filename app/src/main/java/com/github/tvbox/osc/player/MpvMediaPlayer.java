@@ -251,7 +251,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.setOptionString("cache-pause-wait", "3");   // 等 3 秒再暂停
         mpv.setOptionString("cache-secs", "30");         // 缓存 30 秒
         mpv.setOptionString("demuxer-max-bytes", "50M"); // 底层缓冲
-        mpv.setOptionString("demuxer-lavf-format", "hls");
         mpv.setOptionString("allowed_extensions", "ALL");
         mpv.setOptionString("protocol_whitelist", "file,http,https,tls,crypto,data,tcp,udp");
         mpv.init();
