@@ -584,17 +584,17 @@ public class MpvMediaPlayer extends AbstractPlayer {
      */
     private static class MpvNativeLoader {
         private static final String[] LIBS = {
-            "libavcodec.so"
-            "libavdevice.so"
-            "libavfilter.so"
-            "libavformat.so"
-            "libavutil.so"
-            "libc++_shared.so"
-            "libmpv.so"
-            "libxml2.so"
-            "libplayer.so"
-            "libswresample.so"
-            "libswscale.so"
+                "libavcodec.so",
+                "libavdevice.so",
+                "libavfilter.so",
+                "libavformat.so",
+                "libavutil.so",
+                "libc++_shared.so",
+                "libmpv.so",
+                "libxml2.so",
+                "libplayer.so",
+                "libswresample.so",
+                "libswscale.so",
         };
 
         private static boolean sLoaded = false;
