@@ -50,7 +50,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
             .build();
 
     private MPV mpv;
-    private Surface mSurface;
     private Context context;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
