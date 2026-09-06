@@ -247,8 +247,3 @@
 -keep class org.chromium.net.**{*;}
 # Nano
 -keep class fi.iki.elonen.** { *; }
-# MPV
--keep class is.xyz.mpv.** { *; }
--keepclasseswithmembernames class is.xyz.mpv.** {
-    native <methods>;
-}
