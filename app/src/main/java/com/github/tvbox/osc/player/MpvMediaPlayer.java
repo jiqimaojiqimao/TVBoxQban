@@ -4,15 +4,16 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
-import is.xyz.mpv.MPV;
-import is.xyz.mpv.MPVNode;
-
+import java.net.URL;
 import java.util.Map;
 
+import is.xyz.mpv.MPV;
+import is.xyz.mpv.MPVNode;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 
@@ -47,24 +48,20 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private volatile boolean mPrepared = false;
     private volatile boolean mPaused = false;
 
-    // ★ UA 常量
-    private static final String UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+    // ★ UA 常量（模拟 Chrome，兼容绝大多数源）
+    private static final String UA =
+            "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
     // ★ seek 锁定
     private volatile boolean mSeekLock = false;
     private long mSeekTarget = 0;
 
-    // ★ 延迟发 RENDERING_START
+    // ★ 播放通知
     private volatile boolean mShouldNotifyPlaying = false;
     private boolean mPlayingNotified = false;
 
-    // ★★★ 新增：缓冲状态机 ★★★
-    private volatile boolean mBuffering = false;
-
     /* ========================= 缓冲 ========================= */
     private void notifyBufferingStart() {
-        if (mBuffering) return; // 防止重复
-        mBuffering = true;
         mainHandler.post(() -> {
             if (mPlayerEventListener != null) {
                 mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
@@ -73,8 +70,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     private void notifyBufferingEnd() {
-        if (!mBuffering) return; // 防止重复
-        mBuffering = false;
         mainHandler.post(() -> {
             if (mPlayerEventListener != null) {
                 mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, getBufferedPercentage());
@@ -83,50 +78,51 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     /* ========================= Observer ========================= */
-
     private final MPV.EventObserver observer = new MPV.EventObserver() {
+
         public void eventProperty(String property) {}
+
         public void eventProperty(String property, long value) {
             if (mpv == null) return;
-            if ("duration".equals(property)) {
-                mDuration = value * 1000;
-            } else if ("time-pos".equals(property)) {
-                mShouldNotifyPlaying = true;
-                mPlayingNotified = false;
-                checkAndNotifyPlaying(value);
-                if (!mSeekLock) {
-                    mPosition = value * 1000;
-                }
-            } else if ("demuxer-cache-time".equals(property)) {
-                mCacheEnd = value;
-            } else if ("dwidth".equals(property)) {
-                mVideoWidth = (int) value;
-                notifyVideoSizeIfReady();
-            } else if ("dheight".equals(property)) {
-                mVideoHeight = (int) value;
-                notifyVideoSizeIfReady();
-
-            // ★★★ 新增：真正的缓冲结束判断 ★★★
-            } else if ("cache-buffering-state".equals(property)) {
-                int percent = (int) value;
-                Log.d(TAG, "cache-buffering-state=" + percent);
-                if (percent >= 99) {
-                    notifyBufferingEnd();
-                }
+            switch (property) {
+                case "duration":
+                    mDuration = value * 1000;
+                    break;
+                case "time-pos":
+                    mShouldNotifyPlaying = true;
+                    mPlayingNotified = false;
+                    checkAndNotifyPlaying(value);
+                    if (!mSeekLock) mPosition = value * 1000;
+                    break;
+                case "demuxer-cache-time":
+                    mCacheEnd = value;
+                    break;
+                case "dwidth":
+                    mVideoWidth = (int) value;
+                    notifyVideoSizeIfReady();
+                    break;
+                case "dheight":
+                    mVideoHeight = (int) value;
+                    notifyVideoSizeIfReady();
+                    break;
+                case "cache-buffering-state":
+                    Log.d(TAG, "cache-buffering-state=" + value);
+                    if (value >= 99) {
+                        notifyBufferingEnd();
+                    }
+                    break;
             }
         }
 
         public void eventProperty(String property, double value) {
             if (mpv == null) return;
             if ("duration".equals(property)) {
-                mDuration = (long)(value * 1000);
+                mDuration = (long) (value * 1000);
             } else if ("time-pos".equals(property)) {
                 mShouldNotifyPlaying = true;
                 mPlayingNotified = false;
                 checkAndNotifyPlaying(value);
-                if (!mSeekLock) {
-                    mPosition = (long)(value * 1000);
-                }
+                if (!mSeekLock) mPosition = (long) (value * 1000);
             }
         }
 
@@ -134,11 +130,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if (mpv == null) return;
             if ("paused-for-cache".equals(property)) {
                 Log.d(TAG, "paused-for-cache=" + value);
-                if (value) {
-                    notifyBufferingStart();
-                }
-                // ★★★ 不再在这里结束缓冲 ★★★
-                // 由 cache-buffering-state >= 95 来结束
+                if (value) notifyBufferingStart();
+                // 不再在这里结束缓冲
             }
         }
 
@@ -160,37 +153,34 @@ public class MpvMediaPlayer extends AbstractPlayer {
         public void event(int eventId, MPVNode node) { handleEvent(eventId); }
 
         private void handleEvent(int eventId) {
-            Log.d(TAG, "event: " + eventId);
             if (mpv == null) return;
-
-            if (eventId == 8 /* MPV_EVENT_FILE_LOADED */) {
-                Log.d(TAG, "FILE_LOADED");
-                notifyVideoSizeIfReady();
-
-            // ★★★ PLAYBACK_RESTART 不再结束缓冲 ★★★
-            } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
-                Log.d(TAG, "PLAYBACK_RESTART");
-                mSeekLock = false;
-                // notifyBufferingEnd() 已移除
-
-            } else if (eventId == 20 /* MPV_EVENT_SEEK */) {
-                Log.d(TAG, "SEEK -> BUFFERING_START");
-                notifyBufferingStart();
-
-            } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
-                Log.d(TAG, "END_FILE");
-                mPrepared = false;
-                mPaused = false;
-                mSeekLock = false;
-                mSeekTarget = 0;
-                mShouldNotifyPlaying = false;
-                mPlayingNotified = false;
-                mBuffering = false; // ★ 重置
-                mainHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onCompletion();
-                    }
-                });
+            switch (eventId) {
+                case 8: // MPV_EVENT_FILE_LOADED
+                    Log.d(TAG, "FILE_LOADED");
+                    notifyVideoSizeIfReady();
+                    break;
+                case 21: // MPV_EVENT_PLAYBACK_RESTART
+                    Log.d(TAG, "PLAYBACK_RESTART");
+                    mSeekLock = false;
+                    break;
+                case 20: // MPV_EVENT_SEEK
+                    Log.d(TAG, "SEEK -> BUFFERING_START");
+                    notifyBufferingStart();
+                    break;
+                case 7: // MPV_EVENT_END_FILE
+                    Log.d(TAG, "END_FILE");
+                    mPrepared = false;
+                    mPaused = false;
+                    mSeekLock = false;
+                    mSeekTarget = 0;
+                    mShouldNotifyPlaying = false;
+                    mPlayingNotified = false;
+                    mainHandler.post(() -> {
+                        if (mPlayerEventListener != null) {
+                            mPlayerEventListener.onCompletion();
+                        }
+                    });
+                    break;
             }
         }
     };
@@ -230,7 +220,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     /* ========================= Surface ========================= */
-
     @Override
     public void setSurface(Surface surface) {
         if (surface != null && mpv != null) {
@@ -240,15 +229,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public void setDisplay(SurfaceHolder holder) {
-        if (holder == null) {
-            setSurface(null);
-        } else {
-            setSurface(holder.getSurface());
-        }
+        if (holder == null) setSurface(null);
+        else setSurface(holder.getSurface());
     }
 
     /* ========================= 生命周期 ========================= */
-
     public MpvMediaPlayer(Context context) {
         this.context = context.getApplicationContext();
     }
@@ -261,22 +246,30 @@ public class MpvMediaPlayer extends AbstractPlayer {
             try { mpv.destroy(); } catch (Exception ignored) {}
             mpv = null;
         }
+
         mpv = new MPV();
         mpv.create(context);
+
+        // 解码 / 音频
         mpv.setOptionString("hwdec", "auto");
         mpv.setOptionString("ao", "audiotrack");
         mpv.setOptionString("keep-open", "yes");
         mpv.setOptionString("loop-file", "no");
         mpv.setOptionString("ytdl", "no");
 
-        // ========== ★ 缓冲优化（重点） ==========
+        // ★ HTTPS / TLS 兼容
+        mpv.setOptionString("tls-verify", "no");
+
+        // ★ 缓冲优化
         mpv.setOptionString("cache-pause", "yes");
-        mpv.setOptionString("cache-pause-wait", "5");   // 等 3 秒再暂停
-        mpv.setOptionString("cache-secs", "30");         // 缓存 30 秒
-        mpv.setOptionString("demuxer-max-bytes", "50M"); // 底层缓冲
+        mpv.setOptionString("cache-pause-wait", "5");
+        mpv.setOptionString("cache-secs", "30");
+        mpv.setOptionString("demuxer-max-bytes", "50M");
+
         mpv.init();
         mpv.addObserver(observer);
 
+        // 属性监听
         mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
         mpv.observeProperty("dheight", MPV_FORMAT_INT64);
         mpv.observeProperty("time-pos", MPV_FORMAT_INT64);
@@ -284,29 +277,38 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.observeProperty("demuxer-cache-time", MPV_FORMAT_INT64);
         mpv.observeProperty("paused-for-cache", MPV_FORMAT_FLAG);
         mpv.observeProperty("end-file-reason", MPV_FORMAT_STRING);
-
-        // ★★★ 新增 ★★★
         mpv.observeProperty("cache-buffering-state", MPV_FORMAT_INT64);
 
         mPrepared = false;
         mPaused = false;
         mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-        mBuffering = false;
     }
 
+    /* ========================= 关键：DataSource ========================= */
     public void setDataSource(String path, Map<String, String> headers) {
         Log.d(TAG, "setDataSource: " + path);
+
         mPrepared = false;
         mPaused = false;
         mDuration = 0;
         mCacheEnd = 0;
         mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-        mBuffering = false;
 
+        // ★ 自动提取 Referer
+        String referer = extractReferer(path);
+        String origin = extractOrigin(path);
+
+        // ---- http-header-fields ----
         StringBuilder sb = new StringBuilder();
         sb.append("User-Agent: ").append(UA).append("\r\n");
+        if (!TextUtils.isEmpty(referer)) {
+            sb.append("Referer: ").append(referer).append("\r\n");
+        }
+        if (!TextUtils.isEmpty(origin)) {
+            sb.append("Origin: ").append(origin).append("\r\n");
+        }
         if (headers != null && !headers.isEmpty()) {
             for (Map.Entry<String, String> e : headers.entrySet()) {
                 sb.append(e.getKey()).append(": ").append(e.getValue()).append("\r\n");
@@ -314,9 +316,37 @@ public class MpvMediaPlayer extends AbstractPlayer {
         }
         sb.append("\r\n");
         mpv.setOptionString("http-header-fields", sb.toString());
-        mpv.setOptionString("demuxer-lavf-format", "hls");
 
+        // ---- lavf-o 兜底（非常重要）----
+        StringBuilder lavfOpts = new StringBuilder();
+        lavfOpts.append("user_agent=").append(UA.replace(",", "\\,"));
+        if (!TextUtils.isEmpty(referer)) {
+            lavfOpts.append(",referrer=").append(referer.replace(",", "\\,"));
+        }
+        mpv.setOptionString("demuxer-lavf-o", lavfOpts.toString());
+
+        // ★ 不再强制 hls，让 mpv 自动探测
         mpv.command("loadfile", path);
+    }
+
+    /** 从 URL 提取 Referer（取 scheme + host + /） */
+    private String extractReferer(String url) {
+        try {
+            URL u = new URL(url);
+            return u.getProtocol() + "://" + u.getHost() + "/";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** 从 URL 提取 Origin（同 Referer，不带路径） */
+    private String extractOrigin(String url) {
+        try {
+            URL u = new URL(url);
+            return u.getProtocol() + "://" + u.getHost();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     public void setDataSource(AssetFileDescriptor fd) {
@@ -344,7 +374,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mSeekTarget = 0;
         mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-        mBuffering = false; // ★ 重置
     }
 
     public void prepareAsync() {
@@ -364,7 +393,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mSeekTarget = 0;
         mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-        mBuffering = false; // ★ 重置
     }
 
     public boolean isPlaying() {
@@ -396,12 +424,11 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mSeekTarget = 0;
         mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-        mBuffering = false;
     }
 
     public void setVolume(float l, float r) {
         if (mpv != null) {
-            mpv.command("set", "ao-volume", String.valueOf((int)((l + r) / 2 * 100)));
+            mpv.command("set", "ao-volume", String.valueOf((int) ((l + r) / 2 * 100)));
         }
     }
 
@@ -430,15 +457,12 @@ public class MpvMediaPlayer extends AbstractPlayer {
     public long getDuration() { return mDuration; }
 
     public long getCurrentPosition() {
-        if (mSeekLock) {
-            return mSeekTarget;
-        }
-        return mPosition;
+        return mSeekLock ? mSeekTarget : mPosition;
     }
 
     public int getBufferedPercentage() {
         if (mDuration > 0 && mCacheEnd > 0) {
-            return (int)Math.min(100, mCacheEnd * 1000 / mDuration);
+            return (int) Math.min(100, mCacheEnd * 1000 / mDuration);
         }
         return 0;
     }
