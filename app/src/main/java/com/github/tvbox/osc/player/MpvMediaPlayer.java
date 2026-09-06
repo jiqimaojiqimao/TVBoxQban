@@ -183,11 +183,18 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     mPlayerEventListener.onPrepared();
                 }
             });
+            // ★ startPosition
+            final long startPos = getStartPosition();
+            if (startPos > 0 && !isStartPositionApplied()) {
+                Log.d(TAG, "apply startPosition: " + startPos);
+                mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
+                markStartPositionApplied();
+            }    
             mainHandler.postDelayed(() -> {
                 if (mPlayerEventListener != null) {
                     mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                 }
-            }, 200);
+            }, 20);
         }
     }
 
