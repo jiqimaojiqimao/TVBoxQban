@@ -84,11 +84,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-                    mPrepared = true;
                 mShouldNotifyPlaying = true;
                 mPlayingNotified = false;  // 重置，准备新一轮通知
-        
-                   checkAndNotifyPlaying(value);        
+                checkAndNotifyPlaying(value);        
                 if (!mSeekLock) {
                     long newPos = value * 1000;
                     mPosition = newPos;
@@ -109,11 +107,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
-                      mPrepared = true;
                 mShouldNotifyPlaying = true;
                 mPlayingNotified = false;  // 重置，准备新一轮通知
-        
-                   checkAndNotifyPlaying(value);          
+                checkAndNotifyPlaying(value);          
                 if (!mSeekLock) {
                     long newPos = (long)(value * 1000);
                     mPosition = newPos;
@@ -154,21 +150,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
             if (eventId == 8 /* MPV_EVENT_FILE_LOADED */) {
                 Log.d(TAG, "FILE_LOADED");
-
-
+                notifyVideoSizeIfReady();   
             //    notifyBufferingEnd();
-
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
                 mSeekLock = false;
                 notifyBufferingEnd();
-
             } else if (eventId == 20 /* MPV_EVENT_SEEK */) {
-            
-        
                 Log.d(TAG, "SEEK -> BUFFERING_START");
                 notifyBufferingStart();
-
             } else if (eventId == 7 /* MPV_EVENT_END_FILE */) {
                 Log.d(TAG, "END_FILE");
                 mPrepared = false;
@@ -201,22 +191,13 @@ public class MpvMediaPlayer extends AbstractPlayer {
         if (!mShouldNotifyPlaying || mPlayingNotified) return;
         if (timePosValue > 0) {
             mPlayingNotified = true;  // 标记已触发，防止重复调度
-         notifyVideoSizeIfReady();   
+            notifyVideoSizeIfReady();   
               mainHandler.post(() -> {
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onPrepared();
-                        // ★ 不再在这里发 RENDERING_START
+                        mPrepared = true;
                     }
                 });
-
-                // ★ startPosition
-                final long startPos = getStartPosition();
-                if (startPos > 0 && !isStartPositionApplied()) {
-                    Log.d(TAG, "apply startPosition: " + startPos);
-                    mpv.command("seek", String.valueOf(startPos / 1000.0), "absolute");
-                    markStartPositionApplied();
-                  notifyBufferingStart();  
-                }      
             Log.d(TAG, "time-pos > 0, scheduling RENDERING_START with 200ms delay");
             mainHandler.postDelayed(mNotifyPlayingRunnable, 20);
         }
