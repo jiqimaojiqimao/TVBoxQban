@@ -594,6 +594,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
             "libxml2.so"
             "libplayer.so"
             "libswresample.so"
+            "libswscale.so"
         };
 
         private static boolean sLoaded = false;
