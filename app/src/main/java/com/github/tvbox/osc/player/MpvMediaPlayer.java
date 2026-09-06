@@ -94,7 +94,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
                     mDuration = value * 1000;
                     break;
                 case "time-pos":
-                    mPlayingNotified = false;
                     checkAndNotifyPlaying(value);
                     if (!mSeekLock) mPosition = value * 1000;
                     break;
@@ -117,7 +116,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long) (value * 1000);
             } else if ("time-pos".equals(property)) {
-                mPlayingNotified = false;
                 checkAndNotifyPlaying(value);
                 if (!mSeekLock) mPosition = (long) (value * 1000);
             }
