@@ -205,17 +205,20 @@ public class MpvMediaPlayer extends AbstractPlayer {
     /* ========================= Surface ========================= */
     @Override
     public void setSurface(Surface surface) {
-        mSurface = surface;
-        if (mpv != null && surface != null) {
+        if (surface != null && mpv != null){
             mpv.attachSurface(surface);
         }
     }
 
     @Override
     public void setDisplay(SurfaceHolder holder) {
-        if (holder == null) setSurface(null);
-        else setSurface(holder.getSurface());
+        if (holder == null){ 
+            setSurface(null);
+        } else {
+            setSurface(holder.getSurface());
+        }
     }
+
 
     /* ========================= 生命周期 ========================= */
     public MpvMediaPlayer(Context context) {
@@ -247,7 +250,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.setOptionString("allowed_extensions", "ALL");
         mpv.setOptionString("protocol_whitelist", "file,http,https,tls,crypto,data,tcp,udp");
         mpv.init();
-        mpv.attachSurface(mSurface); // ✅ 提前保存 surface
         mpv.addObserver(observer);
 
         mpv.observeProperty("dwidth", MPV_FORMAT_INT64);
