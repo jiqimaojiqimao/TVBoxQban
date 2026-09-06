@@ -487,6 +487,9 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public boolean isPlaying() {
+        if (mpv == null){
+            return false;
+        }
         return mPrepared && !mPaused;
     }
 
