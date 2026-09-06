@@ -47,7 +47,8 @@ android {
             exclude '**/libxml2.so'
             exclude '**/libplayer.so'
             exclude '**/libmedia3ext.so' 
-            exclude '**/libswresample.so' 	
+            exclude '**/libswresample.so' 
+            exclude '**/libswscale.so' 	    
         }
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/beans.xml'
