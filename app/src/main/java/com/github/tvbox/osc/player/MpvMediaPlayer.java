@@ -64,7 +64,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private volatile boolean mPaused = false;
     private volatile boolean mSeekLock = false;
     private long mSeekTarget = 0;
-    private boolean mPreparedNotified = false;
     private boolean mPlayingNotified = false;
 
     private File mLocalM3u8File;
@@ -178,7 +177,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     private void checkAndNotifyPlaying(double timePosValue) {
         if (mPlayingNotified) return;
         if (timePosValue > 0) {
-            mPreparedNotified = true;
+            mPlayingNotified = true;
             mPrepared = true;
 
             notifyVideoSizeIfReady();
