@@ -713,6 +713,11 @@ public class VideoView<P extends AbstractPlayer> extends FrameLayout
         setUrl(url, null);
     }
 
+@Override
+public void onPlayerIdle() {
+    setPlayState(STATE_IDLE);
+}
+
     /**
      * 设置包含请求头信息的视频地址
      *
