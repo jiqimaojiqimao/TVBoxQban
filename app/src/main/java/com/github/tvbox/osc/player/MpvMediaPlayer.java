@@ -84,8 +84,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
-                mShouldNotifyPlaying = true;
-                mPlayingNotified = false;  // 重置，准备新一轮通知
                 checkAndNotifyPlaying(value);        
                 if (!mSeekLock) {
                     long newPos = value * 1000;
@@ -107,8 +105,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
-                mShouldNotifyPlaying = true;
-                mPlayingNotified = false;  // 重置，准备新一轮通知
                 checkAndNotifyPlaying(value);          
                 if (!mSeekLock) {
                     long newPos = (long)(value * 1000);
@@ -151,7 +147,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if (eventId == 8 /* MPV_EVENT_FILE_LOADED */) {
                 Log.d(TAG, "FILE_LOADED");
                 notifyVideoSizeIfReady();   
-            //    notifyBufferingEnd();
             } else if (eventId == 21 /* MPV_EVENT_PLAYBACK_RESTART */) {
                 Log.d(TAG, "PLAYBACK_RESTART");
                 mSeekLock = false;
@@ -188,6 +183,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
     };
 
     private void checkAndNotifyPlaying(double timePosValue) {
+        mShouldNotifyPlaying = true;
+		mPlayingNotified = false;  // 重置，准备新一轮通知
         if (!mShouldNotifyPlaying || mPlayingNotified) return;
         if (timePosValue > 0) {
             mPlayingNotified = true;  // 标记已触发，防止重复调度
@@ -198,7 +195,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
                         mPrepared = true;
                     }
                 });
-            Log.d(TAG, "time-pos > 0, scheduling RENDERING_START with 200ms delay");
+            Log.d(TAG, "time-pos > 0, scheduling RENDERING_START with 20ms delay");
             mainHandler.postDelayed(mNotifyPlayingRunnable, 20);
         }
     }
@@ -253,8 +250,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mpv.setOptionString("keep-open", "yes");
         mpv.setOptionString("loop-file", "no");
         mpv.setOptionString("ytdl", "no");
-        mpv.setOptionString("user-agent", UA);
-        mpv.setOptionString("mediacodec-surface-callbacks", "yes");
         mpv.init();
         mpv.addObserver(observer);
 
@@ -281,8 +276,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
         mCacheEnd = 0;
         mShouldNotifyPlaying = false;
         mPlayingNotified = false;
-
-        notifyBufferingStart();
 
         StringBuilder sb = new StringBuilder();
         sb.append("User-Agent: ").append(UA).append("\r\n");
