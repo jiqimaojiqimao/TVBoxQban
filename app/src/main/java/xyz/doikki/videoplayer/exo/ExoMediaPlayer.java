@@ -350,12 +350,6 @@ public class ExoMediaPlayer extends AbstractPlayer implements Player.Listener {
             // 将播放器定位到直播窗口的默认（实时）位置
             if (mMediaPlayer != null) {
                 mMediaPlayer.seekToDefaultPosition();
-// 在ExoMediaPlayer的任意位置，当检测到Exo播放器进入IDLE状态时执行
-if (mPlayerEventListener != null) {
-    // 你可以在AbstractPlayer的PlayerEventListener接口中新增一个onPlayerIdle()方法
-    mPlayerEventListener.onPlayerIdle();
-}
-
                 // 可选：重新准备并开始播放
                 mMediaPlayer.prepare();
                 mMediaPlayer.setPlayWhenReady(true);
@@ -373,12 +367,6 @@ if (mPlayerEventListener != null) {
                     mMediaPlayer.stop();
                     mMediaPlayer.clearMediaItems();
                     mIsPreparing = false;                       // xuameng可选：重置一些状态变量
-// 在ExoMediaPlayer的任意位置，当检测到Exo播放器进入IDLE状态时执行
-if (mPlayerEventListener != null) {
-    // 你可以在AbstractPlayer的PlayerEventListener接口中新增一个onPlayerIdle()方法
-    mPlayerEventListener.onPlayerIdle();
-}
-
                 }
                 // xuameng重新尝试播放
                 if (mLastUri != null) {
