@@ -84,6 +84,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = value * 1000;
             } else if ("time-pos".equals(property)) {
+                mShouldNotifyPlaying = true;
+                mPlayingNotified = false;  // 重置，准备新一轮通知
                 checkAndNotifyPlaying(value);        
                 if (!mSeekLock) {
                     long newPos = value * 1000;
@@ -105,6 +107,8 @@ public class MpvMediaPlayer extends AbstractPlayer {
             if ("duration".equals(property)) {
                 mDuration = (long)(value * 1000);
             } else if ("time-pos".equals(property)) {
+                mShouldNotifyPlaying = true;
+                mPlayingNotified = false;  // 重置，准备新一轮通知
                 checkAndNotifyPlaying(value);          
                 if (!mSeekLock) {
                     long newPos = (long)(value * 1000);
@@ -183,8 +187,6 @@ public class MpvMediaPlayer extends AbstractPlayer {
     };
 
     private void checkAndNotifyPlaying(double timePosValue) {
-        mShouldNotifyPlaying = true;
-		mPlayingNotified = false;  // 重置，准备新一轮通知
         if (!mShouldNotifyPlaying || mPlayingNotified) return;
         if (timePosValue > 0) {
             mPlayingNotified = true;  // 标记已触发，防止重复调度
@@ -215,7 +217,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     @Override
     public void setSurface(Surface surface) {
-        if (mpv != null && surface != null) {
+        if (surface != null) {
             mpv.attachSurface(surface);
         }
     }
@@ -337,7 +339,7 @@ public class MpvMediaPlayer extends AbstractPlayer {
     }
 
     public boolean isPlaying() {
-        return mPrepared && !mPaused && mpv != null;
+        return mPrepared && !mPaused;
     }
 
     public void seekTo(long time) {
