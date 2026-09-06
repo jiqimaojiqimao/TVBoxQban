@@ -360,11 +360,15 @@ public class MpvMediaPlayer extends AbstractPlayer {
 
     /** 处理 #EXT-X-KEY 里的相对 URI */
     private String rewriteUri(String line, String baseUrl) {
-        return line.replaceAll("URI=\"([^\"]+)\"", match -> {
-            String uri = match.group(1);
-            if (uri.startsWith("http")) return match.group(0);
-            return "URI=\"" + baseUrl + uri + "\"";
-        });
+        if (!line.contains("URI=\"")) return line;
+        int uriStart = line.indexOf("URI=\"") + 5;
+        int uriEnd = line.indexOf("\"", uriStart);
+        if (uriStart <= 5 || uriEnd <= uriStart) return line;
+        String uri = line.substring(uriStart, uriEnd);
+        if (!uri.startsWith("http://") && !uri.startsWith("https://")) {
+            uri = baseUrl + uri;
+        }
+        return line.substring(0, uriStart) + uri + line.substring(uriEnd);
     }
 
     private boolean isLikelyHls(String path) {
