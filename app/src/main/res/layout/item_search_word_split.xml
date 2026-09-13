@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TextView
-    android:textSize="@dimen/ts_24"
+    android:textSize="@dimen/ts_22"
     android:textColor="@color/color_FFFFFF"
     android:ellipsize="end"
     android:gravity="center_vertical"
