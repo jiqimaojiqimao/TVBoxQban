@@ -330,16 +330,6 @@ public class VlcMediaPlayer extends AbstractPlayer
     public void onSurfacesDestroyed(IVLCVout vout) {
     }
 
-    @Override
-    public void onNewVideoLayout(IVLCVout vout, int width, int height,
-            int visibleWidth, int visibleHeight, int sarNum, int sarDen) {
-        if (width > 0 && height > 0) {
-            mVideoWidth = width;
-            mVideoHeight = height;
-            notifyVideoSizeIfReady();
-        }
-    }
-
     // ==================== 视频尺寸 ====================
 
     private void readVideoSizeFromTracks() {
