@@ -12,7 +12,6 @@ import android.content.res.AssetFileDescriptor;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
-import org.videolan.libvlc.AWindow;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -33,6 +32,11 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private Runnable mVideoSizePollingRunnable;
+
+    // Repeat type 常量（3.x 内部值）
+    private static final int REPEAT_NONE = 0;
+    private static final int REPEAT_ONCE = 1;
+    private static final int REPEAT_ALL = 2;
 
     public VlcMediaPlayer(Context context) {
         mContext = context.getApplicationContext();
@@ -62,7 +66,6 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
     public void setDataSource(String path, Map<String, String> headers) {
         if (mMediaPlayer == null) initPlayer();
 
-        // 本地文件处理
         if (!path.startsWith("http") && !path.startsWith("rtsp") && !path.startsWith("rtmp")) {
             if (!path.startsWith("/")) {
                 path = "file://" + path;
@@ -165,23 +168,26 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     @Override
     public int getBufferedPercentage() {
-        // 3.x 没有 getCachedBytes，用 MediaPlayer 内部的缓冲估算
-        if (mMediaPlayer == null) return 0;
-        // getBufferedPercentage 不存在于 3.x，返回 0 让 VideoView 不显示缓冲进度
-        return 0;
+        return 0; // 3.x 没有 getCachedBytes
     }
 
-@Override
-public void setSurface(Surface surface) {
-    if (mMediaPlayer == null) return;
-    AWindow vout = mMediaPlayer.getVLCVout();
-    if (surface == null) {
-        vout.detachViews();
-    } else {
-        vout.setVideoSurface(surface, null);
-        vout.attachViews();
+    @Override
+    public void setSurface(Surface surface) {
+        if (mMediaPlayer == null) return;
+        try {
+            Object vout = mMediaPlayer.getVLCVout();
+            if (surface == null) {
+                vout.getClass().getMethod("detachViews").invoke(vout);
+            } else {
+                vout.getClass()
+                    .getMethod("setVideoSurface", Surface.class, SurfaceHolder.class)
+                    .invoke(vout, surface, null);
+                vout.getClass().getMethod("attachViews").invoke(vout);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-}
 
     @Override
     public void setDisplay(SurfaceHolder holder) {
@@ -203,8 +209,8 @@ public void setSurface(Surface surface) {
     @Override
     public void setLooping(boolean isLooping) {
         if (mMediaPlayer == null) return;
-        mMediaPlayer.setRepeatType(isLooping ?
-                MediaPlayer.RepeatType.All : MediaPlayer.RepeatType.None);
+        // 用数字常量，不依赖符号
+        mMediaPlayer.setRepeatType(isLooping ? REPEAT_ALL : REPEAT_NONE);
     }
 
     @Override
@@ -305,14 +311,17 @@ public void setSurface(Surface surface) {
             @Override
             public void run() {
                 if (mMediaPlayer == null) return;
-                Media media = mMediaPlayer.getMedia();
-                if (media == null) return;
+                // 用 IMedia 接收，不强制转 Media
+                org.videolan.libvlc.interfaces.IMedia imedia = mMediaPlayer.getMedia();
+                if (imedia == null) return;
 
                 int w = 0, h = 0;
-                for (int i = 0; i < media.getTrackCount(); i++) {
-                    Media.Track track = media.getTrack(i);
-                    if (track.type == Media.Track.Type.Video) {
-                        Media.VideoTrack vt = (Media.VideoTrack) track;
+                // 3.x: IMedia.getTrackCount() / getTrack()
+                for (int i = 0; i < imedia.getTrackCount(); i++) {
+                    org.videolan.libvlc.interfaces.IMedia.Track track = imedia.getTrack(i);
+                    if (track.type == org.videolan.libvlc.interfaces.IMedia.Track.Type.Video) {
+                        org.videolan.libvlc.interfaces.IMedia.VideoTrack vt =
+                                (org.videolan.libvlc.interfaces.IMedia.VideoTrack) track;
                         w = vt.width;
                         h = vt.height;
                         break;
