@@ -31,7 +31,6 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
     private float mSpeed = 1.0f;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
-    private Runnable mVideoSizePollingRunnable;
 
     // Repeat type 常量（3.x 内部值）
     private static final int REPEAT_NONE = 0;
@@ -131,7 +130,6 @@ public void reset() {
     mAttachedSurface = null;
     mIsPrepared = false;
     mStartPositionApplied = false;
-    stopVideoSizePolling();
 }
 
 @Override
@@ -149,7 +147,6 @@ public void release() {
     }
     mAttachedSurface = null;
     mIsPrepared = false;
-    stopVideoSizePolling();
 }
 
     @Override
@@ -250,23 +247,19 @@ public void setDisplay(SurfaceHolder holder) {
             case MediaPlayer.Event.Playing:
                 if (!mIsPrepared) {
                     mIsPrepared = true;
-                    mHandler.post(() -> {
-                        if (mPlayerEventListener != null) {
-                            mPlayerEventListener.onPrepared();
-                            startVideoSizePolling();
-                        }
-                    });
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onPrepared();
+                        startVideoSizePolling();
+                    }
                     long startPos = getStartPosition();
                     if (startPos > 0 && !mStartPositionApplied) {
                         mMediaPlayer.setTime(startPos);
                         markStartPositionApplied();
                     }
                 }
-                mHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                    }
-                });
+                if (mPlayerEventListener != null) {
+                    mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
+                }
                 break;
 
             case MediaPlayer.Event.EndReached:
@@ -274,34 +267,26 @@ public void setDisplay(SurfaceHolder holder) {
                     mMediaPlayer.stop();
                     mMediaPlayer.play();
                 } else {
-                    mHandler.post(() -> {
-                        if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
-                    });
+                    if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
                 }
                 break;
 
             case MediaPlayer.Event.EncounteredError:
-                mHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onError();
-                    }
-                });
+                if (mPlayerEventListener != null) {
+                    mPlayerEventListener.onError();
+                }
                 break;
 
             case MediaPlayer.Event.Buffering:
                 float buffering = event.getBuffering();
                 if (buffering < 100) {
-                    mHandler.post(() -> {
-                        if (mPlayerEventListener != null) {
-                            mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, (int) buffering);
-                        }
-                    });
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, (int) buffering);
+                    }
                 } else {
-                    mHandler.post(() -> {
-                        if (mPlayerEventListener != null) {
-                            mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, 100);
-                        }
-                    });
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, 100);
+                    }
                 }
                 break;
         }
@@ -309,55 +294,34 @@ public void setDisplay(SurfaceHolder holder) {
 
     // ==================== 视频尺寸轮询 ====================
 
-    private void startVideoSizePolling() {
-        stopVideoSizePolling();
-        mVideoSizePollingRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (mMediaPlayer == null) return;
-                // 用 IMedia 接收，不强制转 Media
-                org.videolan.libvlc.interfaces.IMedia imedia = mMediaPlayer.getMedia();
-                if (imedia == null) return;
+private void startVideoSizePolling() {
+        if (mMediaPlayer == null) return;
+        org.videolan.libvlc.interfaces.IMedia imedia = mMediaPlayer.getMedia();
+        if (imedia == null) return;
 
-                int w = 0, h = 0;
-                // 3.x: IMedia.getTrackCount() / getTrack()
-                for (int i = 0; i < imedia.getTrackCount(); i++) {
-                    org.videolan.libvlc.interfaces.IMedia.Track track = imedia.getTrack(i);
-                    if (track.type == org.videolan.libvlc.interfaces.IMedia.Track.Type.Video) {
-                        org.videolan.libvlc.interfaces.IMedia.VideoTrack vt =
-                                (org.videolan.libvlc.interfaces.IMedia.VideoTrack) track;
-                        w = vt.width;
-                        h = vt.height;
-                        break;
-                    }
-                }
-                if (w > 0 && h > 0) {
-                    mVideoWidth = w;
-                    mVideoHeight = h;
-                    notifyVideoSizeIfReady();
-                    stopVideoSizePolling();
-                    return;
-                }
-                mHandler.postDelayed(this, 500);
+        int w = 0, h = 0;
+        for (int i = 0; i < imedia.getTrackCount(); i++) {
+            org.videolan.libvlc.interfaces.IMedia.Track track = imedia.getTrack(i);
+            if (track.type == org.videolan.libvlc.interfaces.IMedia.Track.Type.Video) {
+                org.videolan.libvlc.interfaces.IMedia.VideoTrack vt =
+                        (org.videolan.libvlc.interfaces.IMedia.VideoTrack) track;
+                w = vt.width;
+                h = vt.height;
+                break;
             }
-        };
-        mHandler.post(mVideoSizePollingRunnable);
-    }
-
-    private void stopVideoSizePolling() {
-        if (mVideoSizePollingRunnable != null) {
-            mHandler.removeCallbacks(mVideoSizePollingRunnable);
-            mVideoSizePollingRunnable = null;
+        }
+        if (w > 0 && h > 0) {
+            mVideoWidth = w;
+            mVideoHeight = h;
+            notifyVideoSizeIfReady();
         }
     }
 
     private void notifyVideoSizeIfReady() {
         if (mVideoWidth > 0 && mVideoHeight > 0 && mPlayerEventListener != null) {
-            mHandler.post(() -> {
-                if (mPlayerEventListener != null) {
-                    mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
-                }
-            });
+            if (mPlayerEventListener != null) {
+                mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
+            }
         }
     }
 }
