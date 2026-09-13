@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.TextUtils;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
@@ -13,6 +12,7 @@ import android.content.res.AssetFileDescriptor;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
+import org.videolan.libvlc.IVLCVout;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -21,12 +21,9 @@ import xyz.doikki.videoplayer.player.AbstractPlayer;
 
 public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventListener {
 
-    private static final String TAG = "VlcMediaPlayer";
-
     private Context mContext;
     private LibVLC mLibVLC;
     private MediaPlayer mMediaPlayer;
-    private Media mMedia;
 
     private boolean mIsPrepared = false;
     private boolean mStartPositionApplied = false;
@@ -43,7 +40,7 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     @Override
     public void initPlayer() {
-        release(); // 先释放旧实例
+        release();
 
         ArrayList<String> options = new ArrayList<>();
         options.add("--no-drop-late-frames");
@@ -65,26 +62,25 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
     public void setDataSource(String path, Map<String, String> headers) {
         if (mMediaPlayer == null) initPlayer();
 
-        // 处理本地文件
+        // 本地文件处理
         if (!path.startsWith("http") && !path.startsWith("rtsp") && !path.startsWith("rtmp")) {
             if (!path.startsWith("/")) {
                 path = "file://" + path;
             }
         }
 
-        mMedia = new Media(mLibVLC, Uri.parse(path));
-        mMedia.setHWDecoderEnabled(true, false);
-        mMedia.addOption(":network-caching=300");
+        Media media = new Media(mLibVLC, Uri.parse(path));
+        media.setHWDecoderEnabled(true, false);
+        media.addOption(":network-caching=300");
 
-        // 设置 headers（如果有）
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
-                mMedia.addOption(":" + entry.getKey() + "=" + entry.getValue());
+                media.addOption(":" + entry.getKey() + "=" + entry.getValue());
             }
         }
 
-        mMediaPlayer.setMedia(mMedia);
-        mMedia.release(); // Media 设完就可以释放
+        mMediaPlayer.setMedia(media);
+        media.release();
     }
 
     @Override
@@ -94,28 +90,21 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     @Override
     public void start() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.play();
-        }
+        if (mMediaPlayer != null) mMediaPlayer.play();
     }
 
     @Override
     public void pause() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.pause();
-        }
+        if (mMediaPlayer != null) mMediaPlayer.pause();
     }
 
     @Override
     public void stop() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.stop();
-        }
+        if (mMediaPlayer != null) mMediaPlayer.stop();
     }
 
     @Override
     public void prepareAsync() {
-        // VLC 是异步的，setMedia 后直接 play 即可
         if (mMediaPlayer != null) {
             long startPos = getStartPosition();
             if (startPos > 0) {
@@ -161,9 +150,7 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     @Override
     public void seekTo(long time) {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.setTime(time);
-        }
+        if (mMediaPlayer != null) mMediaPlayer.setTime(time);
     }
 
     @Override
@@ -178,11 +165,10 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     @Override
     public int getBufferedPercentage() {
+        // 3.x 没有 getCachedBytes，用 MediaPlayer 内部的缓冲估算
         if (mMediaPlayer == null) return 0;
-        long cached = mMediaPlayer.getCachedBytes();
-        long total = mMediaPlayer.getLength();
-        if (total <= 0) return 0;
-        return (int) (cached * 100 / total);
+        // getBufferedPercentage 不存在于 3.x，返回 0 让 VideoView 不显示缓冲进度
+        return 0;
     }
 
     @Override
@@ -191,10 +177,7 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         if (surface == null) {
             mMediaPlayer.detachViews();
         } else {
-            // VLC 3.x 需要 attachViews
-            mMediaPlayer.attachViews(null, null, false, false);
-            // 通过 IVLCVout 设置 surface
-            MediaPlayer.VLCVout vout = mMediaPlayer.getVLCVout();
+            IVLCVout vout = mMediaPlayer.getVLCVout();
             vout.setVideoSurface(surface, null);
             vout.attachViews();
         }
@@ -213,7 +196,6 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
     @Override
     public void setVolume(float leftVolume, float rightVolume) {
         if (mMediaPlayer == null) return;
-        // 3.x: setVolume(int) 0-100
         int vol = (int) ((leftVolume + rightVolume) / 2 * 100);
         mMediaPlayer.setVolume(vol);
     }
@@ -221,7 +203,8 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
     @Override
     public void setLooping(boolean isLooping) {
         if (mMediaPlayer == null) return;
-        mMediaPlayer.setRepeatType(isLooping ? MediaPlayer.Repeat.All : MediaPlayer.Repeat.None);
+        mMediaPlayer.setRepeatType(isLooping ?
+                MediaPlayer.RepeatType.All : MediaPlayer.RepeatType.None);
     }
 
     @Override
@@ -244,12 +227,12 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     @Override
     public long getTcpSpeed() {
-        return 0; // VLC 3.x 没有直接获取网速的 API
+        return 0;
     }
 
     @Override
     public int getAudioSessionId() {
-        return 0; // VLC 不暴露 AudioSessionId
+        return 0;
     }
 
     // ==================== EventListener ====================
@@ -265,13 +248,11 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
                             mPlayerEventListener.onPrepared();
                         }
                     });
-                    // 应用 startPosition
                     long startPos = getStartPosition();
                     if (startPos > 0 && !mStartPositionApplied) {
                         mMediaPlayer.setTime(startPos);
                         markStartPositionApplied();
                     }
-                    // 开始轮询视频尺寸
                     startVideoSizePolling();
                 }
                 mHandler.post(() -> {
@@ -279,12 +260,6 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
                         mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                     }
                 });
-                break;
-
-            case MediaPlayer.Event.Paused:
-                break;
-
-            case MediaPlayer.Event.Stopped:
                 break;
 
             case MediaPlayer.Event.EndReached:
@@ -319,14 +294,6 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
                     });
                 }
                 break;
-
-            case MediaPlayer.Event.TimeChanged:
-                // 时间变化，可以用来更新进度
-                break;
-
-            case MediaPlayer.Event.PositionChanged:
-                // 位置变化
-                break;
         }
     }
 
@@ -337,9 +304,20 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         mVideoSizePollingRunnable = new Runnable() {
             @Override
             public void run() {
-                if (mMediaPlayer == null || mMedia == null) return;
-                int w = mMedia.getTrackCount() > 0 ? mMedia.getTrack(0).video.width : 0;
-                int h = mMedia.getTrackCount() > 0 ? mMedia.getTrack(0).video.height : 0;
+                if (mMediaPlayer == null) return;
+                Media media = mMediaPlayer.getMedia();
+                if (media == null) return;
+
+                int w = 0, h = 0;
+                for (int i = 0; i < media.getTrackCount(); i++) {
+                    Media.Track track = media.getTrack(i);
+                    if (track.type == Media.Track.Type.Video) {
+                        Media.VideoTrack vt = (Media.VideoTrack) track;
+                        w = vt.width;
+                        h = vt.height;
+                        break;
+                    }
+                }
                 if (w > 0 && h > 0) {
                     mVideoWidth = w;
                     mVideoHeight = h;
