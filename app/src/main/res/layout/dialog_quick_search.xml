@@ -13,7 +13,7 @@
         android:paddingRight="@dimen/vs_30"
         android:paddingBottom="@dimen/vs_30"
         android:layout_width="@dimen/vs_720"
-        android:layout_height="475mm">
+        android:layout_height="@dimen/vs_470">
         <TextView
             android:textSize="@dimen/ts_24"
             android:textColor="@color/color_CC000000"
