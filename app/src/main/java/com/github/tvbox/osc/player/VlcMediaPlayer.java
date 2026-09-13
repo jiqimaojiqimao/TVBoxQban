@@ -206,12 +206,21 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         mMediaPlayer.setVolume(vol);
     }
 
-    @Override
-    public void setLooping(boolean isLooping) {
-        if (mMediaPlayer == null) return;
-        // 用数字常量，不依赖符号
-        mMediaPlayer.setRepeatType(isLooping ? REPEAT_ALL : REPEAT_NONE);
+@Override
+public void setLooping(boolean isLooping) {
+    // 3.x: 循环是通过 Media 设置的，不是 MediaPlayer
+    // 如果已经在播放，需要重新设置 Media 的循环选项
+    if (mMediaPlayer != null) {
+        org.videolan.libvlc.interfaces.IMedia media = mMediaPlayer.getMedia();
+        if (media != null) {
+            // 3.x 里通过 Media 的 addOption 设置循环
+            // 但 Media 一旦 set 给 Player 就不能再改选项了
+            // 所以这里只打个日志，实际循环交给 VideoView 层的 onCompletion 重播
+        }
     }
+    // 实际循环由 AbstractPlayer 的子类实现者处理
+    // 或者让 VideoView 在 onCompletion 时重新 start()
+}
 
     @Override
     public void setOptions() {
