@@ -38,7 +38,9 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
     private static final int REPEAT_ONCE = 1;
     private static final int REPEAT_ALL = 2;
 
-private boolean mSurfaceAttached = false;
+    private Surface mAttachedSurface = null;
+
+    public boolean mIsLooping = false; 
 
     public VlcMediaPlayer(Context context) {
         mContext = context.getApplicationContext();
@@ -120,33 +122,35 @@ private boolean mSurfaceAttached = false;
         }
     }
 
-    @Override
-    public void reset() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.stop();
-            mMediaPlayer.detachViews();
-        }
-        mIsPrepared = false;
-        mStartPositionApplied = false;
-        stopVideoSizePolling();
+@Override
+public void reset() {
+    if (mMediaPlayer != null) {
+        mMediaPlayer.stop();
+        mMediaPlayer.setVideoTrackEnabled(false);
     }
+    mAttachedSurface = null;
+    mIsPrepared = false;
+    mStartPositionApplied = false;
+    stopVideoSizePolling();
+}
 
-    @Override
-    public void release() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.setEventListener(null);
-            mMediaPlayer.stop();
-            mMediaPlayer.detachViews();
-            mMediaPlayer.release();
-            mMediaPlayer = null;
-        }
-        if (mLibVLC != null) {
-            mLibVLC.release();
-            mLibVLC = null;
-        }
-        mIsPrepared = false;
-        stopVideoSizePolling();
+@Override
+public void release() {
+    if (mMediaPlayer != null) {
+        mMediaPlayer.setEventListener(null);
+        mMediaPlayer.stop();
+        mMediaPlayer.setVideoTrackEnabled(false);
+        mMediaPlayer.release();
+        mMediaPlayer = null;
     }
+    if (mLibVLC != null) {
+        mLibVLC.release();
+        mLibVLC = null;
+    }
+    mAttachedSurface = null;
+    mIsPrepared = false;
+    stopVideoSizePolling();
+}
 
     @Override
     public boolean isPlaying() {
@@ -176,34 +180,26 @@ private boolean mSurfaceAttached = false;
 @Override
 public void setSurface(Surface surface) {
     if (mMediaPlayer == null) return;
-    try {
-        Object vout = mMediaPlayer.getVLCVout();
-        if (surface == null) {
-            vout.getClass().getMethod("detachViews").invoke(vout);
-            mSurfaceAttached = false;
-        } else {
-            if (mSurfaceAttached) return;
-            vout.getClass()
-                .getMethod("attachViews", Surface.class, Surface.class, boolean.class, boolean.class)
-                .invoke(vout, surface, null, false, false);
-            mSurfaceAttached = true;
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
+    
+    // 同一个 surface 不重复设置
+    if (mAttachedSurface == surface) return;
+    
+    if (surface == null) {
+        mMediaPlayer.setVideoTrackEnabled(false);
+        mAttachedSurface = null;
+    } else {
+        mMediaPlayer.setVideoSurface(surface);
+        mMediaPlayer.setVideoTrackEnabled(true);
+        mAttachedSurface = surface;
     }
 }
 
 @Override
 public void setDisplay(SurfaceHolder holder) {
-    if (mMediaPlayer == null) return;
-    if (holder == null) {
-        setSurface(null);
+    if (holder != null) {
+        setSurface(holder.getSurface());
     } else {
-        // ★ holder.getSurface() 必须在调用前判断 isValid
-        Surface s = holder.getSurface();
-        if (s != null && s.isValid()) {
-            setSurface(s);
-        }
+        setSurface(null);
     }
 }
 
@@ -214,21 +210,9 @@ public void setDisplay(SurfaceHolder holder) {
         mMediaPlayer.setVolume(vol);
     }
 
-@Override
-public void setLooping(boolean isLooping) {
-    // 3.x: 循环是通过 Media 设置的，不是 MediaPlayer
-    // 如果已经在播放，需要重新设置 Media 的循环选项
-    if (mMediaPlayer != null) {
-        org.videolan.libvlc.interfaces.IMedia media = mMediaPlayer.getMedia();
-        if (media != null) {
-            // 3.x 里通过 Media 的 addOption 设置循环
-            // 但 Media 一旦 set 给 Player 就不能再改选项了
-            // 所以这里只打个日志，实际循环交给 VideoView 层的 onCompletion 重播
-        }
+    public void setLooping(boolean isLooping) {
+        mIsLooping = isLooping;
     }
-    // 实际循环由 AbstractPlayer 的子类实现者处理
-    // 或者让 VideoView 在 onCompletion 时重新 start()
-}
 
     @Override
     public void setOptions() {
@@ -269,6 +253,7 @@ public void setLooping(boolean isLooping) {
                     mHandler.post(() -> {
                         if (mPlayerEventListener != null) {
                             mPlayerEventListener.onPrepared();
+                            startVideoSizePolling();
                         }
                     });
                     long startPos = getStartPosition();
@@ -276,7 +261,6 @@ public void setLooping(boolean isLooping) {
                         mMediaPlayer.setTime(startPos);
                         markStartPositionApplied();
                     }
-                    startVideoSizePolling();
                 }
                 mHandler.post(() -> {
                     if (mPlayerEventListener != null) {
@@ -286,11 +270,14 @@ public void setLooping(boolean isLooping) {
                 break;
 
             case MediaPlayer.Event.EndReached:
-                mHandler.post(() -> {
-                    if (mPlayerEventListener != null) {
-                        mPlayerEventListener.onCompletion();
-                    }
-                });
+                if (mIsLooping) {
+                    mMediaPlayer.stop();
+                    mMediaPlayer.play();
+                } else {
+                    mHandler.post(() -> {
+                        if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
+                    });
+                }
                 break;
 
             case MediaPlayer.Event.EncounteredError:
