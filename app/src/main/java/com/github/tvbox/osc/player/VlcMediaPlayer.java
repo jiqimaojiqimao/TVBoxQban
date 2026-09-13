@@ -12,7 +12,7 @@ import android.content.res.AssetFileDescriptor;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
-import org.videolan.libvlc.IVLCVout;
+import org.videolan.libvlc.AWindow;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -171,17 +171,17 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         return 0;
     }
 
-    @Override
-    public void setSurface(Surface surface) {
-        if (mMediaPlayer == null) return;
-        if (surface == null) {
-            mMediaPlayer.detachViews();
-        } else {
-            IVLCVout vout = mMediaPlayer.getVLCVout();
-            vout.setVideoSurface(surface, null);
-            vout.attachViews();
-        }
+@Override
+public void setSurface(Surface surface) {
+    if (mMediaPlayer == null) return;
+    AWindow vout = mMediaPlayer.getVLCVout();
+    if (surface == null) {
+        vout.detachViews();
+    } else {
+        vout.setVideoSurface(surface, null);
+        vout.attachViews();
     }
+}
 
     @Override
     public void setDisplay(SurfaceHolder holder) {
