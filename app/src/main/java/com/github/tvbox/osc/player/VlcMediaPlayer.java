@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
+import xyz.doikki.videoplayer.util.PlayerUtils;
 
 public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventListener {
 
@@ -82,7 +83,7 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         }
 
         mMediaPlayer.setMedia(media);
-        media.release();
+        // 不手动 release，让 MediaPlayer 管引用计数
     }
 
     @Override
@@ -128,6 +129,8 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         mAttachedSurface = null;
         mIsPrepared = false;
         mStartPositionApplied = false;
+        mVideoWidth = 0;
+        mVideoHeight = 0;
     }
 
     @Override
@@ -147,6 +150,8 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         }
         mAttachedSurface = null;
         mIsPrepared = false;
+        mVideoWidth = 0;
+        mVideoHeight = 0;
     }
 
     @Override
@@ -174,7 +179,7 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         return 0;
     }
 
-    // ==================== 核心修复：通过 IVLCVout 绑 surface ====================
+    // ==================== surface 绑定 ====================
 
     @Override
     public void setSurface(Surface surface) {
@@ -184,7 +189,7 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         IVLCVout vout = mMediaPlayer.getVLCVout();
         vout.detachViews();
 
-        if (surface != null) {
+        if (surface != null && surface.isValid()) {
             vout.setVideoSurface(surface, null);
             vout.attachViews();
             mMediaPlayer.setVideoTrackEnabled(true);
@@ -202,7 +207,7 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         IVLCVout vout = mMediaPlayer.getVLCVout();
         vout.detachViews();
 
-        if (holder != null) {
+        if (holder != null && holder.getSurface() != null && holder.getSurface().isValid()) {
             vout.setVideoSurface(holder.getSurface(), holder);
             vout.attachViews();
             mMediaPlayer.setVideoTrackEnabled(true);
@@ -213,7 +218,7 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         }
     }
 
-    // ==================== 其余方法不变 ====================
+    // ==================== 其余控制方法 ====================
 
     @Override
     public void setVolume(float leftVolume, float rightVolume) {
@@ -245,9 +250,7 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
     }
 
     @Override
-    public long getTcpSpeed() {
-        return 0;
-    }
+    public long getTcpSpeed() { return PlayerUtils.getNetSpeed(mContext); }
 
     @Override
     public int getAudioSessionId() {
@@ -258,14 +261,17 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     @Override
     public void onEvent(MediaPlayer.Event event) {
+        if (mMediaPlayer == null) return;
+
         switch (event.type) {
             case MediaPlayer.Event.Playing:
                 if (!mIsPrepared) {
                     mIsPrepared = true;
                     if (mPlayerEventListener != null) {
                         mPlayerEventListener.onPrepared();
-                        startVideoSizePolling();
                     }
+                    // Playing 时补一次尺寸
+                    readVideoSize();
                     long startPos = getStartPosition();
                     if (startPos > 0 && !mStartPositionApplied) {
                         mMediaPlayer.setTime(startPos);
@@ -277,9 +283,15 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
                 }
                 break;
 
+            case MediaPlayer.Event.Vout:
+                // vout 建立后读尺寸，这是最准的时机
+                readVideoSize();
+                break;
+
             case MediaPlayer.Event.EndReached:
                 if (mIsLooping) {
-                    mMediaPlayer.stop();
+                    // 循环：seek 到 0 再 play，不用 stop+play
+                    mMediaPlayer.setTime(0);
                     mMediaPlayer.play();
                 } else {
                     if (mPlayerEventListener != null) mPlayerEventListener.onCompletion();
@@ -309,22 +321,10 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     // ==================== 视频尺寸 ====================
 
-    private void startVideoSizePolling() {
+    private void readVideoSize() {
         if (mMediaPlayer == null) return;
-        org.videolan.libvlc.interfaces.IMedia imedia = mMediaPlayer.getMedia();
-        if (imedia == null) return;
-
-        int w = 0, h = 0;
-        for (int i = 0; i < imedia.getTrackCount(); i++) {
-            org.videolan.libvlc.interfaces.IMedia.Track track = imedia.getTrack(i);
-            if (track.type == org.videolan.libvlc.interfaces.IMedia.Track.Type.Video) {
-                org.videolan.libvlc.interfaces.IMedia.VideoTrack vt =
-                        (org.videolan.libvlc.interfaces.IMedia.VideoTrack) track;
-                w = vt.width;
-                h = vt.height;
-                break;
-            }
-        }
+        int w = mMediaPlayer.getVideoWidth();
+        int h = mMediaPlayer.getVideoHeight();
         if (w > 0 && h > 0) {
             mVideoWidth = w;
             mVideoHeight = h;
