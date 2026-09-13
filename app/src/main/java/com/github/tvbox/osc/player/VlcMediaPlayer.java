@@ -38,6 +38,8 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
     private static final int REPEAT_ONCE = 1;
     private static final int REPEAT_ALL = 2;
 
+private boolean mSurfaceAttached = false;
+
     public VlcMediaPlayer(Context context) {
         mContext = context.getApplicationContext();
     }
@@ -171,33 +173,39 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         return 0; // 3.x 没有 getCachedBytes
     }
 
-    @Override
-    public void setSurface(Surface surface) {
-        if (mMediaPlayer == null) return;
-        try {
-            Object vout = mMediaPlayer.getVLCVout();
-            if (surface == null) {
-                vout.getClass().getMethod("detachViews").invoke(vout);
-            } else {
-                vout.getClass()
-                    .getMethod("setVideoSurface", Surface.class, SurfaceHolder.class)
-                    .invoke(vout, surface, null);
-                vout.getClass().getMethod("attachViews").invoke(vout);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void setDisplay(SurfaceHolder holder) {
-        if (mMediaPlayer == null) return;
-        if (holder == null) {
-            setSurface(null);
+@Override
+public void setSurface(Surface surface) {
+    if (mMediaPlayer == null) return;
+    try {
+        Object vout = mMediaPlayer.getVLCVout();
+        if (surface == null) {
+            vout.getClass().getMethod("detachViews").invoke(vout);
+            mSurfaceAttached = false;
         } else {
-            setSurface(holder.getSurface());
+            if (mSurfaceAttached) return;
+            vout.getClass()
+                .getMethod("attachViews", Surface.class, Surface.class, boolean.class, boolean.class)
+                .invoke(vout, surface, null, false, false);
+            mSurfaceAttached = true;
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+@Override
+public void setDisplay(SurfaceHolder holder) {
+    if (mMediaPlayer == null) return;
+    if (holder == null) {
+        setSurface(null);
+    } else {
+        // ★ holder.getSurface() 必须在调用前判断 isValid
+        Surface s = holder.getSurface();
+        if (s != null && s.isValid()) {
+            setSurface(s);
         }
     }
+}
 
     @Override
     public void setVolume(float leftVolume, float rightVolume) {
