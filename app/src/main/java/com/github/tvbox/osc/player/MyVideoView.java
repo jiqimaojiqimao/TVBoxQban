@@ -14,7 +14,13 @@ import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.player.VideoView;
 
 public class MyVideoView extends VideoView implements DrawHandler.Callback {
+    public interface DanmuSeekListener {
+        void onDanmuSeek(long position);
+    }
+
     private DanmakuView danmuView;
+
+    private DanmuSeekListener danmuSeekListener;
 
     public MyVideoView(@NonNull Context context) {
         super(context, null);
@@ -36,10 +42,18 @@ public class MyVideoView extends VideoView implements DrawHandler.Callback {
         return mVideoSize;
     }
 
+    public long getPlaybackPosition() {
+        return mCurrentPosition;
+    }
+
     @Override
     public void seekTo(long pos) {
         super.seekTo(pos);
-        if (haveDanmu()) danmuView.seekTo(pos);
+        if (danmuSeekListener != null) {
+            danmuSeekListener.onDanmuSeek(pos);
+        } else if (haveDanmu()) {
+            danmuView.seekTo(pos);
+        }
     }
 
     @Override
@@ -77,6 +91,10 @@ public class MyVideoView extends VideoView implements DrawHandler.Callback {
 
     public DanmakuView getDanmuView() {
         return danmuView;
+    }
+
+    public void setDanmuSeekListener(DanmuSeekListener listener) {
+        danmuSeekListener = listener;
     }
 
     @Override
