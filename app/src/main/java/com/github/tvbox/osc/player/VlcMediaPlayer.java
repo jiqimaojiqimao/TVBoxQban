@@ -1,175 +1,93 @@
 package com.github.tvbox.osc.player;
 
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import android.text.TextUtils;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
-import org.videolan.libvlc.interfaces.IMedia;
-import org.videolan.libvlc.util.AndroidUtil;
 
 import java.util.ArrayList;
 import java.util.Map;
 
 import xyz.doikki.videoplayer.player.AbstractPlayer;
-import xyz.doikki.videoplayer.util.PlayerUtils;
 
-/**
- * VlcPlayer —— 基于 libVLC (org.videolan.android:libvlc-all) 的播放器实现
- * 与 ExoMediaPlayer / MpvMediaPlayer 保持同一套 AbstractPlayer 接口，可直接替换接入
- *
- * 接入方式（与现有 PlayerHelper 一致）：
- *   1. build.gradle: implementation 'org.videolan.android:libvlc-all:3.7.5'
- *   2. manifest: 添加 INTERNET / 本地文件相关权限
- *   3. 在 PlayerHelper 中增加 case 14 -> new PlayerFactory<VlcMediaPlayer>(){ create 返回 new VlcMediaPlayer(context) }
- *   4. 在 getPlayersInfo 增加 14 -> "VLC播放器"，getPlayersExistInfo 视情况加判定
- *
- * Created by tvbox on 2026-09.
- */
-public class VlcMediaPlayer extends AbstractPlayer {
+public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventListener {
 
-    private static final String TAG = "VLC";
+    private static final String TAG = "VlcMediaPlayer";
 
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
-
+    private Context mContext;
     private LibVLC mLibVLC;
     private MediaPlayer mMediaPlayer;
-    private Media mCurrentMedia;
+    private Media mMedia;
 
-    private Context context;
-    private boolean mHWDecode = true;       // true=硬解  false=软解
-    private boolean mPlayingNotified;       // 是否已通知 onPrepared，防止重复
-    private volatile boolean mReleased;     // 是否已被释放，避免重复操作
+    private boolean mIsPrepared = false;
+    private boolean mStartPositionApplied = false;
+    private int mVideoWidth = 0;
+    private int mVideoHeight = 0;
+    private float mSpeed = 1.0f;
 
-    private int mVideoWidth, mVideoHeight;
-    private volatile boolean mSizeProbed;
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
+    private Runnable mVideoSizePollingRunnable;
 
     public VlcMediaPlayer(Context context) {
-        this.context = context.getApplicationContext();
+        mContext = context.getApplicationContext();
     }
-
-    /* ========================= 生命周期 ========================= */
 
     @Override
     public void initPlayer() {
-        if (mMediaPlayer != null) {
-            try { mMediaPlayer.release(); } catch (Exception ignored) {}
-            mMediaPlayer = null;
-        }
-        if (mLibVLC != null) {
-            mLibVLC.release();
-            mLibVLC = null;
-        }
+        release(); // 先释放旧实例
 
-        // xuameng 解码模式：true=硬解 false=软解（可按需接配置）
         ArrayList<String> options = new ArrayList<>();
-        if (mHWDecode) {
-            // 硬解：优先使用 MediaCodec 硬解
-            options.add("--codec=all");
-            options.add("--decoder=medCodec");
-        } else {
-            // 软解：ffmpeg 软件解码
-            options.add("--codec=all");
-            options.add("--decoder=all");
-        }
-        options.add(":finish-on-close");
-        options.add("--network-caching=300");   // 网络缓冲 300ms
-        options.add("--rtsp-tcp");              // RTSP 走 TCP
-        options.add("--drop-late-frames");
-        options.add("--skip-frames");
-        options.add("--no-audio-dsp");
+        options.add("--no-drop-late-frames");
+        options.add("--no-skip-frames");
+        options.add("--rtsp-tcp");
+        options.add("--network-caching=300");
 
-        mLibVLC = new LibVLC(context, options);
+        mLibVLC = new LibVLC(mContext, options);
         mMediaPlayer = new MediaPlayer(mLibVLC);
-        mMediaPlayer.setEventListener(this::onEvent);
-        mMediaPlayer.setAudioOutput("opensles"); // Android 上用 OpenSL ES
+        mMediaPlayer.setEventListener(this);
 
-        mPlayingNotified = false;
+        mIsPrepared = false;
+        mStartPositionApplied = false;
         mVideoWidth = 0;
         mVideoHeight = 0;
-        mSizeProbed = false;
-        mReleased = false;
-
-        setOptions();
-        // 启动尺寸探测：轮询 libVLC 当前视频尺寸，确保 onVideoSizeChanged 能触发
-        startVideoSizeProbe();
     }
-
-    /**
-     * 尺寸探测：libVLC 在 Vout 建立后才有有效尺寸，主线程轻量轮询即可。
-     * 用单次 postDelayed 链式探测，播放器释放后自动停止。
-     */
-    private void startVideoSizeProbe() {
-        if (mReleased || mMediaPlayer == null) return;
-        int w = mMediaPlayer.getVideoWidth();
-        int h = mMediaPlayer.getVideoHeight();
-        if (w > 0 && h > 0 && !mSizeProbed) {
-            mSizeProbed = true;
-            notifyVideoSizeIfReady(w, h);
-        }
-        mainHandler.postDelayed(() -> {
-            // 再次探测，兼容延迟出现的尺寸（直播、软解等）
-            int nw = mMediaPlayer != null ? mMediaPlayer.getVideoWidth() : 0;
-            int nh = mMediaPlayer != null ? mMediaPlayer.getVideoHeight() : 0;
-            if (nw > 0 && nh > 0 && !mSizeProbed) {
-                mSizeProbed = true;
-                notifyVideoSizeIfReady(nw, nh);
-            }
-        }, 500);
-    }
-
-    /* ========================= 核心 ========================= */
 
     @Override
     public void setDataSource(String path, Map<String, String> headers) {
-        if (mMediaPlayer == null) {
-            initPlayer();
-        }
-        // 重置状态
-        mPlayingNotified = false;
-        mVideoWidth = 0;
-        mVideoHeight = 0;
+        if (mMediaPlayer == null) initPlayer();
 
-        Media media = new Media(mLibVLC, path);
-        if (headers != null) {
-            for (Map.Entry<String, String> e : headers.entrySet()) {
-                media.addOption(":http-header=" + e.getKey() + ": " + e.getValue());
+        // 处理本地文件
+        if (!path.startsWith("http") && !path.startsWith("rtsp") && !path.startsWith("rtmp")) {
+            if (!path.startsWith("/")) {
+                path = "file://" + path;
             }
         }
-        media.setHWDecoderEnabled(mHWDecode, false);
-        media.addOption(":network-caching=300");
-        // 本地文件
-        if (path.startsWith("/") || "file".equalsIgnoreCase(AndroidUtil.getScheme(path))) {
-            media.setType(IMedia.Type.FILE);
+
+        mMedia = new Media(mLibVLC, Uri.parse(path));
+        mMedia.setHWDecoderEnabled(true, false);
+        mMedia.addOption(":network-caching=300");
+
+        // 设置 headers（如果有）
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                mMedia.addOption(":" + entry.getKey() + "=" + entry.getValue());
+            }
         }
 
-        releaseCurrentMedia();
-        mCurrentMedia = media;
-        mMediaPlayer.setMedia(media);
+        mMediaPlayer.setMedia(mMedia);
+        mMedia.release(); // Media 设完就可以释放
     }
 
     @Override
     public void setDataSource(AssetFileDescriptor fd) {
-        if (mMediaPlayer == null) {
-            initPlayer();
-        }
-        mPlayingNotified = false;
-        mVideoWidth = 0;
-        mVideoHeight = 0;
-
-        Media media = new Media(mLibVLC, fd.getFileDescriptor());
-        media.setHWDecoderEnabled(mHWDecode, false);
-        media.addOption(":network-caching=300");
-
-        releaseCurrentMedia();
-        mCurrentMedia = media;
-        mMediaPlayer.setMedia(media);
+        throw new UnsupportedOperationException("VLC: AssetFileDescriptor not supported");
     }
 
     @Override
@@ -195,47 +113,44 @@ public class VlcMediaPlayer extends AbstractPlayer {
 
     @Override
     public void prepareAsync() {
-        if (mMediaPlayer == null) return;
-        if (mCurrentMedia == null) return;
-        mMediaPlayer.play(); // libVLC 是异步的，setMedia 后直接 play 即可
+        // VLC 是异步的，setMedia 后直接 play 即可
+        if (mMediaPlayer != null) {
+            long startPos = getStartPosition();
+            if (startPos > 0) {
+                mMediaPlayer.setTime(startPos);
+                markStartPositionApplied();
+            }
+            mMediaPlayer.play();
+        }
     }
 
     @Override
     public void reset() {
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
-            mMediaPlayer.setVolume(0f, 0f);
+            mMediaPlayer.detachViews();
         }
-        releaseCurrentMedia();
-        mPlayingNotified = false;
-        mVideoWidth = 0;
-        mVideoHeight = 0;
-        mSizeProbed = false;
+        mIsPrepared = false;
+        mStartPositionApplied = false;
+        stopVideoSizePolling();
     }
 
     @Override
     public void release() {
-        if (mReleased) return;
-        mReleased = true;
-        releaseCurrentMedia();
         if (mMediaPlayer != null) {
-            try { mMediaPlayer.release(); } catch (Exception ignored) {}
+            mMediaPlayer.setEventListener(null);
+            mMediaPlayer.stop();
+            mMediaPlayer.detachViews();
+            mMediaPlayer.release();
             mMediaPlayer = null;
         }
         if (mLibVLC != null) {
             mLibVLC.release();
             mLibVLC = null;
         }
+        mIsPrepared = false;
+        stopVideoSizePolling();
     }
-
-    private void releaseCurrentMedia() {
-        if (mCurrentMedia != null) {
-            try { mCurrentMedia.release(); } catch (Exception ignored) {}
-            mCurrentMedia = null;
-        }
-    }
-
-    /* ========================= 播放控制 ========================= */
 
     @Override
     public boolean isPlaying() {
@@ -245,152 +160,210 @@ public class VlcMediaPlayer extends AbstractPlayer {
     @Override
     public void seekTo(long time) {
         if (mMediaPlayer != null) {
-            mMediaPlayer.setTime(PlayerUtils.safeTimeMs(time));
+            mMediaPlayer.setTime(time);
         }
     }
 
     @Override
     public long getCurrentPosition() {
-        if (mMediaPlayer == null) return 0;
-        long t = mMediaPlayer.getTime();
-        return t <= 0 ? 0 : t;
+        return mMediaPlayer != null ? mMediaPlayer.getTime() : 0;
     }
 
     @Override
     public long getDuration() {
-        if (mMediaPlayer == null) return 0;
-        long d = mMediaPlayer.getDuration();
-        return d <= 0 ? 0 : d;
+        return mMediaPlayer != null ? mMediaPlayer.getLength() : 0;
     }
 
     @Override
     public int getBufferedPercentage() {
         if (mMediaPlayer == null) return 0;
-        long buffered = mMediaPlayer.getBufferedBytes();
-        long total = mMediaPlayer.getDuration();
+        long cached = mMediaPlayer.getCachedBytes();
+        long total = mMediaPlayer.getLength();
         if (total <= 0) return 0;
-        return (int) Math.min(100, (buffered * 100) / total);
-    }
-
-    @Override
-    public int getAudioSessionId() {
-        // libVLC 使用系统音频，返回 0 即可（与系统播放器一致）
-        return 0;
+        return (int) (cached * 100 / total);
     }
 
     @Override
     public void setSurface(Surface surface) {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.setSurface(surface);
+        if (mMediaPlayer == null) return;
+        if (surface == null) {
+            mMediaPlayer.detachViews();
+        } else {
+            // VLC 3.x 需要 attachViews
+            mMediaPlayer.attachViews(null, null, false, false);
+            // 通过 IVLCVout 设置 surface
+            MediaPlayer.VLCVout vout = mMediaPlayer.getVLCVout();
+            vout.setVideoSurface(surface, null);
+            vout.attachViews();
         }
     }
 
     @Override
     public void setDisplay(SurfaceHolder holder) {
-        if (mMediaPlayer != null) {
-            if (holder == null) {
-                mMediaPlayer.setSurface(null);
-            } else {
-                mMediaPlayer.setSurface(holder.getSurface());
-            }
+        if (mMediaPlayer == null) return;
+        if (holder == null) {
+            setSurface(null);
+        } else {
+            setSurface(holder.getSurface());
         }
     }
 
     @Override
     public void setVolume(float leftVolume, float rightVolume) {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.setVolume((leftVolume + rightVolume) / 2);
-        }
+        if (mMediaPlayer == null) return;
+        // 3.x: setVolume(int) 0-100
+        int vol = (int) ((leftVolume + rightVolume) / 2 * 100);
+        mMediaPlayer.setVolume(vol);
     }
 
     @Override
     public void setLooping(boolean isLooping) {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.setLoop(isLooping);
-        }
+        if (mMediaPlayer == null) return;
+        mMediaPlayer.setRepeatType(isLooping ? MediaPlayer.Repeat.All : MediaPlayer.Repeat.None);
     }
 
     @Override
     public void setOptions() {
-        // 预留：可在 init 后再做配置
+        // 空实现
     }
 
     @Override
     public void setSpeed(float speed) {
         if (mMediaPlayer != null) {
-            mMediaPlayer.setPlaybackRate(speed);
+            mMediaPlayer.setRate(speed);
         }
+        mSpeed = speed;
     }
 
     @Override
     public float getSpeed() {
-        if (mMediaPlayer != null) {
-            return mMediaPlayer.getPlaybackRate();
-        }
-        return 1f;
+        return mSpeed;
     }
 
     @Override
     public long getTcpSpeed() {
-        return PlayerUtils.getNetSpeed(context);
+        return 0; // VLC 3.x 没有直接获取网速的 API
     }
 
-    /* ========================= 事件回调 ========================= */
+    @Override
+    public int getAudioSessionId() {
+        return 0; // VLC 不暴露 AudioSessionId
+    }
 
-    private void onEvent(MediaPlayer.Event event) {
-        if (event == null || mPlayerEventListener == null) return;
+    // ==================== EventListener ====================
+
+    @Override
+    public void onEvent(MediaPlayer.Event event) {
         switch (event.type) {
-            case MediaPlayer.Event.Opening:       // 缓冲开始
-                mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
-                break;
-            case MediaPlayer.Event.Buffering:      // 缓冲进度
-                if (event.getBuffering() >= 100f) {
-                    mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, 100);
-                } else {
-                    mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, (int) event.getBuffering());
-                }
-                break;
-            case MediaPlayer.Event.Playing:       // 开始渲染
-                // 兼容 onPrepared：用 startPosition 决定是否 seek
-                final long startPos = getStartPosition();
-                if (!isStartPositionApplied() && startPos > 0) {
-                    try {
+            case MediaPlayer.Event.Playing:
+                if (!mIsPrepared) {
+                    mIsPrepared = true;
+                    mHandler.post(() -> {
+                        if (mPlayerEventListener != null) {
+                            mPlayerEventListener.onPrepared();
+                        }
+                    });
+                    // 应用 startPosition
+                    long startPos = getStartPosition();
+                    if (startPos > 0 && !mStartPositionApplied) {
                         mMediaPlayer.setTime(startPos);
                         markStartPositionApplied();
-                    } catch (Exception ignored) {}
+                    }
+                    // 开始轮询视频尺寸
+                    startVideoSizePolling();
                 }
-                if (!mPlayingNotified) {
-                    mPlayingNotified = true;
-                    mainHandler.post(() -> mPlayerEventListener.onPrepared());
-                }
-                mainHandler.postDelayed(() -> {
-                    if (mPlayerEventListener != null)
+                mHandler.post(() -> {
+                    if (mPlayerEventListener != null) {
                         mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
-                }, 20);
+                    }
+                });
                 break;
-            case MediaPlayer.Event.EndReached:     // 播放完成
-                mPlayingNotified = false;
-                mainHandler.post(() -> mPlayerEventListener.onCompletion());
+
+            case MediaPlayer.Event.Paused:
                 break;
-            case MediaPlayer.Event.Error:          // 出错
-                mPlayingNotified = false;
-                Log.e(TAG, "VLC error: " + event.getError());
-                mainHandler.post(() -> mPlayerEventListener.onError());
+
+            case MediaPlayer.Event.Stopped:
                 break;
-            case MediaPlayer.Event.VideoPlayableChanged:
-                // 视频尺寸变化（部分版本用此事件）
-                if (event.getVideoPlayableWidth() > 0) {
-                    notifyVideoSizeIfReady(event.getVideoPlayableWidth(), event.getVideoPlayableHeight());
+
+            case MediaPlayer.Event.EndReached:
+                mHandler.post(() -> {
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onCompletion();
+                    }
+                });
+                break;
+
+            case MediaPlayer.Event.EncounteredError:
+                mHandler.post(() -> {
+                    if (mPlayerEventListener != null) {
+                        mPlayerEventListener.onError();
+                    }
+                });
+                break;
+
+            case MediaPlayer.Event.Buffering:
+                float buffering = event.getBuffering();
+                if (buffering < 100) {
+                    mHandler.post(() -> {
+                        if (mPlayerEventListener != null) {
+                            mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, (int) buffering);
+                        }
+                    });
+                } else {
+                    mHandler.post(() -> {
+                        if (mPlayerEventListener != null) {
+                            mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, 100);
+                        }
+                    });
                 }
+                break;
+
+            case MediaPlayer.Event.TimeChanged:
+                // 时间变化，可以用来更新进度
+                break;
+
+            case MediaPlayer.Event.PositionChanged:
+                // 位置变化
                 break;
         }
     }
 
-    private void notifyVideoSizeIfReady(int w, int h) {
-        if (w > 0 && h > 0 && mPlayerEventListener != null) {
-            mainHandler.post(() -> {
-                if (mPlayerEventListener != null)
-                    mPlayerEventListener.onVideoSizeChanged(w, h);
+    // ==================== 视频尺寸轮询 ====================
+
+    private void startVideoSizePolling() {
+        stopVideoSizePolling();
+        mVideoSizePollingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (mMediaPlayer == null || mMedia == null) return;
+                int w = mMedia.getTrackCount() > 0 ? mMedia.getTrack(0).video.width : 0;
+                int h = mMedia.getTrackCount() > 0 ? mMedia.getTrack(0).video.height : 0;
+                if (w > 0 && h > 0) {
+                    mVideoWidth = w;
+                    mVideoHeight = h;
+                    notifyVideoSizeIfReady();
+                    stopVideoSizePolling();
+                    return;
+                }
+                mHandler.postDelayed(this, 500);
+            }
+        };
+        mHandler.post(mVideoSizePollingRunnable);
+    }
+
+    private void stopVideoSizePolling() {
+        if (mVideoSizePollingRunnable != null) {
+            mHandler.removeCallbacks(mVideoSizePollingRunnable);
+            mVideoSizePollingRunnable = null;
+        }
+    }
+
+    private void notifyVideoSizeIfReady() {
+        if (mVideoWidth > 0 && mVideoHeight > 0 && mPlayerEventListener != null) {
+            mHandler.post(() -> {
+                if (mPlayerEventListener != null) {
+                    mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
+                }
             });
         }
     }
