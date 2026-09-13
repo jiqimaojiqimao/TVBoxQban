@@ -80,6 +80,7 @@ public class DanmuLoadController {
         danmakuContext.setDanmakuStyle(IDisplayer.DANMAKU_STYLE_STROKEN, 3)
                 .setDanmakuMargin(8);
         if (reload && !TextUtils.isEmpty(danmuText) && DanmuHelper.isOpen()) {
+            temporarilyClosed = false;  //xuameng 必须加 重置 临时弹幕状态判断 
             prepare(danmuText);
         }
     }
