@@ -21,14 +21,14 @@ import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.util.PlayerUtils;
 
 /**
- * VlcPlayer ¡ª¡ª »ùÓÚ libVLC (org.videolan.android:libvlc-all) µÄ²¥·ÅÆ÷ÊµÏÖ
- * Óë ExoMediaPlayer / MpvMediaPlayer ±£³ÖÍ¬Ò»Ì× AbstractPlayer ½Ó¿Ú£¬¿ÉÖ±½ÓÌæ»»½ÓÈë
+ * VlcPlayer â€”â€” åŸºäº libVLC (org.videolan.android:libvlc-all) çš„æ’­æ”¾å™¨å®ç°
+ * ä¸ ExoMediaPlayer / MpvMediaPlayer ä¿æŒåŒä¸€å¥— AbstractPlayer æ¥å£ï¼Œå¯ç›´æ¥æ›¿æ¢æ¥å…¥
  *
- * ½ÓÈë·½Ê½£¨ÓëÏÖÓĞ PlayerHelper Ò»ÖÂ£©£º
+ * æ¥å…¥æ–¹å¼ï¼ˆä¸ç°æœ‰ PlayerHelper ä¸€è‡´ï¼‰ï¼š
  *   1. build.gradle: implementation 'org.videolan.android:libvlc-all:3.7.5'
- *   2. manifest: Ìí¼Ó INTERNET / ±¾µØÎÄ¼şÏà¹ØÈ¨ÏŞ
- *   3. ÔÚ PlayerHelper ÖĞÔö¼Ó case 14 -> new PlayerFactory<VlcMediaPlayer>(){ create ·µ»Ø new VlcMediaPlayer(context) }
- *   4. ÔÚ getPlayersInfo Ôö¼Ó 14 -> "VLC²¥·ÅÆ÷"£¬getPlayersExistInfo ÊÓÇé¿ö¼ÓÅĞ¶¨
+ *   2. manifest: æ·»åŠ  INTERNET / æœ¬åœ°æ–‡ä»¶ç›¸å…³æƒé™
+ *   3. åœ¨ PlayerHelper ä¸­å¢åŠ  case 14 -> new PlayerFactory<VlcMediaPlayer>(){ create è¿”å› new VlcMediaPlayer(context) }
+ *   4. åœ¨ getPlayersInfo å¢åŠ  14 -> "VLCæ’­æ”¾å™¨"ï¼ŒgetPlayersExistInfo è§†æƒ…å†µåŠ åˆ¤å®š
  *
  * Created by tvbox on 2026-09.
  */
@@ -43,9 +43,9 @@ public class VlcMediaPlayer extends AbstractPlayer {
     private Media mCurrentMedia;
 
     private Context context;
-    private boolean mHWDecode = true;       // true=Ó²½â  false=Èí½â
-    private boolean mPlayingNotified;       // ÊÇ·ñÒÑÍ¨Öª onPrepared£¬·ÀÖ¹ÖØ¸´
-    private volatile boolean mReleased;     // ÊÇ·ñÒÑ±»ÊÍ·Å£¬±ÜÃâÖØ¸´²Ù×÷
+    private boolean mHWDecode = true;       // true=ç¡¬è§£  false=è½¯è§£
+    private boolean mPlayingNotified;       // æ˜¯å¦å·²é€šçŸ¥ onPreparedï¼Œé˜²æ­¢é‡å¤
+    private volatile boolean mReleased;     // æ˜¯å¦å·²è¢«é‡Šæ”¾ï¼Œé¿å…é‡å¤æ“ä½œ
 
     private int mVideoWidth, mVideoHeight;
     private volatile boolean mSizeProbed;
@@ -54,7 +54,7 @@ public class VlcMediaPlayer extends AbstractPlayer {
         this.context = context.getApplicationContext();
     }
 
-    /* ========================= ÉúÃüÖÜÆÚ ========================= */
+    /* ========================= ç”Ÿå‘½å‘¨æœŸ ========================= */
 
     @Override
     public void initPlayer() {
@@ -67,20 +67,20 @@ public class VlcMediaPlayer extends AbstractPlayer {
             mLibVLC = null;
         }
 
-        // xuameng ½âÂëÄ£Ê½£ºtrue=Ó²½â false=Èí½â£¨¿É°´Ğè½ÓÅäÖÃ£©
+        // xuameng è§£ç æ¨¡å¼ï¼štrue=ç¡¬è§£ false=è½¯è§£ï¼ˆå¯æŒ‰éœ€æ¥é…ç½®ï¼‰
         ArrayList<String> options = new ArrayList<>();
         if (mHWDecode) {
-            // Ó²½â£ºÓÅÏÈÊ¹ÓÃ MediaCodec Ó²½â
+            // ç¡¬è§£ï¼šä¼˜å…ˆä½¿ç”¨ MediaCodec ç¡¬è§£
             options.add("--codec=all");
             options.add("--decoder=medCodec");
         } else {
-            // Èí½â£ºffmpeg Èí¼ş½âÂë
+            // è½¯è§£ï¼šffmpeg è½¯ä»¶è§£ç 
             options.add("--codec=all");
             options.add("--decoder=all");
         }
         options.add(":finish-on-close");
-        options.add("--network-caching=300");   // ÍøÂç»º³å 300ms
-        options.add("--rtsp-tcp");              // RTSP ×ß TCP
+        options.add("--network-caching=300");   // ç½‘ç»œç¼“å†² 300ms
+        options.add("--rtsp-tcp");              // RTSP èµ° TCP
         options.add("--drop-late-frames");
         options.add("--skip-frames");
         options.add("--no-audio-dsp");
@@ -88,7 +88,7 @@ public class VlcMediaPlayer extends AbstractPlayer {
         mLibVLC = new LibVLC(context, options);
         mMediaPlayer = new MediaPlayer(mLibVLC);
         mMediaPlayer.setEventListener(this::onEvent);
-        mMediaPlayer.setAudioOutput("opensles"); // Android ÉÏÓÃ OpenSL ES
+        mMediaPlayer.setAudioOutput("opensles"); // Android ä¸Šç”¨ OpenSL ES
 
         mPlayingNotified = false;
         mVideoWidth = 0;
@@ -97,13 +97,13 @@ public class VlcMediaPlayer extends AbstractPlayer {
         mReleased = false;
 
         setOptions();
-        // Æô¶¯³ß´çÌ½²â£ºÂÖÑ¯ libVLC µ±Ç°ÊÓÆµ³ß´ç£¬È·±£ onVideoSizeChanged ÄÜ´¥·¢
+        // å¯åŠ¨å°ºå¯¸æ¢æµ‹ï¼šè½®è¯¢ libVLC å½“å‰è§†é¢‘å°ºå¯¸ï¼Œç¡®ä¿ onVideoSizeChanged èƒ½è§¦å‘
         startVideoSizeProbe();
     }
 
     /**
-     * ³ß´çÌ½²â£ºlibVLC ÔÚ Vout ½¨Á¢ºó²ÅÓĞÓĞĞ§³ß´ç£¬Ö÷Ïß³ÌÇáÁ¿ÂÖÑ¯¼´¿É¡£
-     * ÓÃµ¥´Î postDelayed Á´Ê½Ì½²â£¬²¥·ÅÆ÷ÊÍ·Åºó×Ô¶¯Í£Ö¹¡£
+     * å°ºå¯¸æ¢æµ‹ï¼šlibVLC åœ¨ Vout å»ºç«‹åæ‰æœ‰æœ‰æ•ˆå°ºå¯¸ï¼Œä¸»çº¿ç¨‹è½»é‡è½®è¯¢å³å¯ã€‚
+     * ç”¨å•æ¬¡ postDelayed é“¾å¼æ¢æµ‹ï¼Œæ’­æ”¾å™¨é‡Šæ”¾åè‡ªåŠ¨åœæ­¢ã€‚
      */
     private void startVideoSizeProbe() {
         if (mReleased || mMediaPlayer == null) return;
@@ -114,7 +114,7 @@ public class VlcMediaPlayer extends AbstractPlayer {
             notifyVideoSizeIfReady(w, h);
         }
         mainHandler.postDelayed(() -> {
-            // ÔÙ´ÎÌ½²â£¬¼æÈİÑÓ³Ù³öÏÖµÄ³ß´ç£¨Ö±²¥¡¢Èí½âµÈ£©
+            // å†æ¬¡æ¢æµ‹ï¼Œå…¼å®¹å»¶è¿Ÿå‡ºç°çš„å°ºå¯¸ï¼ˆç›´æ’­ã€è½¯è§£ç­‰ï¼‰
             int nw = mMediaPlayer != null ? mMediaPlayer.getVideoWidth() : 0;
             int nh = mMediaPlayer != null ? mMediaPlayer.getVideoHeight() : 0;
             if (nw > 0 && nh > 0 && !mSizeProbed) {
@@ -124,14 +124,14 @@ public class VlcMediaPlayer extends AbstractPlayer {
         }, 500);
     }
 
-    /* ========================= ºËĞÄ ========================= */
+    /* ========================= æ ¸å¿ƒ ========================= */
 
     @Override
     public void setDataSource(String path, Map<String, String> headers) {
         if (mMediaPlayer == null) {
             initPlayer();
         }
-        // ÖØÖÃ×´Ì¬
+        // é‡ç½®çŠ¶æ€
         mPlayingNotified = false;
         mVideoWidth = 0;
         mVideoHeight = 0;
@@ -144,7 +144,7 @@ public class VlcMediaPlayer extends AbstractPlayer {
         }
         media.setHWDecoderEnabled(mHWDecode, false);
         media.addOption(":network-caching=300");
-        // ±¾µØÎÄ¼ş
+        // æœ¬åœ°æ–‡ä»¶
         if (path.startsWith("/") || "file".equalsIgnoreCase(AndroidUtil.getScheme(path))) {
             media.setType(IMedia.Type.FILE);
         }
@@ -197,7 +197,7 @@ public class VlcMediaPlayer extends AbstractPlayer {
     public void prepareAsync() {
         if (mMediaPlayer == null) return;
         if (mCurrentMedia == null) return;
-        mMediaPlayer.play(); // libVLC ÊÇÒì²½µÄ£¬setMedia ºóÖ±½Ó play ¼´¿É
+        mMediaPlayer.play(); // libVLC æ˜¯å¼‚æ­¥çš„ï¼ŒsetMedia åç›´æ¥ play å³å¯
     }
 
     @Override
@@ -235,7 +235,7 @@ public class VlcMediaPlayer extends AbstractPlayer {
         }
     }
 
-    /* ========================= ²¥·Å¿ØÖÆ ========================= */
+    /* ========================= æ’­æ”¾æ§åˆ¶ ========================= */
 
     @Override
     public boolean isPlaying() {
@@ -274,7 +274,7 @@ public class VlcMediaPlayer extends AbstractPlayer {
 
     @Override
     public int getAudioSessionId() {
-        // libVLC Ê¹ÓÃÏµÍ³ÒôÆµ£¬·µ»Ø 0 ¼´¿É£¨ÓëÏµÍ³²¥·ÅÆ÷Ò»ÖÂ£©
+        // libVLC ä½¿ç”¨ç³»ç»ŸéŸ³é¢‘ï¼Œè¿”å› 0 å³å¯ï¼ˆä¸ç³»ç»Ÿæ’­æ”¾å™¨ä¸€è‡´ï¼‰
         return 0;
     }
 
@@ -312,7 +312,7 @@ public class VlcMediaPlayer extends AbstractPlayer {
 
     @Override
     public void setOptions() {
-        // Ô¤Áô£º¿ÉÔÚ init ºóÔÙ×öÅäÖÃ
+        // é¢„ç•™ï¼šå¯åœ¨ init åå†åšé…ç½®
     }
 
     @Override
@@ -335,23 +335,23 @@ public class VlcMediaPlayer extends AbstractPlayer {
         return PlayerUtils.getNetSpeed(context);
     }
 
-    /* ========================= ÊÂ¼ş»Øµ÷ ========================= */
+    /* ========================= äº‹ä»¶å›è°ƒ ========================= */
 
     private void onEvent(MediaPlayer.Event event) {
         if (event == null || mPlayerEventListener == null) return;
         switch (event.type) {
-            case MediaPlayer.Event.Opening:       // »º³å¿ªÊ¼
+            case MediaPlayer.Event.Opening:       // ç¼“å†²å¼€å§‹
                 mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, 0);
                 break;
-            case MediaPlayer.Event.Buffering:      // »º³å½ø¶È
+            case MediaPlayer.Event.Buffering:      // ç¼“å†²è¿›åº¦
                 if (event.getBuffering() >= 100f) {
                     mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_END, 100);
                 } else {
                     mPlayerEventListener.onInfo(MEDIA_INFO_BUFFERING_START, (int) event.getBuffering());
                 }
                 break;
-            case MediaPlayer.Event.Playing:       // ¿ªÊ¼äÖÈ¾
-                // ¼æÈİ onPrepared£ºÓÃ startPosition ¾ö¶¨ÊÇ·ñ seek
+            case MediaPlayer.Event.Playing:       // å¼€å§‹æ¸²æŸ“
+                // å…¼å®¹ onPreparedï¼šç”¨ startPosition å†³å®šæ˜¯å¦ seek
                 final long startPos = getStartPosition();
                 if (!isStartPositionApplied() && startPos > 0) {
                     try {
@@ -368,17 +368,17 @@ public class VlcMediaPlayer extends AbstractPlayer {
                         mPlayerEventListener.onInfo(MEDIA_INFO_RENDERING_START, 0);
                 }, 20);
                 break;
-            case MediaPlayer.Event.EndReached:     // ²¥·ÅÍê³É
+            case MediaPlayer.Event.EndReached:     // æ’­æ”¾å®Œæˆ
                 mPlayingNotified = false;
                 mainHandler.post(() -> mPlayerEventListener.onCompletion());
                 break;
-            case MediaPlayer.Event.Error:          // ³ö´í
+            case MediaPlayer.Event.Error:          // å‡ºé”™
                 mPlayingNotified = false;
                 Log.e(TAG, "VLC error: " + event.getError());
                 mainHandler.post(() -> mPlayerEventListener.onError());
                 break;
             case MediaPlayer.Event.VideoPlayableChanged:
-                // ÊÓÆµ³ß´ç±ä»¯£¨²¿·Ö°æ±¾ÓÃ´ËÊÂ¼ş£©
+                // è§†é¢‘å°ºå¯¸å˜åŒ–ï¼ˆéƒ¨åˆ†ç‰ˆæœ¬ç”¨æ­¤äº‹ä»¶ï¼‰
                 if (event.getVideoPlayableWidth() > 0) {
                     notifyVideoSizeIfReady(event.getVideoPlayableWidth(), event.getVideoPlayableHeight());
                 }
