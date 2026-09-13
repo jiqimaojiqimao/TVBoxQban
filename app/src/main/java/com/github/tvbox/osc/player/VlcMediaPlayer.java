@@ -12,6 +12,7 @@ import android.content.res.AssetFileDescriptor;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
 import org.videolan.libvlc.MediaPlayer;
+import org.videolan.libvlc.interfaces.IVLCVout;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -32,14 +33,9 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
 
-    // Repeat type 常量（3.x 内部值）
-    private static final int REPEAT_NONE = 0;
-    private static final int REPEAT_ONCE = 1;
-    private static final int REPEAT_ALL = 2;
-
     private Surface mAttachedSurface = null;
 
-    public boolean mIsLooping = false; 
+    public boolean mIsLooping = false;
 
     public VlcMediaPlayer(Context context) {
         mContext = context.getApplicationContext();
@@ -121,33 +117,37 @@ public class VlcMediaPlayer extends AbstractPlayer implements MediaPlayer.EventL
         }
     }
 
-@Override
-public void reset() {
-    if (mMediaPlayer != null) {
-        mMediaPlayer.stop();
-        mMediaPlayer.setVideoTrackEnabled(false);
+    @Override
+    public void reset() {
+        if (mMediaPlayer != null) {
+            IVLCVout vout = mMediaPlayer.getVLCVout();
+            vout.detachViews();
+            mMediaPlayer.stop();
+            mMediaPlayer.setVideoTrackEnabled(false);
+        }
+        mAttachedSurface = null;
+        mIsPrepared = false;
+        mStartPositionApplied = false;
     }
-    mAttachedSurface = null;
-    mIsPrepared = false;
-    mStartPositionApplied = false;
-}
 
-@Override
-public void release() {
-    if (mMediaPlayer != null) {
-        mMediaPlayer.setEventListener(null);
-        mMediaPlayer.stop();
-        mMediaPlayer.setVideoTrackEnabled(false);
-        mMediaPlayer.release();
-        mMediaPlayer = null;
+    @Override
+    public void release() {
+        if (mMediaPlayer != null) {
+            IVLCVout vout = mMediaPlayer.getVLCVout();
+            vout.detachViews();
+            mMediaPlayer.setEventListener(null);
+            mMediaPlayer.stop();
+            mMediaPlayer.setVideoTrackEnabled(false);
+            mMediaPlayer.release();
+            mMediaPlayer = null;
+        }
+        if (mLibVLC != null) {
+            mLibVLC.release();
+            mLibVLC = null;
+        }
+        mAttachedSurface = null;
+        mIsPrepared = false;
     }
-    if (mLibVLC != null) {
-        mLibVLC.release();
-        mLibVLC = null;
-    }
-    mAttachedSurface = null;
-    mIsPrepared = false;
-}
 
     @Override
     public boolean isPlaying() {
@@ -171,34 +171,49 @@ public void release() {
 
     @Override
     public int getBufferedPercentage() {
-        return 0; // 3.x 没有 getCachedBytes
+        return 0;
     }
 
-@Override
-public void setSurface(Surface surface) {
-    if (mMediaPlayer == null) return;
-    
-    // 同一个 surface 不重复设置
-    if (mAttachedSurface == surface) return;
-    
-    if (surface == null) {
-        mMediaPlayer.setVideoTrackEnabled(false);
-        mAttachedSurface = null;
-    } else {
-        mMediaPlayer.setVideoSurface(surface);
-        mMediaPlayer.setVideoTrackEnabled(true);
-        mAttachedSurface = surface;
-    }
-}
+    // ==================== 核心修复：通过 IVLCVout 绑 surface ====================
 
-@Override
-public void setDisplay(SurfaceHolder holder) {
-    if (holder != null) {
-        setSurface(holder.getSurface());
-    } else {
-        setSurface(null);
+    @Override
+    public void setSurface(Surface surface) {
+        if (mMediaPlayer == null) return;
+        if (mAttachedSurface == surface) return;
+
+        IVLCVout vout = mMediaPlayer.getVLCVout();
+        vout.detachViews();
+
+        if (surface != null) {
+            vout.setVideoSurface(surface, null);
+            vout.attachViews();
+            mMediaPlayer.setVideoTrackEnabled(true);
+            mAttachedSurface = surface;
+        } else {
+            mMediaPlayer.setVideoTrackEnabled(false);
+            mAttachedSurface = null;
+        }
     }
-}
+
+    @Override
+    public void setDisplay(SurfaceHolder holder) {
+        if (mMediaPlayer == null) return;
+
+        IVLCVout vout = mMediaPlayer.getVLCVout();
+        vout.detachViews();
+
+        if (holder != null) {
+            vout.setVideoSurface(holder.getSurface(), holder);
+            vout.attachViews();
+            mMediaPlayer.setVideoTrackEnabled(true);
+            mAttachedSurface = holder.getSurface();
+        } else {
+            mMediaPlayer.setVideoTrackEnabled(false);
+            mAttachedSurface = null;
+        }
+    }
+
+    // ==================== 其余方法不变 ====================
 
     @Override
     public void setVolume(float leftVolume, float rightVolume) {
@@ -292,9 +307,9 @@ public void setDisplay(SurfaceHolder holder) {
         }
     }
 
-    // ==================== 视频尺寸轮询 ====================
+    // ==================== 视频尺寸 ====================
 
-private void startVideoSizePolling() {
+    private void startVideoSizePolling() {
         if (mMediaPlayer == null) return;
         org.videolan.libvlc.interfaces.IMedia imedia = mMediaPlayer.getMedia();
         if (imedia == null) return;
@@ -319,9 +334,7 @@ private void startVideoSizePolling() {
 
     private void notifyVideoSizeIfReady() {
         if (mVideoWidth > 0 && mVideoHeight > 0 && mPlayerEventListener != null) {
-            if (mPlayerEventListener != null) {
-                mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
-            }
+            mPlayerEventListener.onVideoSizeChanged(mVideoWidth, mVideoHeight);
         }
     }
 }
