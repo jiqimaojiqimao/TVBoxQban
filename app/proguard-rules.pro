@@ -247,19 +247,3 @@
 -keep class org.chromium.net.**{*;}
 # Nano
 -keep class fi.iki.elonen.** { *; }
-
-
-# LibVLC / VLC Android
--keep class org.videolan.libvlc.** { *; }
--keep interface org.videolan.libvlc.** { *; }
--keep class org.videolan.libvlc.interfaces.** { *; }
--keep interface org.videolan.libvlc.interfaces.** { *; }
-
--keepattributes InnerClasses,Signature,EnclosingMethod,Exceptions
-
-# VLC 内部用匿名/内部类、native 回调
--keepclassmembers class org.videolan.libvlc.** {
-    *;
-}
-
--dontwarn org.videolan.**
