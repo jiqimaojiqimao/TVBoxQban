@@ -888,6 +888,7 @@ public class HomeActivity extends BaseActivity {
             ControlManager.get().stopServer();
         }
     }
+
     private SelectDialog<SourceBean> mSiteSwitchDialog;
 
     void showSiteSwitch() {
