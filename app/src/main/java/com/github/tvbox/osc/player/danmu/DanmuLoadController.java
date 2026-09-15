@@ -94,6 +94,7 @@ public class DanmuLoadController {
     }
 
     public void check(String danmu, String title, String episode, LoadCallback callback) {
+        DanmakuApi.cancel();
         loadCallback = callback;
         seekGeneration++;
         pendingSeekPosition = -1;
