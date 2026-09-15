@@ -15,16 +15,15 @@ import com.github.tvbox.osc.util.FileUtils;
 import java.io.File;
 import java.io.IOException;
 
-
 /**
- * 类描述:
- *
- * @author pj567
- * @since 2020/5/15
+ * @author xuameng
+ * @since 2026/9/15
+ * 历史列表专用：只查轻量字段，dataJson以文件形式存储 解决大列表数据库崩溃
  */
+
 public class AppDataManager {
-    private static final int DB_FILE_VERSION = 3;
-    private static final String DB_NAME = "tvbox";
+    private static final int DB_FILE_VERSION = 6;
+    private static final String DB_NAME = "jvhuiys";
     private static AppDataManager manager;   //xuameng搜索历史
     private static AppDataBase dbInstance;
 
@@ -56,7 +55,6 @@ public class AppDataManager {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
             database.execSQL("CREATE TABLE IF NOT EXISTS `vodRecordTmp` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vodId` TEXT, `updateTime` INTEGER NOT NULL, `sourceKey` TEXT, `data` BLOB, `dataJson` TEXT, `testMigration` INTEGER NOT NULL)");
-
             database.execSQL("CREATE TABLE IF NOT EXISTS t_search (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, searchKeyWords TEXT)"); //xuameng搜索历史
             database.execSQL("CREATE INDEX IF NOT EXISTS index_t_search_searchKeyWords ON t_search (searchKeyWords)");  //xuameng搜索历史
             // Read every thing from the former Expense table
@@ -86,22 +84,35 @@ public class AppDataManager {
         }
     };
 
-    static final Migration MIGRATION_3_4 = new Migration(3, 4) {
+    static final Migration MIGRATION_3_4 = new Migration(3, 4) {  //xuameng 列表用轻量字段 名称 图片 播放到几集
         @Override
         public void migrate(SupportSQLiteDatabase database) {
             try {
-                database.execSQL("ALTER TABLE vodRecord ADD COLUMN dataJson TEXT");
+                database.execSQL("ALTER TABLE vodRecord ADD COLUMN vodName TEXT");
+                database.execSQL("ALTER TABLE vodRecord ADD COLUMN vodPic TEXT");
+                database.execSQL("ALTER TABLE vodRecord ADD COLUMN playNote TEXT");
             } catch (SQLiteException e) {
                 e.printStackTrace();
             }
         }
     };
 
-    static final Migration MIGRATION_4_5 = new Migration(4, 5) {
+
+    static final Migration MIGRATION_4_5 = new Migration(4, 5) {  //xuameng dataJsonPath以文件形式存储
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE vodRecord ADD COLUMN dataJsonPath TEXT");
+        }
+    };
+
+    static final Migration MIGRATION_5_6 = new Migration(5, 6) {   //xuameng 节目源列表、播放集数 播放器类型 倒叙
         @Override
         public void migrate(SupportSQLiteDatabase database) {
             try {
-                database.execSQL("ALTER TABLE localSource ADD COLUMN type INTEGER NOT NULL DEFAULT 0");
+                database.execSQL("ALTER TABLE vodRecord ADD COLUMN currentPlayFlag TEXT");
+                database.execSQL("ALTER TABLE vodRecord ADD COLUMN currentPlayIndex INTEGER NOT NULL DEFAULT 0");
+                database.execSQL("ALTER TABLE vodRecord ADD COLUMN playerCfg TEXT");
+                database.execSQL("ALTER TABLE vodRecord ADD COLUMN reverseSort INTEGER NOT NULL DEFAULT 0");
             } catch (SQLiteException e) {
                 e.printStackTrace();
             }
@@ -119,10 +130,11 @@ public class AppDataManager {
         if (dbInstance == null)
             dbInstance = Room.databaseBuilder(App.getInstance(), AppDataBase.class, dbPath())
                     .setJournalMode(RoomDatabase.JournalMode.TRUNCATE)
-   //                 .addMigrations(MIGRATION_1_2)
+//                  .addMigrations(MIGRATION_1_2)
                     .addMigrations(MIGRATION_2_3)     //xuameng搜索历史
-                    //.addMigrations(MIGRATION_3_4)
-                    //.addMigrations(MIGRATION_4_5)
+                    .addMigrations(MIGRATION_3_4)     //xuameng 列表用轻量字段 名称 图片 播放到几集
+                    .addMigrations(MIGRATION_4_5)     //xuameng dataJsonPath以文件形式存储
+                    .addMigrations(MIGRATION_5_6)     //xuameng 节目源列表、播放集数 播放器类型 倒叙
                     .addCallback(new RoomDatabase.Callback() {
                         @Override
                         public void onCreate(@NonNull SupportSQLiteDatabase db) {
@@ -141,10 +153,10 @@ public class AppDataManager {
     }
 
     public static boolean backup(File path) throws IOException {
-/*xuameng先注销不关闭数据库防止 连接池关闭崩溃        if (dbInstance != null && dbInstance.isOpen()) {
-            dbInstance.close();
-        }
-*/
+//        if (dbInstance != null && dbInstance.isOpen()) {    //xuameng先注销不关闭数据库防止 连接池关闭崩溃
+//            dbInstance.close();
+//        }
+
         File db = App.getInstance().getDatabasePath(dbPath());
         if (db.exists()) {
             FileUtils.copyFile(db, path);
