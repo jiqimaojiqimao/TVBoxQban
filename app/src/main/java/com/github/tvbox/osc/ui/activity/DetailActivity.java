@@ -58,6 +58,10 @@ import com.github.tvbox.osc.util.SubtitleHelper;
 import com.github.tvbox.osc.ui.dialog.DescDialog;     //xuameng 内容简介
 import com.github.tvbox.osc.ui.dialog.PushDialog;    //xuameng远程推送
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
+
+import com.github.tvbox.osc.cache.VodRecordSummary;
+import com.github.tvbox.osc.data.AppDataManager;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -1033,23 +1037,22 @@ public class DetailActivity extends BaseActivity {
                         mEmptyPlayList.setVisibility(View.GONE);
 
                         VodInfo vodInfoRecord = RoomDataManger.getVodInfo(sourceKey, vodId);
-                        // xuameng读取历史记录
-                        if (vodInfoRecord != null) {
-                            // 优先使用历史记录中保存的当前播放源和索引
-                            if (vodInfoRecord.currentPlayFlag != null && vodInfoRecord.currentPlayIndex >= 0) {
-                                vodInfo.playIndex = vodInfoRecord.currentPlayIndex;
-                                vodInfo.playFlag = vodInfoRecord.currentPlayFlag;
-                                vodInfo.currentPlayFlag = vodInfoRecord.currentPlayFlag;
-                                vodInfo.currentPlayIndex = vodInfoRecord.currentPlayIndex;
+                        // xuameng读取历史记录：从摘要表读播放状态（不读大字段）
+                        VodRecordSummary recordSummary = AppDataManager.get().getVodRecordDao().getVodRecordSummary(sourceKey, vodId);
+                        if (recordSummary != null) {
+                            if (recordSummary.currentPlayFlag != null && recordSummary.currentPlayIndex >= 0) {
+                                vodInfo.playIndex = recordSummary.currentPlayIndex;
+                                vodInfo.playFlag = recordSummary.currentPlayFlag;
+                                vodInfo.currentPlayFlag = recordSummary.currentPlayFlag;
+                                vodInfo.currentPlayIndex = recordSummary.currentPlayIndex;
                             } else {
-                                // 兼容旧版记录
-                                vodInfo.playIndex = Math.max(vodInfoRecord.playIndex, 0);
-                                vodInfo.playFlag = vodInfoRecord.playFlag;
-                                vodInfo.currentPlayFlag = vodInfoRecord.playFlag;
-                                vodInfo.currentPlayIndex = vodInfoRecord.playIndex;
+                                vodInfo.playIndex = 0;
+                                vodInfo.playFlag = null;
+                                vodInfo.currentPlayFlag = null;
+                                vodInfo.currentPlayIndex = 0;
                             }
-                        vodInfo.playerCfg = vodInfoRecord.playerCfg;
-                        vodInfo.reverseSort = vodInfoRecord.reverseSort;
+                            vodInfo.playerCfg = recordSummary.playerCfg != null ? recordSummary.playerCfg : "";
+                            vodInfo.reverseSort = recordSummary.reverseSort == 1;
                         } else {
                             vodInfo.playIndex = 0;
                             vodInfo.playFlag = null;
