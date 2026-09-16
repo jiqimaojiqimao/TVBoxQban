@@ -9,7 +9,7 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Base64;
 
-import com.google.android.exoplayer2.util.UriUtil;
+import androidx.media3.common.util.UriUtil;
 import com.github.catvod.crawler.JarLoader;
 import com.github.catvod.crawler.JsLoader;
 import com.github.catvod.crawler.Spider;
