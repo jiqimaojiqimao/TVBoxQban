@@ -747,8 +747,7 @@ public class PlayFragment extends BaseLazyFragment {
                     for (TrackInfoBean track : tracks) {
                         track.selected = isSameTrack(track, value);
                     }
-                    mediaPlayer.pause();
-                    long progress = mediaPlayer.getCurrentPosition();
+                    long progress = mediaPlayer.getCurrentPosition() - 3000L;//XUAMENG保存当前进度，//XUAMENG保存当前进度，回退3秒
                     if (mediaPlayer instanceof IjkMediaPlayer) {
                         ((IjkMediaPlayer) mediaPlayer).setTrack(value.trackId);
                     } else if (mediaPlayer instanceof EXOmPlayer) {
