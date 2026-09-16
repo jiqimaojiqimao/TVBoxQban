@@ -9,7 +9,7 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Base64;
 
-import androidx.media3.common.util.UriUtil;
+import com.google.android.exoplayer2.util.UriUtil;
 import com.github.catvod.crawler.JarLoader;
 import com.github.catvod.crawler.JsLoader;
 import com.github.catvod.crawler.Spider;
@@ -1902,6 +1902,7 @@ public class ApiConfig {
         if (apiUrlXu == null || apiUrlXu.isEmpty() || apiUrlXu.length() == 0) {
             if (Hawk.contains(HawkConfig.API_URL)) {
                 Hawk.delete(HawkConfig.API_URL); // 完全删除
+                Hawk.delete(HawkConfig.SOURCES_FOR_SEARCH); // 完全删除		
             }
         }
     }
