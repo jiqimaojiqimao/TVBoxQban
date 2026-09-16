@@ -37,7 +37,11 @@ public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearc
     }
 
     private void setCheckedSource(HashMap<String, String> checkedSources) {
-        mCheckedSources = checkedSources;
+        if (checkedSources == null) {   //xuameng 防止崩溃
+            mCheckedSources = new HashMap<>();
+        } else {
+            mCheckedSources = checkedSources;
+        }
     }
 
     private ArrayList<SourceBean> data = new ArrayList<>();
@@ -47,7 +51,7 @@ public class CheckboxSearchAdapter extends ListAdapter<SourceBean, CheckboxSearc
     public void setData(List<SourceBean> newData, HashMap<String, String> checkedSources) {
         data.clear();
         data.addAll(newData);
-        setCheckedSource(checkedSources);
+        setCheckedSource(checkedSources != null ? checkedSources : new HashMap<>());  //xuameng 防止崩溃
         notifyDataSetChanged();
     }
 
