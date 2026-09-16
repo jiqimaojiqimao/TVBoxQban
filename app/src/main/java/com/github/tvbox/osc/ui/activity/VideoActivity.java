@@ -1099,16 +1099,16 @@ public class VideoActivity extends BaseActivity {
                                     mGridView.removeOnScrollListener(this);    //xuameng删除滚动监听
                                 }
                             }
-                       });
-                       safeSelectMGridView(vodInfo.playIndex);
+                        });
+                        safeSelectMGridView(vodInfo.playIndex);
 
-                       tvPlay.setNextFocusUpId(R.id.mGridView);   //xuameng上面焦点是选剧集
-                       tvQuickSearch.setNextFocusUpId(R.id.mGridView); 
-                       tvSort.setNextFocusUpId(R.id.mGridView); 
-                       tvCollect.setNextFocusUpId(R.id.mGridView); 
-                       tvDesc.setNextFocusUpId(R.id.mGridView); 
-                       tvPush.setNextFocusUpId(R.id.mGridView); 
-                       //llPlayerFragmentContainerBlock.setNextFocusUpId(R.id.mGridView); 
+                        tvPlay.setNextFocusUpId(R.id.mGridView);   //xuameng上面焦点是选剧集
+                        tvQuickSearch.setNextFocusUpId(R.id.mGridView); 
+                        tvSort.setNextFocusUpId(R.id.mGridView); 
+                        tvCollect.setNextFocusUpId(R.id.mGridView); 
+                        tvDesc.setNextFocusUpId(R.id.mGridView); 
+                        tvPush.setNextFocusUpId(R.id.mGridView); 
+                        //llPlayerFragmentContainerBlock.setNextFocusUpId(R.id.mGridView); 
 
                         if (showPreview) {
                             jumpToPlay();
