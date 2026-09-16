@@ -5,7 +5,7 @@ import androidx.room.ColumnInfo;
 /**
  * @author xuameng
  * @since 2026/9/15
- * ��ʷ�б�ר�ã�ֻ�������ֶΣ�dataJson���ļ���ʽ�洢 ������б����ݿ����
+ * 历史列表专用：只查轻量字段，dataJson以文件形式存储 解决大列表数据库崩溃
  */
 
 public class VodRecordPath {
