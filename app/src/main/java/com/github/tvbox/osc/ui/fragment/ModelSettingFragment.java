@@ -322,6 +322,10 @@ public class ModelSettingFragment extends BaseLazyFragment {
             @Override
             public void onClick(View v) {
                 FastClickCheckUtil.check(v);
+                if (HawkConfig.refreshHomeIng){
+                    App.showToastShort(getContext(), "聚汇影视提示：数据加载中请稍后！");
+                    return;
+                }
                 List<SourceBean> sites = ApiConfig.get().getSwitchSourceBeanList();
                 if (!sites.isEmpty()){
                     int select = sites.indexOf(ApiConfig.get().getHomeSourceBean());
@@ -348,6 +352,7 @@ public class ModelSettingFragment extends BaseLazyFragment {
                             tvHomeApi.setText(ApiConfig.get().getHomeSourceBean().getName());
                             EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_SET_PREVIOUS_HOME_SOURCE, targetSource)); //xuameng告诉HOME上次的主页源以便恢复
                             EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_HOME_SOURCE_CHANGE));
+                            HawkConfig.refreshHomeIng = true; 
                         }
                         @Override
                         public String getDisplay(SourceBean val) {
