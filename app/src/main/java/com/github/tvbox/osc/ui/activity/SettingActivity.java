@@ -20,6 +20,7 @@ import com.github.tvbox.osc.ui.adapter.SettingPageAdapter;
 import com.github.tvbox.osc.ui.fragment.ModelSettingFragment;
 import com.github.tvbox.osc.util.AppManager;
 import com.github.tvbox.osc.util.HawkConfig;
+import com.github.tvbox.osc.util.DefaultConfig; //重启APP
 import com.github.tvbox.osc.viewmodel.SourceViewModel;
 import com.orhanobut.hawk.Hawk;
 import com.owen.tvrecyclerview.widget.TvRecyclerView;
@@ -219,9 +220,19 @@ public class SettingActivity extends BaseActivity {
                 jumpActivity(HomeActivity.class, createBundle());
             }
         } else {
-            clearConfigSwitchCache();
-            AppManager.getInstance().finishAllActivity();
-            jumpActivity(HomeActivity.class);
+            String apiUrlXu = Hawk.get(HawkConfig.API_URL, "");
+            if (apiUrlXu == null || apiUrlXu.isEmpty() || apiUrlXu.length() == 0) {  //xuameng 处理使用内置源时搜索源选择不正常的问题
+                if (Hawk.contains(HawkConfig.API_URL)) {
+                    Hawk.delete(HawkConfig.API_URL); // 完全删除
+                    Hawk.delete(HawkConfig.SOURCES_FOR_SEARCH); // 完全删除	
+                    clearConfigSwitchCache();
+                    DefaultConfig.restartApp();	
+                }
+            }else{
+                clearConfigSwitchCache();
+                AppManager.getInstance().finishAllActivity();
+                jumpActivity(HomeActivity.class);
+		    }  
         }
         App.HideToast();  //xuameng HideToast
         super.onBackPressed();
