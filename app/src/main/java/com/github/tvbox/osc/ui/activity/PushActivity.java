@@ -11,13 +11,23 @@ import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.base.BaseActivity;
 import com.github.tvbox.osc.server.ControlManager;
 import com.github.tvbox.osc.ui.tv.QRCodeGen;
+import com.github.tvbox.osc.ui.activity.TransferActivity;
 import com.github.tvbox.osc.receiver.PushReceiver;
+import com.github.tvbox.osc.util.ScreenUtils;
+import com.github.tvbox.osc.util.FastClickCheckUtil;
 
 import me.jessyan.autosize.utils.AutoSizeUtils;
+
+/**
+ * @author xuameng
+ * @date :2026/9/16
+ * @description: 加传输文件
+ */
 
 public class PushActivity extends BaseActivity {
     private ImageView ivQRCode;
     private TextView tvAddress;
+    private TextView tvTransfer;
 
     @Override
     protected int getLayoutResID() {
@@ -33,10 +43,13 @@ public class PushActivity extends BaseActivity {
     private void initView() {
         ivQRCode = findViewById(R.id.ivQRCode);
         tvAddress = findViewById(R.id.tvAddress);
+        tvTransfer = findViewById(R.id.tvTransfer);
+      //  tvTransfer.setVisibility(ScreenUtils.isTv(this) ? View.VISIBLE : View.GONE);
         refreshQRCode();
         findViewById(R.id.pushLocal).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                FastClickCheckUtil.check(v);
                 try {
                     ClipboardManager manager = (ClipboardManager) PushActivity.this.getSystemService(Context.CLIPBOARD_SERVICE);
                     if (manager != null) {
@@ -51,6 +64,15 @@ public class PushActivity extends BaseActivity {
                 }
             }
         });
+
+        tvTransfer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FastClickCheckUtil.check(v);
+                jumpActivity(TransferActivity.class);
+            }
+        });
+
     }
 
     private void refreshQRCode() {
