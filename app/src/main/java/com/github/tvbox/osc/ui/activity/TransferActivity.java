@@ -89,16 +89,26 @@ public class TransferActivity extends BaseActivity {
                 int percent = object.optInt("progress", 0);
                 String name = object.optString("name", "");
                 progressName = name;
-                progress.setProgress(percent);
-                if (percent > 0 && percent < 100 && name.length() > 0) status.setText("正在上传 " + name + "（" + percent + "%）");
-                else if (percent >= 100) status.setText("最近一次上传完成");
+                boolean fileReady = percent >= 100 && hasTransferFile(name);
+                int displayPercent = percent >= 100 && !fileReady ? 99 : percent;
+                progress.setProgress(displayPercent);
+                if (displayPercent > 0 && displayPercent < 100 && name.length() > 0) status.setText("正在上传 " + name + "（" + displayPercent + "%）");
+                else if (fileReady) status.setText("最近一次上传完成");
+                else if (percent >= 100) status.setText("正在确认 " + (name.length() > 0 ? name : "文件"));
                 else status.setText("等待网页上传");
             } catch (Throwable ignored) { }
         }
     }
 
-    private void loadFiles() {
+    private boolean hasTransferFile(String name) {
+        if (name == null || name.length() == 0) return false;
+        File[] fs = RemoteServer.getTransferDirectory().listFiles();
+        if (fs == null) return false;
+        for (File f : fs) if (f.isFile() && name.equals(f.getName())) return true;
+        return false;
+    }
 
+    private void loadFiles() {
         if (!XXPermissions.isGranted(this, Permission.Group.STORAGE)) {
             fileList.removeAllViews();
             TextView tip = new TextView(this);
