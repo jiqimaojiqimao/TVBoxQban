@@ -29,19 +29,35 @@
             android:textColor="@color/color_FFFFFF"
             android:textSize="@dimen/ts_24"
             tools:text="1111111111111111111111111111111111111111111111111111" />
-
-        <TextView
-            android:id="@+id/pushLocal"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="@dimen/vs_20"
-            android:background="@drawable/shape_user_focus"
-            android:focusable="true"
-            android:gravity="center"
-            android:padding="@dimen/vs_10"
-            android:text="推送剪贴板内容"
-            android:textColor="@color/color_FFFFFF"
-            android:textSize="@dimen/ts_24" />
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/pushLocal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_dialog_main"
+                android:focusable="true"
+                android:gravity="center"
+                android:padding="@dimen/vs_10"
+                android:text="推剪贴板内容"
+                android:textColor="@color/color_FFFFFF"
+                android:textSize="@dimen/ts_24" />
+            <TextView
+                android:id="@+id/tvTransfer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/vs_20"
+                android:background="@drawable/button_dialog_main"
+                android:focusable="true"
+                android:gravity="center"
+                android:padding="@dimen/vs_10"
+                android:text="上传本地文件"
+                android:textColor="@color/color_FFFFFF"
+                android:textSize="@dimen/ts_24" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>
