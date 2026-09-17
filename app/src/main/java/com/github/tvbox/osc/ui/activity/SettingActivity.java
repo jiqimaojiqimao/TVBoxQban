@@ -205,20 +205,33 @@ public class SettingActivity extends BaseActivity {
         if (currentApi.equals(Hawk.get(HawkConfig.API_URL, ""))) {   //xuameng 如何配置地址没变
             if(dnsOpt != Hawk.get(HawkConfig.DOH_URL, 0)){  //xuameng DNS更改重启
                 clearConfigSwitchCache();
-                DefaultConfig.restartApp();	  
+                AppManager.getInstance().finishAllActivity();
+                jumpActivity(HomeActivity.class);
             }else if (!currentLiveApi.equals(Hawk.get(HawkConfig.LIVE_API_URL, ""))){    //xuameng修复直播API不刷新问题   重启
                 clearConfigSwitchCache();
-                DefaultConfig.restartApp();	  
+                AppManager.getInstance().finishAllActivity();
+                jumpActivity(HomeActivity.class);
             }else if (HawkConfig.ISrestore){     //xuameng 恢复重启
                 HawkConfig.ISrestore = false;  //xuameng恢复成功,请重启应用
                 clearConfigSwitchCache();
-                DefaultConfig.restartApp();	  
+                AppManager.getInstance().finishAllActivity();
+                jumpActivity(HomeActivity.class);
             }else if (homeRec != Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC)) {//xuameng 更改数据源或首页推荐
                 jumpActivity(HomeActivity.class, createBundle());
             }
         } else {
-            clearConfigSwitchCache();
-            DefaultConfig.restartApp();	  
+            String apiUrlXu = Hawk.get(HawkConfig.API_URL, "");
+            if (apiUrlXu == null || apiUrlXu.isEmpty() || apiUrlXu.length() == 0) {  //xuameng 处理使用内置源时搜索源选择不正常的问题
+                if (Hawk.contains(HawkConfig.API_URL)) {
+                    Hawk.delete(HawkConfig.API_URL); // 完全删除
+                    clearConfigSwitchCache();
+                    DefaultConfig.restartApp();	
+                }
+            }else{
+                clearConfigSwitchCache();
+                AppManager.getInstance().finishAllActivity();
+                jumpActivity(HomeActivity.class);
+		    }  
         }
         App.HideToast();  //xuameng HideToast
         super.onBackPressed();
