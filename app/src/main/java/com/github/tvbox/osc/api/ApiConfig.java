@@ -1901,8 +1901,7 @@ public class ApiConfig {
         String apiUrlXu = Hawk.get(HawkConfig.API_URL, "");
         if (apiUrlXu == null || apiUrlXu.isEmpty() || apiUrlXu.length() == 0) {
             if (Hawk.contains(HawkConfig.API_URL)) {
-                Hawk.delete(HawkConfig.API_URL); // 完全删除
-                Hawk.delete(HawkConfig.SOURCES_FOR_SEARCH); // 完全删除		
+                Hawk.delete(HawkConfig.API_URL); // 完全删除	
             }
         }
     }
