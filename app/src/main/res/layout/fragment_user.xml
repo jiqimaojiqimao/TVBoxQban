@@ -174,7 +174,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/vs_10"
-                    android:text="推送"
+                    android:text="推传"
                     android:textAlignment="gravity"
                     android:letterSpacing="0.1"/>
             </LinearLayout>
