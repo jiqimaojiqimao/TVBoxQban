@@ -250,8 +250,10 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         homeHotVodAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                if (ApiConfig.get().getSourceBeanList().isEmpty())
+                if (ApiConfig.get().getSourceBeanList().isEmpty()){
+                    App.showToastShort(mContext, "没有可用源！");
                     return;
+                }
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
                 if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
@@ -299,8 +301,10 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         homeHotVodAdapterxu.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() { //xuameng首页单行
             @Override
             public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
-                if (ApiConfig.get().getSourceBeanList().isEmpty())
+                if (ApiConfig.get().getSourceBeanList().isEmpty()){
+                    App.showToastShort(mContext, "没有可用源！");
                     return;
+                }
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
                 if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
@@ -421,7 +425,10 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         homeHotVodAdapter.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
-                if (ApiConfig.get().getSourceBeanList().isEmpty()) return false;
+                if (ApiConfig.get().getSourceBeanList().isEmpty()){
+                    App.showToastShort(mContext, "没有可用源！");
+                    return false;
+                }
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
                 if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
@@ -444,7 +451,10 @@ public class UserFragment extends BaseLazyFragment implements View.OnClickListen
         homeHotVodAdapterxu.setOnItemLongClickListener(new BaseQuickAdapter.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(BaseQuickAdapter adapter, View view, int position) {
-                if (ApiConfig.get().getSourceBeanList().isEmpty()) return false;
+                if (ApiConfig.get().getSourceBeanList().isEmpty()){
+                    App.showToastShort(mContext, "没有可用源！");
+                    return false;
+                }
                 Movie.Video vod = ((Movie.Video) adapter.getItem(position));
 
                 if (Hawk.get(HawkConfig.HOME_REC, HawkConfig.DEFAULT_HOME_REC) == 1 && homeSourceRec != null && !TextUtils.isEmpty(vod.action)) {  //xuameng 接口action方法判断
