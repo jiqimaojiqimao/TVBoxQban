@@ -964,7 +964,7 @@ public class PlayFragment extends BaseLazyFragment {
         if (TextUtils.isEmpty(url)) {   //xuameng 地址为空
             pauseForHidden();
             mController.imageHide();  //xuameng隐藏图片
-            errorWithRetry("播放地址为空", false);
+            handleResolvePlayUrlFailed("获取播放地址为空");
             return;
         }
         webPlayUrl=url;
@@ -1414,15 +1414,23 @@ public class PlayFragment extends BaseLazyFragment {
                             });
                         }
                     } catch (Throwable th) {
-                        errorWithRetry("获取播放信息错误", true);
+                        handleResolvePlayUrlFailed("获取播放信息错误");
                     }
                 } else {
                     //   获取播放信息错误后只需再重试一次
-                    errorWithRetry("获取播放信息错误", true);
+                    handleResolvePlayUrlFailed("获取播放信息错误");
                 }
             }
         };
         sourceViewModel.playResult.observeForever(playResultObserver);
+    }
+
+    void handleResolvePlayUrlFailed(String err) {
+        LOG.i("echo-resolvePlayUrl failed, try next line: " + err);
+        if (sourceViewModel != null) sourceViewModel.cancelPlayRequest();
+        stopParse();
+        stopMusicSessionForFailedPlayback();
+        setTip(err, false, true);
     }
 
     private String resolveDataUriSubtitle(String dataUri) {   //xuameng base64字幕转换并缓存
