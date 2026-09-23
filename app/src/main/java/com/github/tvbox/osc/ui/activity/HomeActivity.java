@@ -265,7 +265,7 @@ public class HomeActivity extends BaseActivity {
                 if (direction == View.FOCUS_UP) {   //XUAMENG上键刷新完
                     BaseLazyFragment baseLazyFragment = fragments.get(sortFocused);
                     if (baseLazyFragment instanceof UserFragment) {
-                        refreshHomeSort();
+                        refreshHome(false);
                         App.showToastShort(HomeActivity.this, "主页刷新！");	
                         return true;
                     }
@@ -304,7 +304,7 @@ public class HomeActivity extends BaseActivity {
                 FastClickCheckUtil.check(v);
                 if(dataInitOk && jarInitOk){
                     refreshHome(false);
-                    App.showToastShort(HomeActivity.this, "重载数据！");
+                    App.showToastShort(HomeActivity.this, "主页刷新！");
                 }else {
                     jumpActivity(SettingActivity.class);   //xuameng加载慢跳转设置
                 }
