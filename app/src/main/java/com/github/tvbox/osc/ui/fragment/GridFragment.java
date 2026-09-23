@@ -223,6 +223,7 @@ public class GridFragment extends BaseLazyFragment {
             mGridView = v3;
             mGridView.setVisibility(View.VISIBLE);
         }
+        HawkConfig.isShowList = false;  //xuameng判断是否显示列表恢复默认
         mGridView.setHasFixedSize(true);
         style=ImgUtil.initStyle();
         gridAdapter = new GridAdapter(isFolederMode(), style);
