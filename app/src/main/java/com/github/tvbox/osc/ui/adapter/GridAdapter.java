@@ -41,19 +41,12 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
         if (style != null) {
             if (showList || "list".equals(style.type)) {   //xuameng如果 showList或 style = list 就以文件夹显示 转style = null 用 item_list
                 style = null;
-                HawkConfig.isShowList = true;    //xuameng判断是否显示列表
             } else {
                 this.defaultWidth = ImgUtil.getStyleDefaultWidth(style);   //style 来设置图片的宽高比例
-                HawkConfig.isShowList = false;    //xuameng判断是否显示列表
-            }
-        } else {
-            if (showList){
-                HawkConfig.isShowList = true;    //xuameng判断是否显示列表
-            } else {
-                HawkConfig.isShowList = false;    //xuameng判断是否显示列表
             }
         }
         this.style = style;
+        HawkConfig.isShowList = showList;  //xuameng判断是否显示列表
     }
 
     @Override
