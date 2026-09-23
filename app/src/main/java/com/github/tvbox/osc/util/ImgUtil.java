@@ -12,6 +12,7 @@ import android.util.Base64;
 
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.api.ApiConfig;
+import com.github.tvbox.osc.util.HawkConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,11 +57,13 @@ public class ImgUtil {
     }
 
     public static Style initStyle() {     //xuameng 改成list 不需要ratio
+        if (HawkConfig.isShowList){      //xuameng判断是否显示列表
+            return new Style(0f, "list");
+        }
         String bStyle = ApiConfig.get().getHomeSourceBean().getStyle();
         if (TextUtils.isEmpty(bStyle)) {
             return null;
         }
-
         try {
             JSONObject jsonObject = new JSONObject(bStyle);
 
@@ -98,12 +101,12 @@ public class ImgUtil {
 
     public static int getStyleDefaultWidth(Style style) {
         // 1. style 为空，回退默认
-        if (style == null) {
+        if (style == null && !HawkConfig.isShowList) {  //xuameng判断是否显示列表
             return defaultWidth;
         }
 
-        // 2. xuameng list 类型，直接给固定宽度
-        if ("list".equals(style.type)) {
+        // 2. xuameng list 类型，或显示列表 直接给固定宽度
+        if ("list".equals(style.type) || HawkConfig.isShowList) {
             return 100;
         }
 
