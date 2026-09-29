@@ -529,6 +529,7 @@ public class HomeActivity extends BaseActivity {
                                 }
                             });
                         if (!mConfigErrorDialog.isShowing() && !refreshEmpty){
+                            showSuccess();
                             mConfigErrorDialog.show();
                         }
                     }
