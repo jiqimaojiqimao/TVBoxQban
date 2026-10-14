@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.http.SslError;
 import android.os.Build;
+import android.text.Html;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -1806,11 +1807,21 @@ public class PlayFragment extends BaseLazyFragment {
         play(false);
     }
 
+    private String removeHtmlTag(String info) {
+        if (TextUtils.isEmpty(info))
+            return "";
+        String text = info.replaceAll("\\[a=cr:(?:\\{.*?\\}|\\[.*?\\])\\/](.*?)\\[\\/a]", "$1");
+        text = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                ? Html.fromHtml(text, Html.FROM_HTML_MODE_LEGACY).toString()
+                : Html.fromHtml(text).toString();
+        return text.replaceAll("\\s", "");
+    }
+
     private void showEpisodeDialog() {
         if (!isAdded() || mVodInfo == null || mVodInfo.seriesMap == null || TextUtils.isEmpty(mVodInfo.playFlag)) return;
         List<VodInfo.VodSeries> episodes = mVodInfo.seriesMap.get(mVodInfo.playFlag);
         if (episodes == null || episodes.isEmpty()) return;
-        String title = TextUtils.isEmpty(mVodInfo.name) ? "选集" : mVodInfo.name + " 选集";
+        String title = TextUtils.isEmpty(mVodInfo.name) ? "选集" : removeHtmlTag(mVodInfo.name) + " 选集";
         EpisodeDialog dialog = new EpisodeDialog(requireContext(), title, episodes, mVodInfo.playIndex, new EpisodeDialog.EpisodeSelectListener() {
             @Override
             public void selectEpisode(int position) {
