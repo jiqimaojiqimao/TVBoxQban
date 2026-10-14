@@ -186,20 +186,30 @@ public class GridFragment extends BaseLazyFragment {
     // 丢弃当前页面，将页面还原成上一个保存的页面
     public boolean restoreView(){
         if(mGrids.empty()) return false;
+        //xuameng判断是否显示列表恢复默认
+        HawkConfig.isShowList = false;  
         this.showSuccess();
         ((ViewGroup) mGridView.getParent()).removeView(this.mGridView); // 重父窗口移除当前控件
-        GridInfo info = mGrids.pop();// 还原上次保存的控件
+        // 还原上次保存的控件
+        GridInfo info = mGrids.pop();
         this.sortData.id = info.sortID;
         this.mGridView = info.mGridView;
         this.gridAdapter = info.gridAdapter;
+        // xuameng判断 showList
+        if (this.gridAdapter != null && this.gridAdapter.isShowList()) {
+            HawkConfig.isShowList = true;
+        } else {
+            HawkConfig.isShowList = false;
+        }
         this.page = info.page;
         this.maxPage = info.maxPage;
         this.isLoad = info.isLoad;
         this.hasActionItems = info.hasActionItems;
         this.focusedView = info.focusedView;
-        this.mGridView.setVisibility(View.VISIBLE);
-//        if(this.focusedView != null){ this.focusedView.requestFocus(); }
-        if(mGridView != null) mGridView.requestFocus();
+        if (mGridView != null) {
+            mGridView.setVisibility(View.VISIBLE);
+            mGridView.requestFocus();
+        }
         return true;
     }
 
@@ -609,6 +619,7 @@ public class GridFragment extends BaseLazyFragment {
             App.showToastShort(getContext(), "数据加载中，请稍候！");
             return;
         }
+        HawkConfig.isShowList = false;
         // xuameng关键：已经在 LoadSir 托管状态下，不要再 showLoading
         if (!isLoad) {
             showLoading();
