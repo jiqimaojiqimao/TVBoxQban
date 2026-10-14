@@ -258,19 +258,6 @@
                 android:layout_marginBottom="@dimen/vs_10">
                 <TextView
                     android:textSize="@dimen/ts_20"
-                    android:textColor="@color/color_FFFFFF"
-                    android:background="@drawable/button_dialog_main_1"
-                    android:padding="@dimen/vs_10"
-                    android:paddingRight="@dimen/vs_10"
-                    android:focusable="false"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="@dimen/vs_5"
-                    android:text="选择"
-                    android:singleLine="true"
-                    android:layout_marginEnd="@dimen/vs_5"/>
-                <TextView
-                    android:textSize="@dimen/ts_20"
                     android:textColor="@android:color/white"
                     android:id="@+id/play_next"
                     android:background="@drawable/button_dialog_main_1"
@@ -293,6 +280,20 @@
                     android:layout_height="wrap_content"
                     android:layout_marginRight="@dimen/vs_5"
                     android:text="上一集"
+                    android:singleLine="true"
+                    android:layout_marginEnd="@dimen/vs_5"/>
+                <TextView
+                    android:textSize="@dimen/ts_20"
+                    android:textColor="@android:color/white"
+                    android:id="@+id/play_select"
+                    android:background="@drawable/button_dialog_main_1"
+                    android:padding="@dimen/vs_10"
+                    android:paddingRight="@dimen/vs_10"
+                    android:focusable="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="@dimen/vs_5"
+                    android:text="选集"
                     android:singleLine="true"
                     android:layout_marginEnd="@dimen/vs_5"/>
                 <TextView
