@@ -325,6 +325,7 @@ public class VodController extends BaseController {
     TextView mPlayTimeEnd; //xuameng影片结束时间
     TextView mNextBtn;
     TextView mPreBtn;
+    TextView mSelectBtn;
     TextView mPlayerScaleBtn;
     public TextView mPlayerSpeedBtn;
     TextView mPlayerBtn;
@@ -587,6 +588,7 @@ public class VodController extends BaseController {
         mPlayrefresh = findViewById(R.id.play_refresh);
         mNextBtn = findViewById(R.id.play_next);
         mPreBtn = findViewById(R.id.play_pre);
+        mSelectBtn = findViewById(R.id.play_select);
         mPlayerScaleBtn = findViewById(R.id.play_scale);
         mPlayerSpeedBtn = findViewById(R.id.play_speed);
         mPlayerBtn = findViewById(R.id.play_player);
@@ -884,18 +886,6 @@ public class VodController extends BaseController {
                 listener.playNext(false);
             }
         });
-        mNextBtn.setOnLongClickListener(new OnLongClickListener() { //xuameng 长按下一集 显示频道列表
-            @Override
-            public boolean onLongClick(View view) {
-                FastClickCheckUtil.check(view);
-                myHandle.removeCallbacks(myRunnable);
-                if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
-                    hideBottom();
-                }
-                listener.showEpisodeDialog();
-                return true;
-            }
-        });
         mxuPlay.setOnClickListener(new OnClickListener() { //xuameng 低菜单播放监听
             @Override //xuameng 低菜单播放监听
             public void onClick(View view) { //xuameng 低菜单播放监听
@@ -1079,16 +1069,19 @@ public class VodController extends BaseController {
                 listener.playPre();
             }
         });
-        mPreBtn.setOnLongClickListener(new OnLongClickListener() {  //xuameng 长按上一集 显示频道列表
+        mSelectBtn.setOnClickListener(new OnClickListener() {  //xuameng 选集 显示频道列表
             @Override
-            public boolean onLongClick(View view) {
+            public void onClick(View view) {
                 FastClickCheckUtil.check(view);
+                if((System.currentTimeMillis() - DOUBLE_CLICK_TIME_2) < 300 || isAnimation || isDisplay) { //xuameng 防播放打断动画
+                    return;
+                }
+                DOUBLE_CLICK_TIME_2 = System.currentTimeMillis();
                 myHandle.removeCallbacks(myRunnable);
                 if(!isAnimation && mBottomRoot.getVisibility() == View.VISIBLE) {
                     hideBottom();
                 }
                 listener.showEpisodeDialog();
-                return true;
             }
         });
         mPlayerScaleBtn.setOnClickListener(new OnClickListener() {  //xuameng 画面比例
@@ -1610,6 +1603,7 @@ public class VodController extends BaseController {
         mSeekBar.setNextFocusDownId(R.id.play_next);  //xuameng 进程条下键是下一集
         mNextBtn.setNextFocusUpId(R.id.mxuplay);
         mPreBtn.setNextFocusUpId(R.id.mxuplay);
+        mSelectBtn.setNextFocusUpId(R.id.mxuplay);
         mPlayerRetry.setNextFocusUpId(R.id.mxuplay);
         mPlayrefresh.setNextFocusUpId(R.id.mxuplay);
         mPlayerScaleBtn.setNextFocusUpId(R.id.mxuplay);
