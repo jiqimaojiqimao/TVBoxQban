@@ -31,6 +31,7 @@ import me.jessyan.autosize.utils.AutoSizeUtils;
  */
 public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
 	private int defaultWidth;
+    private final boolean showList;   // xuameng给GridFragment.java判断用
     public ImgUtil.Style style; // 动态风格，传入时调整图片宽高比
 
     /**xuameng 如果 style = list 就以文件夹显示 style = null 用 item_grid.xml  video.tag.equals("folder" 用 item_list以文件夹显示
@@ -38,6 +39,7 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
      */
     public GridAdapter(boolean showList, ImgUtil.Style style) {
         super( showList ? R.layout.item_list:R.layout.item_grid, new ArrayList<>());
+        this.showList = showList;     // xuameng保存给GridFragment.java判断用
         if (style != null) {
             if (showList || "list".equals(style.type)) {   //xuameng如果 showList或 style = list 就以文件夹显示 转style = null 用 item_list
                 style = null;
@@ -47,6 +49,11 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
         }
         this.style = style;
         HawkConfig.isShowList = showList;  //xuameng判断是否显示列表
+    }
+
+    //xuameng 给GridFragment.java判断showlist用
+    public boolean isShowList() {
+        return showList;
     }
 
     @Override
