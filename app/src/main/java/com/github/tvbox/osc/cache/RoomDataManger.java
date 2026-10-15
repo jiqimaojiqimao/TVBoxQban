@@ -14,6 +14,7 @@ import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.github.tvbox.osc.util.MD5;
 
 import com.orhanobut.hawk.Hawk;
 import java.util.ArrayList;
@@ -80,20 +81,20 @@ public class RoomDataManger {
 
         // JSON 写文件，路径存库
         String json = getVodInfoGson().toJson(vodInfo);
-        String fileName = sourceKey + "_" + vodInfo.id + ".json";
+        String rawName = sourceKey + "_" + vodInfo.id;
+        String fileName = MD5.string2MD5(rawName) + ".json";
         File dir = new File(App.getInstance().getFilesDir(), "vod_record");
         if (!dir.exists()) dir.mkdirs();
         File jsonFile = new File(dir, fileName);
         try {
             FileWriter writer = new FileWriter(jsonFile);
             writer.write(json);
-            writer.close();
+            writer.close(); 
             record.dataJsonPath = jsonFile.getAbsolutePath();
         } catch (IOException e) {
             e.printStackTrace();
-            record.dataJson = json; // 兜底
+            record.dataJsonPath = null;
         }
-
         dao.insert(record);
     }
 
