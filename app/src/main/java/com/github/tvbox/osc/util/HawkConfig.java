@@ -82,7 +82,6 @@ public class HawkConfig {
     public static boolean saveHistory = false;  //xuameng 存储历史记录
     public static boolean exoSubtitle = false;  //xuameng 判断当前是否播放EXO内置字幕
     public static boolean refreshHomeIng = false; //xuameng判断是否正常刷新页面
-    public static boolean isShowList = false; //xuameng判断是否显示列表
 
     public static boolean hotVodDelete;
 }
