@@ -13,7 +13,6 @@ import com.github.tvbox.osc.bean.Movie;
 import com.github.tvbox.osc.picasso.RoundTransformation;
 import com.github.tvbox.osc.util.DefaultConfig;
 import com.github.tvbox.osc.util.MD5;
-import com.github.tvbox.osc.util.HawkConfig;
 import com.squareup.picasso.Picasso;
 import com.github.tvbox.osc.util.ImgUtil;   //xuamengBASE64图片
 
@@ -31,7 +30,7 @@ import me.jessyan.autosize.utils.AutoSizeUtils;
  */
 public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
 	private int defaultWidth;
-    private final boolean showList;   // xuameng给GridFragment.java判断用
+    private final boolean showList;   // xuameng 全局showlist判断
     public ImgUtil.Style style; // 动态风格，传入时调整图片宽高比
 
     /**xuameng 如果 style = list 就以文件夹显示 style = null 用 item_grid.xml  video.tag.equals("folder" 用 item_list以文件夹显示
@@ -39,7 +38,7 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
      */
     public GridAdapter(boolean showList, ImgUtil.Style style) {
         super( showList ? R.layout.item_list:R.layout.item_grid, new ArrayList<>());
-        this.showList = showList;     // xuameng保存给GridFragment.java判断用
+        this.showList = showList;    // xuameng 全局showlist判断
         if (style != null) {
             if (showList || "list".equals(style.type)) {   //xuameng如果 showList或 style = list 就以文件夹显示 转style = null 用 item_list
                 style = null;
@@ -48,12 +47,6 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
             }
         }
         this.style = style;
-        HawkConfig.isShowList = showList;  //xuameng判断是否显示列表
-    }
-
-    //xuameng 给GridFragment.java判断showlist用
-    public boolean isShowList() {
-        return showList;
     }
 
     @Override
@@ -98,14 +91,14 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
 
         int newWidth;
         int newHeight;
-        if (HawkConfig.isShowList){  //xuameng判断是否显示列表
+        if (showList){  //xuameng判断是否显示列表
             newWidth = 100;
             newHeight = newWidth;
         } else {
             newWidth = ImgUtil.defaultWidth;
             newHeight = ImgUtil.defaultHeight;
         }
-        if (style != null && !HawkConfig.isShowList) {  //xuameng判断是否显示列表
+        if (style != null && !showList) {  //xuameng判断是否显示列表
             newWidth = defaultWidth;
             float safeRatio = ImgUtil.normalizeRatio(style.ratio);  //xuameng normalizeRatio强行指定ratio值防止用户乱写
             newHeight = (int) (newWidth / safeRatio);
@@ -132,12 +125,12 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
                         .placeholder(R.drawable.img_loading_placeholder)
                         .noFade()
                     //    .error(R.drawable.img_loading_placeholder)
-						.error(ImgUtil.createTextDrawable(item.name))
+                        .error(ImgUtil.createTextDrawable(item.name, showList))  //xuameng加判断是否显示列表
                         .into(ivThumb);
             }
         } else {
-           // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
-			ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name));
+            // ivThumb.setImageResource(R.drawable.img_loading_placeholder);
+            ivThumb.setImageDrawable(ImgUtil.createTextDrawable(item.name, showList));  //xuameng加判断是否显示列表
         }
 		applyStyleToImage(ivThumb);//动态设置宽高
     }
@@ -145,7 +138,7 @@ public class GridAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHolder> {
      * 根据传入的 style 动态设置 ImageView 的高度：高度 = 宽度 / ratio
      */
     private void applyStyleToImage(final ImageView ivThumb) {
-        if(style!=null && !HawkConfig.isShowList){   //xuameng判断是否显示列表
+        if(style!=null && !showList){   //xuameng加判断是否显示列表
             ViewGroup container = (ViewGroup) ivThumb.getParent();
             // xuameng修复：应用normalizeRatio处理后的安全ratio值来计算高度
             int width = defaultWidth;
