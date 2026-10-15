@@ -12,7 +12,6 @@ import android.util.Base64;
 
 import com.github.tvbox.osc.base.App;
 import com.github.tvbox.osc.api.ApiConfig;
-import com.github.tvbox.osc.util.HawkConfig;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,8 +26,9 @@ import android.graphics.PorterDuffXfermode; //xuameng 新增 base64图片圆角�
 
 import me.jessyan.autosize.utils.AutoSizeUtils;
 
-/**
+/**20261015
  * xuameng
+ * 修复LIST显示BUG
  * base64图片
  * 解决base64图片圆角变形等问题
  * @version 2.0.0 <br/>
@@ -57,9 +57,6 @@ public class ImgUtil {
     }
 
     public static Style initStyle() {     //xuameng 改成list 不需要ratio
-        if (HawkConfig.isShowList){      //xuameng判断是否显示列表
-            return new Style(0f, "list");
-        }
         String bStyle = ApiConfig.get().getHomeSourceBean().getStyle();
         if (TextUtils.isEmpty(bStyle)) {
             return null;
@@ -93,7 +90,7 @@ public class ImgUtil {
             } else if (style.ratio >= 1.3) {
                 spanCount = 4; // 4:3
             }
-        } else if ("list".equals(style.type)) {   //xuameng list 时 首页推荐 1列
+        } else if ("list".equals(style.type)) {   //list 时 首页推荐 1列
             spanCount = 1;
         }
         return spanCount;
@@ -101,12 +98,12 @@ public class ImgUtil {
 
     public static int getStyleDefaultWidth(Style style) {
         // 1. style 为空，回退默认
-        if (style == null && !HawkConfig.isShowList) {  //xuameng判断是否显示列表
+        if (style == null) {
             return defaultWidth;
         }
 
-        // 2. xuameng list 类型，或显示列表 直接给固定宽度
-        if ("list".equals(style.type) || HawkConfig.isShowList) {
+        // 2. list 类型，直接给固定宽度
+        if ("list".equals(style.type)) {
             return 100;
         }
 
@@ -127,7 +124,7 @@ public class ImgUtil {
         return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
     }
 
-    public static Drawable createTextDrawable(String text) {
+    public static Drawable createTextDrawable(String text, boolean showList) { //xuameng加判断是否显示列表
         if (TextUtils.isEmpty(text)) {
             text = "聚";
         }
@@ -145,7 +142,7 @@ public class ImgUtil {
         if (style != null) {
             width = getStyleDefaultWidth(style);
 
-            if ("list".equals(style.type)) {
+            if ("list".equals(style.type) || showList) { //xuameng加判断是否显示列表
                 //  list 类型：高度等于宽度（或你希望的任何固定比例）
                 height = width;
             } else {
@@ -154,9 +151,15 @@ public class ImgUtil {
                 height = (int) (width / safeRatio);
             }
         } else {
-            //  style == null，回退默认
-            width = defaultWidth;
-            height = defaultHeight;
+            //  style == null与showlist，固定宽高
+            if (showList){  
+                width = 100;
+                height = width;
+            }else{
+                //  style == null与非showlist，回退默认
+                width = defaultWidth;
+                height = defaultHeight;
+			}
         }
 
         if (height <= 0) {
