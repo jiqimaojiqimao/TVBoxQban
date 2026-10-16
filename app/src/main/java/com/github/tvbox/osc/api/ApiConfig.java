@@ -9,7 +9,7 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Base64;
 
-import androidx.media3.common.util.UriUtil;
+import com.google.android.exoplayer2.util.UriUtil;
 import com.github.catvod.crawler.JarLoader;
 import com.github.catvod.crawler.JsLoader;
 import com.github.catvod.crawler.Spider;
@@ -1747,10 +1747,12 @@ public class ApiConfig {
     public SourceBean getSource(String key) {
         if (!sourceBeanList.containsKey(key)) {
             if ("push_agent".equals(key)) {
+				int pt = (int) Hawk.get(HawkConfig.PLAY_TYPE, 1);  //xuameng加播放器类型
                 SourceBean sourceBean = new SourceBean();
                 sourceBean.setKey("push_agent");
                 sourceBean.setName("🥇聚汇推送");
                 sourceBean.setType(-1);
+                sourceBean.setPlayerType(pt); //xuameng加播放器类型
                 return sourceBean;
             }
             return null;
