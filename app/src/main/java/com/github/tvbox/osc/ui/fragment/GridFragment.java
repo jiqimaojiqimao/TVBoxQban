@@ -194,7 +194,7 @@ public class GridFragment extends BaseLazyFragment {
             mGridView.requestFocus();
         }
         // xuameng关键修复：重新绑定 LoadSir
-        bindLoadSirToCurrentView();
+      //  bindLoadSirToCurrentView();
         return true;
     }
 
