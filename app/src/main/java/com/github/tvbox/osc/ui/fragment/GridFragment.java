@@ -180,7 +180,8 @@ public class GridFragment extends BaseLazyFragment {
     // 丢弃当前页面，将页面还原成上一个保存的页面
 public boolean restoreView(){
     if(mGrids.empty()) return false;
-
+    
+showSuccess();
     GridInfo info = mGrids.pop();
 
     ((ViewGroup) mGridView.getParent()).removeView(this.mGridView);
@@ -200,9 +201,6 @@ public boolean restoreView(){
 
         // ✅ 关键：强制 Success
         showSuccess();
-
-        // ✅ 关键：防止 Adapter 不刷新
-        gridAdapter.notifyDataSetChanged();
 
         mGridView.requestFocus();
     }
