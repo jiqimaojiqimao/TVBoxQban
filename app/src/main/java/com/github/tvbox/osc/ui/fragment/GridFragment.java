@@ -178,25 +178,37 @@ public class GridFragment extends BaseLazyFragment {
         this.mGrids.push(info);
     }
     // 丢弃当前页面，将页面还原成上一个保存的页面
-    public boolean restoreView(){
-        if(mGrids.empty()) return false;
-        this.showSuccess();    
-        ((ViewGroup) mGridView.getParent()).removeView(this.mGridView); // 重父窗口移除当前控件
-        GridInfo info = mGrids.pop();  // 还原上次保存的控件
-        this.sortData.id = info.sortID;
-        this.mGridView = info.mGridView;
-        this.gridAdapter = info.gridAdapter;
-        this.page = info.page;
-        this.maxPage = info.maxPage;
-        this.focusedView = info.focusedView;
-        if (mGridView != null) {
-            mGridView.setVisibility(View.VISIBLE);
-            mGridView.requestFocus();
-        }
-        // xuameng关键修复：重新绑定 LoadSir
-      //  bindLoadSirToCurrentView();
-        return true;
+public boolean restoreView(){
+    if(mGrids.empty()) return false;
+
+    GridInfo info = mGrids.pop();
+
+    ((ViewGroup) mGridView.getParent()).removeView(this.mGridView);
+
+    this.sortData.id = info.sortID;
+    this.mGridView = info.mGridView;
+    this.gridAdapter = info.gridAdapter;
+    this.page = info.page;
+    this.maxPage = info.maxPage;
+    this.focusedView = info.focusedView;
+
+    if (mGridView != null) {
+        mGridView.setVisibility(View.VISIBLE);
+
+        // ✅ 关键：重新绑定 LoadSir
+        bindLoadSirToCurrentView();
+
+        // ✅ 关键：强制 Success
+        showSuccess();
+
+        // ✅ 关键：防止 Adapter 不刷新
+        gridAdapter.notifyDataSetChanged();
+
+        mGridView.requestFocus();
     }
+    return true;
+}
+
 
     private ImgUtil.Style style;
     // 更改当前页面
