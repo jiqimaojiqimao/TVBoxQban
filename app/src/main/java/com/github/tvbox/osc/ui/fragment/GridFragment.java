@@ -191,11 +191,11 @@ public class GridFragment extends BaseLazyFragment {
         this.focusedView = info.focusedView;
         if (mGridView != null) {
             mGridView.setVisibility(View.VISIBLE);
+            // xuameng关键修复：重新绑定 LoadSir
+            bindLoadSirToCurrentView();   
+            this.showSuccess();   
             mGridView.requestFocus();
         }
-        // xuameng关键修复：重新绑定 LoadSir
-        bindLoadSirToCurrentView();
-        this.showSuccess();
         return true;
     }
 
