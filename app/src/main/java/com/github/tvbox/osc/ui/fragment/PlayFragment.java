@@ -837,7 +837,8 @@ public class PlayFragment extends BaseLazyFragment {
                         || value.name.toLowerCase().contains("vobsub")
                         || value.name.toLowerCase().contains("dvb"));
                     if (mediaPlayer instanceof EXOmPlayer) {
-
+                        // xuameng先注册mExoSubtitleView，再切可见性
+                        ((EXOmPlayer) mediaPlayer).setSubtitleView(mController.mExoSubtitleView);
                         if (isPgsSubtitle) {
                             // xuameng选中的是 PGS 字幕：使用 ExoPlayer 内置视图
                             mController.mExoSubtitleView.setVisibility(View.VISIBLE);
@@ -1128,6 +1129,9 @@ public class PlayFragment extends BaseLazyFragment {
         }
 
         if (mVideoView.getMediaPlayer() instanceof EXOmPlayer) {
+            // xuameng先注册mExoSubtitleView，再切可见性
+            ((EXOmPlayer) mVideoView.getMediaPlayer()).setSubtitleView(mController.mExoSubtitleView);
+
             trackInfo = ((EXOmPlayer) (mVideoView.getMediaPlayer())).getTrackInfo();
 
             //xuameng 选择字幕
