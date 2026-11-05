@@ -94,6 +94,7 @@ public class IjkTrackInfo implements ITrackInfo {
         LANGUAGE_REPLACE_MAP.put("fin", "芬兰语");
         LANGUAGE_REPLACE_MAP.put("dan", "丹麦语");
         LANGUAGE_REPLACE_MAP.put("eng", "英语");
+        LANGUAGE_REPLACE_MAP.put("ice", "冰岛语");
 
         // 欧洲语言 - 斯拉夫语族
         LANGUAGE_REPLACE_MAP.put("rus", "俄语");
@@ -106,6 +107,7 @@ public class IjkTrackInfo implements ITrackInfo {
         LANGUAGE_REPLACE_MAP.put("slv", "斯洛文尼亚语");
         LANGUAGE_REPLACE_MAP.put("hrv", "克罗地亚语");
         LANGUAGE_REPLACE_MAP.put("bul", "保加利亚语");
+        LANGUAGE_REPLACE_MAP.put("srp", "塞尔维亚语");
 
         // 欧洲语言 - 波罗的海
         LANGUAGE_REPLACE_MAP.put("lit", "立陶宛语");
