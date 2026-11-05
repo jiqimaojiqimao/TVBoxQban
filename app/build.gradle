@@ -12,7 +12,7 @@ android {
         minSdkVersion 24
         targetSdkVersion 28
         versionCode 1
-        versionName '20261104-2222'
+        versionName '20261105-2222'
         multiDexEnabled = true
         //设置room的Schema的位置
         javaCompileOptions {
@@ -91,7 +91,7 @@ android {
 
 configurations.all {            //xuameng新增解决编译
     resolutionStrategy {
-          force 'org.dom4j:dom4j:2.1.4'
+        force 'org.dom4j:dom4j:2.1.4'
     }
     exclude group: 'xpp3', module: 'xpp3'
 }
