@@ -209,7 +209,12 @@ public final class MyHlsExtractorFactory implements HlsExtractorFactory {
                     (Extractor) checkNotNull(
                             createExtractorByFileType(fileType, format, muxedCaptionFormats, timestampAdjuster));
             if (sniffQuietly(extractor, sniffingExtractorInput)) {
-                return new MyBundledHlsMediaChunkExtractor(extractor, format, timestampAdjuster);
+                HlsMediaChunkExtractor base =
+                        new MyBundledHlsMediaChunkExtractor(extractor, format, timestampAdjuster);
+                if (extractor instanceof MyTsExtractor) {
+                    return new ResyncExtractor(base);
+                }
+                return base;
             }
             if (fallBackExtractor == null
                     && (fileType == formatInferredFileType
@@ -222,8 +227,13 @@ public final class MyHlsExtractorFactory implements HlsExtractorFactory {
             }
         }
 
-        return new MyBundledHlsMediaChunkExtractor(
-                checkNotNull(fallBackExtractor), format, timestampAdjuster);
+        HlsMediaChunkExtractor base =
+                new MyBundledHlsMediaChunkExtractor(
+                        checkNotNull(fallBackExtractor), format, timestampAdjuster);
+        if (fallBackExtractor instanceof MyTsExtractor) {
+            return new ResyncExtractor(base);
+        }
+        return base;
     }
 
     @SuppressLint("SwitchIntDef") // HLS only supports a small subset of the defined file types.
