@@ -1,5 +1,7 @@
 package com.github.tvbox.osc.viewmodel;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.text.TextUtils;
 
 import android.util.Base64;
@@ -21,6 +23,8 @@ import com.github.tvbox.osc.bean.AbsXml;
 import com.github.tvbox.osc.bean.Movie;
 import com.github.tvbox.osc.bean.MovieSort;
 import com.github.tvbox.osc.bean.SourceBean;
+import com.github.tvbox.osc.cache.VodRecord;
+import com.github.tvbox.osc.data.AppDataManager;
 import com.github.tvbox.osc.event.RefreshEvent;
 import com.github.tvbox.osc.player.thirdparty.RemoteTVBox;
 import com.github.tvbox.osc.util.DefaultConfig;
@@ -191,6 +195,43 @@ public class SourceViewModel extends ViewModel {
         return lower.contains("douban") || value.contains("\u8c46\u74e3");
     }
 
+    private static void syncDoubanHistory(SourceBean sourceBean, String categoryId, int page) {  //xuameng 适配豆瓣猜你喜欢
+        if (page != 1 || !"guess_you_like".equals(categoryId) || !isDoubanSource(sourceBean)) return;
+        try {
+            App app = App.getInstance();
+            SharedPreferences preferences = app.getSharedPreferences(app.getPackageName() + "_preferences", Context.MODE_PRIVATE);
+            String previous = preferences.getString("historyvodname", "");
+            List<String> names = new ArrayList<>();
+            // JAR 按每页一个历史片名生成推荐，第一页同步后保持分页顺序。
+            for (VodRecord record : AppDataManager.get().getVodRecordDao().getAll(Integer.MAX_VALUE)) {
+                if (names.size() >= 10) break;
+                if (TextUtils.isEmpty(record.dataJson)) continue;
+                try {
+                    String name = new JSONObject(record.dataJson).optString("name", "").trim();
+                    if (!TextUtils.isEmpty(name) && !names.contains(name)) names.add(name);
+                } catch (org.json.JSONException ignored) {
+                }
+            }
+            // 保留 JAR 自己记录的片名，本机没有播放记录时也可继续使用。
+            if (!TextUtils.isEmpty(previous)) {
+                try {
+                    JSONArray history = new JSONArray(previous);
+                    for (int i = 0; i < history.length() && names.size() < 10; i++) {
+                        String name = history.optString(i, "").trim();
+                        if (!TextUtils.isEmpty(name) && !names.contains(name)) names.add(name);
+                    }
+                } catch (org.json.JSONException ignored) {
+                }
+            }
+            if (!names.isEmpty()) {
+                String history = new JSONArray(names).toString();
+                if (!history.equals(previous)) preferences.edit().putString("historyvodname", history).apply();
+            }
+            LOG.i("echo-douban-history--count=" + names.size());
+        } catch (Exception e) {
+            LOG.e("echo-douban-history-error--" + e.getMessage());
+        }
+    }
 
     // homeContent
     public void getSort(final String sourceKey) {
@@ -437,7 +478,7 @@ public class SourceViewModel extends ViewModel {
     // categoryContent
     public void getList(MovieSort.SortData sortData, int page) {
         if (sortData == null) {     //xuameng 判空防止空指针
-			LOG.i("sortData is null, return");
+            LOG.i("sortData is null, return");
             listResult.postValue(null);
             return;
         }
@@ -452,6 +493,7 @@ public class SourceViewModel extends ViewModel {
                         @Override
                         public String call() throws Exception {
                             Spider sp = ApiConfig.get().getCSP(homeSourceBean);
+                            syncDoubanHistory(homeSourceBean, sortData.id, page); //xuameng 适配豆瓣猜你喜欢
                             return sp.categoryContent(sortData.id, page + "", true, sortData.filterSelect);
                         }
                     });
@@ -574,7 +616,7 @@ public class SourceViewModel extends ViewModel {
     }
 
     public void getListFromSearch(MovieSort.SortData sortData, int page, String sourceKey) { //xuameng 新增搜索中返回下一级列表
-        if (sortData == null) {     //xuameng 判空防止空指针
+        if (sortData == null || TextUtils.isEmpty(sortData.id)) {     //xuameng 判空防止空指针
             LOG.i("sortData is null, return");
             listResult.postValue(null);
             return;
@@ -591,6 +633,7 @@ public class SourceViewModel extends ViewModel {
                         @Override
                         public String call() throws Exception {
                             Spider sp = ApiConfig.get().getCSP(sourceBean);
+                            syncDoubanHistory(sourceBean, sortData.id, page); //xuameng 适配豆瓣猜你喜欢
                             return sp.categoryContent(sortData.id, page + "", true, sortData.filterSelect);
                         }
                     });
@@ -911,7 +954,9 @@ public class SourceViewModel extends ViewModel {
                         }
                     });
         } else {
-            detailResult.postValue(null);
+            AbsXml data = new AbsXml();
+            data.sourceKey = sourceKey;
+            detailResult.postValue(data);
         }
     }
 
@@ -1885,7 +1930,13 @@ public class SourceViewModel extends ViewModel {
             if (searchResult == result || quickSearchResult == result) {
                 postEmptySearchResult(result, sourceKey, searchToken);
             } else if (result != null) {
-                result.postValue(null);
+                if (result == detailResult) {
+                    AbsXml data = new AbsXml();
+                    data.sourceKey = sourceKey;
+                    result.postValue(data);
+                } else {
+                    result.postValue(null);
+                }
             }
             return null;
         }
@@ -1935,7 +1986,13 @@ public class SourceViewModel extends ViewModel {
             if (searchResult == result || quickSearchResult == result) {
                 postEmptySearchResult(result, sourceKey, searchToken);
             } else if (result != null) {
-                result.postValue(null);
+                if (result == detailResult) {
+                    AbsXml data = new AbsXml();
+                    data.sourceKey = sourceKey;
+                    result.postValue(data);
+                } else {
+                    result.postValue(null);
+                }
             }
             return null;
         }
