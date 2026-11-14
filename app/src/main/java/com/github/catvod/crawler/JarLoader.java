@@ -129,7 +129,7 @@ public class JarLoader {
             Class<?> clz = loader.loadClass("com.github.catvod.spider.Init");
             String jarPath = getJarPathByKey(recent);
             if (isProtectedInitJar(jarPath)) {
-                initProtectedJar(clz);
+                initProtectedJar(clz, loader); // xuameng明确传 loader
             } else {
                 Method method = clz.getMethod("init", Context.class);
                 method.invoke(null, App.getInstance());
@@ -547,14 +547,50 @@ public class JarLoader {
         return baos.toByteArray();
     }
 
-    private void initProtectedJar(Class<?> classInit) {
+    private void initProtectedJar(Class<?> classInit, DexClassLoader loader) {
+        if (classInit == null || loader == null) return;
+
         try {
             Method get = classInit.getMethod("get");
             Object init = get.invoke(null);
 
-            Field context = classInit.getDeclaredField("c");
-            context.setAccessible(true);
-            context.set(init, App.getInstance());
+            // 1. 注入 Context
+            try {
+                Field context = classInit.getDeclaredField("c");
+                context.setAccessible(true);
+                context.set(init, App.getInstance());
+            } catch (Throwable ignored) {
+            }
+
+            // 2. 注入 DexClassLoader
+            injectProtectedClassLoader(loader);
+
+            // 3. 初始化本地配置
+            invokeNoArg(classInit, "saveConfig");
+            invokeNoArg(classInit, "replaceCloudDiskNames");
+
+            // 4. 启动 Go Proxy
+            invokeStartGoProxy(classInit);
+
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private void invokeNoArg(Class<?> clz, String methodName) {
+        try {
+            Method method = clz.getDeclaredMethod(methodName);
+            method.setAccessible(true);
+            method.invoke(null);
+        } catch (NoSuchMethodException ignored) {
+        } catch (Throwable th) {
+            Log.e("JarLoader", "echo-init " + methodName + " failed", th);
+        }
+    }
+
+    private void invokeStartGoProxy(Class<?> clz) {
+        try {
+            Method method = clz.getMethod("startGoProxy", Context.class);
+            method.invoke(null, App.getInstance());
         } catch (Throwable ignored) {
         }
     }
