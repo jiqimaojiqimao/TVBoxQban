@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 在当前连接内继续读取TS不同步数据，避免每次同步异常都重新请求切片。
+ * xuameng 在当前连接内继续读取TS不同步数据，避免每次同步异常都重新请求切片。
  * 支持委托给任意 HlsExtractorFactory（如 MyHlsExtractorFactory）。
  */
 public final class ResyncHlsExtractorFactory implements HlsExtractorFactory {
@@ -27,17 +27,17 @@ public final class ResyncHlsExtractorFactory implements HlsExtractorFactory {
 
     private final HlsExtractorFactory delegate;
 
-    // 默认使用 ExoPlayer 的 DEFAULT
+    // xuameng 默认使用 ExoPlayer 的 DEFAULT
     public ResyncHlsExtractorFactory() {
         this(HlsExtractorFactory.DEFAULT);
     }
 
-    // ✅ 注入你自己的 MyHlsExtractorFactory
+    // xuameng 注入你自己的 MyHlsExtractorFactory
     public ResyncHlsExtractorFactory(HlsExtractorFactory delegate) {
         this.delegate = delegate;
     }
 
-    // ✅ 只有一个 createExtractor 方法
+    // xuameng createExtractor 方法
     @Override
     public HlsMediaChunkExtractor createExtractor(
             Uri uri,
@@ -61,7 +61,7 @@ public final class ResyncHlsExtractorFactory implements HlsExtractorFactory {
         );
     }
 
-    // ✅ ResyncExtractor 作为内部类，放在类末尾
+    // xuameng ResyncExtractor 作为内部类，放在类末尾
     private static final class ResyncExtractor implements HlsMediaChunkExtractor {
 
         private final HlsMediaChunkExtractor delegate;
