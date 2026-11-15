@@ -225,6 +225,7 @@
     <methods>;
 }
 
+-keep class com.github.catvod.Proxy { *; }
 -keep class com.github.catvod.crawler.*{*;}
 -keep class com.github.catvod.net.** { *; }
 -keep class com.github.tvbox.osc.bean.ProxyRule { *; }
