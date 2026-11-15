@@ -1,0 +1,142 @@
+package xyz.doikki.videoplayer.exo;
+
+import android.net.Uri;
+import android.util.Log;
+
+import androidx.annotation.Nullable;
+import androidx.media3.common.Format;
+import androidx.media3.common.ParserException;
+import androidx.media3.common.util.TimestampAdjuster;
+import androidx.media3.exoplayer.analytics.PlayerId;
+import androidx.media3.exoplayer.hls.HlsExtractorFactory;
+import androidx.media3.exoplayer.hls.HlsMediaChunkExtractor;
+import androidx.media3.extractor.ExtractorInput;
+import androidx.media3.extractor.ExtractorOutput;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 在当前连接内继续读取TS不同步数据，避免每次同步异常都重新请求切片。
+ * 支持委托给任意 HlsExtractorFactory（如 MyHlsExtractorFactory）。
+ */
+public final class ResyncHlsExtractorFactory implements HlsExtractorFactory {
+
+    private static final int MAX_CONSECUTIVE_RESYNC_ERRORS = 16;
+
+    private final HlsExtractorFactory delegate;
+
+    // 默认使用 ExoPlayer 的 DEFAULT
+    public ResyncHlsExtractorFactory() {
+        this(HlsExtractorFactory.DEFAULT);
+    }
+
+    // ✅ 注入你自己的 MyHlsExtractorFactory
+    public ResyncHlsExtractorFactory(HlsExtractorFactory delegate) {
+        this.delegate = delegate;
+    }
+
+    // ✅ 只有一个 createExtractor 方法
+    @Override
+    public HlsMediaChunkExtractor createExtractor(
+            Uri uri,
+            Format format,
+            @Nullable List<Format> muxedCaptionFormats,
+            TimestampAdjuster timestampAdjuster,
+            Map<String, List<String>> responseHeaders,
+            ExtractorInput sniffingExtractorInput,
+            PlayerId playerId) throws IOException {
+
+        return new ResyncExtractor(
+                delegate.createExtractor(
+                        uri,
+                        format,
+                        muxedCaptionFormats,
+                        timestampAdjuster,
+                        responseHeaders,
+                        sniffingExtractorInput,
+                        playerId
+                )
+        );
+    }
+
+    // ✅ ResyncExtractor 作为内部类，放在类末尾
+    private static final class ResyncExtractor implements HlsMediaChunkExtractor {
+
+        private final HlsMediaChunkExtractor delegate;
+        private ExtractorInput lastInput;
+        private long lastResyncPosition = -1;
+        private int consecutiveResyncErrors;
+
+        ResyncExtractor(HlsMediaChunkExtractor delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void init(ExtractorOutput extractorOutput) {
+            delegate.init(extractorOutput);
+        }
+
+        @Override
+        public boolean read(ExtractorInput input) throws IOException {
+            if (lastInput != input) {
+                lastInput = input;
+                resetResyncProgress();
+            }
+
+            try {
+                boolean hasMoreData = delegate.read(input);
+                resetResyncProgress();
+                return hasMoreData;
+            } catch (ParserException error) {
+                String message = error.getMessage();
+                if (message == null || !message.startsWith("Cannot find sync byte.")) {
+                    throw error;
+                }
+
+                long position = input.getPosition();
+                if (consecutiveResyncErrors >= MAX_CONSECUTIVE_RESYNC_ERRORS
+                        || position <= lastResyncPosition) {
+                    Log.w("jvhuiys-runtime",
+                            "echo-hls-ts-resync-fallback count=" + consecutiveResyncErrors
+                                    + ", position=" + position);
+                    throw error;
+                }
+
+                lastResyncPosition = position;
+                consecutiveResyncErrors++;
+                Log.w("jvhuiys-runtime",
+                        "echo-hls-ts-resync-inplace count=" + consecutiveResyncErrors
+                                + ", position=" + position);
+                return true;
+            }
+        }
+
+        private void resetResyncProgress() {
+            lastResyncPosition = -1;
+            consecutiveResyncErrors = 0;
+        }
+
+        @Override
+        public boolean isPackedAudioExtractor() {
+            return delegate.isPackedAudioExtractor();
+        }
+
+        @Override
+        public boolean isReusable() {
+            return delegate.isReusable();
+        }
+
+        @Override
+        public HlsMediaChunkExtractor recreate() {
+            return new ResyncExtractor(delegate.recreate());
+        }
+
+        @Override
+        public void onTruncatedSegmentParsed() {
+            delegate.onTruncatedSegmentParsed();
+            resetResyncProgress();
+        }
+    }
+}
