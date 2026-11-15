@@ -104,9 +104,9 @@ public final class ExoMediaSourceHelper {
 
         if (errorCode == 3001 || errorCode == 3002 || errorCode == 3003 || errorCode == 3004 || errorCode == 2000) {      // xuameng当错误码为3003时，强制使用 HLS 源进行播放
             return new HlsMediaSource.Factory(factory)
-                    .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
+                    .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // xuameng HLS切片快速重试，兼容TS同步异常，并保留默认的错误暴露阈值和备用轨道回退。
                     .setAllowChunklessPreparation(true)
-                    .setExtractorFactory(
+                    .setExtractorFactory(  //xuameng 在当前连接内继续读取TS不同步数据，避免每次同步异常都重新请求切片并兼顾MyHlsExtractorFactory。
                         new ResyncHlsExtractorFactory(
                             new MyHlsExtractorFactory()
                         )
@@ -124,9 +124,9 @@ public final class ExoMediaSourceHelper {
                 return new DashMediaSource.Factory(factory).createMediaSource(MediaItem.fromUri(contentUri));
             case C.TYPE_HLS:
                 return new HlsMediaSource.Factory(factory)
-                        .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
+                        .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // xuameng HLS切片快速重试，兼容TS同步异常，并保留默认的错误暴露阈值和备用轨道回退。
                         .setAllowChunklessPreparation(true)
-                        .setExtractorFactory(
+                        .setExtractorFactory(  //xuameng 在当前连接内继续读取TS不同步数据，避免每次同步异常都重新请求切片并兼顾MyHlsExtractorFactory。
                             new ResyncHlsExtractorFactory(
                                 new MyHlsExtractorFactory()
                             )
