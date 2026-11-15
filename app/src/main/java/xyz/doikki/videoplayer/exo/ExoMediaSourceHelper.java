@@ -106,7 +106,11 @@ public final class ExoMediaSourceHelper {
             return new HlsMediaSource.Factory(factory)
                     .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
                     .setAllowChunklessPreparation(true)
-                    .setExtractorFactory(new MyHlsExtractorFactory())
+                    .setExtractorFactory(
+                        new ResyncHlsExtractorFactory(
+                            new MyHlsExtractorFactory()
+                        )
+                    )
                     .createMediaSource(MediaItem.fromUri(contentUri));
         }
 
@@ -122,7 +126,11 @@ public final class ExoMediaSourceHelper {
                 return new HlsMediaSource.Factory(factory)
                         .setLoadErrorHandlingPolicy(new HlsErrorHandlingPolicy())  // 设置自定义错误处理策略，跳过坏的切片
                         .setAllowChunklessPreparation(true)
-                        .setExtractorFactory(new MyHlsExtractorFactory())
+                        .setExtractorFactory(
+                            new ResyncHlsExtractorFactory(
+                                new MyHlsExtractorFactory()
+                            )
+                        )
                         .createMediaSource(MediaItem.fromUri(contentUri));
             default:
             case C.TYPE_OTHER:
