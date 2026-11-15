@@ -118,7 +118,7 @@ public class ImgUtilMusic {
             return;
         }
         RequestOptions options = new RequestOptions()
-                .format(DecodeFormat.PREFER_RGB_565)
+                .format(DecodeFormat.PREFER_ARGB_8888)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .dontAnimate()
                 .transform(new FitCenter(), new RoundedCorners(roundingRadius));
@@ -145,7 +145,7 @@ public class ImgUtilMusic {
             return;
         }
         RequestOptions options = new RequestOptions()
-                .format(DecodeFormat.PREFER_RGB_565)
+                .format(DecodeFormat.PREFER_ARGB_8888)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .dontAnimate()
                 .transform(new CenterCrop(), new RoundedCorners(roundingRadius));
