@@ -27,7 +27,7 @@ public class HlsErrorHandlingPolicy extends DefaultLoadErrorHandlingPolicy {
         if (isMediaChunk && loadErrorInfo.exception instanceof ParserException
                 && message != null && message.startsWith("Cannot find sync byte.")) {
             // TS解析器已丢弃不同步数据，HlsMediaChunk会记录读取位置，允许重试后继续读取。
-            Log.w("Tvbox-runtime", "echo-hls-ts-resync-retry count=" + loadErrorInfo.errorCount
+            Log.w("jvhuiys-runtime", "echo-hls-ts-resync-retry count=" + loadErrorInfo.errorCount
                     + ", bytesLoaded=" + loadErrorInfo.loadEventInfo.bytesLoaded
                     + ", segment=" + loadErrorInfo.loadEventInfo.uri);
             return RETRY_DELAY_MS;
