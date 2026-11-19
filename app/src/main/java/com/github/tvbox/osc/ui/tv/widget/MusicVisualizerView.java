@@ -23,7 +23,7 @@ import android.animation.ValueAnimator;
  */
 public class MusicVisualizerView extends View {
 
-    private static final int MAX_AMPLITUDE = 12222;  // xuameng判断音量大小
+    private static final int MAX_AMPLITUDE = 10222;  // xuameng判断音量大小
     private static final int BAR_COUNT = 22;          // xuameng 音柱数量
     private static final int ANIMATION_DURATION = 60; // xuameng 音柱动画时长
 
