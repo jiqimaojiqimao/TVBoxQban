@@ -20,7 +20,7 @@
         android:layout_height="fill_parent"/>
     <com.github.tvbox.osc.ui.tv.widget.MusicVisualizerView
         android:id="@+id/visualizer_view"
-        android:layout_width="400mm"
+        android:layout_width="800mm"
         android:layout_height="150mm"
         android:layout_gravity="bottom|center_horizontal"
         android:visibility="gone"
