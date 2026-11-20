@@ -9,7 +9,7 @@ import android.view.View;
 import android.animation.ValueAnimator;
 
 /**
- * xuameng
+ * xuameng 20261120
  * 音乐可视化视图组件（带振幅颜色渐变）
  * <p>
  * 新增特性：
@@ -24,7 +24,7 @@ import android.animation.ValueAnimator;
 public class MusicVisualizerView extends View {
 
     private static final int MAX_AMPLITUDE = 10222;  // xuameng判断音量大小
-    private static final int BAR_COUNT = 22;          // xuameng 音柱数量
+    private static final int BAR_COUNT = 64;          // xuameng 音柱数量
     private static final int ANIMATION_DURATION = 60; // xuameng 音柱动画时长
 
     // xuameng 是否应该绘制音柱
@@ -32,7 +32,7 @@ public class MusicVisualizerView extends View {
 
     // ==================== xuameng 新增：强音扩散参数 ====================
     // 强音扩散半径（向左右各影响几个音柱）
-    private static final int BEAT_SPREAD_RADIUS = 10;
+    private static final int BEAT_SPREAD_RADIUS = 11;
     // 扩散衰减系数（越大衰减越慢，扩散越远，0~1之间）
     private static final float BEAT_DECAY = 0.80f;
     // =====================================================================
@@ -41,7 +41,7 @@ public class MusicVisualizerView extends View {
      * 最低可见高度比例（防止小音量时柱子消失）
      * 调大 → 最小柱子更高
      * 调小 → 差距更大但可能消失
-     * 当前 0.02（2%）
+     * 当前 0.005（0.5%）
      */
     private static final float MIN_VISIBLE_RATIO = 0.005f;
 
@@ -74,7 +74,6 @@ public class MusicVisualizerView extends View {
     private final Paint mBarPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final float[] mBarHeights = new float[BAR_COUNT];
     private final float[] mTargetHeights = new float[BAR_COUNT];
-    private final float[] mAmplitudeLevels = new float[BAR_COUNT]; // 存储各柱振幅强度
 
     // 动画控制器
     private ValueAnimator mAnimator;
@@ -123,16 +122,10 @@ public class MusicVisualizerView extends View {
             return;
         }
         mVisible = true; // xuameng 有数据就显示
-        // 修改采样策略：前1/3柱子重点采样低频，后2/3均匀采样中高频
+        // 修改采样策略：前1/3柱子采样低频，后2/3均匀采样中高频
         for (int i = 0; i < BAR_COUNT; i++) {
-            int barIndex;
-            if (i < BAR_COUNT / 3) {
-                // 低频段密集采样（每4点取1）
-                barIndex = 2 + i * 4;
-            } else {
-                // 中高频段间隔采样（每2点取1）
-                barIndex = 2 + (BAR_COUNT / 3) * 4 + (i - BAR_COUNT / 3) * 2;
-            }
+            // xuameng 1点取1（每根音柱对应一个复数对）
+            int barIndex = 2 + i * 2;
             if (barIndex < fft.length - 1) {
                 byte rfk = fft[barIndex];
                 byte ifk = fft[barIndex + 1];
@@ -140,20 +133,23 @@ public class MusicVisualizerView extends View {
 
                 // xuameng改进的频率加权策略（三段式加权）
                 float weight;
-                if (i < BAR_COUNT / 4) {
-                    weight = 1.0f; // xuameng 超低频段(0-200Hz)增益
-                } else if (i < BAR_COUNT / 2) {
-                    weight = 1.8f; // xuameng 中低频段(200-800Hz)基准值增益
+                int third = BAR_COUNT / 3; // 21
+                if (i < third) {
+                    // 第一段：xuameng 超低频段(0-200Hz)增益
+                    weight = 1.0f;
+                } else if (i < third * 2) {
+                    // 第二段：xuameng 中低频段(200-800Hz)基准值增益
+                    weight = 2.8f;
                 } else {
-                    float freqFactor = (float) Math.pow(1.5, (i - BAR_COUNT / 2) / 2.0); // xuameng 高频段(800Hz+)指数增强
+                    // 第三段：xuameng 高频段(800Hz+)指数增强
+                    float freqFactor = (float) Math.pow(1.5, (i - third * 2) / 2.0);
                     weight = 2.8f * freqFactor;
+                    weight = Math.min(weight, 15.0f); // 限制最大增益
                 }
-
                 mTargetHeights[i] = Math.min(
                         (magnitude * getHeight() * weight * volumeLevel) / MAX_AMPLITUDE, // xuameng判断音量大小
                         getHeight() * 0.95f
                 );
-                mAmplitudeLevels[i] = Math.min(magnitude / MAX_AMPLITUDE, 1.0f);
             }
         }
 
@@ -169,8 +165,8 @@ public class MusicVisualizerView extends View {
         }
 
         // 只对明显强音做扩散（避免微弱信号也扩散导致乱跳）
-        // 阈值：主柱高度超过视图高度的15%才触发扩散
-        float spreadThreshold = getHeight() * 0.15f;
+        // 阈值：主柱高度超过视图高度的10%才触发扩散
+        float spreadThreshold = getHeight() * 0.10f;
         if (maxTarget > spreadThreshold) {
             // 创建临时数组存储扩散后的高度，不破坏原始计算结果
             float[] spreadHeights = new float[BAR_COUNT];
@@ -224,12 +220,6 @@ public class MusicVisualizerView extends View {
             if (mTargetHeights[i] < minVisibleHeight) {
                 mTargetHeights[i] = minVisibleHeight;
             }
-
-            // 3. 同步振幅强度（用于颜色渐变）
-            mAmplitudeLevels[i] = Math.max(
-                    mAmplitudeLevels[i],
-                    MIN_VISIBLE_RATIO
-            );
         }
         // ==================== 托底逻辑结束 ====================
         startAnimation();
@@ -281,7 +271,7 @@ public class MusicVisualizerView extends View {
         final int width = getWidth();
         final int height = getHeight();
         final float barWidth = width / (float) BAR_COUNT;
-        final float gap = barWidth * 0.2f;
+        final float gap = barWidth * 0.15f;  //xuameng 音柱间距
         final float barUnitWidth = barWidth - gap;
 
         // 新增：定义分段效果的最小高度阈值（例如4像素）
@@ -293,8 +283,10 @@ public class MusicVisualizerView extends View {
             float barHeight = Math.min(mBarHeights[i], height * 0.9f);
             float top = height - barHeight;
 
-            // 根据当前颜色方案和振幅强度计算颜色
-            int color = getDynamicColor(mAmplitudeLevels[i], colorSchemes[currentSchemeIndex]);
+            // xuameng：改为按实际音柱高度计算颜色
+            float normalizedHeight = barHeight / (height > 0 ? height : 1f);
+            normalizedHeight = Math.max(0f, Math.min(1f, normalizedHeight));
+            int color = getDynamicColor(normalizedHeight, colorSchemes[currentSchemeIndex]);
             mBarPaint.setColor(color);
 
             // 分段绘制音柱（实现"一段一段"效果）
@@ -363,7 +355,6 @@ public class MusicVisualizerView extends View {
         for (int i = 0; i < BAR_COUNT; i++) {
             mBarHeights[i] = 0;
             mTargetHeights[i] = 0;
-            mAmplitudeLevels[i] = 0;
         }
         mVisible = false;
         postInvalidate();
