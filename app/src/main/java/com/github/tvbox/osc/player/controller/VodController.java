@@ -336,7 +336,7 @@ public class VodController extends BaseController {
     TextView mxuPlay; //xuameng 底部播放ID
     TextView mPlayrender;  //xuameng渲染方式
     TextView mPlayanimation; //xuameng音柱动画
-    private ImageView iv_circle_bg; //xuameng音乐播放时图标
+    public ImageView iv_circle_bg; //xuameng音乐播放时图标
     private FrameLayout play_speed_3; //xuameng倍速播放
     private FrameLayout mPauseContainer; // xuameng播放标题、暂停时间
     private TextView tv_slide_progress_text;  //xuameng 旧的亮度调节框已作废
@@ -372,7 +372,7 @@ public class VodController extends BaseController {
     private boolean mSeekBarhasFocus = false; //xuameng seekbar是否拥有焦点
     private boolean isBufferIng = false; //xuameng 判断是否进在缓冲视频
     private Visualizer mVisualizer;  //xuameng音乐播放动画
-    private MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
+    public MusicVisualizerView customVisualizer; //xuameng播放音乐柱状图
     public boolean noHaveVideo = false;   //xuameng 判断是否有视频
     private int audioSessionId = -1; // 使用-1表示未初始化状态 //xuameng音乐播放动画
     private boolean musicAnimation = Hawk.get(HawkConfig.VOD_MUSIC_ANIMATION, false);     //xuameng 音柱动画 加载设置
@@ -473,7 +473,12 @@ public class VodController extends BaseController {
                         // xuameng如果 mLrcView 显示，则将 iv_circle_bg 置于屏幕左上角
                         params.gravity = Gravity.TOP | Gravity.LEFT;
                         // xuameng设置左上角的外边距为 30dp
-                        int margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30, getResources().getDisplayMetrics());
+                        int margin;
+                        if (fullPreview){ 
+                            margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30, getResources().getDisplayMetrics());
+                        } else {
+                            margin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 15, getResources().getDisplayMetrics());
+                        }
                         params.topMargin = margin;
                         params.leftMargin = margin;
 
