@@ -4240,6 +4240,11 @@ public class LivePlayActivity extends BaseActivity {
                         Runnable updateTask = () -> {
                             try {
                                 if (customVisualizer != null) {
+                                    //xuameng暂停时隐藏音柱
+                                    if (!mVideoView.isPlaying()) {
+                                        customVisualizer.reset();
+                                        return;
+                                    }
                                     customVisualizer.updateVisualizer(fftData, volumeLevel);
                                 }
                             } catch (Exception e) {
