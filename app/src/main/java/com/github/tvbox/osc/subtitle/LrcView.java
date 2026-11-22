@@ -36,7 +36,7 @@ import java.lang.Math;
  * 新增：不是相邻行不不显示滚动动画
  * 新增：播放进度到当前行的上行或多行不显示滚动动画
  * 20260817 新增：高亮进度平滑滤波 解决最版exoplayer对mp3的升级后字幕卡顿问题
- * 202601122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
+ * 20261122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
  * 20261122 新增：逐字歌词“渲染时间轴”平滑推进
  * 说明：普通歌词走 mSmoothedProgress 滤波，逐字歌词原来是直接吃播放器原始进度，
  *      播放器（最新版 ExoPlayer 对 MP3 的改动后）上报的进度是离散跳变的，
@@ -802,26 +802,14 @@ public class LrcView extends View {
         // xuameng 修改：使用平滑时间轴，且用浮点运算，避免整字跳变
         float lineElapsed = mRenderTime - line.time;
 
-        // ===== 新增：获取最后一个字的 end，判断是否该强制铺满 =====
-        WordInfo lastWord = line.words.get(line.words.size() - 1);
-        long lastWordEnd = lastWord.end;
-        // 当时间超过最后一个字的 95% 时，强制所有字铺满
-        boolean forceFull = (lastWordEnd > 0 && lineElapsed >= lastWordEnd * 0.95f);
-
         float x = startX;
         for (WordInfo w : line.words) {
-            if (lineElapsed >= w.start || forceFull) {
+            if (lineElapsed >= w.start) {
                 float wordProgress = 1.0f;
-                if (!forceFull) {
-                    long wordDur = w.end - w.start;
-                    if (wordDur > 0 && lineElapsed < w.end) {
-                        wordProgress = (lineElapsed - w.start) / (float) wordDur;
-                        wordProgress = Math.max(0f, Math.min(1f, wordProgress));
-                    }
-                    // 单个字 0.99 就拉满9
-                    if (wordProgress >= 0.99f) {
-                        wordProgress = 1.0f;
-                    }
+                long wordDur = w.end - w.start;
+                if (wordDur > 0 && lineElapsed < w.end) {
+                    wordProgress = (lineElapsed - w.start) / (float) wordDur;
+                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
                 }
 
                 float highlightWidth = w.width * wordProgress;
@@ -927,12 +915,18 @@ public class LrcView extends View {
                     // 绘制背景文本（完整）
                     canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
 
-                    // 绘制高亮部分（渐变填充）
-                    float highlightWidth = line.width * progress;
-                    // 防止裁剪区域无效
-                    if (highlightWidth < 1f) {
-                        highlightWidth = 1f;
-                    }
+// 绘制高亮部分（渐变填充）
+float highlightWidth = line.width * progress;
+
+// ✅ 关键修复：防止英文字母右侧抗锯齿被 clipRect 裁掉
+highlightWidth += 2f;
+
+if (highlightWidth > line.width) {
+    highlightWidth = line.width;
+}
+if (highlightWidth < 1f) {
+    highlightWidth = 1f;
+}
                     canvas.save();
                     // 使用精确的裁剪区域
                     canvas.clipRect(getWidth() / 2 - line.width / 2,
