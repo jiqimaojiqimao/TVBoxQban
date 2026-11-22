@@ -1907,7 +1907,7 @@ public class VodController extends BaseController {
             mSpeedTimeUp = 0;
             if(!simSlideStart) return;
             mControlWrapper.seekTo(simSeekPosition);
-            if (mLrcView != null) mLrcView.setSeekPosition(newPosition);  //xuameng解决歌词同步问题 暂停立即停止绘画，播放马上开始绘画
+            if (mLrcView != null) mLrcView.setSeekPosition(simSeekPosition);  //xuameng解决歌词同步问题 暂停立即停止绘画，播放马上开始绘画
             //if(!mControlWrapper.isPlaying())
                 //xuameng快进暂停就暂停测试    mControlWrapper.start();    //测试成功，如果想暂停时快进自动播放取消注销
             simSlideStart = false;
@@ -1924,7 +1924,7 @@ public class VodController extends BaseController {
         if(!simSlideStartXu) return;
         if(isSEEKBAR) {
             mControlWrapper.seekTo(simSeekPosition);
-            if (mLrcView != null) mLrcView.setSeekPosition(newPosition);  //xuameng解决歌词同步问题
+            if (mLrcView != null) mLrcView.setSeekPosition(simSeekPosition);  //xuameng解决歌词同步问题
         }
         //if(!mControlWrapper.isPlaying())
             //xuameng快进暂停就暂停测试    mControlWrapper.start();    //测试成功，如果想暂停时快进自动播放取消注销
