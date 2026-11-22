@@ -36,7 +36,7 @@ import java.lang.Math;
  * 新增：不是相邻行不不显示滚动动画
  * 新增：播放进度到当前行的上行或多行不显示滚动动画
  * 20260817 新增：高亮进度平滑滤波 解决最版exoplayer对mp3的升级后字幕卡顿问题
- * 202601122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
+ * 20261122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
  * 20261122 新增：逐字歌词“渲染时间轴”平滑推进
  * 说明：普通歌词走 mSmoothedProgress 滤波，逐字歌词原来是直接吃播放器原始进度，
  *      播放器（最新版 ExoPlayer 对 MP3 的改动后）上报的进度是离散跳变的，
@@ -107,7 +107,7 @@ public class LrcView extends View {
     /** xuameng：调试日志开关。逐帧重绘时务必关闭，否则日志本身会把渲染拖慢 */
     private static final boolean DEBUG_LOG = false;
     /** xuameng：逐字高亮裁剪框右侧余量(px)。字形 ink 会比 advance 略宽，行末的字右边没有下一个字的窗口接续补色，不留余量就会被裁出一条细缝 */
-    private static final float HIGHLIGHT_RIGHT_PADDING = 1.0f;
+    private static final float HIGHLIGHT_RIGHT_PADDING = 2.0f;
 
     public LrcView(Context context) {
         super(context);
@@ -793,7 +793,7 @@ public class LrcView extends View {
     /**
      * 新增：手动设置是否显示歌词
      *
-     * @param show 是否显示
+     * @param show 是否显示歌词
      */
     public void setShowLyrics(boolean show) {
         if (mShouldShowLyrics != show) {
