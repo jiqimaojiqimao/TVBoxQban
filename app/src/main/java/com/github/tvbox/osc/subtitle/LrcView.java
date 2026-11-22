@@ -80,6 +80,10 @@ public class LrcView extends View {
     // 新增：高亮进度平滑滤波 =====
     private float mSmoothedProgress = 0f;
 
+    // xuameng 新增：逐字歌词帧级插值时间源（解决ExoPlayer回调间隔大导致逐字卡顿）
+    private long mLastPosition = 0L;           // 上次外部传入的position
+    private long mLastPositionTime = 0L;       // 上次外部传入position时的System.currentTimeMillis()
+    private static final long MAX_INTERPOLATE_DRIFT = 1000L; // 最大插值漂移上限(ms)，防失控
 
 
     public LrcView(Context context) {
@@ -337,6 +341,11 @@ public class LrcView extends View {
         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
             mScrollAnimator.cancel();
         }
+
+        // xuameng 新增：重置逐字插值时间源
+        mLastPosition = 0L;
+        mLastPositionTime = 0L;
+
         Log.d("LrcView_xuameng", "setLrcText done, mLrcLines.size()=" + mLrcLines.size());
         invalidate(); // 立即重绘
     }
@@ -438,6 +447,10 @@ public class LrcView extends View {
             mShouldShowLyrics = true;
         }
 
+        // xuameng 新增：记录外部position及当前系统时间，供逐字插值使用
+        mLastPosition = position;
+        mLastPositionTime = System.currentTimeMillis();
+
         mCurrentPosition = position;
 
         // 关键：没歌词时只更新状态，不访问 mLrcLines
@@ -529,25 +542,14 @@ public class LrcView extends View {
                     // 只有前三行向前才等铺满（逐字歌词直接切换，不等铺满）
                     if (isForward && targetLine <= 3 && mSmoothedProgress < 1f) {
                         LrcLine line = mLrcLines.get(mCurrentLine);
-if (line.words != null && !line.words.isEmpty()) {
-    // 逐字歌词：直接跳转，但初始化新行进度避免闪烁
-    mCurrentLine = targetLine;
-    mScrollOffset = 0f;
-    // xuameng 修复：初始化新行的高亮进度，避免切换瞬间lineElapsed为负导致全白闪烁
-    long newLineTime = mLrcLines.get(targetLine).time;
-    long nextTime = (targetLine + 1 < mLrcLines.size())
-            ? mLrcLines.get(targetLine + 1).time
-            : newLineTime + 5000;
-    long duration = nextTime - newLineTime;
-    if (duration > 0 && mCurrentPosition >= newLineTime) {
-        float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
-        mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
-    } else {
-        mSmoothedProgress = 0f;
-    }
-    invalidate();
-    return;
-}
+                        if (line.words != null && !line.words.isEmpty()) {
+                            // 逐字歌词：直接跳转，不走等铺满
+                            mCurrentLine = targetLine;
+                            mScrollOffset = 0f;
+                            mSmoothedProgress = 0f;
+                            invalidate();
+                            return;
+                        }
                         // 普通歌词：等铺满
                         invalidate();
                         return;
@@ -606,7 +608,29 @@ if (line.words != null && !line.words.isEmpty()) {
         mScrollOffset = 0f;
         mSmoothedProgress = 0f;  
         mIsInitialPositioning = true; // 新增：重置初始定位状态
+
+        // xuameng 新增：重置逐字插值时间源
+        mLastPosition = 0L;
+        mLastPositionTime = 0L;
+
         invalidate();
+    }
+
+    /**
+     * xuameng 新增：获取逐字歌词的插值elapsed（帧级平滑，解决ExoPlayer回调间隔大导致卡顿）
+     * 原理：用上次外部回调的position + 距回调经过的时间 推算当前真实进度
+     */
+    private long getInterpolatedElapsed(LrcLine line) {
+        if (mLastPositionTime == 0L) {
+            return mCurrentPosition - line.time;
+        }
+        long now = System.currentTimeMillis();
+        long dt = now - mLastPositionTime;
+        // 限制最大漂移，防止暂停后恢复时elapsed暴涨
+        if (dt < 0) dt = 0;
+        if (dt > MAX_INTERPOLATE_DRIFT) dt = MAX_INTERPOLATE_DRIFT;
+        long interpolatedPosition = mLastPosition + dt;
+        return interpolatedPosition - line.time;
     }
 
     /**
@@ -622,7 +646,8 @@ if (line.words != null && !line.words.isEmpty()) {
         float textTop = y + fm.top;
         float textBottom = y + fm.bottom;
 
-        long lineElapsed = mCurrentPosition - line.time;
+        // xuameng 修改：使用帧级插值elapsed替代裸mCurrentPosition，解决ExoPlayer逐字卡顿
+        long lineElapsed = getInterpolatedElapsed(line);
 
         float x = startX;
         for (WordInfo w : line.words) {
