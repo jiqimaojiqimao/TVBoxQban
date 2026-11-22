@@ -531,12 +531,7 @@ public class LrcView extends View {
         if (lineDiff == 0) {
             return; // 无需滚动
         }
-        // xuameng 修改：seek 换行（mProgressNeedsSync=true）不要清零 mSmoothedProgress，
-        // 否则换行瞬间高亮会从 0 开始爬，视觉上就是“seek 后高亮往回滚一点”。
-        // 只在自然换行（lineDiff == 1 且无 seek 标记）时清零，这样行首才是从头开始走的。
-        if (lineDiff == 1 && !mProgressNeedsSync) {
-            mSmoothedProgress = 0f;
-        }
+        mSmoothedProgress = 0f;
         // 设置动画
         mScrollAnimator = ValueAnimator.ofFloat(0f, (float) lineDiff);
         mScrollAnimator.setDuration(mScrollDuration);
@@ -555,10 +550,7 @@ public class LrcView extends View {
                 // 动画结束后更新当前行
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
-                // xuameng 修改：seek 换行时，mSmoothedProgress 已在外部直接跳到正确位置，不要清零。
-                if (!mProgressNeedsSync) {
-                    mSmoothedProgress = 0f;
-                }
+                mSmoothedProgress = 0f;
             }
 
             @Override
@@ -566,10 +558,7 @@ public class LrcView extends View {
                 // 动画取消时也更新当前行
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
-                // xuameng 修改：取消动画（如向后 seek 把进行中的滚动打断）也不清零
-                if (!mProgressNeedsSync) {
-                    mSmoothedProgress = 0f;
-                }
+                mSmoothedProgress = 0f;
             }
 
         });
@@ -660,16 +649,6 @@ public class LrcView extends View {
             mProgressNeedsSync = true; // xuameng 新增：普通歌词高亮同样要瞬时对齐
         }
 
-        // xuameng 新增：向前 seek 兜底（和向后对称）
-        // 自然播放每次轮询 position 只前进几到几十毫秒；一次前进超过阈值说明是 seek/快进，
-        // 也要瞬时对齐。否则小幅度向前 seek 刚好跨过一行时，会误走 smoothScrollTo 把进度清零，
-        // 之后高亮从 0 开始慢慢爬，表现为“seek 后高亮从行首再走一遍”。
-        if (previousHostPosition != Long.MIN_VALUE
-                && position > previousHostPosition + RENDER_BACKWARD_SEEK_TOLERANCE_MS) {
-            mRenderTime = position;
-            mProgressNeedsSync = true;
-        }
-
         // 检查是否达到最小显示位置
         if (position < MIN_POSITION_TO_SHOW) {
             // 进度小于1秒，不显示歌词，但保持在第一行
@@ -749,31 +728,6 @@ public class LrcView extends View {
             // 判断滚动方向：正数表示向前（下一行），负数表示向后（上一行）
             boolean isForward = lineDiff > 0;
 
-            // xuameng 修改：seek / 跳转（无论向前向后、跨几行）都走“直接跳转 + 初始化进度”，
-            // 不做平滑滚动。否则小幅度向前/向后 seek 跨过一行时，smoothScrollTo 把进度清零、
-            // 动画走完再从头爬高亮，视觉上就是“seek 后高亮往回滚一点再走”。
-            if (mProgressNeedsSync) {
-                if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
-                    mScrollAnimator.cancel();
-                }
-                mCurrentLine = targetLine;
-                mScrollOffset = 0f;
-                long newLineTime = mLrcLines.get(targetLine).time;
-                long nextTime = (targetLine + 1 < mLrcLines.size())
-                        ? mLrcLines.get(targetLine + 1).time
-                        : newLineTime + 5000;
-                long duration = nextTime - newLineTime;
-                if (duration > 0 && mCurrentPosition >= newLineTime) {
-                    float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
-                    mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
-                } else {
-                    mSmoothedProgress = 0f;
-                }
-                mProgressNeedsSync = false; // seek 换行当帧已对齐，清掉标记避免消费点再次覆盖
-                invalidate();
-                return;
-            }
-
             // 如果距离超过阈值（不是相邻行），直接跳转而不滚动
             if (lineDistance > MAX_SCROLL_DISTANCE) {
                 if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
@@ -849,25 +803,6 @@ public class LrcView extends View {
             }
         } else {
             // 行数不变，只更新进度
-            // xuameng 新增：同一行内 seek（同行倒退/快进）时，直接把 mSmoothedProgress
-            // 跳到当前帧的目标位置。原本只在 onDraw 里消费 mProgressNeedsSync，
-            // 会导致 seek 后的第一帧还是旧进度、第二帧才对到位，视觉上出现一帧"缩回"。
-            if (mProgressNeedsSync && mCurrentLine < mLrcLines.size()) {
-                LrcLine line = mLrcLines.get(mCurrentLine);
-                if (line.words == null || line.words.isEmpty()) { // 只对普通歌词做，逐字走 mRenderTime
-                    long newLineTime = line.time;
-                    long nextTime = (mCurrentLine + 1 < mLrcLines.size())
-                            ? mLrcLines.get(mCurrentLine + 1).time
-                            : newLineTime + 5000;
-                    long duration = nextTime - newLineTime;
-                    if (duration > 0 && position >= newLineTime) {
-                        float initProgress = (float) (position - newLineTime) / duration;
-                        mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
-                    } else {
-                        mSmoothedProgress = 0f;
-                    }
-                }
-            }
             invalidate();
         }
     }
