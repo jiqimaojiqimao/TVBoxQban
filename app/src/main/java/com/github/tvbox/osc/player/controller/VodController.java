@@ -573,6 +573,15 @@ public class VodController extends BaseController {
     @Override
     protected void initView() {
         super.initView();
+        
+         //xuameng接受seekto通知
+         setOnSeekListener(newPosition -> {
+            if (mLrcView != null
+                    && mLrcView.getVisibility() == View.VISIBLE) {
+                mLrcView.setSeekPosition(newPosition);
+            }
+        });
+           
         mCurrentTime = findViewById(R.id.curr_time);
         mTotalTime = findViewById(R.id.total_time);
         mPlayTitle = findViewById(R.id.tv_info_name);
