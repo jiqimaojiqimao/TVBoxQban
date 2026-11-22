@@ -37,6 +37,7 @@ import java.lang.Math;
  * 新增：播放进度到当前行的上行或多行不显示滚动动画
  * 20260817 新增：高亮进度平滑滤波 解决最版exoplayer对mp3的升级后字幕卡顿问题
  * 202601122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
+ * 2026xxxx 新增：ExoPlayer 逐字歌词平滑时间源，防止逐字卡顿
  */
 public class LrcView extends View {
 
@@ -80,6 +81,10 @@ public class LrcView extends View {
     // 新增：高亮进度平滑滤波 =====
     private float mSmoothedProgress = 0f;
 
+    // xuameng ExoPlayer 逐字歌词平滑时间源（老方案）
+    private long mSmoothedPosition = 0L;
+    private long mLastUpdatePositionTime = 0L;
+    private boolean mExoMode = true; // 外部设置：是否是 ExoPlayer
 
 
     public LrcView(Context context) {
@@ -95,6 +100,16 @@ public class LrcView extends View {
     public LrcView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);  // 修复这里
         init();
+    }
+
+    /**
+     * xuameng
+     * 设置是否为 ExoPlayer 模式
+     * true = ExoPlayer：开启逐字平滑自驱
+     * false = IJK / VLC / 本地：按原来逻辑
+     */
+    public void setExoPlayerMode(boolean exo) {
+        mExoMode = exo;
     }
 
     /**
@@ -337,6 +352,11 @@ public class LrcView extends View {
         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
             mScrollAnimator.cancel();
         }
+
+        // xuameng ExoPlayer：重置平滑时间源
+        mSmoothedPosition = 0L;
+        mLastUpdatePositionTime = 0L;
+
         Log.d("LrcView_xuameng", "setLrcText done, mLrcLines.size()=" + mLrcLines.size());
         invalidate(); // 立即重绘
     }
@@ -438,7 +458,26 @@ public class LrcView extends View {
             mShouldShowLyrics = true;
         }
 
-        mCurrentPosition = position;
+        // xuameng ExoPlayer 特殊处理：位置低通跟随，避免逐字卡顿
+        if (mExoMode) {
+            long now = System.currentTimeMillis();
+            if (mLastUpdatePositionTime == 0) {
+                mSmoothedPosition = position;
+            } else {
+                long diff = Math.abs(position - mSmoothedPosition);
+                if (diff > 250) {
+                    // seek / 缓冲跳变，直接跟
+                    mSmoothedPosition = position;
+                } else {
+                    // 80% 旧值 + 20% 新值，专门治 ExoPlayer 抖动
+                    mSmoothedPosition = (long) (mSmoothedPosition * 0.8f + position * 0.2f);
+                }
+            }
+            mLastUpdatePositionTime = now;
+            mCurrentPosition = mSmoothedPosition;
+        } else {
+            mCurrentPosition = position;
+        }
 
         // 关键：没歌词时只更新状态，不访问 mLrcLines
         if (mLrcLines == null || mLrcLines.isEmpty()) {
@@ -595,7 +634,25 @@ public class LrcView extends View {
         mScrollOffset = 0f;
         mSmoothedProgress = 0f;  
         mIsInitialPositioning = true; // 新增：重置初始定位状态
+
+        // xuameng ExoPlayer：重置平滑时间源
+        mSmoothedPosition = 0L;
+        mLastUpdatePositionTime = 0L;
+
         invalidate();
+    }
+
+    /**
+     * xuameng 新增：获取逐字歌词的平滑 elapsed
+     */
+    private long getKaraokeElapsed(LrcLine line) {
+        long base = mCurrentPosition - line.time;
+
+        // xuameng ExoPlayer：逐字帧级低通，防抖
+        if (mExoMode) {
+            base = (long) (base * 0.85f + (mCurrentPosition - line.time) * 0.15f);
+        }
+        return base;
     }
 
     /**
@@ -611,7 +668,8 @@ public class LrcView extends View {
         float textTop = y + fm.top;
         float textBottom = y + fm.bottom;
 
-        long lineElapsed = mCurrentPosition - line.time;
+        // xuameng ExoPlayer：使用平滑 elapsed
+        long lineElapsed = getKaraokeElapsed(line);
 
         float x = startX;
         for (WordInfo w : line.words) {
@@ -745,6 +803,21 @@ public class LrcView extends View {
             } else {
                 // 非当前行：普通显示
                 canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
+            }
+        }
+
+        // xuameng ExoPlayer 逐字歌词自驱渲染，避免等外部进度回调才动
+        if (mExoMode && mShouldShowLyrics && mLrcLines != null && !mLrcLines.isEmpty()) {
+            LrcLine cur = mLrcLines.get(mCurrentLine);
+            if (cur.words != null && !cur.words.isEmpty()) {
+                long lineElapsed = mCurrentPosition - cur.time;
+                long nextTime = (mCurrentLine + 1 < mLrcLines.size())
+                        ? mLrcLines.get(mCurrentLine + 1).time
+                        : cur.time + 5000;
+
+                if (lineElapsed < nextTime - cur.time) {
+                    invalidate();
+                }
             }
         }
     }
