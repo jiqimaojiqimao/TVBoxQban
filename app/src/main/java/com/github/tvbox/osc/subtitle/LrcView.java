@@ -102,6 +102,8 @@ public class LrcView extends View {
     private static final long RENDER_IDLE_TIMEOUT_MS = 1000L;
     /** 与播放器真实进度相差超过该值视为 seek/跳转，时间轴直接硬对齐 */
     private static final long RENDER_RESYNC_THRESHOLD_MS = 800L;
+    /** 向后 seek 判定：正常播放进度只会前进，倒退超过该值即认定用户拖回了进度条 */
+    private static final long RENDER_BACKWARD_SEEK_TOLERANCE_MS = 250L;
     /** xuameng：调试日志开关。逐帧重绘时务必关闭，否则日志本身会把渲染拖慢 */
     private static final boolean DEBUG_LOG = false;
 
@@ -223,8 +225,13 @@ public class LrcView extends View {
         }
         mIsPlaying = playing;
         if (playing) {
-            // 从暂停恢复：直接对齐时间轴，避免暂停期间的漂移在恢复瞬间跳一下
-            mRenderTime = mCurrentPosition;
+            // 从暂停恢复：只有偏差明显（seek 或长时间漂移）才硬对齐。
+            // 原来这里是无条件 mRenderTime = mCurrentPosition，这是“高亮往回走一点”的主因之一：
+            // seek 期间宿主不会调用 updateTime，mCurrentPosition 仍是 seek 之前的旧值，
+            // 恢复播放时会把已经平滑的时间轴拽回旧位置，之后才慢慢爬向新位置。
+            if (Math.abs((float) mCurrentPosition - mRenderTime) > RENDER_RESYNC_THRESHOLD_MS) {
+                mRenderTime = mCurrentPosition;
+            }
             mLastPositionChangeNanos = System.nanoTime();
         }
         mLastFrameNanos = 0L; // 重置帧计时，避免把暂停时长算进下一帧
@@ -242,6 +249,22 @@ public class LrcView extends View {
         if (speed > 0.1f && speed < 5.0f) {
             mPlaybackSpeed = speed;
         }
+    }
+
+    /**
+     * xuameng 新增：宿主 seekTo 之后立即调用（推荐）
+     * 时间轴瞬时对齐到 seek 的目标位置，绝不做平滑追赶，从根上避免“高亮往回走一点”。
+     * 暂停状态下 seek 也能立刻反映到画面上（此时宿主不会走正常的进度轮询）。
+     *
+     * @param position seek 的目标位置（毫秒）
+     */
+    public void setSeekPosition(long position) {
+        mRenderTime = position;                 // 时间轴先行硬对齐
+        mCurrentPosition = position;
+        mLastHostPosition = position;           // 同步基准，避免下一次被当成倒退再对齐一次
+        mLastPositionChangeNanos = System.nanoTime();
+        mLastFrameNanos = 0L;                   // 重置帧计时，seek 的耗时不算进下一帧
+        updateTime(position, mIsPlaying);       // 复用定位/换行/滚动逻辑，立即刷新画面
     }
 
     /**
@@ -538,6 +561,7 @@ public class LrcView extends View {
      */
     public void updateTime(long position, boolean playing) {
         long now = System.nanoTime();
+        long previousHostPosition = mLastHostPosition; // 新增：先留住上一次进度，用于判断前进还是倒退
 
         if (position != mLastHostPosition) {
             mLastHostPosition = position;
@@ -553,6 +577,15 @@ public class LrcView extends View {
 
         // xuameng 新增：seek / 跳转 / 首次进入时，平滑时间轴直接硬对齐，不做平滑追赶
         if (Math.abs((float) position - mRenderTime) > RENDER_RESYNC_THRESHOLD_MS) {
+            mRenderTime = position;
+        }
+
+        // xuameng 新增：向后 seek 检测（宿主没有调用 setSeekPosition 时的兜底）
+        // 正常播放进度只会前进；本次进度比上次倒退超过阈值，就说明用户把进度条拖回去了，
+        // 必须立刻硬对齐。否则差值落在 800ms 阈值以内时会走 RENDER_SYNC_GAIN 慢收敛，
+        // 表现为高亮以极小步幅一点点往回爬，也就是“高亮往回走一点”。
+        if (previousHostPosition != Long.MIN_VALUE
+                && position < previousHostPosition - RENDER_BACKWARD_SEEK_TOLERANCE_MS) {
             mRenderTime = position;
         }
 
