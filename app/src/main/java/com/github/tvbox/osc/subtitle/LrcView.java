@@ -712,47 +712,55 @@ public class LrcView extends View {
         mPlaying = playing;
     }
 
-    /**
-     * xuameng 新增：逐字卡拉OK绘制
-     */
-    private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
-        // xuameng EXO平滑：用帧时间，不用播放器跳变进度
-        long now = getSmoothPosition();
-        float startX = getWidth() / 2 - line.width / 2;
+/**
+ * xuameng 修复EXO卡顿：逐字只算一个 singingX，整行只画两次
+ */
+private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
+    long now = getSmoothPosition();
+    float startX = getWidth() / 2 - line.width / 2;
 
-        // 1. 先画整行普通底色（和老歌词一样）
-        canvas.drawText(line.text, startX, y, mNormalPaint);
+    // 1. 底色整行
+    canvas.drawText(line.text, startX, y, mNormalPaint);
 
-        Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
-        float textTop = y + fm.top;
-        float textBottom = y + fm.bottom;
-
-        long lineElapsed = now - line.time;
-
-        float x = startX;
-        for (WordInfo w : line.words) {
-            if (lineElapsed >= w.start) {
-                float wordProgress = 1.0f;
-                if (lineElapsed < w.end) {
-                    wordProgress = (float)(lineElapsed - w.start) / (w.end - w.start);
-                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
-                }
-
-                if (wordProgress >= 0.99f) wordProgress = 1.0f;
-
-                float highlightWidth = w.width * wordProgress;
-                if (highlightWidth > 0.5f) {
-                    // 关键：用整行 clipRect，但只裁剪当前字的区域
-                    canvas.save();
-                    canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
-                    // 画整行文本，不是逐字！
-                    canvas.drawText(line.text, startX, y, mHighlightPaint);
-                    canvas.restore();
-                }
-            }
-            x += w.width;
-        }
+    long elapsed = now - line.time;
+    if (elapsed <= 0) {
+        return; // 还没开始唱，不用画高亮
     }
+
+    float x = startX;
+    float singX = startX;
+
+    for (WordInfo w : line.words) {
+        if (elapsed >= w.end) {
+            // 这个字已经唱完
+            singX = x + w.width;
+        } else if (elapsed >= w.start) {
+            // 正在唱这个字（线性插值）
+            float p = (float) (elapsed - w.start) / (w.end - w.start);
+            p = Math.max(0f, Math.min(1f, p));
+            singX = x + w.width * p;
+            break;
+        } else {
+            // 还没唱到这个字
+            break;
+        }
+        x += w.width;
+    }
+
+    // 没唱到任何字
+    if (singX <= startX + 0.5f) {
+        return;
+    }
+
+    Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
+
+    canvas.save();
+    // 一次性裁剪到“已经唱到的位置”
+    canvas.clipRect(startX, y + fm.top, singX, y + fm.bottom);
+    // 高亮整行只画一次
+    canvas.drawText(line.text, startX, y, mHighlightPaint);
+    canvas.restore();
+}
 
     /**
      * 绘制卡拉OK效果
