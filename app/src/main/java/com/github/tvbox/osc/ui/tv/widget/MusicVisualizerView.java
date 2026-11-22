@@ -9,7 +9,7 @@ import android.view.View;
 import android.animation.ValueAnimator;
 
 /**
- * xuameng 20261120
+ * xuameng
  * 音乐可视化视图组件（带振幅颜色渐变）
  * <p>
  * 新增特性：
@@ -19,7 +19,10 @@ import android.animation.ValueAnimator;
  * 4，振幅随音量大小变化
  * 5，三种颜色随机变化
  * 6，新增音柱分段效果
- * 7，强音扩散算法：强节奏时主柱+相邻柱协同弹起，距离越远越矮（xuameng 新增）
+ * 7， 20261120强音扩散算法：强节奏时主柱+相邻柱协同弹起，距离越远越矮（xuameng 新增）
+ * 8， 20261121新增兜底音柱高度防止音柱消失
+ * 9， 20261122判断暂停静音时隐藏音柱，改成64音柱，频段一对一，矮柱两次加权，动画平滑优化
+ * 10，20261122实际音柱高度计算颜色，分段防悬空感
  */
 public class MusicVisualizerView extends View {
 
@@ -206,6 +209,32 @@ public class MusicVisualizerView extends View {
         }
         // ==================== 强音扩散算法结束 ====================
 
+        // ==================== xuameng：矮柱二次加权（防死柱） ====================
+        float shortBarThreshold = getHeight() * 0.1f;   // 高度 < 10%
+        int third = BAR_COUNT / 3; // 21
+        for (int i = 0; i < BAR_COUNT; i++) {
+            if (mTargetHeights[i] < shortBarThreshold) {
+
+                float weight;
+                if (i < third) {
+                    weight = 1.0f;
+                } else if (i < third * 2) {
+                    weight = 2.8f;
+                } else {
+                    float freqFactor = (float) Math.pow(1.5, (i - third * 2) / 2.0f);
+                    weight = 2.8f * freqFactor;
+                   weight = Math.min(weight, 15.0f);
+                }
+
+                // 关键：限制提升上限，防止矮柱突然变高
+                float boosted = mTargetHeights[i] * weight;
+                boosted = Math.min(boosted, shortBarThreshold * 0.2f);
+
+                mTargetHeights[i] = Math.max(mTargetHeights[i], boosted);
+            }
+        }
+        // ==================== 矮柱二次加权结束 ====================
+
         // ==================== xuameng 新增：最低可见高度托底 ====================
         float maxH = getHeight();
         if (maxH <= 0) maxH = 100f;
@@ -292,6 +321,12 @@ public class MusicVisualizerView extends View {
             // 分段绘制音柱（实现"一段一段"效果）
             // 修改点：分段绘制音柱（仅当音柱高度达到最小阈值时才显示分段效果）
             if (mShowStripes && barHeight >= MIN_HEIGHT_FOR_STRIPES) {
+                // ========== xuameng: 底部实柱兜底区域（不画分段） ==========
+                float minVisibleHeight = height * MIN_VISIBLE_RATIO;
+                float stripeTop = height - barHeight + minVisibleHeight; // 分段起始Y（从兜底线以上开始）
+                //第一步：画底部实心兜底柱(要不然分段效果会有悬空感)
+                canvas.drawRect(left, height - minVisibleHeight, right, height, mBarPaint);
+                // =========================================================
                 // 动态计算实际能显示的分段数量
                 float segmentHeightWithSpacing = mSegmentSpacingFixed * 2; // 每段高度+间距
                 int actualSegmentCount = (int) (barHeight / segmentHeightWithSpacing);
@@ -305,6 +340,15 @@ public class MusicVisualizerView extends View {
                 for (int segment = 0; segment < actualSegmentCount; segment++) {
                     float segmentTop = height - (segment + 1) * (actualSegmentHeight + mSegmentSpacingFixed);
                     float segmentBottom = segmentTop + actualSegmentHeight;
+
+                    // ========== xuameng: 只画在兜底线以上 ==========
+                    if (segmentBottom <= stripeTop) {
+                        continue; // 底部兜底区域内不画分段
+                    }
+                    if (segmentTop < stripeTop) {
+                        segmentTop = stripeTop; // 截断，不超出兜底区
+                    }
+                    // ==============================================
                     // 确保段在音柱范围内
                     if (segmentTop >= top) {
                         canvas.drawRect(left, segmentTop, right, segmentBottom, mBarPaint);
