@@ -95,7 +95,7 @@ import com.github.tvbox.osc.event.RefreshEvent; //xuameng弹幕
 import com.github.tvbox.osc.util.DanmuHelper; //xuameng弹幕
 import com.github.tvbox.osc.player.danmu.DanmuLoadController; //xuameng 弹幕
 
-import androidx.media3.ui.SubtitleView; // 用于显示ExoPlayer内置字幕
+import com.google.android.exoplayer2.ui.SubtitleView;   // 用于显示ExoPlayer内置字幕
 
 import android.os.Build;
 import android.webkit.WebView;
@@ -468,7 +468,7 @@ public class VodController extends BaseController {
                     if(mLrcView.getVisibility() == View.VISIBLE) {   //xuameng LRC歌词字幕
                         int position = safeTimeMs(mControlWrapper.getCurrentPosition());
                         if (mLrcView != null) {
-                            mLrcView.updateTime(position);  //xuameng 刷新LRC歌词字幕
+                            mLrcView.updateTime(position, mControlWrapper.isPlaying()); //xuameng 刷新LRC歌词字幕
                         }
                         // xuameng如果 mLrcView 显示，则将 iv_circle_bg 置于屏幕左上角
                         params.gravity = Gravity.TOP | Gravity.LEFT;
@@ -775,6 +775,7 @@ public class VodController extends BaseController {
                 long duration = safeTimeMs(mControlWrapper.getDuration());
                 long newPosition = (duration * seekBar.getProgress()) / seekBar.getMax();
                 mControlWrapper.seekTo(newPosition);
+                if (mLrcView != null) mLrcView.setSeekPosition(newPosition);  //xuameng解决歌词同步问题
                 mIsDragging = false;
                 mControlWrapper.startProgress();
                 mControlWrapper.startFadeOut();
@@ -1906,6 +1907,7 @@ public class VodController extends BaseController {
             mSpeedTimeUp = 0;
             if(!simSlideStart) return;
             mControlWrapper.seekTo(simSeekPosition);
+            if (mLrcView != null) mLrcView.setSeekPosition(newPosition);  //xuameng解决歌词同步问题 暂停立即停止绘画，播放马上开始绘画
             //if(!mControlWrapper.isPlaying())
                 //xuameng快进暂停就暂停测试    mControlWrapper.start();    //测试成功，如果想暂停时快进自动播放取消注销
             simSlideStart = false;
@@ -1922,6 +1924,7 @@ public class VodController extends BaseController {
         if(!simSlideStartXu) return;
         if(isSEEKBAR) {
             mControlWrapper.seekTo(simSeekPosition);
+            if (mLrcView != null) mLrcView.setSeekPosition(newPosition);  //xuameng解决歌词同步问题
         }
         //if(!mControlWrapper.isPlaying())
             //xuameng快进暂停就暂停测试    mControlWrapper.start();    //测试成功，如果想暂停时快进自动播放取消注销
@@ -2019,6 +2022,11 @@ public class VodController extends BaseController {
     protected void onPlayStateChanged(int playState) {
         super.onPlayStateChanged(playState);
         videoPlayState = playState;
+
+        if (mLrcView != null) {   // 新增：同步播放状态，暂停时逐字高亮立刻冻结
+            mLrcView.setPlaying(playState == VideoView.STATE_PLAYING);
+        }
+
         switch(playState) {
             case VideoView.STATE_IDLE:
                 imageHide();  //xuameng 隐藏图片
