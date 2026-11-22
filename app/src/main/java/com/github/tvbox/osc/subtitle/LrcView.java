@@ -37,7 +37,6 @@ import java.lang.Math;
  * 新增：播放进度到当前行的上行或多行不显示滚动动画
  * 20260817 新增：高亮进度平滑滤波 解决最版exoplayer对mp3的升级后字幕卡顿问题
  * 202601122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
- * 2026xxxx 新增：ExoPlayer 逐字歌词平滑时间源，防止逐字卡顿
  */
 public class LrcView extends View {
 
@@ -81,10 +80,10 @@ public class LrcView extends View {
     // 新增：高亮进度平滑滤波 =====
     private float mSmoothedProgress = 0f;
 
-    // xuameng ExoPlayer 逐字歌词平滑时间源（老方案）
-    private long mSmoothedPosition = 0L;
-    private long mLastUpdatePositionTime = 0L;
-    private boolean mExoMode = true; // 外部设置：是否是 ExoPlayer
+    // xuameng 新增：逐字歌词帧级插值时间源（解决ExoPlayer回调间隔大导致逐字卡顿）
+    private long mLastPosition = 0L;           // 上次外部传入的position
+    private long mLastPositionTime = 0L;       // 上次外部传入position时的System.currentTimeMillis()
+    private static final long MAX_INTERPOLATE_DRIFT = 1000L; // 最大插值漂移上限(ms)，防失控
 
 
     public LrcView(Context context) {
@@ -100,16 +99,6 @@ public class LrcView extends View {
     public LrcView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);  // 修复这里
         init();
-    }
-
-    /**
-     * xuameng
-     * 设置是否为 ExoPlayer 模式
-     * true = ExoPlayer：开启逐字平滑自驱
-     * false = IJK / VLC / 本地：按原来逻辑
-     */
-    public void setExoPlayerMode(boolean exo) {
-        mExoMode = exo;
     }
 
     /**
@@ -353,9 +342,9 @@ public class LrcView extends View {
             mScrollAnimator.cancel();
         }
 
-        // xuameng ExoPlayer：重置平滑时间源
-        mSmoothedPosition = 0L;
-        mLastUpdatePositionTime = 0L;
+        // xuameng 新增：重置逐字插值时间源
+        mLastPosition = 0L;
+        mLastPositionTime = 0L;
 
         Log.d("LrcView_xuameng", "setLrcText done, mLrcLines.size()=" + mLrcLines.size());
         invalidate(); // 立即重绘
@@ -458,26 +447,11 @@ public class LrcView extends View {
             mShouldShowLyrics = true;
         }
 
-        // xuameng ExoPlayer 特殊处理：位置低通跟随，避免逐字卡顿
-        if (mExoMode) {
-            long now = System.currentTimeMillis();
-            if (mLastUpdatePositionTime == 0) {
-                mSmoothedPosition = position;
-            } else {
-                long diff = Math.abs(position - mSmoothedPosition);
-                if (diff > 250) {
-                    // seek / 缓冲跳变，直接跟
-                    mSmoothedPosition = position;
-                } else {
-                    // 80% 旧值 + 20% 新值，专门治 ExoPlayer 抖动
-                    mSmoothedPosition = (long) (mSmoothedPosition * 0.8f + position * 0.2f);
-                }
-            }
-            mLastUpdatePositionTime = now;
-            mCurrentPosition = mSmoothedPosition;
-        } else {
-            mCurrentPosition = position;
-        }
+        // xuameng 新增：记录外部position及当前系统时间，供逐字插值使用
+        mLastPosition = position;
+        mLastPositionTime = System.currentTimeMillis();
+
+        mCurrentPosition = position;
 
         // 关键：没歌词时只更新状态，不访问 mLrcLines
         if (mLrcLines == null || mLrcLines.isEmpty()) {
@@ -635,24 +609,28 @@ public class LrcView extends View {
         mSmoothedProgress = 0f;  
         mIsInitialPositioning = true; // 新增：重置初始定位状态
 
-        // xuameng ExoPlayer：重置平滑时间源
-        mSmoothedPosition = 0L;
-        mLastUpdatePositionTime = 0L;
+        // xuameng 新增：重置逐字插值时间源
+        mLastPosition = 0L;
+        mLastPositionTime = 0L;
 
         invalidate();
     }
 
     /**
-     * xuameng 新增：获取逐字歌词的平滑 elapsed
+     * xuameng 新增：获取逐字歌词的插值elapsed（帧级平滑，解决ExoPlayer回调间隔大导致卡顿）
+     * 原理：用上次外部回调的position + 距回调经过的时间 推算当前真实进度
      */
-    private long getKaraokeElapsed(LrcLine line) {
-        long base = mCurrentPosition - line.time;
-
-        // xuameng ExoPlayer：逐字帧级低通，防抖
-        if (mExoMode) {
-            base = (long) (base * 0.85f + (mCurrentPosition - line.time) * 0.15f);
+    private long getInterpolatedElapsed(LrcLine line) {
+        if (mLastPositionTime == 0L) {
+            return mCurrentPosition - line.time;
         }
-        return base;
+        long now = System.currentTimeMillis();
+        long dt = now - mLastPositionTime;
+        // 限制最大漂移，防止暂停后恢复时elapsed暴涨
+        if (dt < 0) dt = 0;
+        if (dt > MAX_INTERPOLATE_DRIFT) dt = MAX_INTERPOLATE_DRIFT;
+        long interpolatedPosition = mLastPosition + dt;
+        return interpolatedPosition - line.time;
     }
 
     /**
@@ -668,8 +646,8 @@ public class LrcView extends View {
         float textTop = y + fm.top;
         float textBottom = y + fm.bottom;
 
-        // xuameng ExoPlayer：使用平滑 elapsed
-        long lineElapsed = getKaraokeElapsed(line);
+        // xuameng 修改：使用帧级插值elapsed替代裸mCurrentPosition，解决ExoPlayer逐字卡顿
+        long lineElapsed = getInterpolatedElapsed(line);
 
         float x = startX;
         for (WordInfo w : line.words) {
@@ -803,21 +781,6 @@ public class LrcView extends View {
             } else {
                 // 非当前行：普通显示
                 canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
-            }
-        }
-
-        // xuameng ExoPlayer 逐字歌词自驱渲染，避免等外部进度回调才动
-        if (mExoMode && mShouldShowLyrics && mLrcLines != null && !mLrcLines.isEmpty()) {
-            LrcLine cur = mLrcLines.get(mCurrentLine);
-            if (cur.words != null && !cur.words.isEmpty()) {
-                long lineElapsed = mCurrentPosition - cur.time;
-                long nextTime = (mCurrentLine + 1 < mLrcLines.size())
-                        ? mLrcLines.get(mCurrentLine + 1).time
-                        : cur.time + 5000;
-
-                if (lineElapsed < nextTime - cur.time) {
-                    invalidate();
-                }
             }
         }
     }
