@@ -36,7 +36,7 @@ import java.lang.Math;
  * 新增：不是相邻行不不显示滚动动画
  * 新增：播放进度到当前行的上行或多行不显示滚动动画
  * 20260817 新增：高亮进度平滑滤波 解决最版exoplayer对mp3的升级后字幕卡顿问题
- * 202601122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字,逐字歌词exo平滑滤波
+ * 202601122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
  */
 public class LrcView extends View {
 
@@ -542,21 +542,10 @@ public class LrcView extends View {
                     if (isForward && targetLine <= 3 && mSmoothedProgress < 1f) {
                         LrcLine line = mLrcLines.get(mCurrentLine);
                         if (line.words != null && !line.words.isEmpty()) {
-                            // 逐字歌词：直接跳转，但初始化新行进度避免闪烁
+                            // 逐字歌词：直接跳转，不走等铺满
                             mCurrentLine = targetLine;
                             mScrollOffset = 0f;
-                            // xuameng 修复：初始化新行的高亮进度，避免切换瞬间lineElapsed为负导致全白闪烁
-                            long newLineTime = mLrcLines.get(targetLine).time;
-                            long nextTime = (targetLine + 1 < mLrcLines.size())
-                                    ? mLrcLines.get(targetLine + 1).time
-                                    : newLineTime + 5000;
-                            long duration = nextTime - newLineTime;
-                            if (duration > 0 && mCurrentPosition >= newLineTime) {
-                                float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
-                                mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
-                            } else {
-                                mSmoothedProgress = 0f;
-                            }
+                            mSmoothedProgress = 0f;
                             invalidate();
                             return;
                         }
