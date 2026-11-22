@@ -36,8 +36,11 @@ import java.lang.Math;
  * 新增：不是相邻行不不显示滚动动画
  * 新增：播放进度到当前行的上行或多行不显示滚动动画
  * 20260817 新增：高亮进度平滑滤波 解决最版exoplayer对mp3的升级后字幕卡顿问题
- * 20261122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
+ * 202601122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
  * 20261122 新增：逐字歌词“渲染时间轴”平滑推进
+ * 20261122 新增：普通歌词高亮 seek 后瞬时对齐（mProgressNeedsSync），
+ *      修复“seek 往回拖时普通歌词高亮往回滚”：原来 seek 对齐只作用于逐字时间轴，
+ *      普通歌词的 mSmoothedProgress 仍以 10% 步长慢慢爬，实测回退后要约 0.7 秒才到位
  * 说明：普通歌词走 mSmoothedProgress 滤波，逐字歌词原来是直接吃播放器原始进度，
  *      播放器（最新版 ExoPlayer 对 MP3 的改动后）上报的进度是离散跳变的，
  *      而单字时长只有几十~几百毫秒，一次刷新就会跨过半个字甚至整字。
@@ -85,6 +88,14 @@ public class LrcView extends View {
     private static final int MAX_SCROLL_DISTANCE = 1;
     // 新增：高亮进度平滑滤波（普通歌词用） =====
     private float mSmoothedProgress = 0f;
+    /**
+     * xuameng 新增：普通歌词高亮 seek 后需要“瞬时对齐”，而不是走 10% 慢收敛。
+     * 原问题：updateTime 里所有 seek 硬对齐都只作用于逐字时间轴 mRenderTime，
+     * 普通歌词的 mSmoothedProgress 完全没被触及，往回拖时会先回退小半截、
+     * 再用约 0.7 秒慢慢爬回去，也就是“普通歌词 seek 后高亮往回滚”。
+     * 由 updateTime / setSeekPosition 置位，在 onDraw 画当前行时消费（消费即清除）。
+     */
+    private boolean mProgressNeedsSync = false;
 
     // ===== xuameng 新增：逐字歌词平滑时间轴（解决最新版 ExoPlayer 进度粒度粗导致的跳字） =====
     private float mRenderTime = 0f;              // 平滑渲染时间轴（毫秒，浮点），逐字高亮只认它
@@ -107,7 +118,7 @@ public class LrcView extends View {
     /** xuameng：调试日志开关。逐帧重绘时务必关闭，否则日志本身会把渲染拖慢 */
     private static final boolean DEBUG_LOG = false;
     /** xuameng：逐字高亮裁剪框右侧余量(px)。字形 ink 会比 advance 略宽，行末的字右边没有下一个字的窗口接续补色，不留余量就会被裁出一条细缝 */
-    private static final float HIGHLIGHT_RIGHT_PADDING = 2.0f;
+    private static final float HIGHLIGHT_RIGHT_PADDING = 1.0f;
 
     public LrcView(Context context) {
         super(context);
@@ -276,6 +287,7 @@ public class LrcView extends View {
             // 恢复播放时会把已经平滑的时间轴拽回旧位置，之后才慢慢爬向新位置。
             if (Math.abs((float) mCurrentPosition - mRenderTime) > RENDER_RESYNC_THRESHOLD_MS) {
                 mRenderTime = mCurrentPosition;
+                mProgressNeedsSync = true; // xuameng 新增：普通歌词高亮同样要瞬时对齐（仅在偏差明显时）
             }
             mLastPositionChangeNanos = System.nanoTime();
         }
@@ -305,6 +317,7 @@ public class LrcView extends View {
      */
     public void setSeekPosition(long position) {
         mRenderTime = position;                 // 时间轴先行硬对齐
+        mProgressNeedsSync = true;              // xuameng 新增：普通歌词高亮也当场对齐，不走 10% 慢收敛
         mCurrentPosition = position;
         mLastHostPosition = position;           // 同步基准，避免下一次被当成倒退再对齐一次
         mLastPositionChangeNanos = System.nanoTime();
@@ -465,6 +478,7 @@ public class LrcView extends View {
         mScrollOffset = 0f;
         mSmoothedProgress = 0f;
         mCurrentPosition = 0;
+        mProgressNeedsSync = false; // xuameng 新增
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         // xuameng 新增：重置平滑时间轴
         mRenderTime = 0f;
@@ -622,6 +636,7 @@ public class LrcView extends View {
         // xuameng 新增：seek / 跳转 / 首次进入时，平滑时间轴直接硬对齐，不做平滑追赶
         if (Math.abs((float) position - mRenderTime) > RENDER_RESYNC_THRESHOLD_MS) {
             mRenderTime = position;
+            mProgressNeedsSync = true; // xuameng 新增：普通歌词高亮同样要瞬时对齐
         }
 
         // xuameng 新增：向后 seek 检测（宿主没有调用 setSeekPosition 时的兜底）
@@ -631,6 +646,7 @@ public class LrcView extends View {
         if (previousHostPosition != Long.MIN_VALUE
                 && position < previousHostPosition - RENDER_BACKWARD_SEEK_TOLERANCE_MS) {
             mRenderTime = position;
+            mProgressNeedsSync = true; // xuameng 新增：普通歌词高亮同样要瞬时对齐
         }
 
         // 检查是否达到最小显示位置
@@ -640,6 +656,7 @@ public class LrcView extends View {
             mCurrentLine = 0; // 确保强制重置到第一行
             mScrollOffset = 0f; // 重置滚动偏移
             mSmoothedProgress = 0f;
+            mProgressNeedsSync = false; // xuameng 新增：未开始显示，清掉对齐标记
             mRenderTime = position; // 新增：时间轴同步重置
             invalidate();
             return;
@@ -793,7 +810,7 @@ public class LrcView extends View {
     /**
      * 新增：手动设置是否显示歌词
      *
-     * @param show 是否显示歌词
+     * @param show 是否显示
      */
     public void setShowLyrics(boolean show) {
         if (mShouldShowLyrics != show) {
@@ -820,6 +837,7 @@ public class LrcView extends View {
         mCurrentLine = 0;
         mScrollOffset = 0f;
         mSmoothedProgress = 0f;
+        mProgressNeedsSync = false; // xuameng 新增
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         // xuameng 新增：重置平滑时间轴
         mRenderTime = 0f;
@@ -948,6 +966,12 @@ public class LrcView extends View {
                     // 平滑滤波
                     if (targetProgress >= 1.0f) {
                         mSmoothedProgress = 1.0f;
+                        mProgressNeedsSync = false; // xuameng 新增：行已铺满，对齐标记不再需要
+                    } else if (mProgressNeedsSync) {
+                        // xuameng 新增：seek / 跳转当帧瞬时就位，不走 10% 慢收敛。
+                        // 否则往回拖时高亮会先回退小半截、再用约 0.7 秒慢慢爬回目标位置。
+                        mSmoothedProgress = targetProgress;
+                        mProgressNeedsSync = false;
                     } else {
                         mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
                     }
