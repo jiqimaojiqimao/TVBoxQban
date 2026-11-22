@@ -749,7 +749,7 @@ public class LrcView extends View {
     /**
      * 新增：手动设置是否显示歌词
      *
-     * @param show 是否显示
+     * @param show 是否显示歌词
      */
     public void setShowLyrics(boolean show) {
         if (mShouldShowLyrics != show) {
@@ -802,14 +802,26 @@ public class LrcView extends View {
         // xuameng 修改：使用平滑时间轴，且用浮点运算，避免整字跳变
         float lineElapsed = mRenderTime - line.time;
 
+        // ===== 新增：获取最后一个字的 end，判断是否该强制铺满 =====
+        WordInfo lastWord = line.words.get(line.words.size() - 1);
+        long lastWordEnd = lastWord.end;
+        // 当时间超过最后一个字的 95% 时，强制所有字铺满
+        boolean forceFull = (lastWordEnd > 0 && lineElapsed >= lastWordEnd * 0.95f);
+
         float x = startX;
         for (WordInfo w : line.words) {
-            if (lineElapsed >= w.start) {
+            if (lineElapsed >= w.start || forceFull) {
                 float wordProgress = 1.0f;
-                long wordDur = w.end - w.start;
-                if (wordDur > 0 && lineElapsed < w.end) {
-                    wordProgress = (lineElapsed - w.start) / (float) wordDur;
-                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
+                if (!forceFull) {
+                    long wordDur = w.end - w.start;
+                    if (wordDur > 0 && lineElapsed < w.end) {
+                        wordProgress = (lineElapsed - w.start) / (float) wordDur;
+                        wordProgress = Math.max(0f, Math.min(1f, wordProgress));
+                    }
+                    // 单个字 0.99 就拉满9
+                    if (wordProgress >= 0.99f) {
+                        wordProgress = 1.0f;
+                    }
                 }
 
                 float highlightWidth = w.width * wordProgress;
