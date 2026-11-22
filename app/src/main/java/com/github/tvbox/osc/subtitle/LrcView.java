@@ -712,54 +712,60 @@ public class LrcView extends View {
         mPlaying = playing;
     }
 
-/**
- * xuameng 修复EXO卡顿：逐字只算一个 singingX，整行只画两次
- */
+    /**
+     * xuameng 新增：逐字卡拉OK绘制
+     */
 private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
-    long now = getSmoothPosition();
+    long now = getRenderTime();   // ← 关键改这一行
     float startX = getWidth() / 2 - line.width / 2;
 
-    // 1. 底色整行
     canvas.drawText(line.text, startX, y, mNormalPaint);
 
     long elapsed = now - line.time;
-    if (elapsed <= 0) {
-        return; // 还没开始唱，不用画高亮
-    }
+    if (elapsed <= 0) return;
 
     float x = startX;
     float singX = startX;
 
     for (WordInfo w : line.words) {
         if (elapsed >= w.end) {
-            // 这个字已经唱完
             singX = x + w.width;
         } else if (elapsed >= w.start) {
-            // 正在唱这个字（线性插值）
-            float p = (float) (elapsed - w.start) / (w.end - w.start);
+            float p = (float)(elapsed - w.start) / (w.end - w.start);
             p = Math.max(0f, Math.min(1f, p));
             singX = x + w.width * p;
             break;
         } else {
-            // 还没唱到这个字
             break;
         }
         x += w.width;
     }
 
-    // 没唱到任何字
-    if (singX <= startX + 0.5f) {
-        return;
-    }
+    if (singX <= startX + 0.5f) return;
 
     Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
-
     canvas.save();
-    // 一次性裁剪到“已经唱到的位置”
     canvas.clipRect(startX, y + fm.top, singX, y + fm.bottom);
-    // 高亮整行只画一次
     canvas.drawText(line.text, startX, y, mHighlightPaint);
     canvas.restore();
+}
+
+// xuameng EXO：实时时钟（不靠回调）
+public interface ClockProvider {
+    long getCurrentPositionMs(); // 必须实时
+}
+private ClockProvider mClockProvider;
+
+public void setClockProvider(ClockProvider p) {
+    this.mClockProvider = p;
+}
+
+private long getRenderTime() {
+    if (mClockProvider != null) {
+        return mClockProvider.getCurrentPositionMs();
+    }
+    // 非 EXO：用原来的平滑时间（IJK/mpv 没问题）
+    return getSmoothPosition();
 }
 
     /**
