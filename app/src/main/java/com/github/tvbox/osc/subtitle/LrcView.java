@@ -48,7 +48,6 @@ public class LrcView extends View {
         long start;        // 在本行内的起始偏移（ms），如 0
         long end;          // 在本行内的结束偏移（ms），如 95
         float width;       // 字的宽度（绘制时计算）
-        float smooth;      // xuameng 逐字平滑进度 0~1，和老歌词行级滤波同思路
     }
 
     /**
@@ -257,7 +256,6 @@ public class LrcView extends View {
                     wi.text = wordText;
                     wi.start = wordStart;
                     wi.end = wordStart + wordDur;
-                    wi.smooth = 0f; // xuameng 逐字平滑进度初始化
                     words.add(wi);
                     fullText.append(wordText);
                 }
@@ -339,16 +337,6 @@ public class LrcView extends View {
         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
             mScrollAnimator.cancel();
         }
-
-        // xuameng 新增：重置所有逐字平滑进度
-        for (LrcLine l : mLrcLines) {
-            if (l.words != null) {
-                for (WordInfo w : l.words) {
-                    w.smooth = 0f;
-                }
-            }
-        }
-
         Log.d("LrcView_xuameng", "setLrcText done, mLrcLines.size()=" + mLrcLines.size());
         invalidate(); // 立即重绘
     }
@@ -541,14 +529,25 @@ public class LrcView extends View {
                     // 只有前三行向前才等铺满（逐字歌词直接切换，不等铺满）
                     if (isForward && targetLine <= 3 && mSmoothedProgress < 1f) {
                         LrcLine line = mLrcLines.get(mCurrentLine);
-                        if (line.words != null && !line.words.isEmpty()) {
-                            // 逐字歌词：直接跳转，不走等铺满
-                            mCurrentLine = targetLine;
-                            mScrollOffset = 0f;
-                            mSmoothedProgress = 0f;
-                            invalidate();
-                            return;
-                        }
+if (line.words != null && !line.words.isEmpty()) {
+    // 逐字歌词：直接跳转，但初始化新行进度避免闪烁
+    mCurrentLine = targetLine;
+    mScrollOffset = 0f;
+    // xuameng 修复：初始化新行的高亮进度，避免切换瞬间lineElapsed为负导致全白闪烁
+    long newLineTime = mLrcLines.get(targetLine).time;
+    long nextTime = (targetLine + 1 < mLrcLines.size())
+            ? mLrcLines.get(targetLine + 1).time
+            : newLineTime + 5000;
+    long duration = nextTime - newLineTime;
+    if (duration > 0 && mCurrentPosition >= newLineTime) {
+        float initProgress = (float) (mCurrentPosition - newLineTime) / duration;
+        mSmoothedProgress = Math.max(0f, Math.min(1f, initProgress));
+    } else {
+        mSmoothedProgress = 0f;
+    }
+    invalidate();
+    return;
+}
                         // 普通歌词：等铺满
                         invalidate();
                         return;
@@ -611,7 +610,7 @@ public class LrcView extends View {
     }
 
     /**
-     * xuameng 新增：逐字卡拉OK绘制（和老歌词行级一样丝滑：直接信ExoPlayer position + 逐字低通滤波）
+     * xuameng 新增：逐字卡拉OK绘制
      */
     private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
         float startX = getWidth() / 2 - line.width / 2;
@@ -623,32 +622,22 @@ public class LrcView extends View {
         float textTop = y + fm.top;
         float textBottom = y + fm.bottom;
 
-        // xuameng 修改：直接信 ExoPlayer 的 position，不用系统时钟插值
         long lineElapsed = mCurrentPosition - line.time;
 
         float x = startX;
         for (WordInfo w : line.words) {
-            // 计算当前字的目标进度（0~1）
-            float target = 0f;
-            if (lineElapsed >= w.end) {
-                target = 1f;
-            } else if (lineElapsed > w.start) {
-                target = (float)(lineElapsed - w.start) / (w.end - w.start);
-                target = Math.max(0f, Math.min(1f, target));
-            }
+            if (lineElapsed >= w.start) {
+                float wordProgress = 1.0f;
+                if (lineElapsed < w.end) {
+                    wordProgress = (float)(lineElapsed - w.start) / (w.end - w.start);
+                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
+                }
 
-            // xuameng 新增：和老歌词行级一样的低通滤波，这是丝滑的关键
-            // 0.35f 是逐字专用系数（字短，比行级的0.1f更大更跟手）
-            w.smooth += (target - w.smooth) * 0.35f;
-            if (Math.abs(w.smooth - target) < 0.01f) {
-                w.smooth = target;
-            }
-            float wordProgress = w.smooth;
+                if (wordProgress >= 0.99f) wordProgress = 1.0f;
 
-            if (wordProgress > 0.005f) {
                 float highlightWidth = w.width * wordProgress;
                 if (highlightWidth > 0.5f) {
-                // 关键：用整行 clipRect，但只裁剪当前字的区域
+                    // 关键：用整行 clipRect，但只裁剪当前字的区域
                     canvas.save();
                     canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
                     // 画整行文本，不是逐字！
