@@ -775,7 +775,7 @@ public class VodController extends BaseController {
                 long duration = safeTimeMs(mControlWrapper.getDuration());
                 long newPosition = (duration * seekBar.getProgress()) / seekBar.getMax();
                 mControlWrapper.seekTo(newPosition);
-                if (mLrcView != null) mLrcView.setSeekPosition(newPosition);  //xuameng解决歌词同步问题
+                if (mLrcView != null && mLrcView.getVisibility() == View.VISIBLE) mLrcView.setSeekPosition(newPosition);  //xuameng解决歌词同步问题
                 mIsDragging = false;
                 mControlWrapper.startProgress();
                 mControlWrapper.startFadeOut();
@@ -1907,7 +1907,7 @@ public class VodController extends BaseController {
             mSpeedTimeUp = 0;
             if(!simSlideStart) return;
             mControlWrapper.seekTo(simSeekPosition);
-            if (mLrcView != null) mLrcView.setSeekPosition(simSeekPosition);  //xuameng解决歌词同步问题 暂停立即停止绘画，播放马上开始绘画
+            if (mLrcView != null && mLrcView.getVisibility() == View.VISIBLE) mLrcView.setSeekPosition(simSeekPosition);  //xuameng解决歌词同步问题 暂停立即停止绘画，播放马上开始绘画
             //if(!mControlWrapper.isPlaying())
                 //xuameng快进暂停就暂停测试    mControlWrapper.start();    //测试成功，如果想暂停时快进自动播放取消注销
             simSlideStart = false;
@@ -1924,7 +1924,7 @@ public class VodController extends BaseController {
         if(!simSlideStartXu) return;
         if(isSEEKBAR) {
             mControlWrapper.seekTo(simSeekPosition);
-            if (mLrcView != null) mLrcView.setSeekPosition(simSeekPosition);  //xuameng解决歌词同步问题
+            if (mLrcView != null && mLrcView.getVisibility() == View.VISIBLE) mLrcView.setSeekPosition(simSeekPosition);  //xuameng解决歌词同步问题
         }
         //if(!mControlWrapper.isPlaying())
             //xuameng快进暂停就暂停测试    mControlWrapper.start();    //测试成功，如果想暂停时快进自动播放取消注销
@@ -2023,7 +2023,7 @@ public class VodController extends BaseController {
         super.onPlayStateChanged(playState);
         videoPlayState = playState;
 
-        if (mLrcView != null) {   // 新增：同步播放状态，暂停时逐字高亮立刻冻结
+        if (mLrcView != null && mLrcView.getVisibility() == View.VISIBLE) {   // 新增：同步播放状态，暂停时逐字高亮立刻冻结
             mLrcView.setPlaying(playState == VideoView.STATE_PLAYING);
         }
 
