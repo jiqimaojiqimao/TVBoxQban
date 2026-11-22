@@ -15,7 +15,6 @@ import android.view.animation.DecelerateInterpolator;
 import android.content.res.Resources;
 import android.util.Log; //xuameng记录字幕播放日志
 import android.util.DisplayMetrics;
-import android.view.Choreographer; // xuameng EXO平滑：帧同步时间源
 
 import androidx.annotation.Nullable;
 
@@ -38,10 +37,12 @@ import java.lang.Math;
  * 新增：播放进度到当前行的上行或多行不显示滚动动画
  * 20260817 新增：高亮进度平滑滤波 解决最版exoplayer对mp3的升级后字幕卡顿问题
  * 202601122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
- *
- * xuameng EXO平滑：ExoPlayer 进度回调频率低，普通行高亮也会一顿一顿。
- * 这里用 Choreographer + System.nanoTime() 做“帧级插值时间源”，
- * 不改变原有业务逻辑，只把“高亮用的时间”变成连续的。
+ * 20261122 新增：逐字歌词“渲染时间轴”平滑推进
+ * 说明：普通歌词走 mSmoothedProgress 滤波，逐字歌词原来是直接吃播放器原始进度，
+ *      播放器（最新版 ExoPlayer 对 MP3 的改动后）上报的进度是离散跳变的，
+ *      而单字时长只有几十~几百毫秒，一次刷新就会跨过半个字甚至整字。
+ *      本次给逐字高亮单独引入一条逐帧推进的平滑时间轴 mRenderTime，
+ *      并且播放中持续逐帧重绘，彻底消除跳字。
  */
 public class LrcView extends View {
 
@@ -82,72 +83,27 @@ public class LrcView extends View {
     private boolean mIsInitialPositioning = true;
     // 最大滚动距离（行数）
     private static final int MAX_SCROLL_DISTANCE = 1;
-    // 新增：高亮进度平滑滤波 =====
+    // 新增：高亮进度平滑滤波（普通歌词用） =====
     private float mSmoothedProgress = 0f;
 
-    /* =====================================================================
-     * xuameng EXO平滑：帧同步时间源
-     * ----------------------------------------------------------------
-     * mAnchorPosition : 最后一次播放器回调的真实进度
-     * mAnchorNano     : 上面这个进度对应的系统纳秒时间
-     * 每一帧用 System.nanoTime() 反推“现在应该到哪里”
-     * ===============================================================*/
-    private long mAnchorPosition = 0;
-    private long mAnchorNano = 0;
-    private boolean mHasAnchor = false;
-    private boolean mPlaying = true; // xuameng EXO平滑：暂停时不往前推
+    // ===== xuameng 新增：逐字歌词平滑时间轴（解决最新版 ExoPlayer 进度粒度粗导致的跳字） =====
+    private float mRenderTime = 0f;              // 平滑渲染时间轴（毫秒，浮点），逐字高亮只认它
+    private long mLastFrameNanos = 0L;           // 上一帧的系统时间，用于计算帧间隔
+    private long mLastPositionChangeNanos = 0L;  // 播放器进度“数值发生变化”的最近时间
+    private long mLastHostPosition = Long.MIN_VALUE; // 上一次的播放器进度，用于判断有没有前进
+    private boolean mIsPlaying = false;          // 播放状态（宿主通过 setPlaying/updateTime 告知）
+    private float mPlaybackSpeed = 1.0f;         // 播放倍速，变速播放时同步调用 setPlaybackSpeed
 
-    private final Choreographer mChoreographer = Choreographer.getInstance();
-    private boolean mFrameLoopRunning = false;
-
-    // xuameng EXO平滑：帧回调
-    private final Choreographer.FrameCallback mFrameCallback = new Choreographer.FrameCallback() {
-        @Override
-        public void doFrame(long frameTimeNanos) {
-            // 只要正在显示歌词 + 有歌词，就持续重绘
-            if (mShouldShowLyrics && mLrcLines != null && !mLrcLines.isEmpty()) {
-                invalidate();
-            }
-            if (mFrameLoopRunning) {
-                mChoreographer.postFrameCallback(this);
-            }
-        }
-    };
-
-    /**
-     * xuameng EXO平滑：启动帧循环（只画当前在显示的歌词）
-     */
-    private void startFrameLoop() {
-        if (mFrameLoopRunning) return;
-        mFrameLoopRunning = true;
-        mChoreographer.postFrameCallback(mFrameCallback);
-    }
-
-    /**
-     * xuameng EXO平滑：停止帧循环
-     */
-    private void stopFrameLoop() {
-        mFrameLoopRunning = false;
-        mChoreographer.removeFrameCallback(mFrameCallback);
-    }
-
-    /**
-     * xuameng EXO平滑：返回“帧级平滑后的播放位置”
-     * 普通行 / 逐字行 都用它
-     */
-    private long getSmoothPosition() {
-        if (!mHasAnchor) {
-            return mCurrentPosition;
-        }
-        if (!mPlaying) {
-            return mAnchorPosition;
-        }
-        long deltaMs = (System.nanoTime() - mAnchorNano) / 1_000_000L;
-        long pos = mAnchorPosition + deltaMs;
-        // 防止异常跳变
-        if (pos < 0) pos = 0;
-        return pos;
-    }
+    /** 每帧向播放器真实进度收敛的系数：越小越平滑、越大越跟手，0.03~0.12 之间比较合适 */
+    private static final float RENDER_SYNC_GAIN = 0.05f;
+    /** 单帧最大推进量，防止掉帧/切后台回来后一次冲过头 */
+    private static final float RENDER_MAX_FRAME_MS = 64f;
+    /** 播放器进度长时间不前进则视为暂停，冻结时间轴（需明显大于宿主的轮询间隔） */
+    private static final long RENDER_IDLE_TIMEOUT_MS = 1000L;
+    /** 与播放器真实进度相差超过该值视为 seek/跳转，时间轴直接硬对齐 */
+    private static final long RENDER_RESYNC_THRESHOLD_MS = 800L;
+    /** xuameng：调试日志开关。逐帧重绘时务必关闭，否则日志本身会把渲染拖慢 */
+    private static final boolean DEBUG_LOG = false;
 
     public LrcView(Context context) {
         super(context);
@@ -255,14 +211,50 @@ public class LrcView extends View {
     }
 
     /**
+     * xuameng 新增：设置播放状态
+     * 强烈建议宿主在 Player.Listener#onIsPlayingChanged 里调用它，
+     * 这样暂停时逐字高亮会立刻冻结，不需要靠“进度不前进”去猜。
+     *
+     * @param playing 是否正在播放
+     */
+    public void setPlaying(boolean playing) {
+        if (mIsPlaying == playing) {
+            return;
+        }
+        mIsPlaying = playing;
+        if (playing) {
+            // 从暂停恢复：直接对齐时间轴，避免暂停期间的漂移在恢复瞬间跳一下
+            mRenderTime = mCurrentPosition;
+            mLastPositionChangeNanos = System.nanoTime();
+        }
+        mLastFrameNanos = 0L; // 重置帧计时，避免把暂停时长算进下一帧
+        if (playing) {
+            postInvalidateOnAnimation();
+        }
+    }
+
+    /**
+     * xuameng 新增：设置播放倍速（变速播放时调用，保证时间轴推进速度一致）
+     *
+     * @param speed 倍速，默认 1.0f
+     */
+    public void setPlaybackSpeed(float speed) {
+        if (speed > 0.1f && speed < 5.0f) {
+            mPlaybackSpeed = speed;
+        }
+    }
+
+    /**
      * 解析LRC格式歌词
      *
      * @param lrcContent LRC格式歌词内容
      */
     public void setLrcText(String lrcContent) {
         // xuameng debug
-        Log.d("LrcView_xuameng", "lrcContent length=" + (lrcContent == null ? "NULL" : lrcContent.length()) + 
-              " first200=" + (lrcContent == null ? "null" : lrcContent.substring(0, Math.min(200, lrcContent.length()))));
+        if (DEBUG_LOG) {
+            Log.d("LrcView_xuameng", "lrcContent length=" + (lrcContent == null ? "NULL" : lrcContent.length()) +
+                  " first200=" + (lrcContent == null ? "null" : lrcContent.substring(0, Math.min(200, lrcContent.length()))));
+        }
         mLrcLines.clear();
 
         // xuameng 新增：逐字格式正则
@@ -289,10 +281,12 @@ public class LrcView extends View {
                 // xuameng 修改：酷狗逐字格式 [开始毫秒, 持续毫秒]
                 long t1 = Long.parseLong(secMatcher.group(1));
                 long t2 = Long.parseLong(secMatcher.group(2));
-                
+
                 // xuameng debug
-                Log.d("LrcView_xuameng", "逐字行原始: t1=" + t1 + " t2=" + t2 + " line=" + line.substring(0, Math.min(60, line.length())));
-                
+                if (DEBUG_LOG) {
+                    Log.d("LrcView_xuameng", "逐字行原始: t1=" + t1 + " t2=" + t2 + " line=" + line.substring(0, Math.min(60, line.length())));
+                }
+
                 long lineTime;
                 if (t1 > 1000 || t2 < 1000) {
                     // t1 很大说明是绝对毫秒；t2 很小说明 t1 是秒
@@ -304,7 +298,9 @@ public class LrcView extends View {
                 }
 
                 // xuameng debug
-                Log.d("LrcView_xuameng", "逐字行 lineTime=" + lineTime + "ms (" + lineTime/1000 + "s)");
+                if (DEBUG_LOG) {
+                    Log.d("LrcView_xuameng", "逐字行 lineTime=" + lineTime + "ms (" + lineTime/1000 + "s)");
+                }
 
                 String afterBracket = line.substring(secMatcher.end());
                 Matcher wordMatcher = patternWord.matcher(afterBracket);
@@ -390,8 +386,10 @@ public class LrcView extends View {
         removeDuplicateLines();
 
         // xuameng debug：打印前5行时间
-        for (int i = 0; i < Math.min(5, mLrcLines.size()); i++) {
-            Log.d("LrcView_xuameng", "排序后 line[" + i + "] time=" + mLrcLines.get(i).time + " text=" + mLrcLines.get(i).text.substring(0, Math.min(15, mLrcLines.get(i).text.length())));
+        if (DEBUG_LOG) {
+            for (int i = 0; i < Math.min(5, mLrcLines.size()); i++) {
+                Log.d("LrcView_xuameng", "排序后 line[" + i + "] time=" + mLrcLines.get(i).time + " text=" + mLrcLines.get(i).text.substring(0, Math.min(15, mLrcLines.get(i).text.length())));
+            }
         }
 
         // 重置所有状态
@@ -401,16 +399,17 @@ public class LrcView extends View {
         mSmoothedProgress = 0f;
         mCurrentPosition = 0;
         mIsInitialPositioning = true; // 新增：重置初始定位状态
-
-        // xuameng EXO平滑：清掉时间锚点
-        mHasAnchor = false;
-        mAnchorPosition = 0;
-        mAnchorNano = 0;
-
+        // xuameng 新增：重置平滑时间轴
+        mRenderTime = 0f;
+        mLastFrameNanos = 0L;
+        mLastHostPosition = Long.MIN_VALUE;
+        mLastPositionChangeNanos = 0L;
         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
             mScrollAnimator.cancel();
         }
-        Log.d("LrcView_xuameng", "setLrcText done, mLrcLines.size()=" + mLrcLines.size());
+        if (DEBUG_LOG) {
+            Log.d("LrcView_xuameng", "setLrcText done, mLrcLines.size()=" + mLrcLines.size());
+        }
         invalidate(); // 立即重绘
     }
 
@@ -470,7 +469,7 @@ public class LrcView extends View {
                 // 动画结束后更新当前行
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
-                mSmoothedProgress = 0f; 
+                mSmoothedProgress = 0f;
             }
 
             @Override
@@ -478,7 +477,7 @@ public class LrcView extends View {
                 // 动画取消时也更新当前行
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
-                mSmoothedProgress = 0f; 
+                mSmoothedProgress = 0f;
             }
 
         });
@@ -487,18 +486,75 @@ public class LrcView extends View {
     }
 
     /**
-     * 更新播放进度
+     * xuameng 新增：推进逐字高亮的平滑时间轴
+     * 规则：按帧自主推进（保证连续） + 缓慢向播放器真实进度收敛（保证不跑偏）
+     *
+     * @return 时间轴本次是否真的在推进（用于决定要不要请求下一帧）
+     */
+    private boolean advanceRenderTime() {
+        long now = System.nanoTime();
+        if (mLastFrameNanos == 0L) {
+            mLastFrameNanos = now;
+            return false;
+        }
+        float dtMs = (now - mLastFrameNanos) / 1_000_000f;
+        mLastFrameNanos = now;
+        if (dtMs <= 0f) {
+            return false;
+        }
+        if (dtMs > RENDER_MAX_FRAME_MS) {
+            dtMs = RENDER_MAX_FRAME_MS; // 掉帧保护
+        }
+
+        // 播放器进度是否还在前进（暂停、宿主停止轮询时都会停止前进）
+        boolean progressAlive = (mLastPositionChangeNanos != 0L)
+                && (now - mLastPositionChangeNanos) < RENDER_IDLE_TIMEOUT_MS * 1_000_000L;
+
+        if (mIsPlaying && progressAlive) {
+            // 1) 按帧自主推进：这才是逐字高亮平滑的关键，不再依赖播放器给的时间精度
+            mRenderTime += dtMs * mPlaybackSpeed;
+            // 2) 缓慢收敛到真实进度：消除系统时钟与音频时钟的漂移，误差不会累积
+            mRenderTime += (mCurrentPosition - mRenderTime) * RENDER_SYNC_GAIN;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 更新播放进度（旧入口，默认按“正在播放”处理）
+     * 内部会结合“进度数值有没有变化”自动识别暂停，宿主不改代码也能基本可用。
      *
      * @param position 当前播放时间（毫秒）
      */
     public void updateTime(long position) {
-        // xuameng debug
-        Log.d("LrcView_xuameng", "updateTime pos=" + position + " shouldShow=" + mShouldShowLyrics + " currentLine=" + mCurrentLine + " lines=" + (mLrcLines == null ? 0 : mLrcLines.size()));
+        updateTime(position, true);
+    }
 
-        // xuameng EXO平滑：先记录锚点（非常关键）
-        mAnchorPosition = position;
-        mAnchorNano = System.nanoTime();
-        mHasAnchor = true;
+    /**
+     * xuameng 新增：更新播放进度 + 播放状态（推荐宿主使用这个重载）
+     *
+     * @param position 当前播放时间（毫秒）
+     * @param playing  是否正在播放
+     */
+    public void updateTime(long position, boolean playing) {
+        long now = System.nanoTime();
+
+        if (position != mLastHostPosition) {
+            mLastHostPosition = position;
+            mLastPositionChangeNanos = now;
+        }
+        mIsPlaying = playing;
+
+        if (DEBUG_LOG) {
+            Log.d("LrcView_xuameng", "updateTime pos=" + position + " playing=" + playing
+                    + " render=" + mRenderTime + " shouldShow=" + mShouldShowLyrics
+                    + " currentLine=" + mCurrentLine + " lines=" + (mLrcLines == null ? 0 : mLrcLines.size()));
+        }
+
+        // xuameng 新增：seek / 跳转 / 首次进入时，平滑时间轴直接硬对齐，不做平滑追赶
+        if (Math.abs((float) position - mRenderTime) > RENDER_RESYNC_THRESHOLD_MS) {
+            mRenderTime = position;
+        }
 
         // 检查是否达到最小显示位置
         if (position < MIN_POSITION_TO_SHOW) {
@@ -507,7 +563,7 @@ public class LrcView extends View {
             mCurrentLine = 0; // 确保强制重置到第一行
             mScrollOffset = 0f; // 重置滚动偏移
             mSmoothedProgress = 0f;
-            mCurrentPosition = position;
+            mRenderTime = position; // 新增：时间轴同步重置
             invalidate();
             return;
         }
@@ -518,9 +574,6 @@ public class LrcView extends View {
         }
 
         mCurrentPosition = position;
-
-        // xuameng EXO平滑：有歌词后，保证帧循环在跑
-        startFrameLoop();
 
         // 关键：没歌词时只更新状态，不访问 mLrcLines
         if (mLrcLines == null || mLrcLines.isEmpty()) {
@@ -545,7 +598,9 @@ public class LrcView extends View {
         }
 
         // xuameng debug
-        Log.d("LrcView_xuameng", "updateTime targetLine=" + targetLine + " lineTime=" + mLrcLines.get(targetLine).time);
+        if (DEBUG_LOG) {
+            Log.d("LrcView_xuameng", "updateTime targetLine=" + targetLine + " lineTime=" + mLrcLines.get(targetLine).time);
+        }
 
         // 关键修改：处理初始定位
         if (mIsInitialPositioning) {
@@ -564,6 +619,7 @@ public class LrcView extends View {
             } else {
                 mSmoothedProgress = 0f;
             }
+            mRenderTime = position; // xuameng 新增：初始定位时时间轴硬对齐
             mIsInitialPositioning = false; // 定位完成，退出初始状态
             invalidate();
             return;
@@ -574,10 +630,10 @@ public class LrcView extends View {
             // 计算目标行与当前行的距离和方向
             int lineDiff = targetLine - mCurrentLine;
             int lineDistance = Math.abs(lineDiff);
-    
+
             // 判断滚动方向：正数表示向前（下一行），负数表示向后（上一行）
             boolean isForward = lineDiff > 0;
-    
+
             // 如果距离超过阈值（不是相邻行），直接跳转而不滚动
             if (lineDistance > MAX_SCROLL_DISTANCE) {
                 if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
@@ -660,14 +716,11 @@ public class LrcView extends View {
     /**
      * 新增：手动设置是否显示歌词
      *
-     * @param show 是否显示歌词
+     * @param show 是否显示
      */
     public void setShowLyrics(boolean show) {
         if (mShouldShowLyrics != show) {
             mShouldShowLyrics = show;
-            if (show) {
-                startFrameLoop();
-            }
             invalidate();
         }
     }
@@ -689,84 +742,56 @@ public class LrcView extends View {
         mCurrentPosition = 0;
         mCurrentLine = 0;
         mScrollOffset = 0f;
-        mSmoothedProgress = 0f;  
+        mSmoothedProgress = 0f;
         mIsInitialPositioning = true; // 新增：重置初始定位状态
-
-        // xuameng EXO平滑
-        mHasAnchor = false;
-        mAnchorPosition = 0;
-        mAnchorNano = 0;
-
+        // xuameng 新增：重置平滑时间轴
+        mRenderTime = 0f;
+        mLastFrameNanos = 0L;
+        mLastHostPosition = Long.MIN_VALUE;
+        mLastPositionChangeNanos = 0L;
         invalidate();
     }
 
     /**
-     * xuameng 新增：播放/暂停状态（外部建议在播放器 pause/resume 时调用）
-     * 不调用也能跑，但调用后 ExoPlayer 暂停时高亮不会“偷偷往前走”
-     */
-    public void setPlaying(boolean playing) {
-        // 暂停恢复时重新打锚点，避免暂停期间时间被累加
-        mAnchorPosition = getSmoothPosition();
-        mAnchorNano = System.nanoTime();
-        mHasAnchor = true;
-        mPlaying = playing;
-    }
-
-    /**
      * xuameng 新增：逐字卡拉OK绘制
+     * 关键改动：高亮进度改用平滑时间轴 mRenderTime，不再直接使用播放器原始进度
      */
-private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
-    long now = getRenderTime();   // ← 关键改这一行
-    float startX = getWidth() / 2 - line.width / 2;
+    private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
+        float startX = getWidth() / 2 - line.width / 2;
 
-    canvas.drawText(line.text, startX, y, mNormalPaint);
+        // 1. 先画整行普通底色（和老歌词一样）
+        canvas.drawText(line.text, startX, y, mNormalPaint);
 
-    long elapsed = now - line.time;
-    if (elapsed <= 0) return;
+        Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
+        float textTop = y + fm.top;
+        float textBottom = y + fm.bottom;
 
-    float x = startX;
-    float singX = startX;
+        // xuameng 修改：使用平滑时间轴，且用浮点运算，避免整字跳变
+        float lineElapsed = mRenderTime - line.time;
 
-    for (WordInfo w : line.words) {
-        if (elapsed >= w.end) {
-            singX = x + w.width;
-        } else if (elapsed >= w.start) {
-            float p = (float)(elapsed - w.start) / (w.end - w.start);
-            p = Math.max(0f, Math.min(1f, p));
-            singX = x + w.width * p;
-            break;
-        } else {
-            break;
+        float x = startX;
+        for (WordInfo w : line.words) {
+            if (lineElapsed >= w.start) {
+                float wordProgress = 1.0f;
+                long wordDur = w.end - w.start;
+                if (wordDur > 0 && lineElapsed < w.end) {
+                    wordProgress = (lineElapsed - w.start) / (float) wordDur;
+                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
+                }
+
+                float highlightWidth = w.width * wordProgress;
+                if (highlightWidth > 0.5f) {
+                    // 关键：用整行 clipRect，但只裁剪当前字的区域
+                    canvas.save();
+                    canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
+                    // 画整行文本，不是逐字！
+                    canvas.drawText(line.text, startX, y, mHighlightPaint);
+                    canvas.restore();
+                }
+            }
+            x += w.width;
         }
-        x += w.width;
     }
-
-    if (singX <= startX + 0.5f) return;
-
-    Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
-    canvas.save();
-    canvas.clipRect(startX, y + fm.top, singX, y + fm.bottom);
-    canvas.drawText(line.text, startX, y, mHighlightPaint);
-    canvas.restore();
-}
-
-// xuameng EXO：实时时钟（不靠回调）
-public interface ClockProvider {
-    long getCurrentPositionMs(); // 必须实时
-}
-private ClockProvider mClockProvider;
-
-public void setClockProvider(ClockProvider p) {
-    this.mClockProvider = p;
-}
-
-private long getRenderTime() {
-    if (mClockProvider != null) {
-        return mClockProvider.getCurrentPositionMs();
-    }
-    // 非 EXO：用原来的平滑时间（IJK/mpv 没问题）
-    return getSmoothPosition();
-}
 
     /**
      * 绘制卡拉OK效果
@@ -795,8 +820,8 @@ private long getRenderTime() {
             return;
         }
 
-        // xuameng EXO平滑：普通行也用平滑时间
-        long drawPosition = getSmoothPosition();
+        // xuameng 新增：推进逐字高亮平滑时间轴（必须放在绘制之前）
+        boolean timeAdvancing = advanceRenderTime();
 
         // 计算总高度和起始Y位置，实现垂直居中
         float lineHeight = mNormalPaint.getTextSize() * 1.5f;
@@ -820,22 +845,19 @@ private long getRenderTime() {
             float y = startY + i * lineHeight;
 
             if (actualIndex == mCurrentLine) {
-                // xuameng debug
-                Log.d("LrcView_xuameng", "onDraw currentLine=" + actualIndex + " time=" + line.time + " pos=" + drawPosition + " words=" + (line.words != null ? line.words.size() : "null"));
-
                 if (line.words != null && !line.words.isEmpty()) {
                     drawKaraokeLine(canvas, line, y);
                 } else {
                     // 当前行：卡拉OK高亮效果
                     float targetProgress = 0f;
-                    if (drawPosition >= line.time) {
+                    if (mCurrentPosition >= line.time) {
                         long nextTime = (actualIndex + 1 < mLrcLines.size())
                             ? mLrcLines.get(actualIndex + 1).time
                             : line.time + 5000;
                         long duration = nextTime - line.time;
 
                        if (duration > 0) {
-                           targetProgress = (float) (drawPosition - line.time) / duration;
+                           targetProgress = (float) (mCurrentPosition - line.time) / duration;
                            targetProgress = Math.max(0f, Math.min(1f, targetProgress));
                        }
                     }
@@ -868,9 +890,9 @@ private long getRenderTime() {
                     }
                     canvas.save();
                     // 使用精确的裁剪区域
-                    canvas.clipRect(getWidth() / 2 - line.width / 2, 
+                    canvas.clipRect(getWidth() / 2 - line.width / 2,
                                     textTop,
-                                    getWidth() / 2 - line.width / 2 + highlightWidth, 
+                                    getWidth() / 2 - line.width / 2 + highlightWidth,
                                     textBottom);
                     canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mHighlightPaint);
                     canvas.restore();
@@ -879,6 +901,12 @@ private long getRenderTime() {
                 // 非当前行：普通显示
                 canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
             }
+        }
+
+        // xuameng 新增：时间轴在推进时请求下一帧，让逐字高亮按屏幕帧率平滑走字
+        // 注意：这里不能再逐帧打 Log，否则日志本身会把渲染拖慢
+        if (timeAdvancing) {
+            postInvalidateOnAnimation();
         }
     }
 
@@ -899,7 +927,5 @@ private long getRenderTime() {
             mScrollAnimator.cancel();
             mScrollAnimator = null;
         }
-        // xuameng EXO平滑：必须注销帧回调，否则 Activity 重建后 CPU 空转
-        stopFrameLoop();
     }
 }
