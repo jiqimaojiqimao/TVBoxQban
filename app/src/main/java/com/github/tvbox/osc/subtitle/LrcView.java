@@ -13,6 +13,7 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.content.res.Resources;
+import android.util.Log; //xuameng记录字幕播放日志
 import android.util.DisplayMetrics;
 
 import androidx.annotation.Nullable;
@@ -35,8 +36,19 @@ import java.lang.Math;
  * 新增：不是相邻行不不显示滚动动画
  * 新增：播放进度到当前行的上行或多行不显示滚动动画
  * 20260817 新增：高亮进度平滑滤波 解决最版exoplayer对mp3的升级后字幕卡顿问题
+ * 202601122 新增：逐字卡拉OK格式歌词，无歌词时加长提示文字
  */
 public class LrcView extends View {
+
+    /**
+     * xuameng 新增：逐字信息（用于逐字卡拉OK格式）
+     */
+    private static class WordInfo {
+        String text;       // 字文本，如 "演"
+        long start;        // 在本行内的起始偏移（ms），如 0
+        long end;          // 在本行内的结束偏移（ms），如 95
+        float width;       // 字的宽度（绘制时计算）
+    }
 
     /**
      * LRC歌词行数据结构
@@ -45,6 +57,7 @@ public class LrcView extends View {
         long time; // 时间戳（毫秒）
         String text; // 歌词文本
         float width; // 文本宽度（用于绘制）
+        List<WordInfo> words; // xuameng 新增：逐字信息，null表示普通行（非逐字格式）
     }
 
     private List<LrcLine> mLrcLines = new ArrayList<>();
@@ -145,6 +158,12 @@ public class LrcView extends View {
     private void recalculateLineWidths() {
         for (LrcLine line : mLrcLines) {
             line.width = mNormalPaint.measureText(line.text);
+            // xuameng 新增：同步计算逐字宽度
+            if (line.words != null) {
+                for (WordInfo w : line.words) {
+                    w.width = mNormalPaint.measureText(w.text);
+                }
+            }
         }
     }
 
@@ -174,9 +193,22 @@ public class LrcView extends View {
      * @param lrcContent LRC格式歌词内容
      */
     public void setLrcText(String lrcContent) {
+        // xuameng debug
+        Log.d("LrcView_xuameng", "lrcContent length=" + (lrcContent == null ? "NULL" : lrcContent.length()) + 
+              " first200=" + (lrcContent == null ? "null" : lrcContent.substring(0, Math.min(200, lrcContent.length()))));
         mLrcLines.clear();
-        String[] lines = lrcContent.split("\n");
+
+        // xuameng 新增：逐字格式正则
+        // 正则1：逐字格式行首 [数字,数字] 或 [数字.数字]，如 [0,1064] 或 [0.570]
+        // xuameng 修改：去掉非贪婪 ?，确保完整匹配毫秒部分
+        Pattern patternSec = Pattern.compile("\\[(\\d+)[,.](\\d+)\\]");
+        // 正则2：逐字标签 <偏移,持续,标志> 如 <0,95,0>
+        Pattern patternWord = Pattern.compile("<(\\d+),(\\d+),\\d*>([^<]*)");
+
+        // 原有：普通行级LRC正则
         Pattern pattern = Pattern.compile("\\[(\\d{2}):(\\d{2})\\.(\\d{1,3})\\]");
+
+        String[] lines = lrcContent.split("\\r?\\n");
 
         for (String line : lines) {
             // 跳过空行
@@ -184,6 +216,65 @@ public class LrcView extends View {
                 continue;
             }
 
+            // ===== xuameng 新增：尝试逐字格式解析 =====
+            Matcher secMatcher = patternSec.matcher(line);
+            if (secMatcher.find()) {
+                // xuameng 修改：酷狗逐字格式 [开始毫秒, 持续毫秒]
+                long t1 = Long.parseLong(secMatcher.group(1));
+                long t2 = Long.parseLong(secMatcher.group(2));
+                
+                // xuameng debug
+                Log.d("LrcView_xuameng", "逐字行原始: t1=" + t1 + " t2=" + t2 + " line=" + line.substring(0, Math.min(60, line.length())));
+                
+                long lineTime;
+                if (t1 > 1000 || t2 < 1000) {
+                    // t1 很大说明是绝对毫秒；t2 很小说明 t1 是秒
+                    // 实际上酷狗格式是 [开始ms, 持续ms]，直接取 t1
+                    lineTime = t1;
+                } else {
+                    // 兼容 [秒.毫秒] 格式：0,570 → 0 * 1000+570
+                    lineTime = t1 * 1000 + t2;
+                }
+
+                // xuameng debug
+                Log.d("LrcView_xuameng", "逐字行 lineTime=" + lineTime + "ms (" + lineTime/1000 + "s)");
+
+                String afterBracket = line.substring(secMatcher.end());
+                Matcher wordMatcher = patternWord.matcher(afterBracket);
+
+                List<WordInfo> words = new ArrayList<>();
+                StringBuilder fullText = new StringBuilder();
+
+                while (wordMatcher.find()) {
+                    long wordStart = Long.parseLong(wordMatcher.group(1));
+                    long wordDur = Long.parseLong(wordMatcher.group(2));
+                    String wordText = wordMatcher.group(3);
+
+                    if (wordText.isEmpty()) continue;
+
+                    WordInfo wi = new WordInfo();
+                    wi.text = wordText;
+                    wi.start = wordStart;
+                    wi.end = wordStart + wordDur;
+                    words.add(wi);
+                    fullText.append(wordText);
+                }
+
+                if (!words.isEmpty()) {
+                    LrcLine lrcLine = new LrcLine();
+                    lrcLine.time = lineTime;
+                    lrcLine.text = fullText.toString();
+                    lrcLine.width = mNormalPaint.measureText(fullText.toString());
+                    lrcLine.words = words;
+                    for (WordInfo w : words) {
+                        w.width = mNormalPaint.measureText(w.text);
+                    }
+                    mLrcLines.add(lrcLine);
+                    continue;
+                }
+            }
+
+            // ===== 原有：普通行级 LRC 解析（完全不动） =====
             Matcher matcher = pattern.matcher(line);
             List<Long> times = new ArrayList<>();
             String text = "";
@@ -218,6 +309,7 @@ public class LrcView extends View {
                     lrcLine.time = time;
                     lrcLine.text = text;
                     lrcLine.width = mNormalPaint.measureText(text);
+                    lrcLine.words = null; // 普通行，无逐字信息
                     mLrcLines.add(lrcLine);
                 }
             }
@@ -230,6 +322,11 @@ public class LrcView extends View {
         // 移除重复的歌词行
         removeDuplicateLines();
 
+        // xuameng debug：打印前5行时间
+        for (int i = 0; i < Math.min(5, mLrcLines.size()); i++) {
+            Log.d("LrcView_xuameng", "排序后 line[" + i + "] time=" + mLrcLines.get(i).time + " text=" + mLrcLines.get(i).text.substring(0, Math.min(15, mLrcLines.get(i).text.length())));
+        }
+
         // 重置所有状态
         mShouldShowLyrics = false;
         mCurrentLine = 0; // 总是从第0行开始
@@ -240,6 +337,7 @@ public class LrcView extends View {
         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
             mScrollAnimator.cancel();
         }
+        Log.d("LrcView_xuameng", "setLrcText done, mLrcLines.size()=" + mLrcLines.size());
         invalidate(); // 立即重绘
     }
 
@@ -321,9 +419,8 @@ public class LrcView extends View {
      * @param position 当前播放时间（毫秒）
      */
     public void updateTime(long position) {
-        if (mLrcLines.isEmpty()) {
-            return;
-        }
+        // xuameng debug
+        Log.d("LrcView_xuameng", "updateTime pos=" + position + " shouldShow=" + mShouldShowLyrics + " currentLine=" + mCurrentLine + " lines=" + (mLrcLines == null ? 0 : mLrcLines.size()));
 
         // 检查是否达到最小显示位置
         if (position < MIN_POSITION_TO_SHOW) {
@@ -343,7 +440,13 @@ public class LrcView extends View {
 
         mCurrentPosition = position;
 
-        // 查找当前应该显示的行
+        // 关键：没歌词时只更新状态，不访问 mLrcLines
+        if (mLrcLines == null || mLrcLines.isEmpty()) {
+            invalidate(); // 触发 onDraw 去画"暂无歌词"
+            return;
+        }
+
+        // xuameng 修改：反向查找最后一个 time <= position 的行
         int targetLine = 0;
 
         // 如果当前时间比第一行还早，保持在第一行
@@ -351,15 +454,16 @@ public class LrcView extends View {
             targetLine = 0;
         } else {
             // 否则找到合适的时间点
-            for (int i = 0; i < mLrcLines.size(); i++) {
-                if (i == mLrcLines.size() - 1 ||
-                        position >= mLrcLines.get(i).time &&
-                                position < mLrcLines.get(i + 1).time) {
+            for (int i = mLrcLines.size() - 1; i >= 0; i--) {
+                if (position >= mLrcLines.get(i).time) {
                     targetLine = i;
                     break;
                 }
             }
         }
+
+        // xuameng debug
+        Log.d("LrcView_xuameng", "updateTime targetLine=" + targetLine + " lineTime=" + mLrcLines.get(targetLine).time);
 
         // 关键修改：处理初始定位
         if (mIsInitialPositioning) {
@@ -422,8 +526,18 @@ public class LrcView extends View {
                     if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                         mScrollAnimator.cancel();
                     }
-                    // 只有前三行向前才等铺满
+                    // 只有前三行向前才等铺满（逐字歌词直接切换，不等铺满）
                     if (isForward && targetLine <= 3 && mSmoothedProgress < 1f) {
+                        LrcLine line = mLrcLines.get(mCurrentLine);
+                        if (line.words != null && !line.words.isEmpty()) {
+                            // 逐字歌词：直接跳转，不走等铺满
+                            mCurrentLine = targetLine;
+                            mScrollOffset = 0f;
+                            mSmoothedProgress = 0f;
+                            invalidate();
+                            return;
+                        }
+                        // 普通歌词：等铺满
                         invalidate();
                         return;
                     }
@@ -485,24 +599,69 @@ public class LrcView extends View {
     }
 
     /**
+     * xuameng 新增：逐字卡拉OK绘制
+     */
+    private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
+        float startX = getWidth() / 2 - line.width / 2;
+
+        // 1. 先画整行普通底色（和老歌词一样）
+        canvas.drawText(line.text, startX, y, mNormalPaint);
+
+        Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
+        float textTop = y + fm.top;
+        float textBottom = y + fm.bottom;
+
+        long lineElapsed = mCurrentPosition - line.time;
+
+        float x = startX;
+        for (WordInfo w : line.words) {
+            if (lineElapsed >= w.start) {
+                float wordProgress = 1.0f;
+                if (lineElapsed < w.end) {
+                    wordProgress = (float)(lineElapsed - w.start) / (w.end - w.start);
+                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
+                }
+
+                if (wordProgress >= 0.99f) wordProgress = 1.0f;
+
+                float highlightWidth = w.width * wordProgress;
+                if (highlightWidth > 0.5f) {
+                    // 关键：用整行 clipRect，但只裁剪当前字的区域
+                    canvas.save();
+                    canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
+                    // 画整行文本，不是逐字！
+                    canvas.drawText(line.text, startX, y, mHighlightPaint);
+                    canvas.restore();
+                }
+            }
+            x += w.width;
+        }
+    }
+
+    /**
      * 绘制卡拉OK效果
      */
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        // 检查是否应该显示歌词
+        // 检查是否应该显示歌词 播放进度0.1秒以上才允许显示
+        String hint = null;   //xuameng 可以加 歌词载入中...
         if (!mShouldShowLyrics) {
-            // 不显示歌词，显示提示信息
-            String hint = "";   //xuameng 可以加 歌词载入中...
+            // 0.1秒以内不显示歌词，显示提示信息
+            hint = null;   //xuameng 可以加 歌词载入中... 现是是什么都不显示，如改成文字就取消下面的return;
+            return;
+        } else {
+            if (mLrcLines == null || mLrcLines.isEmpty()) {  //0.1秒以上才没有歌词显示
+                hint = "聚汇影视提示您：暂无歌词!";   //xuameng 可以加 歌词载入中...
+            }
+        }
+
+        if (hint != null) {
             float textWidth = mNormalPaint.measureText(hint);
             float centerX = getWidth() / 2 - textWidth / 2;
             float centerY = getHeight() / 2;
-            canvas.drawText(hint, centerX, centerY, mNormalPaint);
-            return;
-        }
-
-        if (mLrcLines.isEmpty()) {
+            canvas.drawText(hint, centerX, centerY, mHighlightPaint);
             return;
         }
 
@@ -528,55 +687,62 @@ public class LrcView extends View {
             float y = startY + i * lineHeight;
 
             if (actualIndex == mCurrentLine) {
-                // 当前行：卡拉OK高亮效果
-                float targetProgress = 0f;
-                if (mCurrentPosition >= line.time) {
-                    long nextTime = (actualIndex + 1 < mLrcLines.size())
-                        ? mLrcLines.get(actualIndex + 1).time
-                        : line.time + 5000;
-                    long duration = nextTime - line.time;
+                // xuameng debug
+                Log.d("LrcView_xuameng", "onDraw currentLine=" + actualIndex + " time=" + line.time + " pos=" + mCurrentPosition + " words=" + (line.words != null ? line.words.size() : "null"));
 
-                   if (duration > 0) {
-                       targetProgress = (float) (mCurrentPosition - line.time) / duration;
-                       targetProgress = Math.max(0f, Math.min(1f, targetProgress));
-                   }
-                }
-
-                if (targetProgress > 0.99f) {
-                    targetProgress = 1.0f;
-                }
-
-                // 平滑滤波
-                if (targetProgress >= 1.0f) {
-                    mSmoothedProgress = 1.0f;
+                if (line.words != null && !line.words.isEmpty()) {
+                    drawKaraokeLine(canvas, line, y);
                 } else {
-                    mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
+                    // 当前行：卡拉OK高亮效果
+                    float targetProgress = 0f;
+                    if (mCurrentPosition >= line.time) {
+                        long nextTime = (actualIndex + 1 < mLrcLines.size())
+                            ? mLrcLines.get(actualIndex + 1).time
+                            : line.time + 5000;
+                        long duration = nextTime - line.time;
+
+                       if (duration > 0) {
+                           targetProgress = (float) (mCurrentPosition - line.time) / duration;
+                           targetProgress = Math.max(0f, Math.min(1f, targetProgress));
+                       }
+                    }
+
+                    if (targetProgress > 0.99f) {
+                        targetProgress = 1.0f;
+                    }
+
+                    // 平滑滤波
+                    if (targetProgress >= 1.0f) {
+                        mSmoothedProgress = 1.0f;
+                    } else {
+                        mSmoothedProgress += (targetProgress - mSmoothedProgress) * 0.1f;
+                    }
+                    float progress = mSmoothedProgress;
+
+                    // 获取字体度量信息
+                    Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
+                    float textTop = y + fm.top;
+                    float textBottom = y + fm.bottom;
+
+                    // 绘制背景文本（完整）
+                    canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
+
+                    // 绘制高亮部分（渐变填充）
+                    float highlightWidth = line.width * progress;
+                    // 防止裁剪区域无效
+                    if (highlightWidth < 1f) {
+                        highlightWidth = 1f;
+                    }
+                    canvas.save();
+                    // 使用精确的裁剪区域
+                    canvas.clipRect(getWidth() / 2 - line.width / 2, 
+                                    textTop,
+                                    getWidth() / 2 - line.width / 2 + highlightWidth, 
+                                    textBottom);
+                    canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mHighlightPaint);
+                    canvas.restore();
                 }
-                float progress = mSmoothedProgress;
-
-                // 获取字体度量信息
-                Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
-                float textTop = y + fm.top;
-                float textBottom = y + fm.bottom;
-
-                // 绘制背景文本（完整）
-                canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
-
-                // 绘制高亮部分（渐变填充）
-                float highlightWidth = line.width * progress;
-                // 防止裁剪区域无效
-                if (highlightWidth < 1f) {
-                    highlightWidth = 1f;
-                }
-                canvas.save();
-                // 使用精确的裁剪区域
-                canvas.clipRect(getWidth() / 2 - line.width / 2, 
-                                textTop,
-                                getWidth() / 2 - line.width / 2 + highlightWidth, 
-                                textBottom);
-                canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mHighlightPaint);
-                canvas.restore();
-            }else {
+            } else {
                 // 非当前行：普通显示
                 canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
             }
