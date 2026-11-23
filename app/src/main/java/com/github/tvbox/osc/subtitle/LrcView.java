@@ -688,60 +688,6 @@ public class LrcView extends View {
         mLrcLines = uniqueLines;
     }
 
-    // ===== xuameng 新增：逐行动态槽高相关工具方法 =====
-    // 单语行（非双语模式下的所有行、双语模式下的纯单语行）使用 1.5S 原槽高（保持与全单语歌曲行距一致）；
-    // 双语主行（带辅行的主行）使用 BILINGUAL_GROUP_LINE_HEIGHT_RATIO * S 紧凑组槽高；
-    // 辅行不占槽位（返回0），由其主行在绘制时顺带绘出，这样双语歌里的单语行就不会被压小行距了。
-    private float getLineSlotHeight(int index, float masterTextSize) {
-        if (mLrcLines == null || index < 0 || index >= mLrcLines.size()) {
-            return masterTextSize * 1.5f;
-        }
-        LrcLine line = mLrcLines.get(index);
-        if (line.isTranslation) {
-            return 0f; // 辅行不占独立槽位
-        }
-        // 如果这一行是双语主行（下一行是其辅行），用紧凑双语组槽高
-        if (mIsBilingual && line.isMaster && index + 1 < mLrcLines.size()) {
-            LrcLine next = mLrcLines.get(index + 1);
-            if (next.isTranslation && next.masterIndex == index) {
-                return masterTextSize * BILINGUAL_GROUP_LINE_HEIGHT_RATIO;
-            }
-        }
-        // 单语行：与全单语歌曲保持一致的 1.5S 槽高
-        return masterTextSize * 1.5f;
-    }
-
-    // 判断指定下标是否为双语主行（有对应辅行跟随），供绘制时决定是否顺带画辅行、
-    // 以及计算可视范围内各槽 Y 坐标使用。
-    private boolean isBilingualMasterAt(int index) {
-        if (!mIsBilingual || mLrcLines == null || index < 0 || index >= mLrcLines.size()) {
-            return false;
-        }
-        LrcLine line = mLrcLines.get(index);
-        if (!line.isMaster || index + 1 >= mLrcLines.size()) {
-            return false;
-        }
-        LrcLine next = mLrcLines.get(index + 1);
-        return next.isTranslation && next.masterIndex == index;
-    }
-
-    // 计算从 startLine 到 endLine（含两端、跳过辅行）累计的槽高（像素）。
-    // 用来在逐行动态槽高下，算当前行相对起始行的 baseline Y 偏移。
-    private float accumulateSlotHeight(int startLine, int endLine, float masterTextSize) {
-        if (mLrcLines == null) return 0f;
-        float h = 0f;
-        int from = Math.min(startLine, endLine);
-        int to = Math.max(startLine, endLine);
-        for (int i = from; i <= to; i++) {
-            if (i < 0 || i >= mLrcLines.size()) continue;
-            LrcLine l = mLrcLines.get(i);
-            if (l.isTranslation) continue;
-            h += getLineSlotHeight(i, masterTextSize);
-        }
-        return h;
-    }
-    // ===== 动态槽高工具方法结束 =====
-
     /**
      * 平滑滚动到指定行
      *
@@ -752,34 +698,13 @@ public class LrcView extends View {
             return; // 无需滚动
         }
 
-        // 计算滚动距离（像素）：逐行动态槽高下，从当前行滚动到目标行的真实位移 =
-        // 两行之间（不含两端端点自身槽高）所有"非辅行"的槽高累加值。
-        // 向前换行（targetLine > mCurrentLine）：dy > 0，所有行上移 dy 像素；
-        // 向后换行（targetLine < mCurrentLine）：dy < 0，所有行下移 |dy| 像素。
-        int oldLine = mCurrentLine;
-        if (targetLine == oldLine) {
-            return;
+        // 计算滚动距离（行数差）
+        int lineDiff = targetLine - mCurrentLine;
+        if (lineDiff == 0) {
+            return; // 无需滚动
         }
-        float masterTextSize = mNormalPaint.getTextSize();
-        float totalDy;
-        if (targetLine > oldLine) {
-            // 向前：累加 (oldLine+1) 到 targetLine 的槽高（含 targetLine 本身，因为动画结束后 targetLine 要进中心）
-            totalDy = 0f;
-            for (int i = oldLine + 1; i <= targetLine; i++) {
-                totalDy += getLineSlotHeight(i, masterTextSize);
-            }
-        } else {
-            // 向后：累加 (targetLine+1) 到 oldLine 的槽高，方向向下（负）
-            totalDy = 0f;
-            for (int i = targetLine + 1; i <= oldLine; i++) {
-                totalDy += getLineSlotHeight(i, masterTextSize);
-            }
-            totalDy = -totalDy;
-        }
-        final float dy = totalDy;
-
-        // 设置动画（mScrollOffset 单位改为"像素"，动画结束置0；onDraw 里整体减去它即可）
-        mScrollAnimator = ValueAnimator.ofFloat(0f, dy);
+        // 设置动画
+        mScrollAnimator = ValueAnimator.ofFloat(0f, (float) lineDiff);
         mScrollAnimator.setDuration(mScrollDuration);
         mScrollAnimator.setInterpolator(new AccelerateDecelerateInterpolator());  //加速减速插值器
     //    mScrollAnimator.setInterpolator(new LinearInterpolator()); // 改为线性插值器
@@ -1365,19 +1290,19 @@ public class LrcView extends View {
 
         // 计算总高度和起始Y位置，实现垂直居中
         float masterTextSize = mNormalPaint.getTextSize();
-        // xuameng 修改：逐行动态槽高——
-        //   单语行（非双语模式下的所有行、双语模式下的纯单语行）使用 masterTextSize * 1.5f 的原槽高，
-        //   与全单语歌曲的行距完全一致；
-        //   双语主行（有辅行跟随的主行）使用 BILINGUAL_GROUP_LINE_HEIGHT_RATIO * S 紧凑组槽高，
-        //   组间白边保持 1.2S 版本的紧凑视觉；
-        //   辅行不占独立槽位（getLineSlotHeight 返回0），由主行在绘制时顺带绘出。
-        // 这样"有双语+单语混合"的歌曲里，单语之间的行距就不会被双语槽高压缩，与全单语歌曲一致。
+        // xuameng 修改：单语行仍用 1.5S 槽高；双语模式下"主+辅"一组用 BILINGUAL_GROUP_LINE_HEIGHT_RATIO * S 槽高，
+        // 组间视觉间距收窄到与正常行间距相近，避免之前"组间距是正常行间距好几倍"的空白过大问题。
         float singleLineHeight = masterTextSize * 1.5f;
-        int visibleLines = Math.min(mLrcLines.size(), 7); // 最多取7行作为垂直居中参考
-        // ===== xuameng 修改：当前行 baseline 固定在屏幕垂直中心下方 masterTextSize*0.25f，
-        // 与原先单行模式下 currentLine 居中位置一致（原 totalHeight=7*1.5S，centerY+masterTextSize 下正好是该偏移）；
-        // 然后当前行之上/之下的各行 baseline 按"逐行动态槽高"累加/累减，辅行不占槽。
-        float currentBaseY = getHeight() / 2f + masterTextSize * 0.25f - mScrollOffset;
+        float bilingualGroupHeight = masterTextSize * BILINGUAL_GROUP_LINE_HEIGHT_RATIO;
+        boolean isBilingual = mIsBilingual; // xuameng 修复：字段名应为 mIsBilingual（整首歌是否含双语对）
+        float defaultLineHeight = isBilingual ? bilingualGroupHeight : singleLineHeight;
+        int visibleLines = Math.min(mLrcLines.size(), 7); // 显示最多7行歌词
+        // 总高度按当前实际槽高累加（双语模式统一用双语组槽高，单语模式用单行槽高）
+        float totalHeight = defaultLineHeight * visibleLines;
+        // 滚动偏移像素：使用当前默认槽高作为步长（双语/单语各自一致，不会错位）
+        float scrollOffsetPixels = Math.round(mScrollOffset * defaultLineHeight);
+        float startY = (getHeight() - totalHeight) / 2 + masterTextSize - scrollOffsetPixels;
+        // 计算实际可见的行范围，确保不会超出歌词列表边界
         int startLineIndex = Math.max(0, mCurrentLine - 3);
         int endLineIndex = Math.min(mLrcLines.size() - 1, mCurrentLine + 3);
 
@@ -1425,35 +1350,13 @@ public class LrcView extends View {
             }
 
             LrcLine line = mLrcLines.get(actualIndex);
+            float y = startY + i * defaultLineHeight;
 
             // ===== xuameng 新增：双语模式下，辅行不单独占一个绘制槽位，
             // 因为 targetLine/startLineIndex 都是主行下标，辅行不会被迭代到；
             // 这里做一次保险：万一由于边界计算 iter 到了辅行下标，直接跳过，由其主行绘制 =====
             if (line.isTranslation) {
                 continue;
-            }
-
-            // ===== xuameng 修改：逐行动态 Y 计算——
-            // 以当前行 baseline（currentBaseY）为锚点，逐行累加各行"自身槽高"得到 baseline。
-            // 单语行槽高=1.5S、双语主行槽高=BILINGUAL_GROUP_LINE_HEIGHT_RATIO*S（紧凑）、
-            // 辅行不占槽位（上面已 continue）。这样双语歌里的单语行就按 1.5S 行距排布，与全单语歌曲一致。
-            float y;
-            if (actualIndex == mCurrentLine) {
-                y = currentBaseY;
-            } else if (actualIndex < mCurrentLine) {
-                // 在当前行之上：从 actualIndex+1 到 mCurrentLine 的槽高累加，currentBaseY 减去它
-                float above = 0f;
-                for (int k = actualIndex + 1; k <= mCurrentLine; k++) {
-                    above += getLineSlotHeight(k, masterTextSize);
-                }
-                y = currentBaseY - above;
-            } else {
-                // 在当前行之下：从 mCurrentLine+1 到 actualIndex 的槽高累加，currentBaseY 加上它
-                float below = 0f;
-                for (int k = mCurrentLine + 1; k <= actualIndex; k++) {
-                    below += getLineSlotHeight(k, masterTextSize);
-                }
-                y = currentBaseY + below;
             }
 
             // 统一预先判断"这一行（非当前行/延时高亮/普通）是否需要顺带画辅行"，
