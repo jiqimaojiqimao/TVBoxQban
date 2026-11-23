@@ -101,6 +101,17 @@ import java.lang.Math;
  *      两个字段，前三行向前换行时登记“刚离开的上一行”为延时高亮行，onDraw 画非当前行时
  *      如果命中且未到期，就画成整行高亮；到期后恢复普通白字并持续重绘到那一时点。
  *      seek/reset/初始定位/跨行跳转时会清空这个标记，避免高亮残留。第 4 行起行为不变。
+ * 20261123 新增：双语歌词（中英文对照等“同时间结相邻两行”）独立逻辑。
+ *      判定规则：解析并排序去重完成后，扫描 mLrcLines，若相邻两行的 time 完全相等，
+ *      则认定为双语歌词（mIsBilingual = true），第一行为主歌词（isMaster=true），
+ *      第二行为辅歌词（isTranslation=true，masterIndex 指向对应主行下标）。
+ *      辅歌词不占独立的"行槽"，不参与 targetLine 定位与换行计数（查找目标行时自动跳过辅行）；
+ *      辅行字号 = 主行的 0.5 倍；辅行默认颜色为中灰色（0xFF999999）；
+ *      辅行高亮颜色与主行高亮一致（黄色/或宿主通过 setHighlightColor 设置的颜色）；
+ *      主行与辅行的高亮完全同步（同一时间戳、同一结束时刻、同一进度）；
+ *      主行与辅行之间的间距 = 正常行间距的一半（约为主行字号的 0.25 倍）；
+ *      其它所有原有逻辑（逐字/普通、铺满规则、防闪白、seek 重置、滚动、前三行延时、白边补偿）
+ *      全部保持不变，双语相关代码为独立新增实现，不修改原有流程分支。
  */
 public class LrcView extends View {
 
@@ -123,10 +134,19 @@ public class LrcView extends View {
         float width; // 文本宽度（用于绘制）
         List<WordInfo> words; // xuameng 新增：逐字信息，null表示普通行（非逐字格式）
         boolean fullyLit; // xuameng 新增：是否已经完全铺满高亮（铺满后不再退回未高亮状态，防止闪白）
+        // ===== xuameng 新增：双语歌词相关标记 =====
+        boolean isMaster;      // 是否是双语对中的"主歌词行"（同时间结对中的第一行）
+        boolean isTranslation; // 是否是双语对中的"辅歌词/译词行"（同时间结对中的第二行）
+        int masterIndex;       // 辅行字段：指向对应主行在 mLrcLines 中的下标；主行为 -1
+        float transWidth;      // 辅行字段：辅行文本在辅行字号下的宽度
     }
 
     private List<LrcLine> mLrcLines = new ArrayList<>();
     private Paint mNormalPaint, mHighlightPaint;
+    // ===== xuameng 新增：双语辅歌词独立画笔（不与主歌词共享，避免字号/颜色互相污染） =====
+    private Paint mTransNormalPaint, mTransHighlightPaint;
+    private boolean mIsBilingual = false; // xuameng 新增：当前歌词是否是双语（存在同时间结相邻行）
+
     private int mCurrentLine = 0;
     private long mCurrentPosition = 0;
 
@@ -181,6 +201,13 @@ public class LrcView extends View {
     /** xuameng：调试日志开关。逐帧重绘时务必关闭，否则日志本身会把渲染拖慢 */
     private static final boolean DEBUG_LOG = false;
 
+    // ===== xuameng 新增：双语歌词外观常量（可按需微调） =====
+    private static final float BILINGUAL_TRANS_SIZE_RATIO = 0.5f;   // 辅行字号 = 主行字号 * 0.5
+    private static final int   BILINGUAL_TRANS_NORMAL_COLOR = 0xFF999999; // 辅行默认颜色：中灰色
+    // 主副歌词之间的间距比例：正常行间距 = 主行字号 * 0.5f（因 lineHeight = textSize*1.5，两行 baseline 之间是 1.5*textSize，
+    // 也就是字外额外 0.5*textSize 的间距）；主副之间取其一半 = 主行字号 * 0.25f。
+    private static final float BILINGUAL_MASTER_TRANS_GAP_RATIO = 0.25f;
+
     public LrcView(Context context) {
         super(context);
         init();
@@ -212,6 +239,20 @@ public class LrcView extends View {
         mHighlightPaint.setColor(Color.YELLOW);
         mHighlightPaint.setShadowLayer(3, 1, 1, Color.BLACK);
         mHighlightPaint.setFakeBoldText(true);
+
+        // ===== xuameng 新增：双语辅行画笔独立初始化，默认字号跟随主行的 BILINGUAL_TRANS_SIZE_RATIO 倍 =====
+        mTransNormalPaint = new Paint();
+        mTransNormalPaint.setAntiAlias(true);
+        mTransNormalPaint.setTextSize(36 * BILINGUAL_TRANS_SIZE_RATIO);
+        mTransNormalPaint.setColor(BILINGUAL_TRANS_NORMAL_COLOR);
+        mTransNormalPaint.setShadowLayer(2, 1, 1, Color.BLACK); // 辅行阴影略小
+
+        mTransHighlightPaint = new Paint();
+        mTransHighlightPaint.setAntiAlias(true);
+        mTransHighlightPaint.setTextSize(36 * BILINGUAL_TRANS_SIZE_RATIO);
+        mTransHighlightPaint.setColor(Color.YELLOW); // 与主行高亮颜色保持一致（setHighlightColor 会同步更新）
+        mTransHighlightPaint.setShadowLayer(2, 1, 1, Color.BLACK);
+        mTransHighlightPaint.setFakeBoldText(false); // 辅行不加粗，视觉上作为副文本
     }
 
     /**
@@ -232,6 +273,8 @@ public class LrcView extends View {
         // 将 sp 转换为 px 以便与字幕的字体大小一致
         float pxSize = spToPx(getContext(), textSize);
         mNormalPaint.setTextSize(pxSize);
+        // xuameng 新增：同步更新辅行字号（主行一半）
+        mTransNormalPaint.setTextSize(pxSize * BILINGUAL_TRANS_SIZE_RATIO);
         // 重新计算所有歌词行的宽度
         recalculateLineWidths();
         invalidate();
@@ -246,6 +289,8 @@ public class LrcView extends View {
         // 将 sp 转换为 px 以便与字幕的字体大小一致
         float pxSize = spToPx(getContext(), textSize);
         mHighlightPaint.setTextSize(pxSize);
+        // xuameng 新增：同步更新辅行高亮字号（主行一半）
+        mTransHighlightPaint.setTextSize(pxSize * BILINGUAL_TRANS_SIZE_RATIO);
         // 重新计算所有歌词行的宽度
         recalculateLineWidths();
         invalidate();
@@ -256,11 +301,16 @@ public class LrcView extends View {
      */
     private void recalculateLineWidths() {
         for (LrcLine line : mLrcLines) {
-            line.width = mNormalPaint.measureText(line.text);
-            // xuameng 新增：同步计算逐字宽度
+            // xuameng 修改：双语辅行用辅行画笔测量宽度，主行/普通行用主行画笔
+            Paint measurePaint = line.isTranslation ? mTransNormalPaint : mNormalPaint;
+            line.width = measurePaint.measureText(line.text);
+            if (line.isTranslation) {
+                line.transWidth = line.width; // 辅行同时记录 transWidth
+            }
+            // xuameng 新增：同步计算逐字宽度（逐字字段只在主行/普通行存在，辅行默认没有 words）
             if (line.words != null) {
                 for (WordInfo w : line.words) {
-                    w.width = mNormalPaint.measureText(w.text);
+                    w.width = measurePaint.measureText(w.text);
                 }
             }
         }
@@ -283,6 +333,8 @@ public class LrcView extends View {
      */
     public void setHighlightColor(int color) {
         mHighlightPaint.setColor(color);
+        // xuameng 新增：辅行高亮颜色与主行同步
+        mTransHighlightPaint.setColor(color);
         invalidate();
     }
 
@@ -355,6 +407,8 @@ public class LrcView extends View {
                   " first200=" + (lrcContent == null ? "null" : lrcContent.substring(0, Math.min(200, lrcContent.length()))));
         }
         mLrcLines.clear();
+        // xuameng 新增：重置双语标记，避免上一首歌词的标记残留
+        mIsBilingual = false;
 
         // xuameng 新增：逐字格式正则
         // 正则1：逐字格式行首 [数字,数字] 或 [数字.数字]，如 [0,1064] 或 [0.570]
@@ -428,6 +482,11 @@ public class LrcView extends View {
                     lrcLine.text = fullText.toString();
                     lrcLine.width = mNormalPaint.measureText(fullText.toString());
                     lrcLine.words = words;
+                    // xuameng 新增：默认非双语标记（detectBilingualPairs 后面会覆盖）
+                    lrcLine.isMaster = false;
+                    lrcLine.isTranslation = false;
+                    lrcLine.masterIndex = -1;
+                    lrcLine.transWidth = 0f;
                     for (WordInfo w : words) {
                         w.width = mNormalPaint.measureText(w.text);
                     }
@@ -472,6 +531,11 @@ public class LrcView extends View {
                     lrcLine.text = text;
                     lrcLine.width = mNormalPaint.measureText(text);
                     lrcLine.words = null; // 普通行，无逐字信息
+                    // xuameng 新增：默认非双语标记
+                    lrcLine.isMaster = false;
+                    lrcLine.isTranslation = false;
+                    lrcLine.masterIndex = -1;
+                    lrcLine.transWidth = 0f;
                     mLrcLines.add(lrcLine);
                 }
             }
@@ -484,11 +548,20 @@ public class LrcView extends View {
         // 移除重复的歌词行
         removeDuplicateLines();
 
+        // ===== xuameng 新增：排序去重完成后，检测并标记双语同时间结对 =====
+        detectBilingualPairs();
+        // 双语标记之后再统一测量一次宽度（保证辅行用辅行画笔测宽）
+        recalculateLineWidths();
+
         // xuameng debug：打印前5行时间
         if (DEBUG_LOG) {
             for (int i = 0; i < Math.min(5, mLrcLines.size()); i++) {
-                Log.d("LrcView_xuameng", "排序后 line[" + i + "] time=" + mLrcLines.get(i).time + " text=" + mLrcLines.get(i).text.substring(0, Math.min(15, mLrcLines.get(i).text.length())));
+                Log.d("LrcView_xuameng", "排序后 line[" + i + "] time=" + mLrcLines.get(i).time
+                        + " master=" + mLrcLines.get(i).isMaster
+                        + " trans=" + mLrcLines.get(i).isTranslation
+                        + " text=" + mLrcLines.get(i).text.substring(0, Math.min(15, mLrcLines.get(i).text.length())));
             }
+            Log.d("LrcView_xuameng", "mIsBilingual=" + mIsBilingual);
         }
 
         // 重置所有状态
@@ -513,6 +586,42 @@ public class LrcView extends View {
             Log.d("LrcView_xuameng", "setLrcText done, mLrcLines.size()=" + mLrcLines.size());
         }
         invalidate(); // 立即重绘
+    }
+
+    /**
+     * xuameng 新增：在排序与去重之后扫描 mLrcLines，
+     * 若相邻两行 time 完全相等，则认定为双语对：第一行 isMaster=true，第二行 isTranslation=true。
+     * 只识别相邻同时间结对（中英文对照歌词的典型排布）；不处理 3 行以上同时间结。
+     * 辅行 masterIndex 指向其主行；扫描时跳过上一对已被占用的主行/辅行。
+     */
+    private void detectBilingualPairs() {
+        mIsBilingual = false;
+        if (mLrcLines == null || mLrcLines.size() < 2) {
+            return;
+        }
+        // 先把所有行的双语标记重置一遍
+        for (LrcLine line : mLrcLines) {
+            line.isMaster = false;
+            line.isTranslation = false;
+            line.masterIndex = -1;
+            line.transWidth = 0f;
+        }
+        int i = 0;
+        while (i < mLrcLines.size() - 1) {
+            LrcLine cur = mLrcLines.get(i);
+            LrcLine next = mLrcLines.get(i + 1);
+            // 同时间结且文本不同（文本相同的视为重复行，已经被 removeDuplicateLines 处理过）
+            if (cur.time == next.time && !cur.text.equals(next.text)) {
+                cur.isMaster = true;
+                cur.masterIndex = -1;
+                next.isTranslation = true;
+                next.masterIndex = i;
+                mIsBilingual = true;
+                i += 2; // 跳过这一对，避免把第三行/错位行错误并入
+            } else {
+                i += 1;
+            }
+        }
     }
 
     /**
@@ -704,20 +813,39 @@ public class LrcView extends View {
             return;
         }
 
-        // xuameng 修改：反向查找最后一个 time <= position 的行
+        // xuameng 修改：反向查找最后一个 time <= position 的"非辅行"行，
+        // 辅行（isTranslation==true）不参与 targetLine 定位与换行计数，永远跟随其主行。
+        // 非双语模式下 isTranslation 始终为 false，行为与原来完全一致。
         int targetLine = 0;
 
-        // 如果当前时间比第一行还早，保持在第一行
-        if (position < mLrcLines.get(0).time) {
-            targetLine = 0;
+        // 如果当前时间比第一行还早，保持在第一行（第一行若是辅行，则取其主行）
+        LrcLine firstLine = mLrcLines.get(0);
+        int firstLogicalLine = firstLine.isTranslation ? firstLine.masterIndex : 0;
+        if (position < firstLine.time) {
+            targetLine = firstLogicalLine;
         } else {
-            // 否则找到合适的时间点
+            // 否则反向查找：找到最后一个 time <= position 且不是辅行的行
+            boolean found = false;
             for (int i = mLrcLines.size() - 1; i >= 0; i--) {
-                if (position >= mLrcLines.get(i).time) {
+                LrcLine l = mLrcLines.get(i);
+                if (l.isTranslation) {
+                    continue; // 跳过辅行，不把它当成换行目标
+                }
+                if (position >= l.time) {
                     targetLine = i;
+                    found = true;
                     break;
                 }
             }
+            if (!found) {
+                targetLine = firstLogicalLine;
+            }
+        }
+
+        // xuameng 新增：保证 mCurrentLine 也永远落在主行/普通行上，不停在辅行下标
+        if (mCurrentLine >= 0 && mCurrentLine < mLrcLines.size()
+                && mLrcLines.get(mCurrentLine).isTranslation) {
+            mCurrentLine = mLrcLines.get(mCurrentLine).masterIndex;
         }
 
         // xuameng debug
@@ -745,7 +873,7 @@ public class LrcView extends View {
 
         // 正常播放中的滚动逻辑
         if (targetLine != mCurrentLine) {
-            // 计算目标行与当前行的距离和方向
+            // 计算目标行与当前行的距离和方向（这里的行下标都是主行/普通行，已跳过辅行）
             int lineDiff = targetLine - mCurrentLine;
             int lineDistance = Math.abs(lineDiff);
 
@@ -909,16 +1037,19 @@ public class LrcView extends View {
         mLastFrameNanos = 0L;
         mLastHostPosition = Long.MIN_VALUE;
         mLastPositionChangeNanos = 0L;
+        // xuameng 新增：重置双语标记
+        mIsBilingual = false;
         invalidate();
     }
 
     /**
      * xuameng 新增：取某一行“整行真正走完”的时刻（绝对时间，毫秒）。
      * - 逐字行：行起始时间 + 最后一个字在本行内的结束偏移；
-     * - 普通行：下一行的起始时间（最后一行没有下一行，退化为 起始时间 + 5000ms）。
+     * - 普通行：下一个"非辅行"行的起始时间（最后一行没有下一行，退化为 起始时间 + 5000ms）。
      * 该时刻用于判定“整行是否完整结束”：未结束不许铺满，结束后必须铺满。
+     * 双语模式下，辅行不参与"下一行时间"计算，直接跳到下一个主行/普通行。
      *
-     * @param index 行的下标
+     * @param index 行的下标（必须是主行/普通行，不应是辅行）
      * @return 整行结束的绝对时间（毫秒）
      */
     private long getLineEndTime(int index) {
@@ -935,68 +1066,62 @@ public class LrcView extends View {
             }
             return line.time + wordsEnd;
         } else {
-            long nextTime = (index + 1 < mLrcLines.size())
-                    ? mLrcLines.get(index + 1).time
-                    : line.time + 5000;
+            // xuameng 修改：双语模式下找"下一个非辅行"作为 endTime，跳过 isTranslation 的行
+            long nextTime = line.time + 5000;
+            for (int k = index + 1; k < mLrcLines.size(); k++) {
+                LrcLine nl = mLrcLines.get(k);
+                if (!nl.isTranslation) {
+                    nextTime = nl.time;
+                    break;
+                }
+            }
             return nextTime;
         }
     }
 
     /**
-     * xuameng 新增：卡拉OK高亮绘制（普通歌词与逐字歌词共用一套方案）
-     * 关键改动：高亮进度统一改用平滑时间轴 mRenderTime，不再直接使用播放器原始进度，
-     *          也不再区分两套平滑机制。
-     * - 逐字行（line.words != null）：按每个字的起止时间逐字填充；
-     * - 普通行（line.words == null）：按整行时长线性填充。
-     *
-     * @param index 当前行在 mLrcLines 中的下标（普通行需要用它取下一行时间算行时长）
+     * xuameng 新增：卡拉OK高亮绘制的通用版本，允许传入"普通/高亮画笔"对，
+     * 这样主行与辅行可以共用同一套逐字/逐像素裁剪逻辑，只是画笔（字号/颜色/粗体）不同。
+     * 原 drawKaraokeLine(canvas, line, index, y) 保留不动，内部转调本重载使用主行画笔。
      */
-    private void drawKaraokeLine(Canvas canvas, LrcLine line, int index, float y) {
-        float startX = getWidth() / 2 - line.width / 2;
+    private void drawKaraokeLine(Canvas canvas, LrcLine line, int index, float y,
+                                 Paint normalPaint, Paint highlightPaint) {
+        float lineWidth = line.isTranslation ? line.transWidth : line.width;
+        float startX = getWidth() / 2 - lineWidth / 2;
 
-        // 1. 先画整行普通底色（和老歌词一样）
-        canvas.drawText(line.text, startX, y, mNormalPaint);
+        // 1. 先画整行普通底色
+        canvas.drawText(line.text, startX, y, normalPaint);
 
-        Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
+        Paint.FontMetrics fm = highlightPaint.getFontMetrics();
         float textTop = y + fm.top;
         float textBottom = y + fm.bottom;
 
-        // xuameng 修改：使用平滑时间轴，且用浮点运算，避免整字跳变
+        // 高亮进度统一由平滑时间轴决定
         float lineElapsed = mRenderTime - line.time;
 
-        // xuameng 新增：判断“当前行是否已经完整结束”。
-        // 一旦某行被判定为铺满，fullyLit 永久置 true；之后不管时间轴怎么波动，
-        // 这一行都永远保持整行高亮，不再退回到未高亮状态（彻底消除“铺满后闪白再铺满”）。
-        long lineEndTime = getLineEndTime(index);
+        // 判断"当前行是否已经完整结束"
+        long lineEndTime = getLineEndTime(line.isTranslation ? line.masterIndex : index);
         boolean lineCompleted = (mRenderTime >= lineEndTime) || line.fullyLit;
         if (lineCompleted && !line.fullyLit) {
-            line.fullyLit = true; // xuameng 新增：第一次铺满后永久标记
+            line.fullyLit = true;
         }
-        float fullRight = startX + line.width;
+        float fullRight = startX + lineWidth;
 
-        // xuameng 新增：修复英文/粗体最右侧最后一个字高亮盖不住白字、露出小白边的问题。
-        // 根源：Paint.measureText 返回的是排版 advance width，不是视觉绘制边界；
-        //      fakeBold 加粗 + 抗锯齿 + 英文字形（延伸笔画/斜体）会让高亮实际绘制
-        //      比测量宽度向右多 1~3px，导致 clipRect 按测量宽度裁切时切到笔画露白。
-        // 做法：clipRect 的右边界统一向右多放 HIGHLIGHT_OVERFLOW_PAD 像素，
-        //      让高亮的抗锯齿/粗体溢出/字形延伸都能被完整画出；
-        //      未结束时通过把 wordRight/highlightWidth 上限减去同样的 PAD，
-        //      保证可见右边界仍落在 fullRight - margin 以内，不破坏"未结束不铺满"。
-        final float HIGHLIGHT_OVERFLOW_PAD = 2.5f;
+        // 英文/粗体右边界溢出补偿（主行 2.5px；辅行字号小，溢出也小，用 1.5px 就够）
+        final float HIGHLIGHT_OVERFLOW_PAD = line.isTranslation ? 1.5f : 2.5f;
 
-        float maxVisibleRight; // 裁剪窗口内可见的最右像素位置（含补偿）
+        float maxVisibleRight;
         if (!lineCompleted) {
-            float margin = Math.max(1f, Math.min(3f, line.width * 0.004f));
-            maxVisibleRight = fullRight - margin; // 未结束：仍在整行宽以内，绝不铺满
+            float margin = Math.max(1f, Math.min(3f, lineWidth * 0.004f));
+            maxVisibleRight = fullRight - margin;
         } else {
-            maxVisibleRight = fullRight + HIGHLIGHT_OVERFLOW_PAD; // 结束时：允许向右溢出几个像素完全覆盖白字
+            maxVisibleRight = fullRight + HIGHLIGHT_OVERFLOW_PAD;
         }
-        // wordRight/highlightWidth 的封顶值 = 可见右边界 - PAD（因为 clipRect 右参数会再加 PAD）
         float maxDrawRight = maxVisibleRight - HIGHLIGHT_OVERFLOW_PAD;
 
-        // xuameng 新增：已铺满的行，不管时间轴如何，直接整行高亮，不再走逐字/逐像素裁剪
+        // 已铺满的行：直接整行高亮，不走逐字/逐像素裁剪
         if (line.fullyLit) {
-            canvas.drawText(line.text, startX, y, mHighlightPaint);
+            canvas.drawText(line.text, startX, y, highlightPaint);
             return;
         }
 
@@ -1011,38 +1136,40 @@ public class LrcView extends View {
                         wordProgress = (lineElapsed - w.start) / (float) wordDur;
                         wordProgress = Math.max(0f, Math.min(1f, wordProgress));
                     }
-                    //xuameng 盛满高亮
                     if (wordProgress > 0.99f) wordProgress = 1.0f;
                     float highlightWidth = w.width * wordProgress;
-                    // xuameng 新增：右边界受 maxDrawRight 限制，clipRect 加溢出补偿覆盖粗体/抗锯齿
                     float wordRight = Math.min(x + highlightWidth, maxDrawRight);
                     float clipRight = wordRight + HIGHLIGHT_OVERFLOW_PAD;
                     if (clipRight - x > 0.5f) {
-                        // 关键：用整行 clipRect，但只裁剪当前字的区域
                         canvas.save();
                         canvas.clipRect(x, textTop, clipRight, textBottom);
-                        // 画整行文本，不是逐字！
-                        canvas.drawText(line.text, startX, y, mHighlightPaint);
+                        // 注意：辅行一般没有 words 字段（双语普通歌词），这里用传入的 highlightPaint 画
+                        canvas.drawText(line.text, startX, y, highlightPaint);
                         canvas.restore();
                     }
                 }
                 x += w.width;
             }
         } else {
-            // ===== 普通歌词：整行按行时长线性推进（同样走平滑时间轴） =====
-            long nextTime = (index + 1 < mLrcLines.size())
-                    ? mLrcLines.get(index + 1).time
-                    : line.time + 5000;
+            // ===== 普通歌词：整行按行时长线性推进 =====
+            // 行时长：找下一个非辅行的 time
+            long nextTime = line.time + 5000;
+            int searchFrom = line.isTranslation ? line.masterIndex : index;
+            for (int k = searchFrom + 1; k < mLrcLines.size(); k++) {
+                LrcLine nl = mLrcLines.get(k);
+                if (!nl.isTranslation) {
+                    nextTime = nl.time;
+                    break;
+                }
+            }
             long duration = nextTime - line.time;
             float progress = 0f;
             if (duration > 0) {
                 progress = (mRenderTime - line.time) / (float) duration;
                 progress = Math.max(0f, Math.min(1f, progress));
             }
-            //xuameng 盛满高亮
             if (progress > 0.99f) progress = 1.0f;
-            float highlightWidth = line.width * progress;
-            // xuameng 新增：右边界受 maxDrawRight 限制，clipRect 加溢出补偿覆盖粗体/抗锯齿
+            float highlightWidth = lineWidth * progress;
             if (highlightWidth > maxDrawRight) {
                 highlightWidth = maxDrawRight;
             }
@@ -1050,10 +1177,18 @@ public class LrcView extends View {
             if (clipRight - startX > 0.5f) {
                 canvas.save();
                 canvas.clipRect(startX, textTop, clipRight, textBottom);
-                canvas.drawText(line.text, startX, y, mHighlightPaint);
+                canvas.drawText(line.text, startX, y, highlightPaint);
                 canvas.restore();
             }
         }
+    }
+
+    /**
+     * xuameng 新增：卡拉OK高亮绘制（主行版本），保持与原签名完全一致，
+     * 内部转调支持自定义画笔的重载，使用主行 mNormalPaint/mHighlightPaint。
+     */
+    private void drawKaraokeLine(Canvas canvas, LrcLine line, int index, float y) {
+        drawKaraokeLine(canvas, line, index, y, mNormalPaint, mHighlightPaint);
     }
 
     /**
@@ -1088,6 +1223,10 @@ public class LrcView extends View {
 
         // 计算总高度和起始Y位置，实现垂直居中
         float lineHeight = mNormalPaint.getTextSize() * 1.5f;
+        // xuameng 修改：双语模式下当前行槽位需要同时画主行和辅行，辅行要占额外高度；
+        // 为了简单稳妥：visibleLines 保持 7 不变，但 totalHeight 与 startY 仍按单行 lineHeight 排布，
+        // 只是在"当前行是主行且有对应辅行"时，把当前槽位内主行上移、辅行画在主行下方半间距处，
+        // 视觉上当前槽位会比其它行稍高，但不影响上下行的滚动与定位。
         int visibleLines = Math.min(mLrcLines.size(), 7); // 显示最多7行歌词
         float totalHeight = lineHeight * visibleLines;
         // 将浮点数偏移转换为整数像素，避免亚像素渲染问题
@@ -1112,6 +1251,29 @@ public class LrcView extends View {
             prevHighlightStillOn = false;
         }
 
+        // ===== xuameng 新增：提前判断当前行是否是"双语主行（需要顺带画辅行）" =====
+        boolean currentHasTranslation = false;
+        LrcLine currentTransLine = null;
+        if (mIsBilingual && mCurrentLine >= 0 && mCurrentLine < mLrcLines.size()) {
+            LrcLine curLine = mLrcLines.get(mCurrentLine);
+            if (curLine.isMaster && mCurrentLine + 1 < mLrcLines.size()) {
+                LrcLine next = mLrcLines.get(mCurrentLine + 1);
+                if (next.isTranslation && next.masterIndex == mCurrentLine) {
+                    currentHasTranslation = true;
+                    currentTransLine = next;
+                }
+            }
+        }
+        // 主辅之间的间距 = 主行字号 * 0.25（正常行间距的一半）
+        float masterTransGap = mNormalPaint.getTextSize() * BILINGUAL_MASTER_TRANS_GAP_RATIO;
+        // 为了让"主行+辅行"整体在当前槽位内垂直居中，主行 baseline 上移一点：
+        // 辅行baseline 相对主行 baseline 的下移 = 辅行字号（baseline 到字底） + 间距；
+        // 把主行 baseline 上移 (下移量)/2，使两行整体中心对齐到槽位中心。
+        float transTextSize = mTransNormalPaint.getTextSize();
+        float transBaselineOffset = transTextSize + masterTransGap;
+        float masterLift = transBaselineOffset * 0.5f; // 主行上移
+        float transDrop  = transBaselineOffset - masterLift; // 辅行相对槽位中心baseline的下移
+
         // 绘制当前行及前后行
         for (int i = 0; i < visibleLines; i++) {
             int actualIndex = startLineIndex + i;
@@ -1122,16 +1284,58 @@ public class LrcView extends View {
             LrcLine line = mLrcLines.get(actualIndex);
             float y = startY + i * lineHeight;
 
+            // ===== xuameng 新增：双语模式下，辅行不单独占一个绘制槽位，
+            // 因为 targetLine/startLineIndex 都是主行下标，辅行不会被迭代到；
+            // 这里做一次保险：万一由于边界计算 iter 到了辅行下标，直接跳过，由其主行绘制 =====
+            if (line.isTranslation) {
+                continue;
+            }
+
             if (actualIndex == mCurrentLine) {
                 // 当前行：卡拉OK高亮效果（普通行/逐字行统一走 drawKaraokeLine）
-                drawKaraokeLine(canvas, line, actualIndex, y);
+                if (currentHasTranslation && currentTransLine != null) {
+                    // 双语主行：主行 baseline 上移，画主行卡拉OK
+                    float masterY = y - masterLift;
+                    drawKaraokeLine(canvas, line, actualIndex, masterY);
+                    // 辅行：在主行下方（小字号 + 半间距），用辅行画笔同步画卡拉OK
+                    float transY = masterY + transBaselineOffset;
+                    // 辅行未高亮/高亮都与主行同步：用同一时间轴、同一 line 结束时刻（drawKaraokeLine 内部
+                    // 会通过 masterIndex 取主行的 endTime 与 duration），所以高亮完全同步。
+                    drawKaraokeLine(canvas, currentTransLine, actualIndex, transY,
+                            mTransNormalPaint, mTransHighlightPaint);
+                } else {
+                    // 非双语当前行：按原逻辑绘制
+                    drawKaraokeLine(canvas, line, actualIndex, y);
+                }
             } else {
                 // 非当前行：普通显示；如果命中“前三行上一行延时高亮”且未到期，则整行画高亮
+                // xuameng 新增：双语模式下，如果这一行是主行且下一行是它的辅行（也是非当前行），
+                // 则同时在主行下方半间距位置画辅行白字；辅行延时高亮逻辑简单处理：
+                // 只有当主行本身处于"延时高亮"时，辅行也一起画高亮，否则都是普通色。
                 if (prevHighlightStillOn && actualIndex == mPrevHighlightLineIndex) {
                     float x = getWidth() / 2 - line.width / 2;
                     canvas.drawText(line.text, x, y, mHighlightPaint);
+                    // 如果该主行有对应辅行，辅行也画成高亮色（保持视觉一致）
+                    if (mIsBilingual && line.isMaster && actualIndex + 1 < mLrcLines.size()) {
+                        LrcLine next = mLrcLines.get(actualIndex + 1);
+                        if (next.isTranslation && next.masterIndex == actualIndex) {
+                            float tx = getWidth() / 2 - next.transWidth / 2;
+                            float ty = y - masterLift + transBaselineOffset;
+                            canvas.drawText(next.text, tx, ty, mTransHighlightPaint);
+                        }
+                    }
                 } else {
-                    canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
+                    float x = getWidth() / 2 - line.width / 2;
+                    canvas.drawText(line.text, x, y, mNormalPaint);
+                    // 双语非当前主行：在主行下方画辅行（中灰色、小字号、半间距）
+                    if (mIsBilingual && line.isMaster && actualIndex + 1 < mLrcLines.size()) {
+                        LrcLine next = mLrcLines.get(actualIndex + 1);
+                        if (next.isTranslation && next.masterIndex == actualIndex) {
+                            float tx = getWidth() / 2 - next.transWidth / 2;
+                            float ty = y - masterLift + transBaselineOffset;
+                            canvas.drawText(next.text, tx, ty, mTransNormalPaint);
+                        }
+                    }
                 }
             }
         }
