@@ -106,12 +106,20 @@ import java.lang.Math;
  *      则认定为双语歌词（mIsBilingual = true），第一行为主歌词（isMaster=true），
  *      第二行为辅歌词（isTranslation=true，masterIndex 指向对应主行下标）。
  *      辅歌词不占独立的"行槽"，不参与 targetLine 定位与换行计数（查找目标行时自动跳过辅行）；
- *      辅行字号 = 主行的 0.5 倍；辅行默认颜色为中灰色（0xFF999999）；
+ *      辅行字号 = 主行的 2/3；辅行默认颜色为中灰色（0xFF999999）；
  *      辅行高亮颜色与主行高亮一致（黄色/或宿主通过 setHighlightColor 设置的颜色）；
  *      主行与辅行的高亮完全同步（同一时间戳、同一结束时刻、同一进度）；
  *      主行与辅行之间的间距 = 正常行间距的一半（约为主行字号的 0.25 倍）；
  *      其它所有原有逻辑（逐字/普通、铺满规则、防闪白、seek 重置、滚动、前三行延时、白边补偿）
  *      全部保持不变，双语相关代码为独立新增实现，不修改原有流程分支。
+ * 20261123 修复：双语歌词字号与主辅间距不一致的问题。
+ *      1) 辅行字号由主行的 0.5 倍改为 2/3（BILINGUAL_TRANS_SIZE_RATIO = 2f/3f）；
+ *      2) 修正"正在唱的主副行间距正常、已唱/未唱行间距挤在一起、段与段之间间距被拉大"的问题：
+ *         原因是 onDraw 里给当前行做了"主行上移 masterLift"的居中处理，但非当前行主行
+ *         没做同样的上移，辅行的 Y 计算却仍减去了 masterLift，导致非当前行辅行几乎贴在主行下方，
+ *         并把下一行槽位的间距挤掉、段间看起来变宽。
+ *         现改为：主行 baseline 固定在槽位 y，辅行 baseline 统一为 y + transBaselineOffset，
+ *         正在唱/已唱/未唱三类行使用完全相同的 Y 公式，主副间距一致，段间间距恢复正常。
  */
 public class LrcView extends View {
 
@@ -202,7 +210,8 @@ public class LrcView extends View {
     private static final boolean DEBUG_LOG = false;
 
     // ===== xuameng 新增：双语歌词外观常量（可按需微调） =====
-    private static final float BILINGUAL_TRANS_SIZE_RATIO = 0.5f;   // 辅行字号 = 主行字号 * 0.5
+    // xuameng 修改：辅行字号由主行的 0.5 倍改为主行的 2/3（≈0.667）
+    private static final float BILINGUAL_TRANS_SIZE_RATIO = 2f / 3f;
     private static final int   BILINGUAL_TRANS_NORMAL_COLOR = 0xFF999999; // 辅行默认颜色：中灰色
     // 主副歌词之间的间距比例：正常行间距 = 主行字号 * 0.5f（因 lineHeight = textSize*1.5，两行 baseline 之间是 1.5*textSize，
     // 也就是字外额外 0.5*textSize 的间距）；主副之间取其一半 = 主行字号 * 0.25f。
@@ -273,7 +282,7 @@ public class LrcView extends View {
         // 将 sp 转换为 px 以便与字幕的字体大小一致
         float pxSize = spToPx(getContext(), textSize);
         mNormalPaint.setTextSize(pxSize);
-        // xuameng 新增：同步更新辅行字号（主行一半）
+        // xuameng 新增：同步更新辅行字号（主行的 2/3）
         mTransNormalPaint.setTextSize(pxSize * BILINGUAL_TRANS_SIZE_RATIO);
         // 重新计算所有歌词行的宽度
         recalculateLineWidths();
@@ -289,7 +298,7 @@ public class LrcView extends View {
         // 将 sp 转换为 px 以便与字幕的字体大小一致
         float pxSize = spToPx(getContext(), textSize);
         mHighlightPaint.setTextSize(pxSize);
-        // xuameng 新增：同步更新辅行高亮字号（主行一半）
+        // xuameng 新增：同步更新辅行高亮字号（主行的 2/3）
         mTransHighlightPaint.setTextSize(pxSize * BILINGUAL_TRANS_SIZE_RATIO);
         // 重新计算所有歌词行的宽度
         recalculateLineWidths();
@@ -1266,13 +1275,11 @@ public class LrcView extends View {
         }
         // 主辅之间的间距 = 主行字号 * 0.25（正常行间距的一半）
         float masterTransGap = mNormalPaint.getTextSize() * BILINGUAL_MASTER_TRANS_GAP_RATIO;
-        // 为了让"主行+辅行"整体在当前槽位内垂直居中，主行 baseline 上移一点：
-        // 辅行baseline 相对主行 baseline 的下移 = 辅行字号（baseline 到字底） + 间距；
-        // 把主行 baseline 上移 (下移量)/2，使两行整体中心对齐到槽位中心。
+        // 辅行 baseline 相对于"所属主行 baseline"的固定下移量（= 主辅间距，不再叠辅行字号——
+        // baseline 之间用"间距"足够，让辅行紧贴主行下方半间距处；这样已唱/正在唱/未唱
+        // 三类主副块的几何完全一致，不会出现"正在唱的间距正常、其它行间距挤在一起"的情况）。
         float transTextSize = mTransNormalPaint.getTextSize();
-        float transBaselineOffset = transTextSize + masterTransGap;
-        float masterLift = transBaselineOffset * 0.5f; // 主行上移
-        float transDrop  = transBaselineOffset - masterLift; // 辅行相对槽位中心baseline的下移
+        float transBaselineOffset = transTextSize * 0.85f + masterTransGap;
 
         // 绘制当前行及前后行
         for (int i = 0; i < visibleLines; i++) {
@@ -1291,16 +1298,25 @@ public class LrcView extends View {
                 continue;
             }
 
+            // 统一预先判断"这一行（非当前行/延时高亮/普通）是否需要顺带画辅行"，
+            // 辅行的 Y 都用 y + transBaselineOffset（与当前行的辅行 Y 公式完全相同），
+            // 保证已唱/正在唱/未唱三类主副块的主辅间距完全一致。
+            boolean hasTrans = false;
+            LrcLine transLine = null;
+            if (mIsBilingual && line.isMaster && actualIndex + 1 < mLrcLines.size()) {
+                LrcLine next = mLrcLines.get(actualIndex + 1);
+                if (next.isTranslation && next.masterIndex == actualIndex) {
+                    hasTrans = true;
+                    transLine = next;
+                }
+            }
+
             if (actualIndex == mCurrentLine) {
                 // 当前行：卡拉OK高亮效果（普通行/逐字行统一走 drawKaraokeLine）
                 if (currentHasTranslation && currentTransLine != null) {
-                    // 双语主行：主行 baseline 上移，画主行卡拉OK
-                    float masterY = y - masterLift;
-                    drawKaraokeLine(canvas, line, actualIndex, masterY);
-                    // 辅行：在主行下方（小字号 + 半间距），用辅行画笔同步画卡拉OK
-                    float transY = masterY + transBaselineOffset;
-                    // 辅行未高亮/高亮都与主行同步：用同一时间轴、同一 line 结束时刻（drawKaraokeLine 内部
-                    // 会通过 masterIndex 取主行的 endTime 与 duration），所以高亮完全同步。
+                    // 双语主行：主行 baseline 就在槽位 y，辅行在 y + transBaselineOffset（固定下移）
+                    drawKaraokeLine(canvas, line, actualIndex, y);
+                    float transY = y + transBaselineOffset;
                     drawKaraokeLine(canvas, currentTransLine, actualIndex, transY,
                             mTransNormalPaint, mTransHighlightPaint);
                 } else {
@@ -1309,32 +1325,23 @@ public class LrcView extends View {
                 }
             } else {
                 // 非当前行：普通显示；如果命中“前三行上一行延时高亮”且未到期，则整行画高亮
-                // xuameng 新增：双语模式下，如果这一行是主行且下一行是它的辅行（也是非当前行），
-                // 则同时在主行下方半间距位置画辅行白字；辅行延时高亮逻辑简单处理：
-                // 只有当主行本身处于"延时高亮"时，辅行也一起画高亮，否则都是普通色。
                 if (prevHighlightStillOn && actualIndex == mPrevHighlightLineIndex) {
                     float x = getWidth() / 2 - line.width / 2;
                     canvas.drawText(line.text, x, y, mHighlightPaint);
-                    // 如果该主行有对应辅行，辅行也画成高亮色（保持视觉一致）
-                    if (mIsBilingual && line.isMaster && actualIndex + 1 < mLrcLines.size()) {
-                        LrcLine next = mLrcLines.get(actualIndex + 1);
-                        if (next.isTranslation && next.masterIndex == actualIndex) {
-                            float tx = getWidth() / 2 - next.transWidth / 2;
-                            float ty = y - masterLift + transBaselineOffset;
-                            canvas.drawText(next.text, tx, ty, mTransHighlightPaint);
-                        }
+                    // 如果该主行有对应辅行，辅行也画成高亮色（保持视觉一致，Y 与正在唱的辅行一致）
+                    if (hasTrans && transLine != null) {
+                        float tx = getWidth() / 2 - transLine.transWidth / 2;
+                        float ty = y + transBaselineOffset;
+                        canvas.drawText(transLine.text, tx, ty, mTransHighlightPaint);
                     }
                 } else {
                     float x = getWidth() / 2 - line.width / 2;
                     canvas.drawText(line.text, x, y, mNormalPaint);
-                    // 双语非当前主行：在主行下方画辅行（中灰色、小字号、半间距）
-                    if (mIsBilingual && line.isMaster && actualIndex + 1 < mLrcLines.size()) {
-                        LrcLine next = mLrcLines.get(actualIndex + 1);
-                        if (next.isTranslation && next.masterIndex == actualIndex) {
-                            float tx = getWidth() / 2 - next.transWidth / 2;
-                            float ty = y - masterLift + transBaselineOffset;
-                            canvas.drawText(next.text, tx, ty, mTransNormalPaint);
-                        }
+                    // 双语非当前主行：辅行同样画在 y + transBaselineOffset（与正在唱的辅行坐标一致）
+                    if (hasTrans && transLine != null) {
+                        float tx = getWidth() / 2 - transLine.transWidth / 2;
+                        float ty = y + transBaselineOffset;
+                        canvas.drawText(transLine.text, tx, ty, mTransNormalPaint);
                     }
                 }
             }
