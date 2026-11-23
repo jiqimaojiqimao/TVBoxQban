@@ -570,7 +570,7 @@ public class VodController extends BaseController {
     protected void initView() {
         super.initView();
 
-         //xuameng接受通知 用于lrc歌词获取seekTo进度
+         //xuameng接受BaseController通知 用于lrc歌词获取seekTo进度
          setOnSeekListener(newPosition -> {
             if (mLrcView != null
                     && mLrcView.getVisibility() == View.VISIBLE) {
