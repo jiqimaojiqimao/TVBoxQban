@@ -50,14 +50,14 @@ import java.lang.Math;
  *      一批进度初始化判断和“普通歌词等铺满”判断，减少两套方案互相冲突。
  *      现在只有一套高亮逻辑：进度统一由 mRenderTime 决定，
  *      逐字行按字的起止时间填充，普通行按整行时长线性填充。
- * 20261123 修复：逐字歌词换行首帧整行闪满问题。
- *      原因是换行的那一帧 mRenderTime 已经被同步项拉到新行开始后几十毫秒，
- *      而逐字行的高亮是“每字 clip 后画整行文字”，只要某帧 lineElapsed 越过最后一个字的 end，
- *      循环中所有字都会以 wordProgress=1 被 clip 出来，拼起来就是整行闪黄。
- *      修复方式：
- *        1) 换行时把 mRenderTime 对齐到新行的 line.time，保证首帧 lineElapsed=0；
- *        2) 逐字行绘制时把 lineElapsed 钳到 [0, lastWordEnd]，不让它越过本行末尾；
- *      普通歌词逻辑保持不变。
+ * 20261123 修复：逐字行切换时首帧"整行闪黄/闪两次"问题。
+ *      根因：①换行时曾硬拽 mRenderTime，导致滚动动画 300ms 期间行号(mCurrentLine)
+ *            还停在上一行、时间轴却已到新行，上一行瞬间整行全亮形成"第二次闪"；
+ *            ②首帧 lineElapsed 为负/越界时未彻底钳制，一帧跨过多个字就全铺黄。
+ *      修复：①去掉换行时对 mRenderTime 的硬对齐，时间轴始终匀速自然推进；
+ *            ②drawKaraokeLine 对 lineElapsed 做三重钳制：<0 不画高亮、
+ *            超过本行末字末尾则钳制到末字末尾、每个字 progress 强制[0,1]；
+ *            ③advanceRenderTime 加单帧收敛上限，防止宿主大步长上报时一帧跨多字。
  */
 public class LrcView extends View {
 
@@ -111,19 +111,16 @@ public class LrcView extends View {
 
     /** 每帧向播放器真实进度收敛的系数：越小越平滑、越大越跟手，0.03~0.12 之间比较合适 */
     private static final float RENDER_SYNC_GAIN = 0.05f;
-    /** 单帧最大推进量，防止掉帧/切后台回来后一次冲过头 */
+    /** 单帧自主推进的最大量（真实时间走的部分），防止掉帧/切后台回来后一次冲过头 */
     private static final float RENDER_MAX_FRAME_MS = 64f;
+    /** 单帧向真实进度"收敛追赶"的最大量，防止宿主大步长上报时一帧跨很多字造成整行闪 */
+    private static final float RENDER_MAX_CATCHUP_MS = 40f;
     /** 播放器进度长时间不前进则视为暂停，冻结时间轴（需明显大于宿主的轮询间隔） */
     private static final long RENDER_IDLE_TIMEOUT_MS = 1000L;
     /** 与播放器真实进度相差超过该值视为 seek/跳转，时间轴直接硬对齐 */
     private static final long RENDER_RESYNC_THRESHOLD_MS = 800L;
     /** 向后 seek 判定：正常播放进度只会前进，倒退超过该值即认定用户拖回了进度条 */
     private static final long RENDER_BACKWARD_SEEK_TOLERANCE_MS = 250L;
-    /** xuameng：20261123 修复：换行时允许把 mRenderTime 对齐到新行起点的最大偏差。
-     *  只有当 mRenderTime 落在 [newLineTime - 30ms, newLineTime + 150ms] 之间时才对齐，
-     *  避免跨多行跳转/seek 时被误对齐。 */
-    private static final long RENDER_LINE_ALIGN_EARLY_MS = 30L;
-    private static final long RENDER_LINE_ALIGN_LATE_MS = 150L;
     /** xuameng：调试日志开关。逐帧重绘时务必关闭，否则日志本身会把渲染拖慢 */
     private static final boolean DEBUG_LOG = false;
 
@@ -553,7 +550,15 @@ public class LrcView extends View {
             // 1) 按帧自主推进：这才是高亮平滑的关键，不再依赖播放器给的时间精度
             mRenderTime += dtMs * mPlaybackSpeed;
             // 2) 缓慢收敛到真实进度：消除系统时钟与音频时钟的漂移，误差不会累积
-            mRenderTime += (mCurrentPosition - mRenderTime) * RENDER_SYNC_GAIN;
+            //    加单帧收敛上限 RENDER_MAX_CATCHUP_MS，防止宿主大步长上报时一帧追过多个字
+            float diff = mCurrentPosition - mRenderTime;
+            float catchup = diff * RENDER_SYNC_GAIN;
+            if (catchup > RENDER_MAX_CATCHUP_MS) {
+                catchup = RENDER_MAX_CATCHUP_MS;
+            } else if (catchup < -RENDER_MAX_CATCHUP_MS) {
+                catchup = -RENDER_MAX_CATCHUP_MS;
+            }
+            mRenderTime += catchup;
             return true;
         }
         return false;
@@ -567,24 +572,6 @@ public class LrcView extends View {
      */
     public void updateTime(long position) {
         updateTime(position, true);
-    }
-
-    /**
-     * xuameng 20261123 修复：切换到新行时，把平滑时间轴对齐到新行的 line.time，
-     * 保证逐字行首帧 lineElapsed=0，避免"首帧整行闪黄"。
-     * 只在相邻行正常切换时对齐；跨多行跳转/seek 由调用方自己硬对齐，不动它。
-     */
-    private void alignRenderTimeToLineIfNeeded(int newLine) {
-        if (mLrcLines == null || newLine < 0 || newLine >= mLrcLines.size()) {
-            return;
-        }
-        long newLineTime = mLrcLines.get(newLine).time;
-        float diff = mRenderTime - newLineTime;
-        // mRenderTime 比新行稍微早一点（前一行还没收敛完）或稍微晚一点（updateTime 已到、画面还没换）
-        // 都对齐到新行起点；明显超前/明显落后属于 seek/大跳转，不做对齐交给既有的硬同步逻辑。
-        if (diff >= -RENDER_LINE_ALIGN_EARLY_MS && diff <= RENDER_LINE_ALIGN_LATE_MS) {
-            mRenderTime = newLineTime;
-        }
     }
 
     /**
@@ -695,17 +682,18 @@ public class LrcView extends View {
                 if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                     mScrollAnimator.cancel();
                 }
-                // 直接跳转逻辑
+                // 直接跳转逻辑：切行时不硬拽 mRenderTime，让时间轴自然走过来
+                // （drawKaraokeLine 会处理 lineElapsed<0 的情况，不画高亮，不会闪）
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
-                // 20261123 修复：跨多行跳转同样对齐，避免首帧越界
-                alignRenderTimeToLineIfNeeded(targetLine);
                 invalidate();
             } else {
                 // 相邻行：只有向前滚动（到下一行）才执行平滑滚动
                 if (isForward && targetLine > 3) {
-                    // 20261123 修复：相邻向前切换前先对齐时间轴，再启动滚动动画
-                    alignRenderTimeToLineIfNeeded(targetLine);
+                    // 注意：这里不再提前改 mRenderTime，避免滚动 300ms 期间 mCurrentLine
+                    // 还是旧行、时间轴却已跳到新行，导致旧行瞬间整行全亮（第二次闪）。
+                    // mCurrentLine 会在动画 onAnimationEnd 里再切到 targetLine，
+                    // 届时 mRenderTime 已经自然走到新行起点附近，lineElapsed 从 0 开始平滑推进。
                     smoothScrollTo(targetLine);
                 } else {
                     // 向后滚动（到上一行）或前三行：直接跳转
@@ -716,8 +704,6 @@ public class LrcView extends View {
                     // 换行时不再需要按行类型分别初始化进度，也不再需要“普通歌词等铺满”的判断
                     mCurrentLine = targetLine;
                     mScrollOffset = 0f;
-                    // 20261123 修复：向后切行/前三行直接切换也做一次对齐
-                    alignRenderTimeToLineIfNeeded(targetLine);
                     invalidate();
                 }
             }
@@ -789,26 +775,35 @@ public class LrcView extends View {
 
         if (line.words != null && !line.words.isEmpty()) {
             // ===== 逐字歌词：每个字按自己的起止时间推进 =====
-            // 20261123 修复：逐字行的 lineElapsed 必须钳到 [0, 最后一个字的 end]。
-            // 换行首帧或同步项过冲时，lineElapsed 可能越过最后一个字的 end，
-            // 导致循环里所有字都被判定为 wordProgress=1，clip 拼起来就是整行闪黄。
+
+            // 第一道闸：时间轴还没走到本行起点，完全不画高亮（避免首帧负值导致越界闪整行）
+            if (lineElapsed < 0f) {
+                return;
+            }
+
+            // 第二道闸：超过本行最后一个字结束时间时，钳制到末字末尾，
+            // 防止时间轴超前时整行瞬间全亮
             long lastWordEnd = line.words.get(line.words.size() - 1).end;
-            if (lineElapsed < 0f) lineElapsed = 0f;
-            if (lineElapsed > lastWordEnd) lineElapsed = lastWordEnd;
+            if (lineElapsed > lastWordEnd) {
+                lineElapsed = lastWordEnd;
+            }
 
             float x = startX;
             for (WordInfo w : line.words) {
-                // 20261123 修复：未到达的字完全不画，避免因 clip 区间错位闪出整行。
-                // 原来写成 "if (lineElapsed >= w.start)"，在 lineElapsed 超前时会把后面的字
-                // 一起画满；现在直接对 lineElapsed 做了上界钳制，未到的字 lineElapsed < w.start，
-                // 自然不会进入分支，行为正确。
+                // 第三道闸：每个字的 progress 严格钳制在 [0,1]，
+                // 只有 w.start <= lineElapsed 时才可能有高亮，从根本上防止跨字误判
+                float wordProgress = 0f;
                 if (lineElapsed >= w.start) {
-                    float wordProgress = 1.0f;
                     long wordDur = w.end - w.start;
-                    if (wordDur > 0 && lineElapsed < w.end) {
+                    if (wordDur <= 0) {
+                        // 字时长为0/异常，唱到就直接全亮
+                        wordProgress = 1.0f;
+                    } else if (lineElapsed >= w.end) {
+                        wordProgress = 1.0f;
+                    } else {
                         wordProgress = (lineElapsed - w.start) / (float) wordDur;
-                        wordProgress = Math.max(0f, Math.min(1f, wordProgress));
                     }
+                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
                     //xuameng 盛满高亮
                     if (wordProgress > 0.99f) wordProgress = 1.0f;
                     float highlightWidth = w.width * wordProgress;
