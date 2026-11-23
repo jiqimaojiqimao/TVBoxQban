@@ -50,14 +50,6 @@ import java.lang.Math;
  *      一批进度初始化判断和“普通歌词等铺满”判断，减少两套方案互相冲突。
  *      现在只有一套高亮逻辑：进度统一由 mRenderTime 决定，
  *      逐字行按字的起止时间填充，普通行按整行时长线性填充。
- * 20261123 修复：逐字行切换时首帧"整行闪黄/闪两次"问题。
- *      根因：①换行时曾硬拽 mRenderTime，导致滚动动画 300ms 期间行号(mCurrentLine)
- *            还停在上一行、时间轴却已到新行，上一行瞬间整行全亮形成"第二次闪"；
- *            ②首帧 lineElapsed 为负/越界时未彻底钳制，一帧跨过多个字就全铺黄。
- *      修复：①去掉换行时对 mRenderTime 的硬对齐，时间轴始终匀速自然推进；
- *            ②drawKaraokeLine 对 lineElapsed 做三重钳制：<0 不画高亮、
- *            超过本行末字末尾则钳制到末字末尾、每个字 progress 强制[0,1]；
- *            ③advanceRenderTime 加单帧收敛上限，防止宿主大步长上报时一帧跨多字。
  */
 public class LrcView extends View {
 
@@ -111,10 +103,8 @@ public class LrcView extends View {
 
     /** 每帧向播放器真实进度收敛的系数：越小越平滑、越大越跟手，0.03~0.12 之间比较合适 */
     private static final float RENDER_SYNC_GAIN = 0.05f;
-    /** 单帧自主推进的最大量（真实时间走的部分），防止掉帧/切后台回来后一次冲过头 */
+    /** 单帧最大推进量，防止掉帧/切后台回来后一次冲过头 */
     private static final float RENDER_MAX_FRAME_MS = 64f;
-    /** 单帧向真实进度"收敛追赶"的最大量，防止宿主大步长上报时一帧跨很多字造成整行闪 */
-    private static final float RENDER_MAX_CATCHUP_MS = 40f;
     /** 播放器进度长时间不前进则视为暂停，冻结时间轴（需明显大于宿主的轮询间隔） */
     private static final long RENDER_IDLE_TIMEOUT_MS = 1000L;
     /** 与播放器真实进度相差超过该值视为 seek/跳转，时间轴直接硬对齐 */
@@ -550,15 +540,7 @@ public class LrcView extends View {
             // 1) 按帧自主推进：这才是高亮平滑的关键，不再依赖播放器给的时间精度
             mRenderTime += dtMs * mPlaybackSpeed;
             // 2) 缓慢收敛到真实进度：消除系统时钟与音频时钟的漂移，误差不会累积
-            //    加单帧收敛上限 RENDER_MAX_CATCHUP_MS，防止宿主大步长上报时一帧追过多个字
-            float diff = mCurrentPosition - mRenderTime;
-            float catchup = diff * RENDER_SYNC_GAIN;
-            if (catchup > RENDER_MAX_CATCHUP_MS) {
-                catchup = RENDER_MAX_CATCHUP_MS;
-            } else if (catchup < -RENDER_MAX_CATCHUP_MS) {
-                catchup = -RENDER_MAX_CATCHUP_MS;
-            }
-            mRenderTime += catchup;
+            mRenderTime += (mCurrentPosition - mRenderTime) * RENDER_SYNC_GAIN;
             return true;
         }
         return false;
@@ -682,18 +664,13 @@ public class LrcView extends View {
                 if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                     mScrollAnimator.cancel();
                 }
-                // 直接跳转逻辑：切行时不硬拽 mRenderTime，让时间轴自然走过来
-                // （drawKaraokeLine 会处理 lineElapsed<0 的情况，不画高亮，不会闪）
+                // 直接跳转逻辑
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
                 invalidate();
             } else {
                 // 相邻行：只有向前滚动（到下一行）才执行平滑滚动
                 if (isForward && targetLine > 3) {
-                    // 注意：这里不再提前改 mRenderTime，避免滚动 300ms 期间 mCurrentLine
-                    // 还是旧行、时间轴却已跳到新行，导致旧行瞬间整行全亮（第二次闪）。
-                    // mCurrentLine 会在动画 onAnimationEnd 里再切到 targetLine，
-                    // 届时 mRenderTime 已经自然走到新行起点附近，lineElapsed 从 0 开始平滑推进。
                     smoothScrollTo(targetLine);
                 } else {
                     // 向后滚动（到上一行）或前三行：直接跳转
@@ -775,48 +752,48 @@ public class LrcView extends View {
 
         if (line.words != null && !line.words.isEmpty()) {
             // ===== 逐字歌词：每个字按自己的起止时间推进 =====
-
-            // 第一道闸：时间轴还没走到本行起点，完全不画高亮（避免首帧负值导致越界闪整行）
+            // 硬规则：只要时间还没走完本行（没到最后一个字结束时间），就绝不允许整行铺满
+            // 从根源杜绝任何原因导致的"推进过程中闪一下整行高亮"
+            long lineTotalDuration = line.words.get(line.words.size() - 1).end;
+            // 还没到本行开始时间：完全不画高亮
             if (lineElapsed < 0f) {
                 return;
             }
-
-            // 第二道闸：超过本行最后一个字结束时间时，钳制到末字末尾，
-            // 防止时间轴超前时整行瞬间全亮
-            long lastWordEnd = line.words.get(line.words.size() - 1).end;
-            if (lineElapsed > lastWordEnd) {
-                lineElapsed = lastWordEnd;
-            }
-
-            float x = startX;
-            for (WordInfo w : line.words) {
-                // 第三道闸：每个字的 progress 严格钳制在 [0,1]，
-                // 只有 w.start <= lineElapsed 时才可能有高亮，从根本上防止跨字误判
-                float wordProgress = 0f;
-                if (lineElapsed >= w.start) {
+            // 时间没走完本行：只允许高亮到当前正在唱的字，绝对不允许铺满整行
+            if (lineElapsed < lineTotalDuration) {
+                float x = startX;
+                for (WordInfo w : line.words) {
+                    // 还没到这个字的开始时间：后面的字都不画，直接跳出
+                    if (lineElapsed < w.start) {
+                        break;
+                    }
+                    float wordProgress;
                     long wordDur = w.end - w.start;
-                    if (wordDur <= 0) {
-                        // 字时长为0/异常，唱到就直接全亮
-                        wordProgress = 1.0f;
-                    } else if (lineElapsed >= w.end) {
+                    if (wordDur <= 0 || lineElapsed >= w.end) {
+                        // 这个字已经唱完：全量高亮这个字，不多不少
                         wordProgress = 1.0f;
                     } else {
+                        // 正在唱这个字：按进度高亮部分宽度
                         wordProgress = (lineElapsed - w.start) / (float) wordDur;
+                        wordProgress = Math.max(0f, Math.min(1f, wordProgress));
+                        //xuameng 盛满高亮
+                        if (wordProgress > 0.99f) wordProgress = 1.0f;
                     }
-                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
-                    //xuameng 盛满高亮
-                    if (wordProgress > 0.99f) wordProgress = 1.0f;
                     float highlightWidth = w.width * wordProgress;
                     if (highlightWidth > 0.5f) {
-                        // 关键：用整行 clipRect，但只裁剪当前字的区域
+                        // 关键修复：每个字只裁剪自己的区域，只画自己这个字，绝不画整行
+                        // 之前画整行文本的写法，哪怕clipRect只截一个字宽，也会因为浮点/抗锯齿问题
+                        // 出现偶发的整行漏出高亮，这就是慢字时容易闪全铺的根因
                         canvas.save();
                         canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
-                        // 画整行文本，不是逐字！
-                        canvas.drawText(line.text, startX, y, mHighlightPaint);
+                        canvas.drawText(w.text, x, y, mHighlightPaint);
                         canvas.restore();
                     }
+                    x += w.width;
                 }
-                x += w.width;
+            } else {
+                // 时间确实走完了本行：整行全亮（这是正常的行末全亮，不是闪屏）
+                canvas.drawText(line.text, startX, y, mHighlightPaint);
             }
         } else {
             // ===== 普通歌词：整行按行时长线性推进（同样走平滑时间轴） =====
