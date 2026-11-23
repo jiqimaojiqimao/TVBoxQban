@@ -752,48 +752,28 @@ public class LrcView extends View {
 
         if (line.words != null && !line.words.isEmpty()) {
             // ===== 逐字歌词：每个字按自己的起止时间推进 =====
-            // 硬规则：只要时间还没走完本行（没到最后一个字结束时间），就绝不允许整行铺满
-            // 从根源杜绝任何原因导致的"推进过程中闪一下整行高亮"
-            long lineTotalDuration = line.words.get(line.words.size() - 1).end;
-            // 还没到本行开始时间：完全不画高亮
-            if (lineElapsed < 0f) {
-                return;
-            }
-            // 时间没走完本行：只允许高亮到当前正在唱的字，绝对不允许铺满整行
-            if (lineElapsed < lineTotalDuration) {
-                float x = startX;
-                for (WordInfo w : line.words) {
-                    // 还没到这个字的开始时间：后面的字都不画，直接跳出
-                    if (lineElapsed < w.start) {
-                        break;
-                    }
-                    float wordProgress;
+            float x = startX;
+            for (WordInfo w : line.words) {
+                if (lineElapsed >= w.start) {
+                    float wordProgress = 1.0f;
                     long wordDur = w.end - w.start;
-                    if (wordDur <= 0 || lineElapsed >= w.end) {
-                        // 这个字已经唱完：全量高亮这个字，不多不少
-                        wordProgress = 1.0f;
-                    } else {
-                        // 正在唱这个字：按进度高亮部分宽度
+                    if (wordDur > 0 && lineElapsed < w.end) {
                         wordProgress = (lineElapsed - w.start) / (float) wordDur;
                         wordProgress = Math.max(0f, Math.min(1f, wordProgress));
-                        //xuameng 盛满高亮
-                        if (wordProgress > 0.99f) wordProgress = 1.0f;
                     }
+                    //xuameng 盛满高亮
+                    if (wordProgress > 0.99f) wordProgress = 1.0f;
                     float highlightWidth = w.width * wordProgress;
                     if (highlightWidth > 0.5f) {
-                        // 关键修复：每个字只裁剪自己的区域，只画自己这个字，绝不画整行
-                        // 之前画整行文本的写法，哪怕clipRect只截一个字宽，也会因为浮点/抗锯齿问题
-                        // 出现偶发的整行漏出高亮，这就是慢字时容易闪全铺的根因
+                        // 关键：用整行 clipRect，但只裁剪当前字的区域
                         canvas.save();
                         canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
-                        canvas.drawText(w.text, x, y, mHighlightPaint);
+                        // 画整行文本，不是逐字！
+                        canvas.drawText(line.text, startX, y, mHighlightPaint);
                         canvas.restore();
                     }
-                    x += w.width;
                 }
-            } else {
-                // 时间确实走完了本行：整行全亮（这是正常的行末全亮，不是闪屏）
-                canvas.drawText(line.text, startX, y, mHighlightPaint);
+                x += w.width;
             }
         } else {
             // ===== 普通歌词：整行按行时长线性推进（同样走平滑时间轴） =====
