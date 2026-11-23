@@ -84,6 +84,12 @@ import java.lang.Math;
  *        5) 相邻向后（回到上一行）跳转，同时把 mRenderTime 硬对齐到当前 position；
  *      正常相邻向前换行（先补铺满再进下一行）不重置 fullyLit，让防闪白规则继续生效。
  *      普通歌词、逐字歌词、前三行全部统一生效。
+ * 20261123 修改：去掉老代码“不是相邻行就不显示滚动动画”的遗留限制。
+ *      改为：前三行保持“不滚动、直接跳转”不变；其余行（含跨多行）一律显示滚动动画；
+ *      只有 seek/跳转时才不显示滚动动画、直接跳转，防止 seek 后动画乱滚不好看。
+ *      实现：新增 mSeekJump 标记，setSeekPosition 以及 updateTime 的回退兜底检测都会置位，
+ *      updateTime 开头消费一次；跨行分支与向后分支据此决定“滚动”还是“直接跳转”。
+ *      普通歌词、逐字歌词统一生效。
  */
 public class LrcView extends View {
 
@@ -135,6 +141,10 @@ public class LrcView extends View {
     private long mLastHostPosition = Long.MIN_VALUE; // 上一次的播放器进度，用于判断有没有前进
     private boolean mIsPlaying = false;          // 播放状态（宿主通过 setPlaying/updateTime 告知）
     private float mPlaybackSpeed = 1.0f;         // 播放倍速，变速播放时同步调用 setPlaybackSpeed
+    // xuameng 新增：标记“本次 updateTime 是否由 seek/跳转触发”。
+    // 为 true 时换行不显示滚动动画、直接跳转（防止 seek 后动画乱滚不好看）；
+    // 为 false（正常播放换行）时一律显示滚动动画。updateTime 开头消费一次即复位。
+    private boolean mSeekJump = false;
 
     /** 每帧向播放器真实进度收敛的系数：越小越平滑、越大越跟手，0.03~0.12 之间比较合适 */
     private static final float RENDER_SYNC_GAIN = 0.05f;
@@ -306,6 +316,8 @@ public class LrcView extends View {
         mLastHostPosition = position;           // 同步基准，避免下一次被当成倒退再对齐一次
         mLastPositionChangeNanos = System.nanoTime();
         mLastFrameNanos = 0L;                   // 重置帧计时，seek 的耗时不算进下一帧
+        // xuameng 新增：标记本次为 seek/跳转触发，换行时不显示滚动动画（直接跳转）
+        mSeekJump = true;
         updateTime(position, mIsPlaying);       // 复用定位/换行/滚动逻辑，立即刷新画面
     }
 
@@ -609,6 +621,11 @@ public class LrcView extends View {
         }
         mIsPlaying = playing;
 
+        // xuameng 新增：本次更新是否由 seek/跳转触发（消费一次即复位），
+        // 供下面的换行逻辑判断：是显示滚动动画，还是直接跳转。
+        boolean seekJump = mSeekJump;
+        mSeekJump = false;
+
         if (DEBUG_LOG) {
             Log.d("LrcView_xuameng", "updateTime pos=" + position + " playing=" + playing
                     + " render=" + mRenderTime + " shouldShow=" + mShouldShowLyrics
@@ -631,6 +648,8 @@ public class LrcView extends View {
             // 否则之前已经唱完、fullyLit=true 的行会在跳回去后仍保持整行高亮，
             // 出现“进度回到第一个字但整行已经黄了”的问题。
             resetFullyLitStates();
+            // xuameng 新增：兜底检测到的回退同样属于 seek/跳转，换行时不显示滚动动画
+            seekJump = true;
         }
 
         // 检查是否达到最小显示位置
@@ -705,19 +724,26 @@ public class LrcView extends View {
             // 判断滚动方向：正数表示向前（下一行），负数表示向后（上一行）
             boolean isForward = lineDiff > 0;
 
-            // 如果距离超过阈值（不是相邻行），直接跳转而不滚动
+            // xuameng 修改：去掉老代码“不是相邻行就不显示滚动动画”的遗留限制。
+            // 现在只有 seek/跳转（seekJump）才不显示滚动动画、直接跳转（防止动画乱滚不好看）；
+            // 正常播放时无论跨几行都显示滚动动画。
             if (lineDistance > MAX_SCROLL_DISTANCE) {
                 if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                     mScrollAnimator.cancel();
                 }
-                // 直接跳转逻辑
                 // xuameng 新增：跨行跳转（快进/跨多行 seek）时重置 fullyLit，
                 // 避免中间行或目标行残留旧的整行高亮。
                 resetFullyLitStates();
-                mCurrentLine = targetLine;
-                mScrollOffset = 0f;
                 mRenderTime = position; // 跨行跳转时时间轴硬对齐
-                invalidate();
+                if (seekJump) {
+                    // seek 触发：不显示滚动动画，直接跳转
+                    mCurrentLine = targetLine;
+                    mScrollOffset = 0f;
+                    invalidate();
+                } else {
+                    // 正常播放跨行：显示滚动动画（不再像老代码那样直接跳转）
+                    smoothScrollTo(targetLine);
+                }
             } else {
                 // xuameng 修改：向前换行先补铺满，保证“铺满之后才进入下一行”；
                 // 是否滚动沿用原规则——前三行（targetLine <= 3，即第 0/1/2/3 行）不滚动、
@@ -745,7 +771,7 @@ public class LrcView extends View {
                         invalidate();
                     }
                 } else {
-                    // 向后滚动（到上一行）：直接跳转
+                    // 向后滚动（到上一行）
                     if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                         mScrollAnimator.cancel();
                     }
@@ -754,10 +780,15 @@ public class LrcView extends View {
                     // xuameng 新增：回到上一行（向后 seek 一格）也重置 fullyLit，
                     // 保证回去后从第一个字重新唱，不会保留整行黄。
                     resetFullyLitStates();
-                    mCurrentLine = targetLine;
-                    mScrollOffset = 0f;
                     mRenderTime = position; // 回到上一行时时间轴硬对齐
-                    invalidate();
+                    // xuameng 修改：只有 seek/跳转才不显示滚动动画；正常播放回到上一行照样滚动
+                    if (seekJump) {
+                        mCurrentLine = targetLine;
+                        mScrollOffset = 0f;
+                        invalidate();
+                    } else {
+                        smoothScrollTo(targetLine);
+                    }
                 }
             }
         } else {
