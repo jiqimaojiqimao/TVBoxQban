@@ -727,23 +727,30 @@ public class LrcView extends View {
             // xuameng 修改：去掉老代码“不是相邻行就不显示滚动动画”的遗留限制。
             // 现在只有 seek/跳转（seekJump）才不显示滚动动画、直接跳转（防止动画乱滚不好看）；
             // 正常播放时无论跨几行都显示滚动动画。
-            if (lineDistance > MAX_SCROLL_DISTANCE) {
-                if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
-                    mScrollAnimator.cancel();
-                }
-                // xuameng 新增：跨行跳转（快进/跨多行 seek）时重置 fullyLit，
-                // 避免中间行或目标行残留旧的整行高亮。
-                resetFullyLitStates();
-                mRenderTime = position; // 跨行跳转时时间轴硬对齐
-                if (seekJump) {
-                    // seek 触发：不显示滚动动画，直接跳转
-                    mCurrentLine = targetLine;
-                    mScrollOffset = 0f;
-                    invalidate();
-                } else {
-                    // 正常播放跨行：显示滚动动画（不再像老代码那样直接跳转）
-                    smoothScrollTo(targetLine);
-                }
+if (lineDistance > MAX_SCROLL_DISTANCE) {
+    if (seekJump) {
+        // seek / 跳转：取消动画，直接跳转
+        if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+            mScrollAnimator.cancel();
+        }
+        resetFullyLitStates();
+        mRenderTime = position;
+        mCurrentLine = targetLine;
+        mScrollOffset = 0f;
+        invalidate();
+    } else {
+        // 正常播放跨行（含双语歌词隔行换行）：
+        // 已在滚动就直接忽略本次，绝不 cancel —— cancel 会触发 onAnimationCancel，
+        // 把 mCurrentLine 直接设成目标行并清零偏移，动画当场被打断，看起来就是直接跳转。
+        if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+            return;
+        }
+        resetFullyLitStates();
+        mRenderTime = position;
+        smoothScrollTo(targetLine);
+    }
+}
+
             } else {
                 // xuameng 修改：向前换行先补铺满，保证“铺满之后才进入下一行”；
                 // 是否滚动沿用原规则——前三行（targetLine <= 3，即第 0/1/2/3 行）不滚动、
