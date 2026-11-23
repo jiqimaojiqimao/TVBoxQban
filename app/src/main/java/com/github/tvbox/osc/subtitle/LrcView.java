@@ -65,6 +65,13 @@ import java.lang.Math;
  *      现给每一行加一个 fullyLit 标记：一旦某行被判定为铺满（mRenderTime 到达行结束时刻），
  *      这个标记就永久置 true；之后不管时间轴怎么波动，这一行都永远保持整行高亮，
  *      不再退回到未高亮状态。普通歌词、逐字歌词、前三行统一按此规则处理。
+ * 20261123 新增：修复“高亮铺满时英文/粗体最右侧最后一个字盖不住白字、露出小白边”的问题。
+ *      根源是 Paint.measureText 返回的是排版 advance width 而非视觉绘制边界，
+ *      fakeBold 加粗 + 抗锯齿 + 英文字形（延伸笔画/斜体）会让高亮实际绘制比测量宽度
+ *      向右多 1~3px，导致 clipRect 按测量宽度裁切时切到笔画露白。
+ *      现给所有 clipRect 的右边界统一加 2.5px 溢出补偿，让高亮抗锯齿/粗体/字形延伸
+ *      都能完整画出；未结束阶段仍然通过封顶值保证不提前铺满。
+ *      普通歌词、逐字歌词、前三行统一走 drawKaraokeLine，因此全部生效。
  */
 public class LrcView extends View {
 
@@ -837,11 +844,26 @@ public class LrcView extends View {
             line.fullyLit = true; // xuameng 新增：第一次铺满后永久标记
         }
         float fullRight = startX + line.width;
-        float maxRight = fullRight;
+
+        // xuameng 新增：修复英文/粗体最右侧最后一个字高亮盖不住白字、露出小白边的问题。
+        // 根源：Paint.measureText 返回的是排版 advance width，不是视觉绘制边界；
+        //      fakeBold 加粗 + 抗锯齿 + 英文字形（延伸笔画/斜体）会让高亮实际绘制
+        //      比测量宽度向右多 1~3px，导致 clipRect 按测量宽度裁切时切到笔画露白。
+        // 做法：clipRect 的右边界统一向右多放 HIGHLIGHT_OVERFLOW_PAD 像素，
+        //      让高亮的抗锯齿/粗体溢出/字形延伸都能被完整画出；
+        //      未结束时通过把 wordRight/highlightWidth 上限减去同样的 PAD，
+        //      保证可见右边界仍落在 fullRight - margin 以内，不破坏"未结束不铺满"。
+        final float HIGHLIGHT_OVERFLOW_PAD = 2.5f;
+
+        float maxVisibleRight; // 裁剪窗口内可见的最右像素位置（含补偿）
         if (!lineCompleted) {
             float margin = Math.max(1f, Math.min(3f, line.width * 0.004f));
-            maxRight = fullRight - margin;
+            maxVisibleRight = fullRight - margin; // 未结束：仍在整行宽以内，绝不铺满
+        } else {
+            maxVisibleRight = fullRight + HIGHLIGHT_OVERFLOW_PAD; // 结束时：允许向右溢出几个像素完全覆盖白字
         }
+        // wordRight/highlightWidth 的封顶值 = 可见右边界 - PAD（因为 clipRect 右参数会再加 PAD）
+        float maxDrawRight = maxVisibleRight - HIGHLIGHT_OVERFLOW_PAD;
 
         // xuameng 新增：已铺满的行，不管时间轴如何，直接整行高亮，不再走逐字/逐像素裁剪
         if (line.fullyLit) {
@@ -863,14 +885,13 @@ public class LrcView extends View {
                     //xuameng 盛满高亮
                     if (wordProgress > 0.99f) wordProgress = 1.0f;
                     float highlightWidth = w.width * wordProgress;
-                    // xuameng 新增：未完整结束时右边界收在 maxRight 内（禁止整行铺满）；
-                    // 完整结束时 maxRight 即整行右边界，逐字照常铺满，整行最终完全铺满。
-                    float wordRight = Math.min(x + highlightWidth, maxRight);
-                    float drawWidth = wordRight - x;
-                    if (drawWidth > 0.5f) {
+                    // xuameng 新增：右边界受 maxDrawRight 限制，clipRect 加溢出补偿覆盖粗体/抗锯齿
+                    float wordRight = Math.min(x + highlightWidth, maxDrawRight);
+                    float clipRight = wordRight + HIGHLIGHT_OVERFLOW_PAD;
+                    if (clipRight - x > 0.5f) {
                         // 关键：用整行 clipRect，但只裁剪当前字的区域
                         canvas.save();
-                        canvas.clipRect(x, textTop, wordRight, textBottom);
+                        canvas.clipRect(x, textTop, clipRight, textBottom);
                         // 画整行文本，不是逐字！
                         canvas.drawText(line.text, startX, y, mHighlightPaint);
                         canvas.restore();
@@ -892,16 +913,14 @@ public class LrcView extends View {
             //xuameng 盛满高亮
             if (progress > 0.99f) progress = 1.0f;
             float highlightWidth = line.width * progress;
-            // xuameng 新增：与逐字行同一规则——未完整结束不铺满，完整结束必须铺满
-            float maxHighlightWidth = lineCompleted
-                    ? line.width
-                    : line.width - Math.max(1f, Math.min(3f, line.width * 0.004f));
-            if (highlightWidth > maxHighlightWidth) {
-                highlightWidth = maxHighlightWidth;
+            // xuameng 新增：右边界受 maxDrawRight 限制，clipRect 加溢出补偿覆盖粗体/抗锯齿
+            if (highlightWidth > maxDrawRight) {
+                highlightWidth = maxDrawRight;
             }
-            if (highlightWidth > 0.5f) {
+            float clipRight = startX + highlightWidth + HIGHLIGHT_OVERFLOW_PAD;
+            if (clipRight - startX > 0.5f) {
                 canvas.save();
-                canvas.clipRect(startX, textTop, startX + highlightWidth, textBottom);
+                canvas.clipRect(startX, textTop, clipRight, textBottom);
                 canvas.drawText(line.text, startX, y, mHighlightPaint);
                 canvas.restore();
             }
