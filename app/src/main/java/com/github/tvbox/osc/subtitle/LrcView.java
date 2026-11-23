@@ -152,6 +152,17 @@ import java.lang.Math;
  *            纯单语歌曲、纯双语歌曲的布局结果与改前完全一致，仅"混合"歌曲的单语行间距恢复成 1.5S。
  *            滚动偏移改用"当前行的槽高"作步长，相邻换行时与真实像素距离一致，双语/单语都不错位。
  *      其它（高亮推进、铺满/防闪白、seek 重置、前三行延时、白边补偿、双语配对识别）全部未动。
+ * 20261123 修复：双语歌词下“前三行不滚动”的判断被辅行下标挤偏的问题。
+ *      现象：只要前三行里出现双语对，辅行也占用一个 mLrcLines 物理下标，
+ *            用来判断“第几行”的下标被辅行撑大，导致还没真正走到第 4 行就提前触发滚动动画。
+ *      修复：新增 getLogicalLineIndex()，把物理下标换算成“逻辑行号”（只数主行/普通行、跳过辅行），
+ *            并把下面四处“第几行”的判断统一改用逻辑行号：
+ *              1) 换行距离 lineDiff / lineDistance；
+ *              2) 滚动方向 isForward；
+ *              3) “前三行不滚动”的判断（原 targetLine > 3）；
+ *              4) “上一行延时高亮”的登记判断（原 justLeftLine <= 3）。
+ *            纯单语/普通歌词的逻辑行号与物理下标完全一致，行为与改前完全相同；
+ *            其余所有逻辑（高亮推进、铺满/防闪白、seek 重置、白边补偿、双语配对、槽位布局）一律未动。
  */
 public class LrcView extends View {
 
@@ -937,8 +948,12 @@ public class LrcView extends View {
 
         // 正常播放中的滚动逻辑
         if (targetLine != mCurrentLine) {
-            // 计算目标行与当前行的距离和方向（这里的行下标都是主行/普通行，已跳过辅行）
-            int lineDiff = targetLine - mCurrentLine;
+            // xuameng 修复：行距离与方向改用“逻辑行号”计算——双语辅行不占行号。
+            // 原来直接相减物理下标，双语相邻换行（主行→下一主行，中间夹一个辅行）会被算成
+            // 距离 2，从而误入“跨行分支”，绕过“前三行不滚动”的判断；
+            // 改用逻辑行号后，双语相邻换行的距离恢复为 1，前三行照旧不滚动。
+            // 纯单语/普通歌词的逻辑行号与物理下标完全相同，行为与改前一致。
+            int lineDiff = getLogicalLineIndex(targetLine) - getLogicalLineIndex(mCurrentLine);
             int lineDistance = Math.abs(lineDiff);
 
             // 判断滚动方向：正数表示向前（下一行），负数表示向后（上一行）
@@ -988,7 +1003,9 @@ public class LrcView extends View {
                     // xuameng 修复：原判断 if (targetLine > 3) 漏了 !seekJump，
                     // 导致 seek 到第 4 行起的相邻下一行时仍然启动滚动动画。
                     // 现改为：只有"不是 seek"并且"目标行在第 4 行之后"才走平滑滚动。
-                    if (targetLine > 3 && !seekJump) {
+                    // xuameng 修复：原来用物理下标 targetLine > 3 判断“是否已过前三行”，
+                    // 双语辅行会撑大下标，导致提前滚动；改用逻辑行号判断（辅行不占行号）。
+                    if (getLogicalLineIndex(targetLine) > 3 && !seekJump) {
                         smoothScrollTo(targetLine);
                     } else {
                         // 前三行 / seek 触发：上面已把时间轴补到当前行结束（逻辑上已完整铺满），
@@ -1010,8 +1027,9 @@ public class LrcView extends View {
                             clearPrevHighlight();
                             mRenderTime = position;
                         }
-                        // 登记延时高亮：仅限前三行（justLeftLine <= 3），并且不是 seek/跳转触发
-                        if (!seekJump && justLeftLine >= 0 && justLeftLine <= 3 && justLeftLine != targetLine) {
+                        // 登记延时高亮：仅限前三行（逻辑行号 <= 3，辅行不占行号），并且不是 seek/跳转触发
+                        int justLeftLogical = getLogicalLineIndex(justLeftLine);
+                        if (!seekJump && justLeftLogical >= 0 && justLeftLogical <= 3 && justLeftLine != targetLine) {
                             mPrevHighlightLineIndex = justLeftLine;
                             // xuameng 修改：改用独立的 mPrevHighlightDuration(222ms)，不再复用 mScrollDuration(300ms)
                             mPrevHighlightExpireNanos = System.nanoTime() + (long) mPrevHighlightDuration * 1_000_000L;
@@ -1084,6 +1102,30 @@ public class LrcView extends View {
     private void clearPrevHighlight() {
         mPrevHighlightLineIndex = -1;
         mPrevHighlightExpireNanos = 0L;
+    }
+
+    /**
+     * xuameng 新增：把 mLrcLines 的“物理下标”换算成“逻辑行号”（只数主行/普通行，跳过双语辅行）。
+     * 背景：双语歌词里辅行也占一个物理下标，若直接把物理下标当作“第几行”，
+     *      只要前面出现双语对，下标就会膨胀，还没到第 4 行就提前开始滚动。
+     * 规则：逻辑行号从 0 开始；每遇到一个非辅行（主行或普通行）就 +1；
+     *      辅行不占行号，返回其所属主行的逻辑行号。
+     * 纯单语/普通歌词里，逻辑行号与物理下标完全相同，行为与改前一致。
+     *
+     * @param physicalIndex mLrcLines 的物理下标
+     * @return 对应的逻辑行号（从 0 开始）；下标越界返回 -1
+     */
+    private int getLogicalLineIndex(int physicalIndex) {
+        if (mLrcLines == null || physicalIndex < 0 || physicalIndex >= mLrcLines.size()) {
+            return -1;
+        }
+        int logical = -1;
+        for (int i = 0; i <= physicalIndex; i++) {
+            if (!mLrcLines.get(i).isTranslation) {
+                logical++;
+            }
+        }
+        return logical;
     }
 
     /**
