@@ -90,6 +90,13 @@ import java.lang.Math;
  *      实现：新增 mSeekJump 标记，setSeekPosition 以及 updateTime 的回退兜底检测都会置位，
  *      updateTime 开头消费一次；跨行分支与向后分支据此决定“滚动”还是“直接跳转”。
  *      普通歌词、逐字歌词统一生效。
+ * 20261123 修改（修正）：前三行“铺满后延时 300ms 再关闭高亮”的观感优化，明确语义——
+ *      跳转立即发生（mCurrentLine 立刻切到下一行，新行从第一个字开始正常高亮），
+ *      只是上一行（前三行范围内）在它原本的屏幕位置再保持整行高亮 300ms（= mScrollDuration），
+ *      之后才变回白字。实现方式：新增 mPrevHighlightLineIndex / mPrevHighlightExpireNanos
+ *      两个字段，前三行向前换行时登记“刚离开的上一行”为延时高亮行，onDraw 画非当前行时
+ *      如果命中且未到期，就画成整行高亮；到期后恢复普通白字并持续重绘到那一时点。
+ *      seek/reset/初始定位/跨行跳转时会清空这个标记，避免高亮残留。第 4 行起行为不变。
  */
 public class LrcView extends View {
 
@@ -145,6 +152,12 @@ public class LrcView extends View {
     // 为 true 时换行不显示滚动动画、直接跳转（防止 seek 后动画乱滚不好看）；
     // 为 false（正常播放换行）时一律显示滚动动画。updateTime 开头消费一次即复位。
     private boolean mSeekJump = false;
+
+    // xuameng 新增：前三行换行时，让“刚离开的上一行”在原位置保持整行高亮 mScrollDuration(默认300ms)
+    // 再熄灭变回白字，而不是切换瞬间立即变白。这样即使前三行时间非常短，肉眼也能看到“铺满”再消失。
+    // 注意：这只是“高亮延时关闭”，不影响 mCurrentLine 的切换——换行立即发生，新行立刻从第一个字开始唱。
+    private int mPrevHighlightLineIndex = -1; // 需要延时熄灭高亮的行下标；-1 表示没有
+    private long mPrevHighlightExpireNanos = 0L; // 延时高亮的到期时刻（System.nanoTime() 纳秒）
 
     /** 每帧向播放器真实进度收敛的系数：越小越平滑、越大越跟手，0.03~0.12 之间比较合适 */
     private static final float RENDER_SYNC_GAIN = 0.05f;
@@ -485,6 +498,8 @@ public class LrcView extends View {
         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
             mScrollAnimator.cancel();
         }
+        // xuameng 新增：换歌词时清掉延时高亮标记
+        clearPrevHighlight();
         if (DEBUG_LOG) {
             Log.d("LrcView_xuameng", "setLrcText done, mLrcLines.size()=" + mLrcLines.size());
         }
@@ -661,6 +676,8 @@ public class LrcView extends View {
             mRenderTime = position; // 新增：时间轴同步重置
             // xuameng 新增：回到开头也属于时间跳转，重置 fullyLit
             resetFullyLitStates();
+            // xuameng 新增：回到开头时清掉延时高亮
+            clearPrevHighlight();
             invalidate();
             return;
         }
@@ -710,6 +727,8 @@ public class LrcView extends View {
             // xuameng 新增：初始定位（含 setLrcText 后的首次定位）时重置 fullyLit，
             // 避免旧歌词/上一次播放残留的整行高亮标记污染新位置。
             resetFullyLitStates();
+            // xuameng 新增：初始定位时清掉延时高亮
+            clearPrevHighlight();
             mIsInitialPositioning = false; // 定位完成，退出初始状态
             invalidate();
             return;
@@ -727,29 +746,26 @@ public class LrcView extends View {
             // xuameng 修改：去掉老代码“不是相邻行就不显示滚动动画”的遗留限制。
             // 现在只有 seek/跳转（seekJump）才不显示滚动动画、直接跳转（防止动画乱滚不好看）；
             // 正常播放时无论跨几行都显示滚动动画。
-if (lineDistance > MAX_SCROLL_DISTANCE) {
-    if (seekJump) {
-        // seek / 跳转：取消动画，直接跳转
-        if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
-            mScrollAnimator.cancel();
-        }
-        resetFullyLitStates();
-        mRenderTime = position;
-        mCurrentLine = targetLine;
-        mScrollOffset = 0f;
-        invalidate();
-    } else {
-        // 正常播放跨行（含双语歌词隔行换行）：
-        // 已在滚动就直接忽略本次，绝不 cancel —— cancel 会触发 onAnimationCancel，
-        // 把 mCurrentLine 直接设成目标行并清零偏移，动画当场被打断，看起来就是直接跳转。
-        if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
-            return;
-        }
-        resetFullyLitStates();
-        mRenderTime = position;
-        smoothScrollTo(targetLine);
-    }
-} else {
+            if (lineDistance > MAX_SCROLL_DISTANCE) {
+                if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+                    mScrollAnimator.cancel();
+                }
+                // xuameng 新增：跨行跳转（快进/跨多行 seek）时重置 fullyLit，
+                // 避免中间行或目标行残留旧的整行高亮。
+                resetFullyLitStates();
+                // xuameng 新增：跨行跳转时清掉延时高亮
+                clearPrevHighlight();
+                mRenderTime = position; // 跨行跳转时时间轴硬对齐
+                if (seekJump) {
+                    // seek 触发：不显示滚动动画，直接跳转
+                    mCurrentLine = targetLine;
+                    mScrollOffset = 0f;
+                    invalidate();
+                } else {
+                    // 正常播放跨行：显示滚动动画（不再像老代码那样直接跳转）
+                    smoothScrollTo(targetLine);
+                }
+            } else {
                 // xuameng 修改：向前换行先补铺满，保证“铺满之后才进入下一行”；
                 // 是否滚动沿用原规则——前三行（targetLine <= 3，即第 0/1/2/3 行）不滚动、
                 // 直接跳转，第 4 行起（targetLine > 3）才走平滑滚动。
@@ -767,12 +783,23 @@ if (lineDistance > MAX_SCROLL_DISTANCE) {
                     if (targetLine > 3) {
                         smoothScrollTo(targetLine);
                     } else {
-                        // 前三行：上面已把时间轴补到当前行结束（逻辑上已完整铺满），此处直接跳转、不滚动
+                        // 前三行：上面已把时间轴补到当前行结束（逻辑上已完整铺满），此处立即跳转、不滚动。
+                        // xuameng 新增：跳转前把“刚离开的上一行”登记为延时高亮行，让它在原位置再保持
+                        // 300ms（= mScrollDuration）整行高亮再熄灭变白，避免前三行时间太短肉眼看不到铺满。
+                        // 注意：mCurrentLine 立刻切到 targetLine，新行从第一个字开始正常唱，不做等待。
+                        int justLeftLine = mCurrentLine;
                         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                             mScrollAnimator.cancel();
                         }
                         mCurrentLine = targetLine;
                         mScrollOffset = 0f;
+                        // 登记延时高亮：仅限前三行（justLeftLine <= 3），并且不是 seek/跳转触发
+                        if (!seekJump && justLeftLine >= 0 && justLeftLine <= 3 && justLeftLine != targetLine) {
+                            mPrevHighlightLineIndex = justLeftLine;
+                            mPrevHighlightExpireNanos = System.nanoTime() + (long) mScrollDuration * 1_000_000L;
+                        } else {
+                            clearPrevHighlight(); // seek 触发时不保留延时高亮，避免与实际进度不符
+                        }
                         invalidate();
                     }
                 } else {
@@ -785,6 +812,8 @@ if (lineDistance > MAX_SCROLL_DISTANCE) {
                     // xuameng 新增：回到上一行（向后 seek 一格）也重置 fullyLit，
                     // 保证回去后从第一个字重新唱，不会保留整行黄。
                     resetFullyLitStates();
+                    // xuameng 新增：向后跳转时清掉延时高亮
+                    clearPrevHighlight();
                     mRenderTime = position; // 回到上一行时时间轴硬对齐
                     // xuameng 修改：只有 seek/跳转才不显示滚动动画；正常播放回到上一行照样滚动
                     if (seekJump) {
@@ -830,6 +859,16 @@ if (lineDistance > MAX_SCROLL_DISTANCE) {
     }
 
     /**
+     * xuameng 新增：清除“前三行上一行延时高亮”标记。
+     * 在 seek / reset / 初始定位 / 跨行跳转 / 回到开头 / 回退 等打断播放的入口统一调用，
+     * 避免跳转后上一行还挂着延时高亮、或者标记过期时间不准导致高亮残留。
+     */
+    private void clearPrevHighlight() {
+        mPrevHighlightLineIndex = -1;
+        mPrevHighlightExpireNanos = 0L;
+    }
+
+    /**
      * 新增：获取当前是否显示歌词
      *
      * @return 是否显示歌词
@@ -849,6 +888,8 @@ if (lineDistance > MAX_SCROLL_DISTANCE) {
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         // xuameng 新增：重置每一行的“已铺满”标记
         resetFullyLitStates();
+        // xuameng 新增：清除前三行“上一行延时高亮”标记
+        clearPrevHighlight();
         // xuameng 新增：重置平滑时间轴
         mRenderTime = 0f;
         mLastFrameNanos = 0L;
@@ -1042,6 +1083,21 @@ if (lineDistance > MAX_SCROLL_DISTANCE) {
         int startLineIndex = Math.max(0, mCurrentLine - 3);
         int endLineIndex = Math.min(mLrcLines.size() - 1, mCurrentLine + 3);
 
+        // xuameng 新增：在开始绘制前，先判断“前三行上一行延时高亮”是否已经到期。
+        // 到期后把标记清掉，该位置就会恢复普通白字绘制；未到期则持续重绘直到那一时点。
+        long drawNowNanos = System.nanoTime();
+        boolean prevHighlightStillOn;
+        if (mPrevHighlightLineIndex >= 0) {
+            if (drawNowNanos >= mPrevHighlightExpireNanos) {
+                clearPrevHighlight(); // 到期熄灭
+                prevHighlightStillOn = false;
+            } else {
+                prevHighlightStillOn = true;
+            }
+        } else {
+            prevHighlightStillOn = false;
+        }
+
         // 绘制当前行及前后行
         for (int i = 0; i < visibleLines; i++) {
             int actualIndex = startLineIndex + i;
@@ -1056,14 +1112,20 @@ if (lineDistance > MAX_SCROLL_DISTANCE) {
                 // 当前行：卡拉OK高亮效果（普通行/逐字行统一走 drawKaraokeLine）
                 drawKaraokeLine(canvas, line, actualIndex, y);
             } else {
-                // 非当前行：普通显示
-                canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
+                // 非当前行：普通显示；如果命中“前三行上一行延时高亮”且未到期，则整行画高亮
+                if (prevHighlightStillOn && actualIndex == mPrevHighlightLineIndex) {
+                    float x = getWidth() / 2 - line.width / 2;
+                    canvas.drawText(line.text, x, y, mHighlightPaint);
+                } else {
+                    canvas.drawText(line.text, getWidth() / 2 - line.width / 2, y, mNormalPaint);
+                }
             }
         }
 
-        // xuameng 新增：时间轴在推进时请求下一帧，让高亮按屏幕帧率平滑走字
-        // 注意：这里不能再逐帧打 Log，否则日志本身会把渲染拖慢
-        if (timeAdvancing) {
+        // xuameng 新增：延时高亮还在亮着时，需要持续请求下一帧重绘，保证到点准时熄灭变白；
+        // 否则上一行会一直保持黄字直到下一次进度更新触发 invalidate。
+        boolean needNextFrame = timeAdvancing || prevHighlightStillOn;
+        if (needNextFrame) {
             postInvalidateOnAnimation();
         }
     }
