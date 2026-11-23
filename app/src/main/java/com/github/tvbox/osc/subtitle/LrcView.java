@@ -135,6 +135,14 @@ import java.lang.Math;
  *            正常播放（含向前、向后、跨多行）在非前三行时一律滚动；前三行保持不滚动。
  *      其它（逐字/普通高亮、铺满规则、防闪白、seek 重置 fullyLit、白边补偿、前三行延时 222ms、
  *      双语逻辑、段间距）全部保持原样未动。
+ *
+ * 20261123 优化：收紧双语歌词"组与组之间"的行间距（用户反馈原组间距是正常行间距的好几倍、太宽）。
+ *      根因：双语主+辅一组被塞进了单行 1.5S 的槽位（S=主行字号），主+辅总高约 1.08S，
+ *            剩下 0.42S 全留给了组间白边；而正常单行两行之间视觉间距只有约 0.15S，所以显得空。
+ *      修复：新增常量 BILINGUAL_GROUP_LINE_HEIGHT_RATIO = 1.2f，双语模式下每组（主+辅）
+ *            槽位高度从 1.5S 改为 1.2S；单语/非双语仍用 1.5S，完全不受影响。
+ *            改后组间视觉白边约 0.12S，比正常行间距略小，视觉紧凑不空旷。
+ *            滚动动画按"行槽"做比例偏移，双语/单语各自槽高一致，动画不会错位。
  */
 public class LrcView extends View {
 
@@ -234,6 +242,11 @@ public class LrcView extends View {
     // xuameng 修改：辅行字号由主行的 0.5 倍改为主行的 2/3（≈0.667）
     private static final float BILINGUAL_TRANS_SIZE_RATIO = 2f / 3f;
     private static final int   BILINGUAL_TRANS_NORMAL_COLOR = 0xFF999999; // 辅行默认颜色：中灰色
+    // ===== xuameng 新增：双语组（主+辅）占用的槽位高度（相对主行字号的倍数）。
+    // 原来直接复用单行 lineHeight=1.5S，导致组间白边是正常行间距的好几倍；
+    // 改成 1.2S 后：主+辅总高约 1.08S，剩下约 0.12S 作为组间距白边，比正常行间距略小，视觉紧凑不空旷。
+    // 单语/非双语行仍走 1.5S 的 lineHeight，完全不受此常量影响 =====
+    private static final float BILINGUAL_GROUP_LINE_HEIGHT_RATIO = 1.2f;
     // 主副歌词之间的间距比例：正常行间距 = 主行字号 * 0.5f（因 lineHeight = textSize*1.5，两行 baseline 之间是 1.5*textSize，
     // 也就是字外额外 0.5*textSize 的间距）；主副之间取其一半 = 主行字号 * 0.25f。
     private static final float BILINGUAL_MASTER_TRANS_GAP_RATIO = 0.25f;
@@ -1277,16 +1290,19 @@ public class LrcView extends View {
         boolean timeAdvancing = advanceRenderTime();
 
         // 计算总高度和起始Y位置，实现垂直居中
-        float lineHeight = mNormalPaint.getTextSize() * 1.5f;
-        // xuameng 修改：双语模式下当前行槽位需要同时画主行和辅行，辅行要占额外高度；
-        // 为了简单稳妥：visibleLines 保持 7 不变，但 totalHeight 与 startY 仍按单行 lineHeight 排布，
-        // 只是在"当前行是主行且有对应辅行"时，把当前槽位内主行上移、辅行画在主行下方半间距处，
-        // 视觉上当前槽位会比其它行稍高，但不影响上下行的滚动与定位。
+        float masterTextSize = mNormalPaint.getTextSize();
+        // xuameng 修改：单语行仍用 1.5S 槽高；双语模式下"主+辅"一组用 BILINGUAL_GROUP_LINE_HEIGHT_RATIO * S 槽高，
+        // 组间视觉间距收窄到与正常行间距相近，避免之前"组间距是正常行间距好几倍"的空白过大问题。
+        float singleLineHeight = masterTextSize * 1.5f;
+        float bilingualGroupHeight = masterTextSize * BILINGUAL_GROUP_LINE_HEIGHT_RATIO;
+        boolean isBilingual = mHasBilingualPairs; // 整首歌是否含双语对
+        float defaultLineHeight = isBilingual ? bilingualGroupHeight : singleLineHeight;
         int visibleLines = Math.min(mLrcLines.size(), 7); // 显示最多7行歌词
-        float totalHeight = lineHeight * visibleLines;
-        // 将浮点数偏移转换为整数像素，避免亚像素渲染问题
-        float scrollOffsetPixels = Math.round(mScrollOffset * lineHeight);  //滚动偏移像素
-        float startY = (getHeight() - totalHeight) / 2 + mNormalPaint.getTextSize() - scrollOffsetPixels;  // 计算起始Y位置，使当前行居中显示  并滚动
+        // 总高度按当前实际槽高累加（双语模式统一用双语组槽高，单语模式用单行槽高）
+        float totalHeight = defaultLineHeight * visibleLines;
+        // 滚动偏移像素：使用当前默认槽高作为步长（双语/单语各自一致，不会错位）
+        float scrollOffsetPixels = Math.round(mScrollOffset * defaultLineHeight);
+        float startY = (getHeight() - totalHeight) / 2 + masterTextSize - scrollOffsetPixels;
         // 计算实际可见的行范围，确保不会超出歌词列表边界
         int startLineIndex = Math.max(0, mCurrentLine - 3);
         int endLineIndex = Math.min(mLrcLines.size() - 1, mCurrentLine + 3);
@@ -1335,7 +1351,7 @@ public class LrcView extends View {
             }
 
             LrcLine line = mLrcLines.get(actualIndex);
-            float y = startY + i * lineHeight;
+            float y = startY + i * defaultLineHeight;
 
             // ===== xuameng 新增：双语模式下，辅行不单独占一个绘制槽位，
             // 因为 targetLine/startLineIndex 都是主行下标，辅行不会被迭代到；
