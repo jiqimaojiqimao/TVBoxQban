@@ -112,6 +112,9 @@ public class MusicPlaybackService extends Service {
         super.onCreate();
         instance = this;
         createNotificationChannel();
+        // xuameng关键修复：立刻前台化 防止崩溃
+        startForeground(NOTIFICATION_ID, buildPlaceholderNotification());
+
         mediaSession = new MediaSessionCompat(this, "聚汇影视");
         mediaSession.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
                 | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -433,4 +436,22 @@ public class MusicPlaybackService extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
+
+    //xuameng 新增占位通知防止初始化晚崩溃
+    private Notification buildPlaceholderNotification() {
+        NotificationCompat.Builder builder =
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                        ? new NotificationCompat.Builder(this, CHANNEL_ID)
+                        : new NotificationCompat.Builder(this);
+
+        builder.setSmallIcon(R.drawable.app_icon)
+                .setContentTitle("聚汇影视")
+                .setContentText("正在准备音乐播放...")
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true);
+
+        return builder.build();
+    }
+
 }
