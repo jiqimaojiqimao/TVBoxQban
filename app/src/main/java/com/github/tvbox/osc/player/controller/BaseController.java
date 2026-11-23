@@ -31,13 +31,13 @@ import xyz.doikki.videoplayer.util.PlayerUtils;
 
 public abstract class BaseController extends BaseVideoController implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, View.OnTouchListener {
 
-    //xuameng新增接口
+    //xuameng新增接口用于lrc歌词获取seekTo进度
     public interface OnSeekListener {
         void onSeekPosition(long position);
     }
-
+    //xuameng新增接口用于lrc歌词获取seekTo进度
     private OnSeekListener mOnSeekListener;
-
+    //xuameng新增接口用于lrc歌词获取seekTo进度
     public void setOnSeekListener(OnSeekListener listener) {
         this.mOnSeekListener = listener;
     }
@@ -445,10 +445,10 @@ public abstract class BaseController extends BaseVideoController implements Gest
                     stopSlide();
                     if (mSeekPosition >= 0) {
                         mControlWrapper.seekTo(mSeekPosition);
-                        //xuameng通知子接口
+                        //xuameng通知子接口用于lrc歌词获取seekTo进度
                         if (mOnSeekListener != null) {
                             mOnSeekListener.onSeekPosition(mSeekPosition);
-                        }           
+                        }   
                         mSeekPosition = -1;
                     }
                     break;
