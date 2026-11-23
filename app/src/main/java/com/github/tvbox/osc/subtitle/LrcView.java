@@ -54,6 +54,10 @@ import java.lang.Math;
  *      规则改为：当前行尚未真正结束时，绝不允许整行铺满高亮；
  *      只有整行完全结束时，才一次性铺满整行高亮；并且必须等整行完全铺满之后，
  *      才进入下一行。逐字歌词与普通歌词统一按此规则处理。
+ * 20261123 补充：把上面“换行前先补铺满”的规则，由原来的“仅第 4 行起向前滚动时生效”
+ *      扩展到所有向前换行：前三行（targetLine <= 3，即第 0/1/2/3 行）向前换行时，
+ *      同样先补铺满再换行，并同样走一次平滑滚动，让“铺满”可被看到；
+ *      逐字歌词与普通歌词、所有行统一按此规则处理。
  */
 public class LrcView extends View {
 
@@ -673,18 +677,33 @@ public class LrcView extends View {
                 mScrollOffset = 0f;
                 invalidate();
             } else {
-                // 相邻行：只有向前滚动（到下一行）才执行平滑滚动
-                if (isForward && targetLine > 3) {
+                // xuameng 修改：向前换行先补铺满，保证“铺满之后才进入下一行”；
+                // 是否滚动沿用原规则——前三行（targetLine <= 3，即第 0/1/2/3 行）不滚动、
+                // 直接跳转，第 4 行起（targetLine > 3）才走平滑滚动。
+                if (isForward) {
                     // xuameng 新增：进入下一行之前，先确认当前行已经“完全铺满”。
                     // 若时间轴还没走完当前行，就把它补到当前行结束时刻（整行立即完全铺满），
-                    // 再执行滚动换行；从根上保证“完全铺满高亮之后，才进入下一行”。
+                    // 再执行换行；从根上保证“完全铺满高亮之后，才进入下一行”。
+                    // 注意：这一步对所有向前换行都执行（含前三行），只补铺满、不改变是否滚动。
                     long currentLineEnd = getLineEndTime(mCurrentLine);
                     if (mRenderTime < currentLineEnd) {
                         mRenderTime = currentLineEnd;
                     }
-                    smoothScrollTo(targetLine);
+                    // xuameng 修改：前三行只补铺满、不滚动，保持原来的“直接跳转”；
+                    // 第 4 行起才走平滑滚动，让“当前行已经铺满”在滚动动画时长里被看到。
+                    if (targetLine > 3) {
+                        smoothScrollTo(targetLine);
+                    } else {
+                        // 前三行：上面已把时间轴补到当前行结束（逻辑上已完整铺满），此处直接跳转、不滚动
+                        if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+                            mScrollAnimator.cancel();
+                        }
+                        mCurrentLine = targetLine;
+                        mScrollOffset = 0f;
+                        invalidate();
+                    }
                 } else {
-                    // 向后滚动（到上一行）或前三行：直接跳转
+                    // 向后滚动（到上一行）：直接跳转
                     if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
                         mScrollAnimator.cancel();
                     }
