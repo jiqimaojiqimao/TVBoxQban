@@ -120,6 +120,21 @@ import java.lang.Math;
  *         并把下一行槽位的间距挤掉、段间看起来变宽。
  *         现改为：主行 baseline 固定在槽位 y，辅行 baseline 统一为 y + transBaselineOffset，
  *         正在唱/已唱/未唱三类行使用完全相同的 Y 公式，主副间距一致，段间间距恢复正常。
+ *         段间间距保持现状（双语一屏显示约 6 行主行+对应辅行，视觉上正好），不做进一步压缩。
+ * 20261123 修复：双语歌词下 seekTo 有时仍会触发滚动动画的问题。
+ *      根因：向前相邻换行分支（lineDistance == 1）的 if (targetLine > 3) 漏判了 seekJump，
+ *            导致 seek 到第 4 行起的相邻下一行时仍会调用 smoothScrollTo，动画就被触发了。
+ *      修复：1) 把判断改为 if (targetLine > 3 && !seekJump)，seek 时走 else 直接跳转、
+ *            不播动画，并在 seek 跳转分支额外 resetFullyLitStates + clearPrevHighlight +
+ *            mRenderTime 硬对齐，保证目标行从第一个字开始唱；
+ *            2) 对称新增"向前大幅跳变兜底"（RENDER_FORWARD_SEEK_TOLERANCE_MS = 2000ms），
+ *            宿主直接把进度往前跳一大段而没调 setSeekPosition 时，同样当作 seek 处理、不滚动；
+ *            3) 大距离 seek 分支补 clearPrevHighlight()，防止前三行延时高亮残留；
+ *            4) 向后 seek 兜底分支也补了 clearPrevHighlight()，保持对称。
+ *      效果：无论宿主是否调用 setSeekPosition，只要是 seek/跳转一律取消滚动动画；
+ *            正常播放（含向前、向后、跨多行）在非前三行时一律滚动；前三行保持不滚动。
+ *      其它（逐字/普通高亮、铺满规则、防闪白、seek 重置 fullyLit、白边补偿、前三行延时 222ms、
+ *      双语逻辑、段间距）全部保持原样未动。
  */
 public class LrcView extends View {
 
@@ -198,6 +213,24 @@ public class LrcView extends View {
 
     /** 每帧向播放器真实进度收敛的系数：越小越平滑、越大越跟手，0.03~0.12 之间比较合适 */
     private static final float RENDER_SYNC_GAIN = 0.05f;
+
+    /** 一帧内允许推进的最大毫秒数（掉帧保护）：防止后台切回时一次性冲过好几行 */
+    private static final float RENDER_MAX_FRAME_MS = 100f;
+
+    /** 平滑时间轴与播放器进度的偏差超过该阈值时，强制硬对齐（毫秒） */
+    private static final float RENDER_RESYNC_THRESHOLD_MS = 800f;
+
+    /** 进度"卡住"超过该时长后，认为播放器已暂停，停止自主推进（毫秒） */
+    private static final long RENDER_IDLE_TIMEOUT_MS = 500L;
+
+    /** 向后倒退超过该阈值，认定为用户往回 seek（毫秒）——兜底，防止宿主没调 setSeekPosition */
+    private static final long RENDER_BACKWARD_SEEK_TOLERANCE_MS = 250L;
+
+    // xuameng 新增：向前大幅跳变兜底阈值（毫秒）。
+    // 正常播放相邻两行时间差一般在几百毫秒到 1~2 秒；若一帧前进超过 2 秒，
+    // 说明用户向前拖了进度条或宿主直接跳进度（部分播放器此时不会调 setSeekPosition），
+    // 此时应当作 seek 处理——不播放滚动动画、重置 fullyLit、硬对齐时间轴。
+    private static final long RENDER_FORWARD_SEEK_TOLERANCE_MS = 2000L;
     /** 单帧最大推进量，防止掉帧/切后台回来后一次冲过头 */
     private static final float RENDER_MAX_FRAME_MS = 64f;
     /** 播放器进度长时间不前进则视为暂停，冻结时间轴（需明显大于宿主的轮询间隔） */
@@ -792,6 +825,19 @@ public class LrcView extends View {
             resetFullyLitStates();
             // xuameng 新增：兜底检测到的回退同样属于 seek/跳转，换行时不显示滚动动画
             seekJump = true;
+            // xuameng 新增：回退时清掉前三行延时高亮，避免与新位置不符
+            clearPrevHighlight();
+        }
+
+        // xuameng 新增：向前大幅跳变兜底（宿主直接往前跳进度、没调 setSeekPosition 时的保护）。
+        // 正常播放相邻两行时间差一般 < 2s；一帧前进超过 2000ms 就认定是向前 seek，
+        // 此时同样不播滚动动画、重置 fullyLit、硬对齐时间轴，防止跨多行时触发动画乱滚。
+        if (previousHostPosition != Long.MIN_VALUE
+                && position > previousHostPosition + RENDER_FORWARD_SEEK_TOLERANCE_MS) {
+            mRenderTime = position;
+            resetFullyLitStates();
+            clearPrevHighlight();
+            seekJump = true;
         }
 
         // 检查是否达到最小显示位置
@@ -899,6 +945,7 @@ public class LrcView extends View {
                         mScrollAnimator.cancel();
                     }
                     resetFullyLitStates();
+                    clearPrevHighlight(); // xuameng 新增：seek 跨多行时清掉前三行延时高亮
                     mRenderTime = position;
                     mCurrentLine = targetLine;
                     mScrollOffset = 0f;
@@ -917,7 +964,9 @@ public class LrcView extends View {
             } else {
                 // xuameng 修改：向前换行先补铺满，保证“铺满之后才进入下一行”；
                 // 是否滚动沿用原规则——前三行（targetLine <= 3，即第 0/1/2/3 行）不滚动、
-                // 直接跳转，第 4 行起（targetLine > 3）才走平滑滚动。
+                // 直接跳转；第 4 行起（targetLine > 3）才走平滑滚动。
+                // xuameng 修复：第 4 行起还需要额外满足 !seekJump——seek/跳转时一律不播滚动动画，
+                // 防止 seek 到相邻下一行（lineDistance == 1）时仍触发 smoothScrollTo 导致动画乱滚。
                 if (isForward) {
                     // xuameng 新增：进入下一行之前，先确认当前行已经“完全铺满”。
                     // 若时间轴还没走完当前行，就把它补到当前行结束时刻（整行立即完全铺满），
@@ -927,15 +976,17 @@ public class LrcView extends View {
                     if (mRenderTime < currentLineEnd) {
                         mRenderTime = currentLineEnd;
                     }
-                    // xuameng 修改：前三行只补铺满、不滚动，保持原来的“直接跳转”；
-                    // 第 4 行起才走平滑滚动，让“当前行已经铺满”在滚动动画时长里被看到。
-                    if (targetLine > 3) {
+                    // xuameng 修复：原判断 if (targetLine > 3) 漏了 !seekJump，
+                    // 导致 seek 到第 4 行起的相邻下一行时仍然启动滚动动画。
+                    // 现改为：只有"不是 seek"并且"目标行在第 4 行之后"才走平滑滚动。
+                    if (targetLine > 3 && !seekJump) {
                         smoothScrollTo(targetLine);
                     } else {
-                        // 前三行：上面已把时间轴补到当前行结束（逻辑上已完整铺满），此处立即跳转、不滚动。
-                        // xuameng 新增：跳转前把“刚离开的上一行”登记为延时高亮行，让它在原位置再保持
-                        // 一段短延时（原为 300ms = mScrollDuration，现独立为 mPrevHighlightDuration = 150ms）
-                        // 整行高亮再熄灭变白，避免前三行时间太短肉眼看不到铺满。
+                        // 前三行 / seek 触发：上面已把时间轴补到当前行结束（逻辑上已完整铺满），
+                        // 此处立即跳转、不播放滚动动画。
+                        // xuameng 新增：跳转前把“刚离开的上一行”登记为延时高亮行（仅非 seek 的前三行换行才登记），
+                        // 让它在原位置再保持一段短延时整行高亮再熄灭变白，
+                        // 避免前三行时间太短肉眼看不到铺满。
                         // 注意：mCurrentLine 立刻切到 targetLine，新行从第一个字开始正常唱，不做等待。
                         int justLeftLine = mCurrentLine;
                         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
@@ -943,10 +994,17 @@ public class LrcView extends View {
                         }
                         mCurrentLine = targetLine;
                         mScrollOffset = 0f;
+                        // xuameng 新增：seek 跳转时额外重置 fullyLit 并硬对齐时间轴，
+                        // 保证目标行从第一个字开始唱，不会残留之前的整行黄。
+                        if (seekJump) {
+                            resetFullyLitStates();
+                            clearPrevHighlight();
+                            mRenderTime = position;
+                        }
                         // 登记延时高亮：仅限前三行（justLeftLine <= 3），并且不是 seek/跳转触发
                         if (!seekJump && justLeftLine >= 0 && justLeftLine <= 3 && justLeftLine != targetLine) {
                             mPrevHighlightLineIndex = justLeftLine;
-                            // xuameng 修改：改用独立的 mPrevHighlightDuration(150ms)，不再复用 mScrollDuration(300ms)
+                            // xuameng 修改：改用独立的 mPrevHighlightDuration(222ms)，不再复用 mScrollDuration(300ms)
                             mPrevHighlightExpireNanos = System.nanoTime() + (long) mPrevHighlightDuration * 1_000_000L;
                         } else {
                             clearPrevHighlight(); // seek 触发时不保留延时高亮，避免与实际进度不符
