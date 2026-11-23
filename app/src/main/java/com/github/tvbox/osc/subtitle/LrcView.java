@@ -217,7 +217,7 @@ public class LrcView extends View {
     // 为 false（正常播放换行）时一律显示滚动动画。updateTime 开头消费一次即复位。
     private boolean mSeekJump = false;
 
-    // xuameng 新增：前三行换行时，让“刚离开的上一行”在原位置保持整行高亮 mScrollDuration(默认300ms)
+    // xuameng 新增：前三行换行时，让“刚离开的上一行”在原位置保持整行高亮 mScrollDuration(默认222ms)
     // 再熄灭变回白字，而不是切换瞬间立即变白。这样即使前三行时间非常短，肉眼也能看到“铺满”再消失。
     // 注意：这只是“高亮延时关闭”，不影响 mCurrentLine 的切换——换行立即发生，新行立刻从第一个字开始唱。
     // xuameng 修改：上述延时时长已从“复用 mScrollDuration(300ms)”独立出来，改为下面的
