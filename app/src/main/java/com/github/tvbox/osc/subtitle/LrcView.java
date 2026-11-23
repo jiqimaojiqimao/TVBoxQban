@@ -253,6 +253,30 @@ public class LrcView extends View {
     }
 
     /**
+     * xuameng 修复：把逐字高亮的平滑时间轴夹在“当前行”的有效区间内。
+     *
+     * 逐字高亮用 lineElapsed = mRenderTime - line.time 计算进度。
+     * 但 mCurrentLine 由宿主上报的（离散、会跳变、还会抖动）进度决定，
+     * 而 mRenderTime 是在 onDraw 里自走的，二者并不总是同步：
+     *   - lineElapsed 为负：整行不着色（之前的“全白闪”）；
+     *   - lineElapsed 超过整行最后一个字的结束时间：drawKaraokeLine 里
+     *     if (lineElapsed >= w.start) 对每个字都成立、wordProgress 全取 1，
+     *     逐字 clipRect 拼接起来就是整行铺满（现在的“闪一下全行高亮”）。
+     * 这里每帧把时间轴限制在当前行区间 [line.time, 下一行.time] 内，从根上避免错配。
+     */
+    private void clampRenderTimeToCurrentLine() {
+        if (mLrcLines == null || mLrcLines.isEmpty()) return;
+        if (mCurrentLine < 0 || mCurrentLine >= mLrcLines.size()) return;
+        long lineStart = mLrcLines.get(mCurrentLine).time;
+        long lineEnd = (mCurrentLine + 1 < mLrcLines.size())
+                ? mLrcLines.get(mCurrentLine + 1).time
+                : lineStart + 5000L;
+        if (lineEnd < lineStart) lineEnd = lineStart;
+        if (mRenderTime < lineStart) mRenderTime = lineStart;
+        if (mRenderTime > lineEnd) mRenderTime = lineEnd;
+    }
+
+    /**
      * xuameng 新增：宿主 seekTo 之后立即调用（推荐）
      * 时间轴瞬时对齐到 seek 的目标位置，绝不做平滑追赶，从根上避免“高亮往回走一点”。
      * 暂停状态下 seek 也能立刻反映到画面上（此时宿主不会走正常的进度轮询）。
@@ -494,6 +518,9 @@ public class LrcView extends View {
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
                 mSmoothedProgress = 0f;
+                // xuameng 修复：动画期间 mCurrentLine 被冻结、时间轴却一直在走，
+                // 结束时要立刻把时间轴夹回新的当前行，避免旧行被多算进度而铺满
+                clampRenderTimeToCurrentLine();
             }
 
             @Override
@@ -502,6 +529,7 @@ public class LrcView extends View {
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
                 mSmoothedProgress = 0f;
+                clampRenderTimeToCurrentLine();
             }
 
         });
@@ -629,6 +657,16 @@ public class LrcView extends View {
                     break;
                 }
             }
+        }
+
+        // xuameng 修复：宿主进度在行边界附近抖动时，targetLine 会在 N 与 N-1 之间来回跳，
+        // 导致 mCurrentLine 回跳，而 mRenderTime 仍停在后面的行上，
+        // 逐字高亮就会被瞬时铺满。正常播放进度只前进，
+        // 这里忽略“并非真正倒退”的微小回跳，配合 clampRenderTimeToCurrentLine 一起消除闪烁。
+        if (targetLine < mCurrentLine
+                && previousHostPosition != Long.MIN_VALUE
+                && position >= previousHostPosition - RENDER_BACKWARD_SEEK_TOLERANCE_MS) {
+            targetLine = mCurrentLine;
         }
 
         // xuameng debug
@@ -790,48 +828,51 @@ public class LrcView extends View {
      * xuameng 新增：逐字卡拉OK绘制
      * 关键改动：高亮进度改用平滑时间轴 mRenderTime，不再直接使用播放器原始进度
      */
-private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
-    float startX = getWidth() / 2 - line.width / 2;
-    canvas.drawText(line.text, startX, y, mNormalPaint);
+    private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
+        float startX = getWidth() / 2 - line.width / 2;
 
-    Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
-    float textTop = y + fm.top;
-    float textBottom = y + fm.bottom;
+        // 1. 先画整行普通底色（和老歌词一样）
+        canvas.drawText(line.text, startX, y, mNormalPaint);
 
-    // 计算当前行的结束时间
-    long lineEndTime = line.time;
-    if (line.words != null && !line.words.isEmpty()) {
-        // 用最后一个字的结束时间
-        WordInfo lastWord = line.words.get(line.words.size() - 1);
-        lineEndTime = line.time + lastWord.end;
-    } else {
-        lineEndTime = line.time + 5000;
-    }
+        Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
+        float textTop = y + fm.top;
+        float textBottom = y + fm.bottom;
 
-    // xuameng 修复：clamp mRenderTime 到当前行时间范围内，防止硬对齐导致的闪全行
-    float clampedRenderTime = Math.max(line.time, Math.min(lineEndTime, mRenderTime));
-    float lineElapsed = clampedRenderTime - line.time;
-
-    float x = startX;
-    for (WordInfo w : line.words) {
-        if (lineElapsed >= w.start) {
-            float wordProgress = 1.0f;
-            long wordDur = w.end - w.start;
-            if (wordDur > 0 && lineElapsed < w.end) {
-                wordProgress = (lineElapsed - w.start) / (float) wordDur;
-                wordProgress = Math.max(0f, Math.min(1f, wordProgress));
-            }
-            float highlightWidth = w.width * wordProgress;
-            if (highlightWidth > 0.5f) {
-                canvas.save();
-                canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
-                canvas.drawText(line.text, startX, y, mHighlightPaint);
-                canvas.restore();
-            }
+        // xuameng 修改：使用平滑时间轴，且用浮点运算，避免整字跳变
+        float lineElapsed = mRenderTime - line.time;
+        // xuameng 修复：把行内进度夹到 [0, 本行逐字总时长]，做最后一道兜底，
+        // 即使时间轴与行号出现瞬时错配，也不会把整行一次性铺满
+        float lineSpan = 0f;
+        for (WordInfo wi : line.words) {
+            if (wi.end > lineSpan) lineSpan = wi.end;
         }
-        x += w.width;
+        if (lineElapsed < 0f) lineElapsed = 0f;
+        if (lineElapsed > lineSpan) lineElapsed = lineSpan;
+
+        float x = startX;
+        for (WordInfo w : line.words) {
+            if (lineElapsed >= w.start) {
+                float wordProgress = 1.0f;
+                long wordDur = w.end - w.start;
+                if (wordDur > 0 && lineElapsed < w.end) {
+                    wordProgress = (lineElapsed - w.start) / (float) wordDur;
+                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
+                }
+                //xuameng 盛满高亮
+                if (wordProgress > 0.99f) wordProgress = 1.0f;
+                float highlightWidth = w.width * wordProgress;
+                if (highlightWidth > 0.5f) {
+                    // 关键：用整行 clipRect，但只裁剪当前字的区域
+                    canvas.save();
+                    canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
+                    // 画整行文本，不是逐字！
+                    canvas.drawText(line.text, startX, y, mHighlightPaint);
+                    canvas.restore();
+                }
+            }
+            x += w.width;
+        }
     }
-}
 
     /**
      * 绘制卡拉OK效果
@@ -862,6 +903,8 @@ private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
 
         // xuameng 新增：推进逐字高亮平滑时间轴（必须放在绘制之前）
         boolean timeAdvancing = advanceRenderTime();
+        // xuameng 修复：每帧把时间轴夹回当前行区间，避免行号与时间轴错配时整行被铺满
+        clampRenderTimeToCurrentLine();
 
         // 计算总高度和起始Y位置，实现垂直居中
         float lineHeight = mNormalPaint.getTextSize() * 1.5f;
