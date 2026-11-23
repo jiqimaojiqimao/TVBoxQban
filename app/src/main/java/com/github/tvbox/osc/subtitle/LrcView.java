@@ -93,7 +93,11 @@ import java.lang.Math;
  * 20261123 修改（修正）：前三行“铺满后延时 300ms 再关闭高亮”的观感优化，明确语义——
  *      跳转立即发生（mCurrentLine 立刻切到下一行，新行从第一个字开始正常高亮），
  *      只是上一行（前三行范围内）在它原本的屏幕位置再保持整行高亮 300ms（= mScrollDuration），
- *      之后才变回白字。实现方式：新增 mPrevHighlightLineIndex / mPrevHighlightExpireNanos
+ *      之后才变回白字。
+ * 20261123 修改（调整）：上述“上一行高亮延时关闭”的时长已改为独立参数
+ *      mPrevHighlightDuration = 150ms，与原 300ms(= mScrollDuration) 解耦，
+ *      即：只把这段延时从 300ms 缩短到 150ms，滚动动画时长不受影响、第 4 行起行为不变。
+ *      实现方式：新增 mPrevHighlightLineIndex / mPrevHighlightExpireNanos
  *      两个字段，前三行向前换行时登记“刚离开的上一行”为延时高亮行，onDraw 画非当前行时
  *      如果命中且未到期，就画成整行高亮；到期后恢复普通白字并持续重绘到那一时点。
  *      seek/reset/初始定位/跨行跳转时会清空这个标记，避免高亮残留。第 4 行起行为不变。
@@ -156,6 +160,11 @@ public class LrcView extends View {
     // xuameng 新增：前三行换行时，让“刚离开的上一行”在原位置保持整行高亮 mScrollDuration(默认300ms)
     // 再熄灭变回白字，而不是切换瞬间立即变白。这样即使前三行时间非常短，肉眼也能看到“铺满”再消失。
     // 注意：这只是“高亮延时关闭”，不影响 mCurrentLine 的切换——换行立即发生，新行立刻从第一个字开始唱。
+    // xuameng 修改：上述延时时长已从“复用 mScrollDuration(300ms)”独立出来，改为下面的
+    // mPrevHighlightDuration，并缩短为 150ms。此改动只影响“上一行高亮延时关闭”的等待时长，
+    // 滚动动画时长仍为 mScrollDuration(300ms)，两者不再联动。
+    // 以后想再调短/调长，只改下面这一个数字即可（与 setScrollDuration 互不影响）。
+    private int mPrevHighlightDuration = 222; // 前三行“上一行高亮延时关闭”的时长（毫秒）
     private int mPrevHighlightLineIndex = -1; // 需要延时熄灭高亮的行下标；-1 表示没有
     private long mPrevHighlightExpireNanos = 0L; // 延时高亮的到期时刻（System.nanoTime() 纳秒）
 
@@ -747,22 +756,25 @@ public class LrcView extends View {
             // 现在只有 seek/跳转（seekJump）才不显示滚动动画、直接跳转（防止动画乱滚不好看）；
             // 正常播放时无论跨几行都显示滚动动画。
             if (lineDistance > MAX_SCROLL_DISTANCE) {
-                if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
-                    mScrollAnimator.cancel();
-                }
-                // xuameng 新增：跨行跳转（快进/跨多行 seek）时重置 fullyLit，
-                // 避免中间行或目标行残留旧的整行高亮。
-                resetFullyLitStates();
-                // xuameng 新增：跨行跳转时清掉延时高亮
-                clearPrevHighlight();
-                mRenderTime = position; // 跨行跳转时时间轴硬对齐
                 if (seekJump) {
-                    // seek 触发：不显示滚动动画，直接跳转
+                    // seek / 跳转：取消动画，直接跳转
+                    if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+                        mScrollAnimator.cancel();
+                    }
+                    resetFullyLitStates();
+                    mRenderTime = position;
                     mCurrentLine = targetLine;
                     mScrollOffset = 0f;
                     invalidate();
                 } else {
-                    // 正常播放跨行：显示滚动动画（不再像老代码那样直接跳转）
+                    // 正常播放跨行（含双语歌词隔行换行）：
+                    // 已在滚动就直接忽略本次，绝不 cancel —— cancel 会触发 onAnimationCancel，
+                    // 把 mCurrentLine 直接设成目标行并清零偏移，动画当场被打断，看起来就是直接跳转。
+                    if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
+                        return;
+                    }
+                    resetFullyLitStates();
+                    mRenderTime = position;
                     smoothScrollTo(targetLine);
                 }
             } else {
@@ -785,7 +797,8 @@ public class LrcView extends View {
                     } else {
                         // 前三行：上面已把时间轴补到当前行结束（逻辑上已完整铺满），此处立即跳转、不滚动。
                         // xuameng 新增：跳转前把“刚离开的上一行”登记为延时高亮行，让它在原位置再保持
-                        // 300ms（= mScrollDuration）整行高亮再熄灭变白，避免前三行时间太短肉眼看不到铺满。
+                        // 一段短延时（原为 300ms = mScrollDuration，现独立为 mPrevHighlightDuration = 150ms）
+                        // 整行高亮再熄灭变白，避免前三行时间太短肉眼看不到铺满。
                         // 注意：mCurrentLine 立刻切到 targetLine，新行从第一个字开始正常唱，不做等待。
                         int justLeftLine = mCurrentLine;
                         if (mScrollAnimator != null && mScrollAnimator.isRunning()) {
@@ -796,7 +809,8 @@ public class LrcView extends View {
                         // 登记延时高亮：仅限前三行（justLeftLine <= 3），并且不是 seek/跳转触发
                         if (!seekJump && justLeftLine >= 0 && justLeftLine <= 3 && justLeftLine != targetLine) {
                             mPrevHighlightLineIndex = justLeftLine;
-                            mPrevHighlightExpireNanos = System.nanoTime() + (long) mScrollDuration * 1_000_000L;
+                            // xuameng 修改：改用独立的 mPrevHighlightDuration(150ms)，不再复用 mScrollDuration(300ms)
+                            mPrevHighlightExpireNanos = System.nanoTime() + (long) mPrevHighlightDuration * 1_000_000L;
                         } else {
                             clearPrevHighlight(); // seek 触发时不保留延时高亮，避免与实际进度不符
                         }
