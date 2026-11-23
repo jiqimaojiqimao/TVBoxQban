@@ -72,6 +72,18 @@ import java.lang.Math;
  *      现给所有 clipRect 的右边界统一加 2.5px 溢出补偿，让高亮抗锯齿/粗体/字形延伸
  *      都能完整画出；未结束阶段仍然通过封顶值保证不提前铺满。
  *      普通歌词、逐字歌词、前三行统一走 drawKaraokeLine，因此全部生效。
+ * 20261123 修复：seek（拖进度条）后 fullyLit 没有重置的问题。
+ *      现象：调用 seekTo 回到上一行时，之前已经铺满的行还保持全黄，但进度实际在画第一个字，
+ *      原因是 fullyLit 只在 reset()/setLrcText() 里重置，seek 跳转时没有重置。
+ *      现在抽出统一的 resetFullyLitStates() 方法，在下列所有"时间轴被打断/跳转"入口调用：
+ *        1) 往回 seek（RENDER_BACKWARD_SEEK_TOLERANCE_MS 检测）；
+ *        2) 回到开头（position < MIN_POSITION_TO_SHOW）；
+ *        3) 初始定位（mIsInitialPositioning 首次对齐）；
+ *        4) 跨行跳转（快进/跨多行 seek，lineDistance > MAX_SCROLL_DISTANCE），
+ *           并把 mRenderTime 硬对齐到当前 position；
+ *        5) 相邻向后（回到上一行）跳转，同时把 mRenderTime 硬对齐到当前 position；
+ *      正常相邻向前换行（先补铺满再进下一行）不重置 fullyLit，让防闪白规则继续生效。
+ *      普通歌词、逐字歌词、前三行全部统一生效。
  */
 public class LrcView extends View {
 
@@ -452,9 +464,7 @@ public class LrcView extends View {
         mCurrentPosition = 0;
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         // xuameng 新增：重置每一行的“已铺满”标记，防止旧歌词的标记残留
-        for (LrcLine line : mLrcLines) {
-            line.fullyLit = false;
-        }
+        resetFullyLitStates();
         // xuameng 新增：重置平滑时间轴
         mRenderTime = 0f;
         mLastFrameNanos = 0L;
@@ -617,6 +627,10 @@ public class LrcView extends View {
         if (previousHostPosition != Long.MIN_VALUE
                 && position < previousHostPosition - RENDER_BACKWARD_SEEK_TOLERANCE_MS) {
             mRenderTime = position;
+            // xuameng 新增：往回 seek（拖进度条回上一段/上一行）时，重置所有行的“已铺满”标记，
+            // 否则之前已经唱完、fullyLit=true 的行会在跳回去后仍保持整行高亮，
+            // 出现“进度回到第一个字但整行已经黄了”的问题。
+            resetFullyLitStates();
         }
 
         // 检查是否达到最小显示位置
@@ -626,6 +640,8 @@ public class LrcView extends View {
             mCurrentLine = 0; // 确保强制重置到第一行
             mScrollOffset = 0f; // 重置滚动偏移
             mRenderTime = position; // 新增：时间轴同步重置
+            // xuameng 新增：回到开头也属于时间跳转，重置 fullyLit
+            resetFullyLitStates();
             invalidate();
             return;
         }
@@ -672,6 +688,9 @@ public class LrcView extends View {
             // 合并后高亮进度由平滑时间轴直接决定：初始定位时把时间轴硬对齐到当前进度，
             // 高亮自然落在正确位置，不再需要单独初始化行进度
             mRenderTime = position; // xuameng 新增：初始定位时时间轴硬对齐
+            // xuameng 新增：初始定位（含 setLrcText 后的首次定位）时重置 fullyLit，
+            // 避免旧歌词/上一次播放残留的整行高亮标记污染新位置。
+            resetFullyLitStates();
             mIsInitialPositioning = false; // 定位完成，退出初始状态
             invalidate();
             return;
@@ -692,8 +711,12 @@ public class LrcView extends View {
                     mScrollAnimator.cancel();
                 }
                 // 直接跳转逻辑
+                // xuameng 新增：跨行跳转（快进/跨多行 seek）时重置 fullyLit，
+                // 避免中间行或目标行残留旧的整行高亮。
+                resetFullyLitStates();
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
+                mRenderTime = position; // 跨行跳转时时间轴硬对齐
                 invalidate();
             } else {
                 // xuameng 修改：向前换行先补铺满，保证“铺满之后才进入下一行”；
@@ -728,8 +751,12 @@ public class LrcView extends View {
                     }
                     // 合并后普通歌词与逐字歌词同为一套方案：高亮进度统一由平滑时间轴决定，
                     // 换行时不再需要按行类型分别初始化进度，也不再需要“普通歌词等铺满”的判断
+                    // xuameng 新增：回到上一行（向后 seek 一格）也重置 fullyLit，
+                    // 保证回去后从第一个字重新唱，不会保留整行黄。
+                    resetFullyLitStates();
                     mCurrentLine = targetLine;
                     mScrollOffset = 0f;
+                    mRenderTime = position; // 回到上一行时时间轴硬对齐
                     invalidate();
                 }
             }
@@ -740,7 +767,7 @@ public class LrcView extends View {
     }
 
     /**
-     * 新增：手动设置是否显示歌词
+     * xuameng 新增：手动设置是否显示歌词
      *
      * @param show 是否显示歌词
      */
@@ -748,6 +775,21 @@ public class LrcView extends View {
         if (mShouldShowLyrics != show) {
             mShouldShowLyrics = show;
             invalidate();
+        }
+    }
+
+    /**
+     * xuameng 新增：重置所有行的“已铺满”标记。
+     * 用于 seek / 跨行跳转 / 初始定位 / 回退 这类“时间轴被手动打断”的场景：
+     * 必须在重绘前把 fullyLit 清空，否则之前已经唱过、fullyLit=true 的行会在跳回去后
+     * 仍保持整行高亮，出现“进度回到第一个字但整行已经黄了”的问题。
+     */
+    private void resetFullyLitStates() {
+        if (mLrcLines == null) {
+            return;
+        }
+        for (LrcLine line : mLrcLines) {
+            line.fullyLit = false;
         }
     }
 
@@ -770,11 +812,7 @@ public class LrcView extends View {
         mScrollOffset = 0f;
         mIsInitialPositioning = true; // 新增：重置初始定位状态
         // xuameng 新增：重置每一行的“已铺满”标记
-        if (mLrcLines != null) {
-            for (LrcLine line : mLrcLines) {
-                line.fullyLit = false;
-            }
-        }
+        resetFullyLitStates();
         // xuameng 新增：重置平滑时间轴
         mRenderTime = 0f;
         mLastFrameNanos = 0L;
