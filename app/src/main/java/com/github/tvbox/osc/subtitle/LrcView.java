@@ -143,6 +143,15 @@ import java.lang.Math;
  *            槽位高度从 1.5S 改为 1.2S；单语/非双语仍用 1.5S，完全不受影响。
  *            改后组间视觉白边约 0.12S，比正常行间距略小，视觉紧凑不空旷。
  *            滚动动画按"行槽"做比例偏移，双语/单语各自槽高一致，动画不会错位。
+ * 20261123 修复：双语歌曲里"单语歌词行"行距被压小的问题。
+ *      现象："既有双语又有单语"的歌曲，单语语句之间的行距比"全是单语歌词"的歌曲明显小。
+ *      根因：onDraw 用整首歌级别的 mIsBilingual 统一决定行槽高度——只要全曲存在任意一处双语对，
+ *            所有行（含单语行）的槽位都被设成双语组槽高 1.2S，单语行原本的 1.5S 被压掉。
+ *      修复：槽位高度改为"逐行判断"——双语对（主+辅）槽位 1.2S，普通单语行槽位 1.5S，
+ *            并逐槽累加各行的 Y 位置（新增 getSlotHeight(index) 与 onDraw 内的 slotOffsets 累加）。
+ *            纯单语歌曲、纯双语歌曲的布局结果与改前完全一致，仅"混合"歌曲的单语行间距恢复成 1.5S。
+ *            滚动偏移改用"当前行的槽高"作步长，相邻换行时与真实像素距离一致，双语/单语都不错位。
+ *      其它（高亮推进、铺满/防闪白、seek 重置、前三行延时、白边补偿、双语配对识别）全部未动。
  */
 public class LrcView extends View {
 
@@ -1078,6 +1087,28 @@ public class LrcView extends View {
     }
 
     /**
+     * xuameng 新增：计算 mLrcLines 某个下标所占用"槽位"的高度（像素，用于垂直布局）。
+     * - 双语对（主行 + 其辅行）所在的槽位：BILINGUAL_GROUP_LINE_HEIGHT_RATIO * S（默认 1.2S）；
+     * - 普通单语行（不属于任何双语对）所在的槽位：1.5S，与"全是单语歌词"的歌曲完全一致。
+     * 关键点：本方法按"每一行自己是不是双语对"逐行判断，而不是看整首歌有没有双语对。
+     * 原来 onDraw 用整首歌级别的 mIsBilingual 统一决定行高，只要歌曲里出现任意一处双语，
+     * 全曲所有单语行的槽位也会被压成 1.2S，导致"既有双语又有单语"的歌曲里单语行间距变小。
+     * 现在逐槽判断后，单语行间距恒为 1.5S（=全单语歌曲），双语对槽位仍是 1.2S（双语观感不变）。
+     */
+    private float getSlotHeight(int index) {
+        float masterSize = mNormalPaint.getTextSize();
+        float singleLineHeight = masterSize * 1.5f;
+        float bilingualGroupHeight = masterSize * BILINGUAL_GROUP_LINE_HEIGHT_RATIO;
+        if (mLrcLines != null && index >= 0 && index < mLrcLines.size()) {
+            LrcLine line = mLrcLines.get(index);
+            if (line.isMaster || line.isTranslation) {
+                return bilingualGroupHeight;
+            }
+        }
+        return singleLineHeight;
+    }
+
+    /**
      * 新增：获取当前是否显示歌词
      *
      * @return 是否显示歌词
@@ -1290,21 +1321,29 @@ public class LrcView extends View {
 
         // 计算总高度和起始Y位置，实现垂直居中
         float masterTextSize = mNormalPaint.getTextSize();
-        // xuameng 修改：单语行仍用 1.5S 槽高；双语模式下"主+辅"一组用 BILINGUAL_GROUP_LINE_HEIGHT_RATIO * S 槽高，
-        // 组间视觉间距收窄到与正常行间距相近，避免之前"组间距是正常行间距好几倍"的空白过大问题。
-        float singleLineHeight = masterTextSize * 1.5f;
-        float bilingualGroupHeight = masterTextSize * BILINGUAL_GROUP_LINE_HEIGHT_RATIO;
-        boolean isBilingual = mIsBilingual; // xuameng 修复：字段名应为 mIsBilingual（整首歌是否含双语对）
-        float defaultLineHeight = isBilingual ? bilingualGroupHeight : singleLineHeight;
+        // xuameng 修改：槽位高度改为"逐行判断"——
+        // 双语对（主+辅）槽位 = BILINGUAL_GROUP_LINE_HEIGHT_RATIO * S（默认 1.2S，双语观感不变）；
+        // 普通单语行槽位 = 1.5S，与"全是单语歌词"的歌曲完全一致。
+        // 原实现用整首歌级别 mIsBilingual 统一决定行高，导致"既有双语又有单语"的歌曲里
+        // 单语行间距也被压成 1.2S；现在逐槽累加后该问题消除，且纯单语 / 纯双语歌曲结果与改前完全一致。
         int visibleLines = Math.min(mLrcLines.size(), 7); // 显示最多7行歌词
-        // 总高度按当前实际槽高累加（双语模式统一用双语组槽高，单语模式用单行槽高）
-        float totalHeight = defaultLineHeight * visibleLines;
-        // 滚动偏移像素：使用当前默认槽高作为步长（双语/单语各自一致，不会错位）
-        float scrollOffsetPixels = Math.round(mScrollOffset * defaultLineHeight);
-        float startY = (getHeight() - totalHeight) / 2 + masterTextSize - scrollOffsetPixels;
+
         // 计算实际可见的行范围，确保不会超出歌词列表边界
         int startLineIndex = Math.max(0, mCurrentLine - 3);
-        int endLineIndex = Math.min(mLrcLines.size() - 1, mCurrentLine + 3);
+
+        // xuameng 新增：逐槽累加各槽位相对窗口顶部的高度
+        // （slotOffsets[k] = 窗口内第 k 个槽位相对起点的偏移；槽位高度由 getSlotHeight 逐行判断）
+        float[] slotOffsets = new float[visibleLines + 1];
+        slotOffsets[0] = 0f;
+        for (int k = 0; k < visibleLines; k++) {
+            slotOffsets[k + 1] = slotOffsets[k] + getSlotHeight(startLineIndex + k);
+        }
+        float totalHeight = slotOffsets[visibleLines];
+        // 滚动偏移像素：以"当前行的槽高"为步长（mScrollOffset 的单位是 mLrcLines 下标步数，
+        // 相邻换行时 mScrollOffset × 当前行槽高正好等于两行之间的真实像素距离，双语/单语都对齐）
+        float scrollStep = getSlotHeight(mCurrentLine);
+        float scrollOffsetPixels = Math.round(mScrollOffset * scrollStep);
+        float startY = (getHeight() - totalHeight) / 2 + masterTextSize - scrollOffsetPixels;
 
         // xuameng 新增：在开始绘制前，先判断“前三行上一行延时高亮”是否已经到期。
         // 到期后把标记清掉，该位置就会恢复普通白字绘制；未到期则持续重绘直到那一时点。
@@ -1350,7 +1389,7 @@ public class LrcView extends View {
             }
 
             LrcLine line = mLrcLines.get(actualIndex);
-            float y = startY + i * defaultLineHeight;
+            float y = startY + slotOffsets[i];
 
             // ===== xuameng 新增：双语模式下，辅行不单独占一个绘制槽位，
             // 因为 targetLine/startLineIndex 都是主行下标，辅行不会被迭代到；
