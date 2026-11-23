@@ -749,9 +749,7 @@ if (lineDistance > MAX_SCROLL_DISTANCE) {
         mRenderTime = position;
         smoothScrollTo(targetLine);
     }
-}
-
-            } else {
+} else {
                 // xuameng 修改：向前换行先补铺满，保证“铺满之后才进入下一行”；
                 // 是否滚动沿用原规则——前三行（targetLine <= 3，即第 0/1/2/3 行）不滚动、
                 // 直接跳转，第 4 行起（targetLine > 3）才走平滑滚动。
