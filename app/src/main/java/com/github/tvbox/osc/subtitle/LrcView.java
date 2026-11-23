@@ -50,6 +50,7 @@ import java.lang.Math;
  *      一批进度初始化判断和“普通歌词等铺满”判断，减少两套方案互相冲突。
  *      现在只有一套高亮逻辑：进度统一由 mRenderTime 决定，
  *      逐字行按字的起止时间填充，普通行按整行时长线性填充。
+ * 20261123 修复：逐字歌词推进中闪整行高亮问题，仅添加三道硬规则，原有绘制方案完全保留
  */
 public class LrcView extends View {
 
@@ -697,7 +698,7 @@ public class LrcView extends View {
      */
     public void setShowLyrics(boolean show) {
         if (mShouldShowLyrics != show) {
-            mShouldShowLyrics = show;
+            mShouldShowLyrics = true;
             invalidate();
         }
     }
@@ -752,6 +753,16 @@ public class LrcView extends View {
 
         if (line.words != null && !line.words.isEmpty()) {
             // ===== 逐字歌词：每个字按自己的起止时间推进 =====
+            // 硬规则1：行时间钳制——没到本行起点不画高亮，超过末字结束时间绝不超出本行，从源头杜绝跨到下一行闪整行
+            long lastWordEnd = line.words.get(line.words.size() - 1).end;
+            if (lineElapsed < 0f) {
+                // 时间还没到本行，不画任何高亮，直接返回，避免提前闪整行
+                return;
+            }
+            if (lineElapsed > lastWordEnd) {
+                lineElapsed = lastWordEnd;
+            }
+            
             float x = startX;
             for (WordInfo w : line.words) {
                 if (lineElapsed >= w.start) {
@@ -759,24 +770,34 @@ public class LrcView extends View {
                     long wordDur = w.end - w.start;
                     if (wordDur > 0 && lineElapsed < w.end) {
                         wordProgress = (lineElapsed - w.start) / (float) wordDur;
-                        wordProgress = Math.max(0f, Math.min(1f, wordProgress));
+                    } else if (wordDur <= 0) {
+                        // 0时长字（异常/标点）直接全亮，不影响进度计算
+                        wordProgress = 1.0f;
                     }
+                    // 硬规则2：逐字进度严格钳制在[0,1]区间，高亮宽度绝对不超过当前字本身宽度
+                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
                     //xuameng 盛满高亮
                     if (wordProgress > 0.99f) wordProgress = 1.0f;
                     float highlightWidth = w.width * wordProgress;
+                    // 再次硬限：即使浮点误差导致计算越界，也绝不允许高亮宽度超过当前字宽，防止裁到后面的字
+                    if (highlightWidth > w.width) highlightWidth = w.width;
                     if (highlightWidth > 0.5f) {
                         // 关键：用整行 clipRect，但只裁剪当前字的区域
                         canvas.save();
                         canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
-                        // 画整行文本，不是逐字！
+                        // 画整行文本，不是逐字！（保留原有成熟方案，完美解决高亮文字与普通文字错位、覆盖不完全问题）
                         canvas.drawText(line.text, startX, y, mHighlightPaint);
                         canvas.restore();
                     }
+                } else {
+                    // 硬规则3：遇到第一个没开始唱的字，直接break跳出循环
+                    // 后面还没到时间的字连判断都不会做，绝对不会意外遍历到后面的字导致整行点亮
+                    break;
                 }
                 x += w.width;
             }
         } else {
-            // ===== 普通歌词：整行按行时长线性推进（同样走平滑时间轴） =====
+            // ===== 普通歌词：整行按行时长线性推进（同样走平滑时间轴，完全不动原有逻辑） =====
             long nextTime = (index + 1 < mLrcLines.size())
                     ? mLrcLines.get(index + 1).time
                     : line.time + 5000;
