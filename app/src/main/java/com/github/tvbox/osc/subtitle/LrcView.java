@@ -56,8 +56,15 @@ import java.lang.Math;
  *      才进入下一行。逐字歌词与普通歌词统一按此规则处理。
  * 20261123 补充：把上面“换行前先补铺满”的规则，由原来的“仅第 4 行起向前滚动时生效”
  *      扩展到所有向前换行：前三行（targetLine <= 3，即第 0/1/2/3 行）向前换行时，
- *      同样先补铺满再换行，并同样走一次平滑滚动，让“铺满”可被看到；
+ *      同样先补铺满再换行，但保持原来“直接跳转、不滚动”的行为；
+ *      第 4 行起（targetLine > 3）仍走平滑滚动，让“铺满”可被看到；
  *      逐字歌词与普通歌词、所有行统一按此规则处理。
+ * 20261123 新增：修复“这行已经走到最后铺满后，会闪一下全白再铺满”的问题。
+ *      原因是播放器上报进度与渲染时间轴在换行瞬间可能有一帧错位，
+ *      导致已铺满的行在下一帧被判定为“未走完”，底色白字被重新画出（闪白）。
+ *      现给每一行加一个 fullyLit 标记：一旦某行被判定为铺满（mRenderTime 到达行结束时刻），
+ *      这个标记就永久置 true；之后不管时间轴怎么波动，这一行都永远保持整行高亮，
+ *      不再退回到未高亮状态。普通歌词、逐字歌词、前三行统一按此规则处理。
  */
 public class LrcView extends View {
 
@@ -79,6 +86,7 @@ public class LrcView extends View {
         String text; // 歌词文本
         float width; // 文本宽度（用于绘制）
         List<WordInfo> words; // xuameng 新增：逐字信息，null表示普通行（非逐字格式）
+        boolean fullyLit; // xuameng 新增：是否已经完全铺满高亮（铺满后不再退回未高亮状态，防止闪白）
     }
 
     private List<LrcLine> mLrcLines = new ArrayList<>();
@@ -436,6 +444,10 @@ public class LrcView extends View {
         mScrollOffset = 0f;
         mCurrentPosition = 0;
         mIsInitialPositioning = true; // 新增：重置初始定位状态
+        // xuameng 新增：重置每一行的“已铺满”标记，防止旧歌词的标记残留
+        for (LrcLine line : mLrcLines) {
+            line.fullyLit = false;
+        }
         // xuameng 新增：重置平滑时间轴
         mRenderTime = 0f;
         mLastFrameNanos = 0L;
@@ -750,6 +762,12 @@ public class LrcView extends View {
         mCurrentLine = 0;
         mScrollOffset = 0f;
         mIsInitialPositioning = true; // 新增：重置初始定位状态
+        // xuameng 新增：重置每一行的“已铺满”标记
+        if (mLrcLines != null) {
+            for (LrcLine line : mLrcLines) {
+                line.fullyLit = false;
+            }
+        }
         // xuameng 新增：重置平滑时间轴
         mRenderTime = 0f;
         mLastFrameNanos = 0L;
@@ -811,16 +829,24 @@ public class LrcView extends View {
         float lineElapsed = mRenderTime - line.time;
 
         // xuameng 新增：判断“当前行是否已经完整结束”。
-        // 只有 mRenderTime 到达/超过整行结束时刻，才允许铺满；
-        // 否则把高亮右边界收在整行宽度之内（maxRight < 整行右边界），
-        // 从根上杜绝“这行还在填、却整行闪一下全亮”的现象。
+        // 一旦某行被判定为铺满，fullyLit 永久置 true；之后不管时间轴怎么波动，
+        // 这一行都永远保持整行高亮，不再退回到未高亮状态（彻底消除“铺满后闪白再铺满”）。
         long lineEndTime = getLineEndTime(index);
-        boolean lineCompleted = mRenderTime >= lineEndTime;
+        boolean lineCompleted = (mRenderTime >= lineEndTime) || line.fullyLit;
+        if (lineCompleted && !line.fullyLit) {
+            line.fullyLit = true; // xuameng 新增：第一次铺满后永久标记
+        }
         float fullRight = startX + line.width;
         float maxRight = fullRight;
         if (!lineCompleted) {
             float margin = Math.max(1f, Math.min(3f, line.width * 0.004f));
             maxRight = fullRight - margin;
+        }
+
+        // xuameng 新增：已铺满的行，不管时间轴如何，直接整行高亮，不再走逐字/逐像素裁剪
+        if (line.fullyLit) {
+            canvas.drawText(line.text, startX, y, mHighlightPaint);
+            return;
         }
 
         if (line.words != null && !line.words.isEmpty()) {
