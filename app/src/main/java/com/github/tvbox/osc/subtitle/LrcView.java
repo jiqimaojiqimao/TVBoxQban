@@ -214,18 +214,6 @@ public class LrcView extends View {
     /** 每帧向播放器真实进度收敛的系数：越小越平滑、越大越跟手，0.03~0.12 之间比较合适 */
     private static final float RENDER_SYNC_GAIN = 0.05f;
 
-    /** 一帧内允许推进的最大毫秒数（掉帧保护）：防止后台切回时一次性冲过好几行 */
-    private static final float RENDER_MAX_FRAME_MS = 100f;
-
-    /** 平滑时间轴与播放器进度的偏差超过该阈值时，强制硬对齐（毫秒） */
-    private static final float RENDER_RESYNC_THRESHOLD_MS = 800f;
-
-    /** 进度"卡住"超过该时长后，认为播放器已暂停，停止自主推进（毫秒） */
-    private static final long RENDER_IDLE_TIMEOUT_MS = 500L;
-
-    /** 向后倒退超过该阈值，认定为用户往回 seek（毫秒）——兜底，防止宿主没调 setSeekPosition */
-    private static final long RENDER_BACKWARD_SEEK_TOLERANCE_MS = 250L;
-
     // xuameng 新增：向前大幅跳变兜底阈值（毫秒）。
     // 正常播放相邻两行时间差一般在几百毫秒到 1~2 秒；若一帧前进超过 2 秒，
     // 说明用户向前拖了进度条或宿主直接跳进度（部分播放器此时不会调 setSeekPosition），
