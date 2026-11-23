@@ -43,6 +43,7 @@ import java.lang.Math;
  *      而单字时长只有几十~几百毫秒，一次刷新就会跨过半个字甚至整字。
  *      本次给逐字高亮单独引入一条逐帧推进的平滑时间轴 mRenderTime，
  *      并且播放中持续逐帧重绘，彻底消除跳字。
+ * 20261123 新增：外部调用seekto时歌词可以实时滚动
  */
 public class LrcView extends View {
 
@@ -811,8 +812,6 @@ public class LrcView extends View {
                     wordProgress = (lineElapsed - w.start) / (float) wordDur;
                     wordProgress = Math.max(0f, Math.min(1f, wordProgress));
                 }
-                //xuameng 盛满高亮
-                if (wordProgress > 0.99f) wordProgress = 1.0f;
                 float highlightWidth = w.width * wordProgress;
                 if (highlightWidth > 0.5f) {
                     // 关键：用整行 clipRect，但只裁剪当前字的区域
