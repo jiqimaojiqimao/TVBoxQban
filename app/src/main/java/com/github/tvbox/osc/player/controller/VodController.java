@@ -510,11 +510,7 @@ public class VodController extends BaseController {
             } else {
                 iv_circle_bg.setVisibility(GONE);
             } //xuameng音乐播放时图标判断完
-            if(mLrcView.getVisibility() == View.VISIBLE) {  
-                mHandler.postDelayed(this, 10);
-            } else {
-                mHandler.postDelayed(this, 100);
-			}
+            mHandler.postDelayed(this, 100);
         }
     };
     private Runnable myRunnableMusic = new Runnable() { //xuameng播放音频切换图片
@@ -573,15 +569,15 @@ public class VodController extends BaseController {
     @Override
     protected void initView() {
         super.initView();
-        
-         //xuameng接受seekto通知
+
+         //xuameng接受通知 用于lrc歌词获取seekTo进度
          setOnSeekListener(newPosition -> {
             if (mLrcView != null
                     && mLrcView.getVisibility() == View.VISIBLE) {
                 mLrcView.setSeekPosition(newPosition);
             }
         });
-           
+
         mCurrentTime = findViewById(R.id.curr_time);
         mTotalTime = findViewById(R.id.total_time);
         mPlayTitle = findViewById(R.id.tv_info_name);
