@@ -221,7 +221,6 @@ public class LrcView extends View {
 
     /** 每帧向播放器真实进度收敛的系数：越小越平滑、越大越跟手，0.03~0.12 之间比较合适 */
     private static final float RENDER_SYNC_GAIN = 0.05f;
-
     // xuameng 新增：向前大幅跳变兜底阈值（毫秒）。
     // 正常播放相邻两行时间差一般在几百毫秒到 1~2 秒；若一帧前进超过 2 秒，
     // 说明用户向前拖了进度条或宿主直接跳进度（部分播放器此时不会调 setSeekPosition），
@@ -1295,7 +1294,7 @@ public class LrcView extends View {
         // 组间视觉间距收窄到与正常行间距相近，避免之前"组间距是正常行间距好几倍"的空白过大问题。
         float singleLineHeight = masterTextSize * 1.5f;
         float bilingualGroupHeight = masterTextSize * BILINGUAL_GROUP_LINE_HEIGHT_RATIO;
-        boolean isBilingual = mHasBilingualPairs; // 整首歌是否含双语对
+        boolean isBilingual = mIsBilingual; // xuameng 修复：字段名应为 mIsBilingual（整首歌是否含双语对）
         float defaultLineHeight = isBilingual ? bilingualGroupHeight : singleLineHeight;
         int visibleLines = Math.min(mLrcLines.size(), 7); // 显示最多7行歌词
         // 总高度按当前实际槽高累加（双语模式统一用双语组槽高，单语模式用单行槽高）
