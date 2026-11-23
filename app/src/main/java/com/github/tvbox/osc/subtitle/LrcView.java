@@ -790,41 +790,48 @@ public class LrcView extends View {
      * xuameng 新增：逐字卡拉OK绘制
      * 关键改动：高亮进度改用平滑时间轴 mRenderTime，不再直接使用播放器原始进度
      */
-    private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
-        float startX = getWidth() / 2 - line.width / 2;
+private void drawKaraokeLine(Canvas canvas, LrcLine line, float y) {
+    float startX = getWidth() / 2 - line.width / 2;
+    canvas.drawText(line.text, startX, y, mNormalPaint);
 
-        // 1. 先画整行普通底色（和老歌词一样）
-        canvas.drawText(line.text, startX, y, mNormalPaint);
+    Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
+    float textTop = y + fm.top;
+    float textBottom = y + fm.bottom;
 
-        Paint.FontMetrics fm = mHighlightPaint.getFontMetrics();
-        float textTop = y + fm.top;
-        float textBottom = y + fm.bottom;
-
-        // xuameng 修改：使用平滑时间轴，且用浮点运算，避免整字跳变
-        float lineElapsed = mRenderTime - line.time;
-
-        float x = startX;
-        for (WordInfo w : line.words) {
-            if (lineElapsed >= w.start) {
-                float wordProgress = 1.0f;
-                long wordDur = w.end - w.start;
-                if (wordDur > 0 && lineElapsed < w.end) {
-                    wordProgress = (lineElapsed - w.start) / (float) wordDur;
-                    wordProgress = Math.max(0f, Math.min(1f, wordProgress));
-                }
-                float highlightWidth = w.width * wordProgress;
-                if (highlightWidth > 0.5f) {
-                    // 关键：用整行 clipRect，但只裁剪当前字的区域
-                    canvas.save();
-                    canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
-                    // 画整行文本，不是逐字！
-                    canvas.drawText(line.text, startX, y, mHighlightPaint);
-                    canvas.restore();
-                }
-            }
-            x += w.width;
-        }
+    // 计算当前行的结束时间
+    long lineEndTime = line.time;
+    if (line.words != null && !line.words.isEmpty()) {
+        // 用最后一个字的结束时间
+        WordInfo lastWord = line.words.get(line.words.size() - 1);
+        lineEndTime = line.time + lastWord.end;
+    } else {
+        lineEndTime = line.time + 5000;
     }
+
+    // xuameng 修复：clamp mRenderTime 到当前行时间范围内，防止硬对齐导致的闪全行
+    float clampedRenderTime = Math.max(line.time, Math.min(lineEndTime, mRenderTime));
+    float lineElapsed = clampedRenderTime - line.time;
+
+    float x = startX;
+    for (WordInfo w : line.words) {
+        if (lineElapsed >= w.start) {
+            float wordProgress = 1.0f;
+            long wordDur = w.end - w.start;
+            if (wordDur > 0 && lineElapsed < w.end) {
+                wordProgress = (lineElapsed - w.start) / (float) wordDur;
+                wordProgress = Math.max(0f, Math.min(1f, wordProgress));
+            }
+            float highlightWidth = w.width * wordProgress;
+            if (highlightWidth > 0.5f) {
+                canvas.save();
+                canvas.clipRect(x, textTop, x + highlightWidth, textBottom);
+                canvas.drawText(line.text, startX, y, mHighlightPaint);
+                canvas.restore();
+            }
+        }
+        x += w.width;
+    }
+}
 
     /**
      * 绘制卡拉OK效果
