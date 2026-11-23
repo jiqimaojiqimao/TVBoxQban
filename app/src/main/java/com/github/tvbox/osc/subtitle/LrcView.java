@@ -591,7 +591,7 @@ public class LrcView extends View {
 
         // 检查是否达到最小显示位置
         if (position < MIN_POSITION_TO_SHOW) {
-            // 进度小于1秒，不显示歌词，但保持在第一行
+            // 进度小于0.1秒，不显示歌词，但保持在第一行
             mShouldShowLyrics = false;
             mCurrentLine = 0; // 确保强制重置到第一行
             mScrollOffset = 0f; // 重置滚动偏移
@@ -811,7 +811,8 @@ public class LrcView extends View {
                     wordProgress = (lineElapsed - w.start) / (float) wordDur;
                     wordProgress = Math.max(0f, Math.min(1f, wordProgress));
                 }
-
+                //xuameng 盛满高亮
+                if (wordProgress > 0.99f) wordProgress = 1.0f;
                 float highlightWidth = w.width * wordProgress;
                 if (highlightWidth > 0.5f) {
                     // 关键：用整行 clipRect，但只裁剪当前字的区域
@@ -894,11 +895,10 @@ public class LrcView extends View {
                            targetProgress = Math.max(0f, Math.min(1f, targetProgress));
                        }
                     }
-
+                    //xuameng 盛满高亮
                     if (targetProgress > 0.99f) {
                         targetProgress = 1.0f;
                     }
-
                     // 平滑滤波
                     if (targetProgress >= 1.0f) {
                         mSmoothedProgress = 1.0f;
