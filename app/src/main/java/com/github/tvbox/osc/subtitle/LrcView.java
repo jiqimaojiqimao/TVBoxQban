@@ -50,6 +50,14 @@ import java.lang.Math;
  *      一批进度初始化判断和“普通歌词等铺满”判断，减少两套方案互相冲突。
  *      现在只有一套高亮逻辑：进度统一由 mRenderTime 决定，
  *      逐字行按字的起止时间填充，普通行按整行时长线性填充。
+ * 20261123 修复：逐字歌词换行首帧整行闪满问题。
+ *      原因是换行的那一帧 mRenderTime 已经被同步项拉到新行开始后几十毫秒，
+ *      而逐字行的高亮是“每字 clip 后画整行文字”，只要某帧 lineElapsed 越过最后一个字的 end，
+ *      循环中所有字都会以 wordProgress=1 被 clip 出来，拼起来就是整行闪黄。
+ *      修复方式：
+ *        1) 换行时把 mRenderTime 对齐到新行的 line.time，保证首帧 lineElapsed=0；
+ *        2) 逐字行绘制时把 lineElapsed 钳到 [0, lastWordEnd]，不让它越过本行末尾；
+ *      普通歌词逻辑保持不变。
  */
 public class LrcView extends View {
 
@@ -111,6 +119,11 @@ public class LrcView extends View {
     private static final long RENDER_RESYNC_THRESHOLD_MS = 800L;
     /** 向后 seek 判定：正常播放进度只会前进，倒退超过该值即认定用户拖回了进度条 */
     private static final long RENDER_BACKWARD_SEEK_TOLERANCE_MS = 250L;
+    /** xuameng：20261123 修复：换行时允许把 mRenderTime 对齐到新行起点的最大偏差。
+     *  只有当 mRenderTime 落在 [newLineTime - 30ms, newLineTime + 150ms] 之间时才对齐，
+     *  避免跨多行跳转/seek 时被误对齐。 */
+    private static final long RENDER_LINE_ALIGN_EARLY_MS = 30L;
+    private static final long RENDER_LINE_ALIGN_LATE_MS = 150L;
     /** xuameng：调试日志开关。逐帧重绘时务必关闭，否则日志本身会把渲染拖慢 */
     private static final boolean DEBUG_LOG = false;
 
@@ -557,6 +570,24 @@ public class LrcView extends View {
     }
 
     /**
+     * xuameng 20261123 修复：切换到新行时，把平滑时间轴对齐到新行的 line.time，
+     * 保证逐字行首帧 lineElapsed=0，避免"首帧整行闪黄"。
+     * 只在相邻行正常切换时对齐；跨多行跳转/seek 由调用方自己硬对齐，不动它。
+     */
+    private void alignRenderTimeToLineIfNeeded(int newLine) {
+        if (mLrcLines == null || newLine < 0 || newLine >= mLrcLines.size()) {
+            return;
+        }
+        long newLineTime = mLrcLines.get(newLine).time;
+        float diff = mRenderTime - newLineTime;
+        // mRenderTime 比新行稍微早一点（前一行还没收敛完）或稍微晚一点（updateTime 已到、画面还没换）
+        // 都对齐到新行起点；明显超前/明显落后属于 seek/大跳转，不做对齐交给既有的硬同步逻辑。
+        if (diff >= -RENDER_LINE_ALIGN_EARLY_MS && diff <= RENDER_LINE_ALIGN_LATE_MS) {
+            mRenderTime = newLineTime;
+        }
+    }
+
+    /**
      * xuameng 新增：更新播放进度 + 播放状态（推荐宿主使用这个重载）
      *
      * @param position 当前播放时间（毫秒）
@@ -667,10 +698,14 @@ public class LrcView extends View {
                 // 直接跳转逻辑
                 mCurrentLine = targetLine;
                 mScrollOffset = 0f;
+                // 20261123 修复：跨多行跳转同样对齐，避免首帧越界
+                alignRenderTimeToLineIfNeeded(targetLine);
                 invalidate();
             } else {
                 // 相邻行：只有向前滚动（到下一行）才执行平滑滚动
                 if (isForward && targetLine > 3) {
+                    // 20261123 修复：相邻向前切换前先对齐时间轴，再启动滚动动画
+                    alignRenderTimeToLineIfNeeded(targetLine);
                     smoothScrollTo(targetLine);
                 } else {
                     // 向后滚动（到上一行）或前三行：直接跳转
@@ -681,6 +716,8 @@ public class LrcView extends View {
                     // 换行时不再需要按行类型分别初始化进度，也不再需要“普通歌词等铺满”的判断
                     mCurrentLine = targetLine;
                     mScrollOffset = 0f;
+                    // 20261123 修复：向后切行/前三行直接切换也做一次对齐
+                    alignRenderTimeToLineIfNeeded(targetLine);
                     invalidate();
                 }
             }
@@ -752,8 +789,19 @@ public class LrcView extends View {
 
         if (line.words != null && !line.words.isEmpty()) {
             // ===== 逐字歌词：每个字按自己的起止时间推进 =====
+            // 20261123 修复：逐字行的 lineElapsed 必须钳到 [0, 最后一个字的 end]。
+            // 换行首帧或同步项过冲时，lineElapsed 可能越过最后一个字的 end，
+            // 导致循环里所有字都被判定为 wordProgress=1，clip 拼起来就是整行闪黄。
+            long lastWordEnd = line.words.get(line.words.size() - 1).end;
+            if (lineElapsed < 0f) lineElapsed = 0f;
+            if (lineElapsed > lastWordEnd) lineElapsed = lastWordEnd;
+
             float x = startX;
             for (WordInfo w : line.words) {
+                // 20261123 修复：未到达的字完全不画，避免因 clip 区间错位闪出整行。
+                // 原来写成 "if (lineElapsed >= w.start)"，在 lineElapsed 超前时会把后面的字
+                // 一起画满；现在直接对 lineElapsed 做了上界钳制，未到的字 lineElapsed < w.start，
+                // 自然不会进入分支，行为正确。
                 if (lineElapsed >= w.start) {
                     float wordProgress = 1.0f;
                     long wordDur = w.end - w.start;
