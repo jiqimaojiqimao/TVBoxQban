@@ -680,21 +680,6 @@ public class VideoActivity extends BaseActivity {
         setLoadSir(llLayout);
         if (fullWindows) {
             setFullPreview(true);
-            playFragment.isFullPreview(true);   //xuameng 非小窗口模式返回后播放BUG
-            llPlayerFragmentContainer.post(() -> {
-                if (playFragment != null) {
-                    playFragment.updateVisualizerSize(true);   //xuameng 音柱全屏与小窗口时大小变化
-                    playFragment.updateMusicLogoSize(true);   //xuameng 音柱全屏与小窗口时大小变化
-                }
-            });
-        } else {
-            playFragment.isFullPreview(false);   //xuameng 非小窗口模式返回后播放BUG
-            llPlayerFragmentContainer.post(() -> {
-                if (playFragment != null) {
-                    playFragment.updateVisualizerSize(false);   //xuameng 音柱全屏与小窗口时大小变化
-                    playFragment.updateMusicLogoSize(false);   //xuameng 音柱全屏与小窗口时大小变化
-                }
-            });
         }
     }
 
